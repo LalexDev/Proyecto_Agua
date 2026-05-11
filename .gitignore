@@ -1,8 +1,10 @@
 # Java / Spring Boot
 target/
+**/target/
 *.class
 *.jar
 *.war
+!**/.mvn/wrapper/maven-wrapper.jar
 
 # Angular / Node
 node_modules/
