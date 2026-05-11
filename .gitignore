@@ -29,4 +29,7 @@ build/
 
 # Sistema
 .DS_Store
-Thumbs.db
+Thumbs.dbnode_modules/
+dist/
+.angular/
+.env

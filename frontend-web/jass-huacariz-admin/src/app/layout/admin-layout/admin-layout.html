@@ -1,0 +1,40 @@
+<div class="admin-layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">💧</div>
+      <div>
+        <h2>JASS Huacariz</h2>
+        <p>Panel administrativo</p>
+      </div>
+    </div>
+
+    <nav class="menu">
+      <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/admin/clientes" routerLinkActive="active">Clientes</a>
+      <a routerLink="/admin/recibos" routerLinkActive="active">Recibos</a>
+      <a routerLink="/admin/pagos" routerLinkActive="active">Pagos</a>
+      <a routerLink="/admin/tarifas" routerLinkActive="active">Tarifas</a>
+      <a routerLink="/admin/reportes" routerLinkActive="active">Reportes</a>
+    </nav>
+
+    <button class="logout">Cerrar sesión</button>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <h1>Sistema de Gestión de Agua</h1>
+        <p>Administración de clientes, recibos, pagos y tarifas</p>
+      </div>
+
+      <div class="user-box">
+        <span>Administrador</span>
+        <div class="avatar">A</div>
+      </div>
+    </header>
+
+    <section class="page-content">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

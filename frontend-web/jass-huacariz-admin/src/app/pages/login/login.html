@@ -1,0 +1,48 @@
+<div class="login-page">
+  <div class="login-left">
+    <div class="brand-box">
+      <div class="logo-circle">💧</div>
+      <h1>JASS Huacariz</h1>
+      <p>Sistema web para gestión de clientes, recibos, pagos y consumo de agua potable.</p>
+    </div>
+
+    <div class="info-card">
+      <h3>Gestión inteligente del servicio de agua</h3>
+      <p>
+        Administra usuarios, lecturas, tarifas, recibos y pagos desde una plataforma moderna,
+        segura y fácil de usar.
+      </p>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <form class="login-card">
+      <h2>Iniciar sesión</h2>
+      <p class="subtitle">Ingresa tus credenciales para acceder al sistema</p>
+
+      <div class="form-group">
+        <label>Correo o usuario</label>
+        <input type="text" placeholder="admin@jass.pe">
+      </div>
+
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" placeholder="••••••••">
+      </div>
+
+     <button type="button" class="btn-login" (click)="entrarComoAdmin()">
+  Ingresar como administrador
+</button>
+
+<button type="button" class="btn-secondary" (click)="entrarComoCliente()">
+  Ingresar como cliente
+</button>
+
+      <div class="demo-users">
+        <p><strong>Usuarios de prueba:</strong></p>
+        <span>Admin: admin@jass.pe</span>
+        <span>Cliente: cliente@jass.pe</span>
+      </div>
+    </form>
+  </div>
+</div>
