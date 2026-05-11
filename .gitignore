@@ -1,0 +1,30 @@
+# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+
+# Angular / Node
+node_modules/
+dist/
+.angular/
+
+# Flutter
+build/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+
+# Entorno
+.env
+*.log
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Sistema
+.DS_Store
+Thumbs.db
