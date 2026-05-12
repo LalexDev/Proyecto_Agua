@@ -89,19 +89,52 @@ public class ClienteService {
         return convertirAResponse(cliente, usuario, suministros);
     }
 
+    @Transactional(readOnly = true)
+    public List<ClienteResponse> listarClientes() {
+        return clienteRepository.findAll()
+                .stream()
+                .map(cliente -> {
+                    List<Suministro> suministros = suministroRepository.findByClienteId(cliente.getId());
+                    return convertirAResponse(cliente, cliente.getUsuario(), suministros);
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ClienteResponse obtenerClientePorId(Integer id) {
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No existe el cliente con ID: " + id));
+
+        List<Suministro> suministros = suministroRepository.findByClienteId(cliente.getId());
+
+        return convertirAResponse(cliente, cliente.getUsuario(), suministros);
+    }
+
+    @Transactional(readOnly = true)
+    public ClienteResponse obtenerClientePorDni(String dni) {
+        Cliente cliente = clienteRepository.findByDni(dni)
+                .orElseThrow(() -> new RuntimeException("No existe el cliente con DNI: " + dni));
+
+        List<Suministro> suministros = suministroRepository.findByClienteId(cliente.getId());
+
+        return convertirAResponse(cliente, cliente.getUsuario(), suministros);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SuministroResponse> listarSuministrosPorCliente(Integer clienteId) {
+        if (!clienteRepository.existsById(clienteId)) {
+            throw new RuntimeException("No existe el cliente con ID: " + clienteId);
+        }
+
+        return suministroRepository.findByClienteId(clienteId)
+                .stream()
+                .map(this::convertirSuministroAResponse)
+                .toList();
+    }
+
     private ClienteResponse convertirAResponse(Cliente cliente, Usuario usuario, List<Suministro> suministros) {
         List<SuministroResponse> suministrosResponse = suministros.stream()
-                .map(suministro -> SuministroResponse.builder()
-                        .id(suministro.getId())
-                        .codigoSuministro(suministro.getCodigoSuministro())
-                        .idSector(suministro.getSector().getId())
-                        .nombreSector(suministro.getSector().getNombre())
-                        .direccionSuministro(suministro.getDireccionSuministro())
-                        .referencia(suministro.getReferencia())
-                        .aliasSuministro(suministro.getAliasSuministro())
-                        .lecturaInicial(suministro.getLecturaInicial())
-                        .estado(suministro.getEstado())
-                        .build())
+                .map(this::convertirSuministroAResponse)
                 .toList();
 
         return ClienteResponse.builder()
@@ -115,6 +148,20 @@ public class ClienteService {
                 .codigoUsuario(usuario.getCodigoUsuario())
                 .passwordInicial(PASSWORD_INICIAL_CLIENTE)
                 .suministros(suministrosResponse)
+                .build();
+    }
+
+    private SuministroResponse convertirSuministroAResponse(Suministro suministro) {
+        return SuministroResponse.builder()
+                .id(suministro.getId())
+                .codigoSuministro(suministro.getCodigoSuministro())
+                .idSector(suministro.getSector().getId())
+                .nombreSector(suministro.getSector().getNombre())
+                .direccionSuministro(suministro.getDireccionSuministro())
+                .referencia(suministro.getReferencia())
+                .aliasSuministro(suministro.getAliasSuministro())
+                .lecturaInicial(suministro.getLecturaInicial())
+                .estado(suministro.getEstado())
                 .build();
     }
 
