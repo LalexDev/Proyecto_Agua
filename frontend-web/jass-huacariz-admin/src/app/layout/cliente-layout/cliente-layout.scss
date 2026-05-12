@@ -1,0 +1,149 @@
+.cliente-layout {
+  min-height: 100vh;
+  background: #f4f8fb;
+  font-family: Arial, sans-serif;
+}
+
+.cliente-header {
+  min-height: 84px;
+  background: white;
+  border-bottom: 1px solid #e4eaf0;
+  padding: 16px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #1da1c2;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+
+.brand h2 {
+  margin: 0;
+  color: #0f3d57;
+  font-size: 18px;
+}
+
+.brand p {
+  margin: 4px 0 0;
+  color: #7b8794;
+  font-size: 13px;
+}
+
+.cliente-menu {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cliente-menu a {
+  text-decoration: none;
+  color: #0f3d57;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: 0.2s ease;
+  white-space: nowrap;
+}
+
+.cliente-menu a:hover,
+.cliente-menu a.active {
+  background: #1da1c2;
+  color: white;
+}
+
+.cliente-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0f3d57;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: #0f3d57;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.cliente-content {
+  padding: 32px;
+}
+
+@media (max-width: 1024px) {
+  .cliente-header {
+    padding: 16px 24px;
+    flex-wrap: wrap;
+  }
+
+  .cliente-menu {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cliente-header {
+    align-items: flex-start;
+  }
+
+  .cliente-user {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .cliente-content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cliente-header {
+    padding: 14px;
+  }
+
+  .brand h2 {
+    font-size: 16px;
+  }
+
+  .brand p {
+    font-size: 12px;
+  }
+
+  .cliente-menu a {
+    font-size: 13px;
+    padding: 9px 12px;
+  }
+
+  .cliente-content {
+    padding: 14px;
+  }
+}

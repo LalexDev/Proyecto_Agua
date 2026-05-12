@@ -1,1 +1,169 @@
 <p>recibos works!</p>
+<div class="recibos-page">
+  <div class="page-header">
+    <div>
+      <span class="module-tag">Gestión de recibos</span>
+      <h2>Recibos generados</h2>
+      <p>
+        Genera recibos por cada suministro registrado, calculando consumo y monto según la lectura mensual.
+      </p>
+    </div>
+
+    <button class="btn-primary" (click)="abrirModal()">
+      + Generar recibo
+    </button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span>Total recibos</span>
+      <h3>{{ recibos.length }}</h3>
+      <p>Emitidos en el sistema</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Pendientes</span>
+      <h3>{{ totalPendientes }}</h3>
+      <p>Recibos por cobrar</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Pagados</span>
+      <h3>{{ totalPagados }}</h3>
+      <p>Recibos cancelados</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Monto pendiente</span>
+      <h3>S/ {{ montoPendiente.toFixed(2) }}</h3>
+      <p>Recaudación pendiente</p>
+    </div>
+  </div>
+
+  <section class="table-card">
+    <div class="table-toolbar">
+      <div>
+        <h3>Listado de recibos</h3>
+        <p>Consulta los recibos generados por cliente y suministro.</p>
+      </div>
+
+      <div class="search-box">
+        <input type="text" placeholder="Buscar por cliente, DNI, suministro o periodo...">
+        <button>Buscar</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>Suministro</th>
+            <th>Periodo</th>
+            <th>Lect. anterior</th>
+            <th>Lect. actual</th>
+            <th>Consumo</th>
+            <th>Total</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (recibo of recibos; track recibo.codigo) {
+            <tr>
+              <td>{{ recibo.codigo }}</td>
+
+              <td>
+                <strong>{{ recibo.cliente }}</strong>
+                <span>DNI: {{ recibo.dni }}</span>
+              </td>
+
+              <td>
+                <strong>{{ recibo.suministro }}</strong>
+                <span>{{ recibo.sector }}</span>
+              </td>
+
+              <td>{{ recibo.periodo }}</td>
+              <td>{{ recibo.lecturaAnterior }} m³</td>
+              <td>{{ recibo.lecturaActual }} m³</td>
+              <td>{{ recibo.consumo }} m³</td>
+              <td><strong>S/ {{ recibo.total.toFixed(2) }}</strong></td>
+
+              <td>
+                <span
+                  class="badge"
+                  [class.pendiente]="recibo.estado === 'Pendiente'"
+                  [class.pagado]="recibo.estado === 'Pagado'"
+                  [class.vencido]="recibo.estado === 'Vencido'"
+                >
+                  {{ recibo.estado }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+@if (mostrarModal) {
+  <div class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3>Generar nuevo recibo</h3>
+          <p>Selecciona un suministro y registra la lectura actual.</p>
+        </div>
+
+        <button class="close-btn" (click)="cerrarModal()">×</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Suministro</label>
+          <select [(ngModel)]="nuevoRecibo.idSuministro" (change)="seleccionarSuministro()">
+            <option [ngValue]="0">Seleccione un suministro</option>
+
+            @for (suministro of suministros; track suministro.id) {
+              <option [ngValue]="suministro.id">
+                {{ suministro.cliente }} - {{ suministro.aliasSuministro }} - {{ suministro.direccionSuministro }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Periodo</label>
+          <input type="text" [(ngModel)]="nuevoRecibo.periodo">
+        </div>
+
+        <div class="form-group">
+          <label>Lectura anterior</label>
+          <input type="number" step="0.001" [(ngModel)]="nuevoRecibo.lecturaAnterior" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Lectura actual</label>
+          <input type="number" step="0.001" [(ngModel)]="nuevoRecibo.lecturaActual">
+        </div>
+
+        <div class="calculo-card">
+          <span>Consumo calculado</span>
+          <h4>{{ calcularConsumo() }} m³</h4>
+        </div>
+
+        <div class="calculo-card total">
+          <span>Total a pagar</span>
+          <h4>S/ {{ calcularTotal().toFixed(2) }}</h4>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn-save" (click)="guardarRecibo()">Generar recibo</button>
+      </div>
+    </div>
+  </div>
+}

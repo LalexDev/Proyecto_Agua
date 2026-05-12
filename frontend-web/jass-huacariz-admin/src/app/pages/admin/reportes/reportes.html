@@ -1,1 +1,161 @@
-<p>reportes works!</p>
+<div class="reportes-page">
+  <div class="page-header">
+    <div>
+      <span class="module-tag">Reportes administrativos</span>
+      <h2>Resumen general del servicio</h2>
+      <p>
+        Visualiza la recaudación, consumo, recibos y estado mensual de los clientes.
+      </p>
+    </div>
+
+    <div class="filter-box">
+      <label>Periodo</label>
+      <select [(ngModel)]="periodoSeleccionado">
+        @for (reporte of reportes; track reporte.periodo) {
+          <option [value]="reporte.periodo">{{ reporte.periodo }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span>Recaudación</span>
+      <h3>S/ {{ reporteActual.montoRecaudado.toFixed(2) }}</h3>
+      <p>Monto cobrado en {{ reporteActual.periodo }}</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Monto pendiente</span>
+      <h3>S/ {{ reporteActual.montoPendiente.toFixed(2) }}</h3>
+      <p>Por cobrar del periodo</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Consumo total</span>
+      <h3>{{ reporteActual.consumoTotalM3 }} m³</h3>
+      <p>Consumo acumulado</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Clientes activos</span>
+      <h3>{{ reporteActual.clientesActivos }}</h3>
+      <p>Usuarios habilitados</p>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <section class="panel-card">
+      <div class="section-title">
+        <div>
+          <h3>Estado de recibos</h3>
+          <p>Distribución de recibos generados en el periodo seleccionado.</p>
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-card pagados">
+          <span>Pagados</span>
+          <h4>{{ reporteActual.recibosPagados }}</h4>
+          <div class="progress">
+            <div class="progress-bar" [style.width.%]="porcentajePagados"></div>
+          </div>
+          <p>{{ porcentajePagados }}% del total</p>
+        </div>
+
+        <div class="status-card pendientes">
+          <span>Pendientes</span>
+          <h4>{{ reporteActual.recibosPendientes }}</h4>
+          <div class="progress">
+            <div class="progress-bar" [style.width.%]="porcentajePendientes"></div>
+          </div>
+          <p>{{ porcentajePendientes }}% del total</p>
+        </div>
+
+        <div class="status-card vencidos">
+          <span>Vencidos</span>
+          <h4>{{ reporteActual.recibosVencidos }}</h4>
+          <div class="progress">
+            <div class="progress-bar" [style.width.%]="porcentajeVencidos"></div>
+          </div>
+          <p>{{ porcentajeVencidos }}% del total</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-card">
+      <div class="section-title">
+        <div>
+          <h3>Recaudación mensual</h3>
+          <p>Comparación de ingresos registrados.</p>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        @for (reporte of reportes; track reporte.periodo) {
+          <div class="chart-item">
+            <div class="bar-container">
+              <div
+                class="bar"
+                [class.active]="reporte.periodo === periodoSeleccionado"
+                [style.height.%]="obtenerAltoBarra(reporte.montoRecaudado)">
+              </div>
+            </div>
+
+            <span>{{ reporte.periodo.split(' ')[0] }}</span>
+            <strong>S/ {{ reporte.montoRecaudado }}</strong>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+
+  <section class="table-card">
+    <div class="table-toolbar">
+      <div>
+        <h3>Detalle mensual</h3>
+        <p>Comparativo de los últimos periodos registrados.</p>
+      </div>
+
+      <button class="btn-export">
+        Exportar reporte
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Periodo</th>
+            <th>Clientes activos</th>
+            <th>Recibos generados</th>
+            <th>Pagados</th>
+            <th>Pendientes</th>
+            <th>Vencidos</th>
+            <th>Consumo total</th>
+            <th>Recaudado</th>
+            <th>Pendiente</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (reporte of reportes; track reporte.periodo) {
+            <tr [class.selected-row]="reporte.periodo === periodoSeleccionado">
+              <td>
+                <strong>{{ reporte.periodo }}</strong>
+              </td>
+              <td>{{ reporte.clientesActivos }}</td>
+              <td>{{ reporte.recibosGenerados }}</td>
+              <td>{{ reporte.recibosPagados }}</td>
+              <td>{{ reporte.recibosPendientes }}</td>
+              <td>{{ reporte.recibosVencidos }}</td>
+              <td>{{ reporte.consumoTotalM3 }} m³</td>
+              <td><strong>S/ {{ reporte.montoRecaudado.toFixed(2) }}</strong></td>
+              <td>S/ {{ reporte.montoPendiente.toFixed(2) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

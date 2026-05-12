@@ -1,1 +1,158 @@
-<p>pagos works!</p>
+<div class="pagos-page">
+  <div class="page-header">
+    <div>
+      <span class="module-tag">Gestión de pagos</span>
+      <h2>Pagos registrados</h2>
+      <p>
+        Registra los pagos realizados por los clientes y actualiza el estado de sus recibos.
+      </p>
+    </div>
+
+    <button class="btn-primary" (click)="abrirModal()">
+      + Registrar pago
+    </button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span>Total pagos</span>
+      <h3>{{ totalPagos }}</h3>
+      <p>Operaciones registradas</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Monto recaudado</span>
+      <h3>S/ {{ montoRecaudado.toFixed(2) }}</h3>
+      <p>Pagos confirmados</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Recibos por cobrar</span>
+      <h3>{{ recibosPorCobrar }}</h3>
+      <p>Pendientes de pago</p>
+    </div>
+  </div>
+
+  <section class="table-card">
+    <div class="table-toolbar">
+      <div>
+        <h3>Historial de pagos</h3>
+        <p>Consulta los pagos realizados por recibo, cliente y suministro.</p>
+      </div>
+
+      <div class="search-box">
+        <input type="text" placeholder="Buscar por cliente, recibo o código de operación...">
+        <button>Buscar</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Código pago</th>
+            <th>Recibo</th>
+            <th>Cliente</th>
+            <th>Suministro</th>
+            <th>Método</th>
+            <th>Operación</th>
+            <th>Monto</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (pago of pagos; track pago.codigoPago) {
+            <tr>
+              <td>{{ pago.codigoPago }}</td>
+
+              <td>
+                <strong>{{ pago.codigoRecibo }}</strong>
+                <span>{{ pago.periodo }}</span>
+              </td>
+
+              <td>
+                <strong>{{ pago.cliente }}</strong>
+                <span>DNI: {{ pago.dni }}</span>
+              </td>
+
+              <td>{{ pago.suministro }}</td>
+              <td>{{ pago.metodoPago }}</td>
+              <td>{{ pago.codigoOperacion }}</td>
+              <td><strong>S/ {{ pago.monto.toFixed(2) }}</strong></td>
+              <td>{{ pago.fechaPago }}</td>
+
+              <td>
+                <span class="badge" [class.registrado]="pago.estado === 'Registrado'" [class.anulado]="pago.estado === 'Anulado'">
+                  {{ pago.estado }}
+                </span>
+              </td>
+
+              <td>
+                <button class="btn-anular" (click)="anularPago(pago)" [disabled]="pago.estado === 'Anulado'">
+                  Anular
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+@if (mostrarModal) {
+  <div class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3>Registrar nuevo pago</h3>
+          <p>Selecciona el recibo pendiente y registra el método de pago.</p>
+        </div>
+
+        <button class="close-btn" (click)="cerrarModal()">×</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Recibo pendiente</label>
+          <select [(ngModel)]="nuevoPago.idRecibo" (change)="seleccionarRecibo()">
+            <option [ngValue]="0">Seleccione un recibo</option>
+
+            @for (recibo of recibosPendientes; track recibo.id) {
+              <option [ngValue]="recibo.id">
+                {{ recibo.codigo }} - {{ recibo.cliente }} - {{ recibo.suministro }} - S/ {{ recibo.total.toFixed(2) }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Método de pago</label>
+          <select [(ngModel)]="nuevoPago.metodoPago" (change)="seleccionarRecibo()">
+            <option value="Efectivo">Efectivo</option>
+            <option value="PagoEfectivo">PagoEfectivo</option>
+            <option value="Transferencia">Transferencia</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Código de operación</label>
+          <input type="text" [(ngModel)]="nuevoPago.codigoOperacion">
+        </div>
+
+        <div class="payment-card full">
+          <span>Monto a pagar</span>
+          <h4>S/ {{ nuevoPago.monto.toFixed(2) }}</h4>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn-save" (click)="guardarPago()">Guardar pago</button>
+      </div>
+    </div>
+  </div>
+}

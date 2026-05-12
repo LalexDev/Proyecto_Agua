@@ -1,0 +1,240 @@
+.inicio-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.welcome-card {
+  background: linear-gradient(135deg, #0f3d57, #146c94, #1da1c2);
+  color: white;
+  border-radius: 28px;
+  padding: 34px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 18px 35px rgba(15, 61, 87, 0.18);
+}
+
+.tag {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.welcome-card h2 {
+  margin: 18px 0 10px;
+  font-size: 30px;
+}
+
+.welcome-card p {
+  margin: 0;
+  color: #e7f8ff;
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+.welcome-icon {
+  width: 90px;
+  height: 90px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.summary-card,
+.section-card {
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid #edf2f7;
+  box-shadow: 0 12px 30px rgba(15, 61, 87, 0.08);
+}
+
+.summary-card span {
+  color: #7b8794;
+  font-size: 14px;
+}
+
+.summary-card h3 {
+  margin: 8px 0;
+  color: #0f3d57;
+  font-size: 28px;
+}
+
+.summary-card p {
+  margin: 0;
+  color: #9aa6b2;
+  font-size: 13px;
+}
+
+.section-title {
+  margin-bottom: 20px;
+}
+
+.section-title h3 {
+  margin: 0;
+  color: #0f3d57;
+  font-size: 22px;
+}
+
+.section-title p {
+  margin: 6px 0 0;
+  color: #7b8794;
+  font-size: 14px;
+}
+
+.suministros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.suministro-card {
+  background: #f8fbfd;
+  border: 1px solid #edf2f7;
+  border-radius: 22px;
+  padding: 22px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.water-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #1da1c2;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+
+.badge {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge.activo {
+  background: #eaf8ef;
+  color: #1f8f4d;
+}
+
+.badge.suspendido {
+  background: #ffecec;
+  color: #d93025;
+}
+
+.suministro-card h4 {
+  margin: 18px 0 8px;
+  color: #0f3d57;
+  font-size: 20px;
+}
+
+.address {
+  margin: 0 0 18px;
+  color: #7b8794;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.info-list {
+  display: grid;
+  gap: 12px;
+}
+
+.info-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #e8eef3;
+  padding-top: 10px;
+}
+
+.info-list span {
+  color: #7b8794;
+  font-size: 13px;
+}
+
+.info-list strong {
+  color: #0f3d57;
+  font-size: 13px;
+  text-align: right;
+}
+
+@media (max-width: 1100px) {
+  .suministros-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .welcome-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 26px;
+  }
+
+  .summary-grid,
+  .suministros-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-card {
+    border-radius: 22px;
+    padding: 22px;
+  }
+
+  .welcome-card h2 {
+    font-size: 24px;
+  }
+
+  .welcome-card p {
+    font-size: 14px;
+  }
+
+  .welcome-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 38px;
+  }
+
+  .summary-card,
+  .section-card,
+  .suministro-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .info-list div {
+    flex-direction: column;
+  }
+
+  .info-list strong {
+    text-align: left;
+  }
+}

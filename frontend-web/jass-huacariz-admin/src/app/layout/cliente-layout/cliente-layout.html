@@ -1,1 +1,27 @@
-<p>cliente-layout works!</p>
+<div class="cliente-layout">
+  <header class="cliente-header">
+    <div class="brand">
+      <div class="brand-icon">💧</div>
+      <div>
+        <h2>JASS Huacariz</h2>
+        <p>Portal del cliente</p>
+      </div>
+    </div>
+
+    <nav class="cliente-menu">
+      <a routerLink="/cliente/inicio" routerLinkActive="active">Inicio</a>
+      <a routerLink="/cliente/mis-recibos" routerLinkActive="active">Mis recibos</a>
+      <a routerLink="/cliente/perfil" routerLinkActive="active">Perfil</a>
+      <a routerLink="/cliente/cambiar-password" routerLinkActive="active">Contraseña</a>
+    </nav>
+
+    <div class="cliente-user">
+      <span>Dany Carmona</span>
+      <div class="avatar">D</div>
+    </div>
+  </header>
+
+  <main class="cliente-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,1 +1,82 @@
-<p>inicio works!</p>
+<div class="inicio-page">
+  <section class="welcome-card">
+    <div>
+      <span class="tag">Bienvenido</span>
+      <h2>Hola, {{ cliente.nombres }} {{ cliente.apellidos }}</h2>
+      <p>
+        Desde tu portal puedes consultar tus suministros, revisar tus recibos pendientes
+        y realizar el seguimiento de tus pagos.
+      </p>
+    </div>
+
+    <div class="welcome-icon">💧</div>
+  </section>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span>Suministros</span>
+      <h3>{{ totalSuministros }}</h3>
+      <p>Conexiones asociadas</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Deuda total</span>
+      <h3>S/ {{ deudaTotal.toFixed(2) }}</h3>
+      <p>Recibos pendientes</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Consumo total</span>
+      <h3>{{ consumoTotal }} m³</h3>
+      <p>Último periodo registrado</p>
+    </div>
+  </div>
+
+  <section class="section-card">
+    <div class="section-title">
+      <div>
+        <h3>Mis suministros</h3>
+        <p>Estos son los suministros asociados a tu usuario.</p>
+      </div>
+    </div>
+
+    <div class="suministros-grid">
+      @for (suministro of suministros; track suministro.alias) {
+        <article class="suministro-card">
+          <div class="card-header">
+            <div class="water-icon">💧</div>
+
+            <span class="badge" [class.activo]="suministro.estado === 'Activo'" [class.suspendido]="suministro.estado === 'Suspendido'">
+              {{ suministro.estado }}
+            </span>
+          </div>
+
+          <h4>{{ suministro.alias }}</h4>
+          <p class="address">{{ suministro.direccion }}</p>
+
+          <div class="info-list">
+            <div>
+              <span>Sector</span>
+              <strong>{{ suministro.sector }}</strong>
+            </div>
+
+            <div>
+              <span>Lectura actual</span>
+              <strong>{{ suministro.lecturaActual }} m³</strong>
+            </div>
+
+            <div>
+              <span>Último consumo</span>
+              <strong>{{ suministro.ultimoConsumo }} m³</strong>
+            </div>
+
+            <div>
+              <span>Recibo pendiente</span>
+              <strong>S/ {{ suministro.reciboPendiente.toFixed(2) }}</strong>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+</div>

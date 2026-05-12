@@ -1,1 +1,120 @@
-<p>mis-recibos works!</p>
+<div class="mis-recibos-page">
+  <section class="page-header">
+    <div>
+      <span class="module-tag">Mis recibos</span>
+      <h2>Recibos del servicio de agua</h2>
+      <p>
+        Consulta tus recibos generados por cada suministro asociado a tu usuario.
+      </p>
+    </div>
+
+    <div class="filter-box">
+      <label>Filtrar por estado</label>
+      <select [(ngModel)]="filtroEstado">
+        <option value="Todos">Todos</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Pagado">Pagado</option>
+        <option value="Vencido">Vencido</option>
+      </select>
+    </div>
+  </section>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span>Total recibos</span>
+      <h3>{{ recibos.length }}</h3>
+      <p>Historial registrado</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Pendientes</span>
+      <h3>{{ recibosPendientes }}</h3>
+      <p>Recibos por pagar</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Pagados</span>
+      <h3>{{ recibosPagados }}</h3>
+      <p>Recibos cancelados</p>
+    </div>
+
+    <div class="summary-card danger">
+      <span>Deuda total</span>
+      <h3>S/ {{ deudaTotal.toFixed(2) }}</h3>
+      <p>Monto pendiente</p>
+    </div>
+  </div>
+
+  <section class="recibos-card">
+    <div class="section-title">
+      <div>
+        <h3>Listado de recibos</h3>
+        <p>Selecciona un recibo para revisar su detalle o realizar el pago.</p>
+      </div>
+    </div>
+
+    <div class="recibos-grid">
+      @for (recibo of recibosFiltrados; track recibo.id) {
+        <article class="recibo-item">
+          <div class="recibo-header">
+            <div>
+              <span class="codigo">{{ recibo.codigo }}</span>
+              <h4>{{ recibo.suministro }}</h4>
+              <p>{{ recibo.direccion }}</p>
+            </div>
+
+            <span
+              class="badge"
+              [class.pendiente]="recibo.estado === 'Pendiente'"
+              [class.pagado]="recibo.estado === 'Pagado'"
+              [class.vencido]="recibo.estado === 'Vencido'">
+              {{ recibo.estado }}
+            </span>
+          </div>
+
+          <div class="recibo-info">
+            <div>
+              <span>Periodo</span>
+              <strong>{{ recibo.periodo }}</strong>
+            </div>
+
+            <div>
+              <span>Consumo</span>
+              <strong>{{ recibo.consumo }} m³</strong>
+            </div>
+
+            <div>
+              <span>Vencimiento</span>
+              <strong>{{ recibo.fechaVencimiento }}</strong>
+            </div>
+
+            <div>
+              <span>Total</span>
+              <strong>S/ {{ recibo.total.toFixed(2) }}</strong>
+            </div>
+          </div>
+
+          <div class="recibo-actions">
+            <a class="btn-detail" [routerLink]="['/cliente/detalle-recibo', recibo.id]">
+              Ver detalle
+            </a>
+
+            @if (recibo.estado === 'Pendiente' || recibo.estado === 'Vencido') {
+              <a class="btn-pay" [routerLink]="['/cliente/pagar-recibo', recibo.id]">
+                Pagar recibo
+              </a>
+            }
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (recibosFiltrados.length === 0) {
+      <div class="empty-state">
+        <div>🧾</div>
+        <h3>No hay recibos para mostrar</h3>
+        <p>Cambia el filtro para visualizar otros recibos.</p>
+      </div>
+    }
+  </section>
+</div>

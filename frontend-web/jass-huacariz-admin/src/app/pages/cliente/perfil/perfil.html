@@ -1,1 +1,193 @@
-<p>perfil works!</p>
+<div class="perfil-page">
+  <section class="profile-hero">
+    <div class="profile-info">
+      <div class="avatar-large">
+        {{ cliente.nombres.charAt(0) }}
+      </div>
+
+      <div>
+        <span class="tag">Mi perfil</span>
+        <h2>{{ nombreCompleto }}</h2>
+        <p>DNI: {{ cliente.dni }} · Usuario del servicio de agua potable</p>
+      </div>
+    </div>
+
+    <button class="btn-edit" (click)="abrirEdicion()">
+      Editar datos
+    </button>
+  </section>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <span>Estado</span>
+      <h3>{{ cliente.estado }}</h3>
+      <p>Cuenta habilitada</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Suministros</span>
+      <h3>{{ totalSuministros }}</h3>
+      <p>Conexiones asociadas</p>
+    </div>
+
+    <div class="summary-card">
+      <span>Activos</span>
+      <h3>{{ suministrosActivos }}</h3>
+      <p>Suministros habilitados</p>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <section class="panel-card">
+      <div class="section-title">
+        <h3>Datos personales</h3>
+        <p>Información básica registrada en el sistema.</p>
+      </div>
+
+      <div class="info-list">
+        <div>
+          <span>DNI</span>
+          <strong>{{ cliente.dni }}</strong>
+        </div>
+
+        <div>
+          <span>Nombres</span>
+          <strong>{{ cliente.nombres }}</strong>
+        </div>
+
+        <div>
+          <span>Apellidos</span>
+          <strong>{{ cliente.apellidos }}</strong>
+        </div>
+
+        <div>
+          <span>Teléfono</span>
+          <strong>{{ cliente.telefono }}</strong>
+        </div>
+
+        <div>
+          <span>Correo</span>
+          <strong>{{ cliente.correo }}</strong>
+        </div>
+
+        <div>
+          <span>Usuario de acceso</span>
+          <strong>{{ cliente.usuario }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-card security-card">
+      <div class="section-title">
+        <h3>Seguridad de cuenta</h3>
+        <p>Administra tus credenciales de acceso.</p>
+      </div>
+
+      <div class="security-icon">🔐</div>
+
+      <h4>Cambiar contraseña</h4>
+      <p>
+        Puedes actualizar tu contraseña para mantener segura tu cuenta de cliente.
+      </p>
+
+      <a class="btn-password" routerLink="/cliente/cambiar-password">
+        Cambiar contraseña
+      </a>
+    </section>
+  </div>
+
+  <section class="panel-card">
+    <div class="section-title">
+      <h3>Mis suministros asociados</h3>
+      <p>Estos son los puntos de consumo registrados a tu nombre.</p>
+    </div>
+
+    <div class="suministros-grid">
+      @for (suministro of suministros; track suministro.alias) {
+        <article class="suministro-card">
+          <div class="card-header">
+            <div class="water-icon">💧</div>
+
+            <span
+              class="badge"
+              [class.activo]="suministro.estado === 'Activo'"
+              [class.suspendido]="suministro.estado === 'Suspendido'">
+              {{ suministro.estado }}
+            </span>
+          </div>
+
+          <h4>{{ suministro.alias }}</h4>
+
+          <div class="suministro-info">
+            <div>
+              <span>Dirección</span>
+              <strong>{{ suministro.direccion }}</strong>
+            </div>
+
+            <div>
+              <span>Referencia</span>
+              <strong>{{ suministro.referencia }}</strong>
+            </div>
+
+            <div>
+              <span>Sector</span>
+              <strong>{{ suministro.sector }}</strong>
+            </div>
+
+            <div>
+              <span>Lectura actual</span>
+              <strong>{{ suministro.lecturaActual }} m³</strong>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+</div>
+
+@if (modoEdicion) {
+  <div class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3>Editar datos de contacto</h3>
+          <p>Actualiza tu teléfono o correo electrónico.</p>
+        </div>
+
+        <button class="close-btn" (click)="cancelarEdicion()">×</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>DNI</label>
+          <input type="text" [(ngModel)]="clienteTemporal.dni" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Nombres</label>
+          <input type="text" [(ngModel)]="clienteTemporal.nombres" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Apellidos</label>
+          <input type="text" [(ngModel)]="clienteTemporal.apellidos" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" [(ngModel)]="clienteTemporal.telefono">
+        </div>
+
+        <div class="form-group full">
+          <label>Correo electrónico</label>
+          <input type="email" [(ngModel)]="clienteTemporal.correo">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="cancelarEdicion()">Cancelar</button>
+        <button class="btn-save" (click)="guardarCambios()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+}
