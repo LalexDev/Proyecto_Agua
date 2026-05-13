@@ -15,6 +15,10 @@ public class ReciboResponse {
 
     private Integer id;
     private String codigoRecibo;
+
+    private String codigoSuministro;
+    private String direccionSuministro;
+
     private Integer anio;
     private Integer mes;
     private BigDecimal consumoM3;
