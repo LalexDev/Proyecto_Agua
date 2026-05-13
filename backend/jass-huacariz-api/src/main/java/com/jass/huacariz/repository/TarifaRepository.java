@@ -8,4 +8,6 @@ import java.util.List;
 public interface TarifaRepository extends JpaRepository<Tarifa, Integer> {
 
     List<Tarifa> findByEstadoTrue();
+
+    List<Tarifa> findByEstadoTrueOrderByConsumoDesdeAsc();
 }

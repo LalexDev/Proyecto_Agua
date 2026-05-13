@@ -19,7 +19,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/clientes/**").permitAll()
                         .requestMatchers("/api/sectores/**").permitAll()
                         .requestMatchers("/api/tarifas/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/lecturas/**").permitAll()
+                        .anyRequest().permitAll()
                 );
 
         return http.build();

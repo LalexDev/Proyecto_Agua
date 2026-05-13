@@ -13,4 +13,6 @@ public interface LecturaRepository extends JpaRepository<Lectura, Integer> {
     Optional<Lectura> findBySuministroIdAndAnioAndMes(Integer suministroId, Integer anio, Integer mes);
 
     boolean existsBySuministroIdAndAnioAndMes(Integer suministroId, Integer anio, Integer mes);
+
+    Optional<Lectura> findTopBySuministroIdOrderByAnioDescMesDesc(Integer suministroId);
 }
