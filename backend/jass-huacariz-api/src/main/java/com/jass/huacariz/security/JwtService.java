@@ -1,6 +1,7 @@
 package com.jass.huacariz.security;
 
 import com.jass.huacariz.entity.Usuario;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +35,27 @@ public class JwtService {
                 .expiration(expiracionToken)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String obtenerCodigoUsuario(String token) {
+        return obtenerClaims(token).getSubject();
+    }
+
+    public boolean tokenValido(String token, Usuario usuario) {
+        String codigoUsuario = obtenerCodigoUsuario(token);
+        return codigoUsuario.equals(usuario.getCodigoUsuario()) && !tokenExpirado(token);
+    }
+
+    private boolean tokenExpirado(String token) {
+        return obtenerClaims(token).getExpiration().before(new Date());
+    }
+
+    private Claims obtenerClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public Long getExpiration() {
