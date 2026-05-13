@@ -15,12 +15,13 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/clientes/**").permitAll()
                         .requestMatchers("/api/sectores/**").permitAll()
                         .requestMatchers("/api/tarifas/**").permitAll()
                         .requestMatchers("/api/lecturas/**").permitAll()
-			.requestMatchers("/api/recibos/**").permitAll()
+                        .requestMatchers("/api/recibos/**").permitAll()
                         .anyRequest().permitAll()
                 );
 
