@@ -19,6 +19,9 @@ import { PagarRecibo } from './pages/cliente/pagar-recibo/pagar-recibo';
 import { Perfil } from './pages/cliente/perfil/perfil';
 import { CambiarPassword } from './pages/cliente/cambiar-password/cambiar-password';
 
+import { authGuard } from './core/guards/auth-guard';
+import { roleGuard } from './core/guards/role-guard';
+
 export const routes: Routes = [
   {
     path: '',
@@ -32,6 +35,8 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: AdminLayout,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMIN'] },
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: Dashboard },
@@ -45,6 +50,8 @@ export const routes: Routes = [
   {
     path: 'cliente',
     component: ClienteLayout,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['CLIENTE'] },
     children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
       { path: 'inicio', component: Inicio },
