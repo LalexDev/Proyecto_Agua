@@ -1,145 +1,169 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
-interface Tarifa {
-  id: number;
-  nombre: string;
-  desdeM3: number;
-  hastaM3: number | null;
-  precioM3: number;
-  descripcion: string;
-  estado: boolean;
-}
+import { Tarifa, TarifaRequest, TarifaResponse } from '../../../core/services/tarifa';
 
 @Component({
   selector: 'app-tarifas',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './tarifas.html',
-  styleUrl: './tarifas.scss'
+  styleUrl: './tarifas.scss',
 })
-export class Tarifas {
-  mostrarModal = false;
-  modoEdicion = false;
+export class Tarifas implements OnInit {
+  tarifas: TarifaResponse[] = [];
 
-  tarifas: Tarifa[] = [
-    {
-      id: 1,
-      nombre: 'Consumo básico',
-      desdeM3: 1,
-      hastaM3: 12,
-      precioM3: 3,
-      descripcion: 'Tarifa aplicada para consumos de 1 a 12 m³.',
-      estado: true
-    },
-    {
-      id: 2,
-      nombre: 'Consumo medio',
-      desdeM3: 13,
-      hastaM3: 23,
-      precioM3: 5,
-      descripcion: 'Tarifa aplicada para consumos de 13 a 23 m³.',
-      estado: true
-    },
-    {
-      id: 3,
-      nombre: 'Consumo alto',
-      desdeM3: 24,
-      hastaM3: null,
-      precioM3: 8,
-      descripcion: 'Tarifa aplicada para consumos desde 24 m³ a más.',
-      estado: true
-    }
-  ];
+  cargando = false;
+  guardando = false;
+  error = '';
+  exito = '';
 
-  mantenimiento = {
-    monto: 3,
-    descripcion: 'Monto aplicado cuando el consumo mensual es 0 m³.',
-    estado: true
-  };
+  mostrarFormulario = false;
 
-  pagoLector = {
-    monto: 1,
-    descripcion: 'Monto adicional por servicio de lectura del medidor.',
-    estado: true
-  };
+  nuevaTarifa: TarifaRequest = this.crearTarifaVacia();
 
-  tarifaSeleccionada: Tarifa = this.crearTarifaVacia();
+  constructor(
+    private tarifaService: Tarifa,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  get tarifasActivas(): number {
-    return this.tarifas.filter(tarifa => tarifa.estado).length;
+  ngOnInit(): void {
+    this.cargarTarifas();
   }
 
-  get precioMinimo(): number {
-    return Math.min(...this.tarifas.map(tarifa => tarifa.precioM3));
+  cargarTarifas(): void {
+    this.cargando = true;
+    this.error = '';
+    this.exito = '';
+
+    this.tarifaService.listarTarifas()
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.tarifas = data;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.error = 'No se pudieron cargar las tarifas. Verifica el backend y tu sesión ADMIN.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  get precioMaximo(): number {
-    return Math.max(...this.tarifas.map(tarifa => tarifa.precioM3));
+  abrirFormulario(): void {
+    this.mostrarFormulario = true;
+    this.error = '';
+    this.exito = '';
+    this.nuevaTarifa = this.crearTarifaVacia();
   }
 
-  abrirModal(): void {
-    this.modoEdicion = false;
-    this.tarifaSeleccionada = this.crearTarifaVacia();
-    this.mostrarModal = true;
+  cerrarFormulario(): void {
+    this.mostrarFormulario = false;
+    this.error = '';
+    this.exito = '';
   }
 
-  editarTarifa(tarifa: Tarifa): void {
-    this.modoEdicion = true;
-    this.tarifaSeleccionada = { ...tarifa };
-    this.mostrarModal = true;
-  }
+  registrarTarifa(): void {
+    this.error = '';
+    this.exito = '';
 
-  cerrarModal(): void {
-    this.mostrarModal = false;
-  }
-
-  guardarTarifa(): void {
-    if (this.modoEdicion) {
-      this.tarifas = this.tarifas.map(tarifa =>
-        tarifa.id === this.tarifaSeleccionada.id ? { ...this.tarifaSeleccionada } : tarifa
-      );
-    } else {
-      const nuevaTarifa: Tarifa = {
-        ...this.tarifaSeleccionada,
-        id: this.tarifas.length + 1
-      };
-
-      this.tarifas.push(nuevaTarifa);
+    if (!this.validarFormulario()) {
+      return;
     }
 
-    this.cerrarModal();
+    this.guardando = true;
+
+    const payload: TarifaRequest = {
+      nombreTarifa: this.nuevaTarifa.nombreTarifa.trim(),
+      consumoDesde: Number(this.nuevaTarifa.consumoDesde),
+      consumoHasta: this.nuevaTarifa.consumoHasta === null || this.nuevaTarifa.consumoHasta === undefined
+        ? null
+        : Number(this.nuevaTarifa.consumoHasta),
+      precioM3: Number(this.nuevaTarifa.precioM3),
+      estado: this.nuevaTarifa.estado
+    };
+
+    this.tarifaService.registrarTarifa(payload)
+      .pipe(
+        finalize(() => {
+          this.guardando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.exito = 'Tarifa registrada correctamente.';
+          this.mostrarFormulario = false;
+          this.cargarTarifas();
+        },
+        error: (err) => {
+          this.error = err?.error?.error || 'No se pudo registrar la tarifa.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  cambiarEstado(tarifa: Tarifa): void {
-    tarifa.estado = !tarifa.estado;
+  estadoTexto(estado: boolean): string {
+    return estado ? 'Activa' : 'Inactiva';
   }
 
-  calcularEjemplo(consumo: number): number {
-    if (consumo === 0) {
-      return this.mantenimiento.monto + this.pagoLector.monto;
+  rangoConsumo(tarifa: TarifaResponse): string {
+    if (tarifa.consumoHasta === null || tarifa.consumoHasta === undefined) {
+      return `${tarifa.consumoDesde} m³ a más`;
     }
 
-    const tarifa = this.tarifas.find(t =>
-      t.estado &&
-      consumo >= t.desdeM3 &&
-      (t.hastaM3 === null || consumo <= t.hastaM3)
-    );
+    return `${tarifa.consumoDesde} m³ - ${tarifa.consumoHasta} m³`;
+  }
 
-    if (!tarifa) {
+  totalActivas(): number {
+    return this.tarifas.filter(t => t.estado).length;
+  }
+
+  precioPromedio(): number {
+    if (this.tarifas.length === 0) {
       return 0;
     }
 
-    return consumo * tarifa.precioM3 + this.pagoLector.monto;
+    const total = this.tarifas.reduce((suma, tarifa) => suma + Number(tarifa.precioM3), 0);
+    return total / this.tarifas.length;
   }
 
-  private crearTarifaVacia(): Tarifa {
+  private validarFormulario(): boolean {
+    if (!this.nuevaTarifa.nombreTarifa.trim()) {
+      this.error = 'Ingrese el nombre de la tarifa.';
+      return false;
+    }
+
+    if (this.nuevaTarifa.consumoDesde < 0) {
+      this.error = 'El consumo desde no puede ser negativo.';
+      return false;
+    }
+
+    if (this.nuevaTarifa.consumoHasta !== null && this.nuevaTarifa.consumoHasta < this.nuevaTarifa.consumoDesde) {
+      this.error = 'El consumo hasta no puede ser menor al consumo desde.';
+      return false;
+    }
+
+    if (this.nuevaTarifa.precioM3 <= 0) {
+      this.error = 'El precio por m³ debe ser mayor a 0.';
+      return false;
+    }
+
+    return true;
+  }
+
+  private crearTarifaVacia(): TarifaRequest {
     return {
-      id: 0,
-      nombre: '',
-      desdeM3: 0,
-      hastaM3: null,
+      nombreTarifa: '',
+      consumoDesde: 0,
+      consumoHasta: null,
       precioM3: 0,
-      descripcion: '',
       estado: true
     };
   }
