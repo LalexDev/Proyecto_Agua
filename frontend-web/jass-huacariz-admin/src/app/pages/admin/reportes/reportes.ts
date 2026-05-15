@@ -1,92 +1,174 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { forkJoin, finalize } from 'rxjs';
 
-interface ReporteMensual {
-  periodo: string;
-  clientesActivos: number;
-  recibosGenerados: number;
-  recibosPagados: number;
-  recibosPendientes: number;
-  recibosVencidos: number;
-  consumoTotalM3: number;
-  montoRecaudado: number;
-  montoPendiente: number;
-}
+import { Cliente, ClienteResponse } from '../../../core/services/cliente';
+import { Recibo, ReciboResponse } from '../../../core/services/recibo';
+import { Pago, PagoResponse } from '../../../core/services/pago';
+import { Tarifa, TarifaResponse } from '../../../core/services/tarifa';
 
 @Component({
   selector: 'app-reportes',
-  imports: [FormsModule],
+  imports: [CommonModule],
   templateUrl: './reportes.html',
-  styleUrl: './reportes.scss'
+  styleUrl: './reportes.scss',
 })
-export class Reportes {
-  periodoSeleccionado = 'Mayo 2026';
+export class Reportes implements OnInit {
+  clientes: ClienteResponse[] = [];
+  recibos: ReciboResponse[] = [];
+  pagos: PagoResponse[] = [];
+  tarifas: TarifaResponse[] = [];
 
-  reportes: ReporteMensual[] = [
-    {
-      periodo: 'Marzo 2026',
-      clientesActivos: 108,
-      recibosGenerados: 115,
-      recibosPagados: 98,
-      recibosPendientes: 12,
-      recibosVencidos: 5,
-      consumoTotalM3: 1450.5,
-      montoRecaudado: 4890,
-      montoPendiente: 620
-    },
-    {
-      periodo: 'Abril 2026',
-      clientesActivos: 115,
-      recibosGenerados: 121,
-      recibosPagados: 104,
-      recibosPendientes: 13,
-      recibosVencidos: 4,
-      consumoTotalM3: 1585.75,
-      montoRecaudado: 5320,
-      montoPendiente: 710
-    },
-    {
-      periodo: 'Mayo 2026',
-      clientesActivos: 128,
-      recibosGenerados: 136,
-      recibosPagados: 102,
-      recibosPendientes: 28,
-      recibosVencidos: 6,
-      consumoTotalM3: 1720.35,
-      montoRecaudado: 6125,
-      montoPendiente: 980
-    }
-  ];
+  cargando = false;
+  error = '';
 
-  get reporteActual(): ReporteMensual {
-    return this.reportes.find(reporte => reporte.periodo === this.periodoSeleccionado) || this.reportes[0];
+  constructor(
+    private clienteService: Cliente,
+    private reciboService: Recibo,
+    private pagoService: Pago,
+    private tarifaService: Tarifa,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarReportes();
   }
 
-  get porcentajePagados(): number {
-    return this.calcularPorcentaje(this.reporteActual.recibosPagados, this.reporteActual.recibosGenerados);
+  cargarReportes(): void {
+    this.cargando = true;
+    this.error = '';
+
+    forkJoin({
+      clientes: this.clienteService.listarClientes(),
+      recibos: this.reciboService.listarRecibos(),
+      pagos: this.pagoService.listarPagos(),
+      tarifas: this.tarifaService.listarTarifas()
+    })
+    .pipe(
+      finalize(() => {
+        this.cargando = false;
+        this.cdr.detectChanges();
+      })
+    )
+    .subscribe({
+      next: ({ clientes, recibos, pagos, tarifas }) => {
+        this.clientes = clientes;
+        this.recibos = recibos;
+        this.pagos = pagos;
+        this.tarifas = tarifas;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.error = 'No se pudieron cargar los reportes. Verifica el backend y tu sesión ADMIN.';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  get porcentajePendientes(): number {
-    return this.calcularPorcentaje(this.reporteActual.recibosPendientes, this.reporteActual.recibosGenerados);
+  totalClientes(): number {
+    return this.clientes.length;
   }
 
-  get porcentajeVencidos(): number {
-    return this.calcularPorcentaje(this.reporteActual.recibosVencidos, this.reporteActual.recibosGenerados);
+  totalSuministros(): number {
+    return this.clientes.reduce(
+      (total, cliente) => total + (cliente.suministros?.length ?? 0),
+      0
+    );
   }
 
-  get maxRecaudacion(): number {
-    return Math.max(...this.reportes.map(reporte => reporte.montoRecaudado));
+  totalRecibos(): number {
+    return this.recibos.length;
   }
 
-  obtenerAltoBarra(monto: number): number {
-    return Math.round((monto / this.maxRecaudacion) * 100);
+  recibosPendientes(): number {
+    return this.recibos.filter(r => r.estadoRecibo === 'PENDIENTE').length;
   }
 
-  private calcularPorcentaje(valor: number, total: number): number {
-    if (total === 0) {
+  recibosPagados(): number {
+    return this.recibos.filter(r => r.estadoRecibo === 'PAGADO').length;
+  }
+
+  totalRecaudado(): number {
+    return this.pagos.reduce((total, pago) => total + Number(pago.monto), 0);
+  }
+
+  totalEmitido(): number {
+    return this.recibos.reduce((total, recibo) => total + Number(recibo.total), 0);
+  }
+
+  consumoTotal(): number {
+    return this.recibos.reduce((total, recibo) => total + Number(recibo.consumoM3), 0);
+  }
+
+  consumoPromedio(): number {
+    if (this.recibos.length === 0) {
       return 0;
     }
 
-    return Math.round((valor / total) * 100);
+    return this.consumoTotal() / this.recibos.length;
+  }
+
+  porcentajePagados(): number {
+    if (this.recibos.length === 0) {
+      return 0;
+    }
+
+    return (this.recibosPagados() / this.recibos.length) * 100;
+  }
+
+  porcentajePendientes(): number {
+    if (this.recibos.length === 0) {
+      return 0;
+    }
+
+    return (this.recibosPendientes() / this.recibos.length) * 100;
+  }
+
+  tarifaPromedio(): number {
+    if (this.tarifas.length === 0) {
+      return 0;
+    }
+
+    const suma = this.tarifas.reduce((total, tarifa) => total + Number(tarifa.precioM3), 0);
+    return suma / this.tarifas.length;
+  }
+
+  ultimosPagos(): PagoResponse[] {
+    return [...this.pagos]
+      .sort((a, b) => b.id - a.id)
+      .slice(0, 5);
+  }
+
+  ultimosRecibos(): ReciboResponse[] {
+    return [...this.recibos]
+      .sort((a, b) => b.id - a.id)
+      .slice(0, 5);
+  }
+
+  clientesConMasSuministros(): ClienteResponse[] {
+    return [...this.clientes]
+      .sort((a, b) => (b.suministros?.length ?? 0) - (a.suministros?.length ?? 0))
+      .slice(0, 5);
+  }
+
+  nombreCompleto(cliente: ClienteResponse): string {
+    return `${cliente.nombres} ${cliente.apellidos}`;
+  }
+
+  estadoClase(estado: string): string {
+    return estado?.toLowerCase() === 'pagado' ? 'pagado' : 'pendiente';
+  }
+
+  periodo(recibo: ReciboResponse): string {
+    return `${this.nombreMes(recibo.mes)} ${recibo.anio}`;
+  }
+
+  private nombreMes(mes: number): string {
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    return meses[mes - 1] ?? 'Mes inválido';
   }
 }
