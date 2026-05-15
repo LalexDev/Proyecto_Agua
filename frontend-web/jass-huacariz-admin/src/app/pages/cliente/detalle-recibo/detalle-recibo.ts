@@ -1,128 +1,92 @@
-import { Component } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { finalize } from 'rxjs';
 
-interface DetalleReciboCliente {
-  id: number;
-  codigo: string;
-  cliente: string;
-  dni: string;
-  telefono: string;
-  correo: string;
-  suministro: string;
-  direccion: string;
-  referencia: string;
-  sector: string;
-  periodo: string;
-  lecturaAnterior: number;
-  lecturaActual: number;
-  consumo: number;
-  precioM3: number;
-  subtotal: number;
-  pagoLector: number;
-  mantenimiento: number;
-  mora: number;
-  total: number;
-  fechaEmision: string;
-  fechaVencimiento: string;
-  estado: 'Pendiente' | 'Pagado' | 'Vencido';
-}
+import {
+  ClientePortal,
+  ReciboClienteResponse
+} from '../../../core/services/cliente-portal';
 
 @Component({
   selector: 'app-detalle-recibo',
-  imports: [RouterLink],
+  imports: [CommonModule, RouterModule],
   templateUrl: './detalle-recibo.html',
-  styleUrl: './detalle-recibo.scss'
+  styleUrl: './detalle-recibo.scss',
 })
-export class DetalleRecibo {
-  recibos: DetalleReciboCliente[] = [
-    {
-      id: 1,
-      codigo: 'REC-0001',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      telefono: '987654321',
-      correo: 'dany@gmail.com',
-      suministro: 'Casa principal',
-      direccion: 'Av. Principal 123',
-      referencia: 'Casa color blanco',
-      sector: 'Huacariz',
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 450.345,
-      lecturaActual: 462.345,
-      consumo: 12,
-      precioM3: 3,
-      subtotal: 36,
-      pagoLector: 1,
-      mantenimiento: 0,
-      mora: 0,
-      total: 37,
-      fechaEmision: '01/05/2026',
-      fechaVencimiento: '15/05/2026',
-      estado: 'Pendiente'
-    },
-    {
-      id: 2,
-      codigo: 'REC-0002',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      telefono: '987654321',
-      correo: 'dany@gmail.com',
-      suministro: 'Tienda',
-      direccion: 'Av. Principal 125',
-      referencia: 'Frente a la tienda',
-      sector: 'Huacariz',
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 220,
-      lecturaActual: 238,
-      consumo: 18,
-      precioM3: 5,
-      subtotal: 90,
-      pagoLector: 1,
-      mantenimiento: 0,
-      mora: 0,
-      total: 91,
-      fechaEmision: '01/05/2026',
-      fechaVencimiento: '15/05/2026',
-      estado: 'Pagado'
-    },
-    {
-      id: 3,
-      codigo: 'REC-0003',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      telefono: '987654321',
-      correo: 'dany@gmail.com',
-      suministro: 'Local comercial',
-      direccion: 'Jr. Lima 560',
-      referencia: 'Esquina con mercado',
-      sector: 'Huacariz Alto',
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 100,
-      lecturaActual: 110,
-      consumo: 10,
-      precioM3: 3,
-      subtotal: 30,
-      pagoLector: 1,
-      mantenimiento: 0,
-      mora: 0,
-      total: 31,
-      fechaEmision: '01/05/2026',
-      fechaVencimiento: '15/05/2026',
-      estado: 'Pendiente'
+export class DetalleRecibo implements OnInit {
+  recibo: ReciboClienteResponse | null = null;
+
+  cargando = false;
+  error = '';
+
+  constructor(
+    private route: ActivatedRoute,
+    private clientePortal: ClientePortal,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarDetalle();
+  }
+
+  cargarDetalle(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+
+    if (!id) {
+      this.error = 'No se encontró el identificador del recibo.';
+      return;
     }
-  ];
 
-  idRecibo = 0;
+    this.cargando = true;
+    this.error = '';
 
-  constructor(private route: ActivatedRoute) {
-    this.idRecibo = Number(this.route.snapshot.paramMap.get('id') || 1);
+    this.clientePortal.listarMisRecibos()
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (recibos) => {
+          const encontrado = recibos.find(r => r.id === id);
+
+          if (!encontrado) {
+            this.error = 'No se encontró el recibo solicitado.';
+            this.recibo = null;
+            this.cdr.detectChanges();
+            return;
+          }
+
+          this.recibo = encontrado;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.error = 'No se pudo cargar el detalle del recibo.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  get reciboActual(): DetalleReciboCliente | undefined {
-    return this.recibos.find(recibo => recibo.id === this.idRecibo);
+  estadoClase(estado: string): string {
+    return estado?.toLowerCase() === 'pagado' ? 'pagado' : 'pendiente';
   }
 
-  imprimirRecibo(): void {
-    window.print();
+  periodo(): string {
+    if (!this.recibo) {
+      return '';
+    }
+
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    return `${meses[this.recibo.mes - 1] ?? 'Mes'} ${this.recibo.anio}`;
+  }
+
+  puedePagar(): boolean {
+    return this.recibo?.estadoRecibo === 'PENDIENTE';
   }
 }

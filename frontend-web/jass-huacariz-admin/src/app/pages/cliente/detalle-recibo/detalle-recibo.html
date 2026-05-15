@@ -1,180 +1,117 @@
-@if (reciboActual) {
-  <div class="detalle-recibo-page">
-    <div class="page-actions no-print">
-      <a routerLink="/cliente/mis-recibos" class="btn-back">
-        ← Volver a mis recibos
-      </a>
+<div class="detalle-recibo-page">
+  <div class="page-header">
+    <div>
+      <span class="tag">Portal cliente</span>
+      <h2>Detalle del recibo</h2>
+      <p>Consulta el detalle completo de tu consumo y pago.</p>
+    </div>
 
-      <div class="action-buttons">
-        <button class="btn-print" (click)="imprimirRecibo()">
-          Imprimir / Descargar
-        </button>
+    <button type="button" class="btn-secondary" routerLink="/cliente/mis-recibos">
+      Volver a mis recibos
+    </button>
+  </div>
 
-        @if (reciboActual.estado === 'Pendiente' || reciboActual.estado === 'Vencido') {
-          <a class="btn-pay" [routerLink]="['/cliente/pagar-recibo', reciboActual.id]">
-            Pagar recibo
-          </a>
-        }
+  <div *ngIf="error" class="alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="cargando" class="alert-info">
+    Cargando detalle del recibo...
+  </div>
+
+  <section class="receipt-card" *ngIf="recibo">
+    <div class="receipt-header">
+      <div>
+        <h3>{{ recibo.codigoRecibo }}</h3>
+        <p>{{ periodo() }}</p>
+      </div>
+
+      <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
+        {{ recibo.estadoRecibo }}
+      </span>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box">
+        <span>Código de suministro</span>
+        <strong>{{ recibo.codigoSuministro }}</strong>
+      </div>
+
+      <div class="info-box">
+        <span>Dirección</span>
+        <strong>{{ recibo.direccionSuministro }}</strong>
+      </div>
+
+      <div class="info-box">
+        <span>Consumo registrado</span>
+        <strong>{{ recibo.consumoM3 | number:'1.2-3' }} m³</strong>
+      </div>
+
+      <div class="info-box">
+        <span>Fecha de emisión</span>
+        <strong>{{ recibo.fechaEmision | date:'dd/MM/yyyy HH:mm' }}</strong>
+      </div>
+
+      <div class="info-box">
+        <span>Fecha de vencimiento</span>
+        <strong>{{ recibo.fechaVencimiento }}</strong>
+      </div>
+
+      <div class="info-box">
+        <span>Periodo</span>
+        <strong>{{ periodo() }}</strong>
       </div>
     </div>
 
-    <section class="receipt-card">
-      <div class="receipt-header">
-        <div class="brand">
-          <div class="brand-icon">💧</div>
-          <div>
-            <h2>JASS Huacariz</h2>
-            <p>Recibo por servicio de agua potable</p>
-          </div>
-        </div>
+    <div class="amount-panel">
+      <h3>Detalle del importe</h3>
 
-        <div class="receipt-status">
-          <span
-            class="badge"
-            [class.pendiente]="reciboActual.estado === 'Pendiente'"
-            [class.pagado]="reciboActual.estado === 'Pagado'"
-            [class.vencido]="reciboActual.estado === 'Vencido'">
-            {{ reciboActual.estado }}
-          </span>
-
-          <h3>{{ reciboActual.codigo }}</h3>
-          <p>{{ reciboActual.periodo }}</p>
-        </div>
+      <div class="amount-row">
+        <span>Subtotal agua</span>
+        <strong>S/ {{ recibo.subtotalAgua | number:'1.2-2' }}</strong>
       </div>
 
-      <div class="receipt-alert">
-        <div>
-          <span>Total a pagar</span>
-          <h1>S/ {{ reciboActual.total.toFixed(2) }}</h1>
-        </div>
-
-        <div>
-          <span>Fecha de vencimiento</span>
-          <strong>{{ reciboActual.fechaVencimiento }}</strong>
-        </div>
+      <div class="amount-row">
+        <span>Cargo mantenimiento</span>
+        <strong>S/ {{ recibo.cargoMantenimiento | number:'1.2-2' }}</strong>
       </div>
 
-      <div class="info-grid">
-        <div class="info-card">
-          <h4>Datos del cliente</h4>
-
-          <div class="info-row">
-            <span>Cliente</span>
-            <strong>{{ reciboActual.cliente }}</strong>
-          </div>
-
-          <div class="info-row">
-            <span>DNI</span>
-            <strong>{{ reciboActual.dni }}</strong>
-          </div>
-
-          <div class="info-row">
-            <span>Teléfono</span>
-            <strong>{{ reciboActual.telefono }}</strong>
-          </div>
-
-          <div class="info-row">
-            <span>Correo</span>
-            <strong>{{ reciboActual.correo }}</strong>
-          </div>
-        </div>
-
-        <div class="info-card">
-          <h4>Datos del suministro</h4>
-
-          <div class="info-row">
-            <span>Suministro</span>
-            <strong>{{ reciboActual.suministro }}</strong>
-          </div>
-
-          <div class="info-row">
-            <span>Sector</span>
-            <strong>{{ reciboActual.sector }}</strong>
-          </div>
-
-          <div class="info-row">
-            <span>Dirección</span>
-            <strong>{{ reciboActual.direccion }}</strong>
-          </div>
-
-          <div class="info-row">
-            <span>Referencia</span>
-            <strong>{{ reciboActual.referencia }}</strong>
-          </div>
-        </div>
+      <div class="amount-row">
+        <span>Cargo lector</span>
+        <strong>S/ {{ recibo.cargoLector | number:'1.2-2' }}</strong>
       </div>
 
-      <div class="reading-section">
-        <h4>Detalle de lectura</h4>
-
-        <div class="reading-grid">
-          <div class="reading-card">
-            <span>Lectura anterior</span>
-            <strong>{{ reciboActual.lecturaAnterior }} m³</strong>
-          </div>
-
-          <div class="reading-card">
-            <span>Lectura actual</span>
-            <strong>{{ reciboActual.lecturaActual }} m³</strong>
-          </div>
-
-          <div class="reading-card highlight">
-            <span>Consumo mensual</span>
-            <strong>{{ reciboActual.consumo }} m³</strong>
-          </div>
-
-          <div class="reading-card">
-            <span>Precio aplicado</span>
-            <strong>S/ {{ reciboActual.precioM3.toFixed(2) }} por m³</strong>
-          </div>
-        </div>
+      <div class="amount-row">
+        <span>Mora</span>
+        <strong>S/ {{ recibo.mora | number:'1.2-2' }}</strong>
       </div>
 
-      <div class="payment-detail">
-        <h4>Detalle del importe</h4>
-
-        <div class="amount-row">
-          <span>Subtotal por consumo</span>
-          <strong>S/ {{ reciboActual.subtotal.toFixed(2) }}</strong>
-        </div>
-
-        <div class="amount-row">
-          <span>Pago de lector</span>
-          <strong>S/ {{ reciboActual.pagoLector.toFixed(2) }}</strong>
-        </div>
-
-        <div class="amount-row">
-          <span>Mantenimiento</span>
-          <strong>S/ {{ reciboActual.mantenimiento.toFixed(2) }}</strong>
-        </div>
-
-        <div class="amount-row">
-          <span>Mora</span>
-          <strong>S/ {{ reciboActual.mora.toFixed(2) }}</strong>
-        </div>
-
-        <div class="amount-row total">
-          <span>Total</span>
-          <strong>S/ {{ reciboActual.total.toFixed(2) }}</strong>
-        </div>
+      <div class="amount-row total">
+        <span>Total a pagar</span>
+        <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
       </div>
+    </div>
 
-      <div class="receipt-footer">
-        <p>
-          Este recibo ha sido generado por el Sistema Web de Gestión de Agua Potable de JASS Huacariz.
-        </p>
+    <div class="actions">
+      <button type="button" class="btn-secondary" routerLink="/cliente/mis-recibos">
+        Volver
+      </button>
 
-        <p>
-          Conserve este documento como constancia de consulta y seguimiento de su servicio.
-        </p>
-      </div>
-    </section>
-  </div>
-} @else {
-  <div class="not-found">
-    <div>🧾</div>
-    <h2>Recibo no encontrado</h2>
-    <p>No se encontró información para el recibo solicitado.</p>
-    <a routerLink="/cliente/mis-recibos">Volver a mis recibos</a>
-  </div>
-}
+      <button
+        *ngIf="puedePagar()"
+        type="button"
+        class="btn-primary"
+        [routerLink]="['/cliente/pagar-recibo', recibo.id]">
+        Pagar recibo
+      </button>
+
+      <button
+        *ngIf="!puedePagar()"
+        type="button"
+        class="btn-disabled"
+        disabled>
+        Recibo pagado
+      </button>
+    </div>
+  </section>
+</div>
