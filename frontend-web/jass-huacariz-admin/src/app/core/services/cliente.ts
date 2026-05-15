@@ -27,6 +27,24 @@ export interface ClienteResponse {
   suministros: SuministroResponse[];
 }
 
+export interface SuministroRequest {
+  idSector: number;
+  direccionSuministro: string;
+  referencia: string;
+  aliasSuministro: string;
+  lecturaInicial: number;
+}
+
+export interface ClienteRequest {
+  dni: string;
+  nombres: string;
+  apellidos: string;
+  telefono: string;
+  correo: string;
+  estado: boolean;
+  suministros: SuministroRequest[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -37,5 +55,17 @@ export class Cliente {
 
   listarClientes(): Observable<ClienteResponse[]> {
     return this.http.get<ClienteResponse[]>(this.apiUrl);
+  }
+
+  registrarCliente(data: ClienteRequest): Observable<ClienteResponse> {
+    return this.http.post<ClienteResponse>(this.apiUrl, data);
+  }
+
+  obtenerClientePorId(id: number): Observable<ClienteResponse> {
+    return this.http.get<ClienteResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  listarSuministrosPorCliente(id: number): Observable<SuministroResponse[]> {
+    return this.http.get<SuministroResponse[]>(`${this.apiUrl}/${id}/suministros`);
   }
 }
