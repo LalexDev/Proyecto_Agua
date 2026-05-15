@@ -20,6 +20,22 @@ export interface ReciboResponse {
   fechaVencimiento: string;
 }
 
+export interface PagoRequest {
+  metodoPago: string;
+  codigoOperacion: string;
+}
+
+export interface PagoResponse {
+  id: number;
+  idRecibo: number;
+  codigoRecibo: string;
+  metodoPago: string;
+  codigoOperacion: string;
+  monto: number;
+  estadoPago: string;
+  fechaPago: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -34,5 +50,13 @@ export class Recibo {
 
   listarPendientes(): Observable<ReciboResponse[]> {
     return this.http.get<ReciboResponse[]>(`${this.apiUrl}/pendientes`);
+  }
+
+  buscarPorSuministro(codigoSuministro: string): Observable<ReciboResponse[]> {
+    return this.http.get<ReciboResponse[]>(`${this.apiUrl}/suministro/${codigoSuministro}`);
+  }
+
+  pagarRecibo(idRecibo: number, data: PagoRequest): Observable<PagoResponse> {
+    return this.http.patch<PagoResponse>(`${this.apiUrl}/${idRecibo}/pagar`, data);
   }
 }

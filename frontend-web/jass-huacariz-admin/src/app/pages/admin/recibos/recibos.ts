@@ -1,200 +1,174 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
-interface SuministroOption {
-  id: number;
-  cliente: string;
-  dni: string;
-  aliasSuministro: string;
-  direccionSuministro: string;
-  sector: string;
-  lecturaAnterior: number;
-}
-
-interface Recibo {
-  codigo: string;
-  cliente: string;
-  dni: string;
-  suministro: string;
-  sector: string;
-  periodo: string;
-  lecturaAnterior: number;
-  lecturaActual: number;
-  consumo: number;
-  total: number;
-  estado: 'Pendiente' | 'Pagado' | 'Vencido';
-}
+import { PagoRequest, Recibo, ReciboResponse } from '../../../core/services/recibo';
 
 @Component({
   selector: 'app-recibos',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './recibos.html',
-  styleUrl: './recibos.scss'
+  styleUrl: './recibos.scss',
 })
-export class Recibos {
-  mostrarModal = false;
+export class Recibos implements OnInit {
+  recibos: ReciboResponse[] = [];
+  recibosFiltrados: ReciboResponse[] = [];
 
-  suministros: SuministroOption[] = [
-    {
-      id: 1,
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      aliasSuministro: 'Casa principal',
-      direccionSuministro: 'Av. Principal 123',
-      sector: 'Huacariz',
-      lecturaAnterior: 450.345
-    },
-    {
-      id: 2,
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      aliasSuministro: 'Tienda',
-      direccionSuministro: 'Av. Principal 125',
-      sector: 'Huacariz',
-      lecturaAnterior: 220.000
-    },
-    {
-      id: 3,
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      aliasSuministro: 'Local comercial',
-      direccionSuministro: 'Jr. Lima 560',
-      sector: 'Huacariz Alto',
-      lecturaAnterior: 100.000
-    },
-    {
-      id: 4,
-      cliente: 'Juan Pérez Sánchez',
-      dni: '45879632',
-      aliasSuministro: 'Vivienda familiar',
-      direccionSuministro: 'Sector Huacariz Bajo S/N',
-      sector: 'Huacariz Bajo',
-      lecturaAnterior: 350.125
-    }
-  ];
+  cargando = false;
+  pagando = false;
+  error = '';
+  exito = '';
 
-  recibos: Recibo[] = [
-    {
-      codigo: 'REC-0001',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      suministro: 'Casa principal',
-      sector: 'Huacariz',
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 450.345,
-      lecturaActual: 462.345,
-      consumo: 12,
-      total: 36,
-      estado: 'Pendiente'
-    },
-    {
-      codigo: 'REC-0002',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      suministro: 'Tienda',
-      sector: 'Huacariz',
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 220,
-      lecturaActual: 238,
-      consumo: 18,
-      total: 90,
-      estado: 'Pagado'
-    }
-  ];
+  filtroEstado = 'TODOS';
+  busqueda = '';
 
-  nuevoRecibo = {
-    idSuministro: 0,
-    periodo: 'Mayo 2026',
-    lecturaAnterior: 0,
-    lecturaActual: 0
+  reciboSeleccionado: ReciboResponse | null = null;
+
+  pago: PagoRequest = {
+    metodoPago: 'PagoEfectivo',
+    codigoOperacion: ''
   };
 
-  get totalPendientes(): number {
-    return this.recibos.filter(r => r.estado === 'Pendiente').length;
+  constructor(
+    private reciboService: Recibo,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarRecibos();
   }
 
-  get totalPagados(): number {
-    return this.recibos.filter(r => r.estado === 'Pagado').length;
+  cargarRecibos(): void {
+    this.cargando = true;
+    this.error = '';
+    this.exito = '';
+
+    this.reciboService.listarRecibos()
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.recibos = data;
+          this.aplicarFiltros();
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.error = 'No se pudieron cargar los recibos. Verifica el backend y tu sesión ADMIN.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  get montoPendiente(): number {
-    return this.recibos
-      .filter(r => r.estado === 'Pendiente')
-      .reduce((total, r) => total + r.total, 0);
+  aplicarFiltros(): void {
+    const texto = this.busqueda.trim().toLowerCase();
+
+    this.recibosFiltrados = this.recibos.filter(recibo => {
+      const coincideEstado =
+        this.filtroEstado === 'TODOS' ||
+        recibo.estadoRecibo === this.filtroEstado;
+
+      const coincideTexto =
+        !texto ||
+        recibo.codigoRecibo.toLowerCase().includes(texto) ||
+        (recibo.codigoSuministro || '').toLowerCase().includes(texto) ||
+        (recibo.direccionSuministro || '').toLowerCase().includes(texto);
+
+      return coincideEstado && coincideTexto;
+    });
   }
 
-  abrirModal(): void {
-    this.nuevoRecibo = {
-      idSuministro: 0,
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 0,
-      lecturaActual: 0
-    };
-
-    this.mostrarModal = true;
-  }
-
-  cerrarModal(): void {
-    this.mostrarModal = false;
-  }
-
-  seleccionarSuministro(): void {
-    const suministro = this.suministros.find(s => s.id === Number(this.nuevoRecibo.idSuministro));
-
-    if (suministro) {
-      this.nuevoRecibo.lecturaAnterior = suministro.lecturaAnterior;
-      this.nuevoRecibo.lecturaActual = suministro.lecturaAnterior;
-    }
-  }
-
-  calcularConsumo(): number {
-    const consumo = this.nuevoRecibo.lecturaActual - this.nuevoRecibo.lecturaAnterior;
-    return consumo > 0 ? Number(consumo.toFixed(3)) : 0;
-  }
-
-  calcularTotal(): number {
-    const consumo = this.calcularConsumo();
-
-    if (consumo === 0) {
-      return 3;
-    }
-
-    if (consumo <= 12) {
-      return consumo * 3;
-    }
-
-    if (consumo <= 23) {
-      return consumo * 5;
-    }
-
-    return consumo * 8;
-  }
-
-  guardarRecibo(): void {
-    const suministro = this.suministros.find(s => s.id === Number(this.nuevoRecibo.idSuministro));
-
-    if (!suministro) {
+  abrirPago(recibo: ReciboResponse): void {
+    if (recibo.estadoRecibo === 'PAGADO') {
+      this.error = 'Este recibo ya se encuentra pagado.';
       return;
     }
 
-    const consumo = this.calcularConsumo();
-    const total = this.calcularTotal();
-
-    const recibo: Recibo = {
-      codigo: `REC-${String(this.recibos.length + 1).padStart(4, '0')}`,
-      cliente: suministro.cliente,
-      dni: suministro.dni,
-      suministro: suministro.aliasSuministro,
-      sector: suministro.sector,
-      periodo: this.nuevoRecibo.periodo,
-      lecturaAnterior: this.nuevoRecibo.lecturaAnterior,
-      lecturaActual: this.nuevoRecibo.lecturaActual,
-      consumo,
-      total,
-      estado: 'Pendiente'
+    this.reciboSeleccionado = recibo;
+    this.pago = {
+      metodoPago: 'PagoEfectivo',
+      codigoOperacion: ''
     };
 
-    this.recibos.unshift(recibo);
-    this.cerrarModal();
+    this.error = '';
+    this.exito = '';
+  }
+
+  cerrarPago(): void {
+    this.reciboSeleccionado = null;
+    this.pago = {
+      metodoPago: 'PagoEfectivo',
+      codigoOperacion: ''
+    };
+  }
+
+  confirmarPago(): void {
+    if (!this.reciboSeleccionado) {
+      return;
+    }
+
+    if (!this.pago.metodoPago.trim()) {
+      this.error = 'Seleccione o ingrese el método de pago.';
+      return;
+    }
+
+    this.pagando = true;
+    this.error = '';
+    this.exito = '';
+
+    this.reciboService.pagarRecibo(this.reciboSeleccionado.id, {
+      metodoPago: this.pago.metodoPago.trim(),
+      codigoOperacion: this.pago.codigoOperacion.trim()
+    })
+    .pipe(
+      finalize(() => {
+        this.pagando = false;
+        this.cdr.detectChanges();
+      })
+    )
+    .subscribe({
+      next: (response) => {
+        this.exito = `Pago registrado correctamente. Recibo: ${response.codigoRecibo}`;
+        this.cerrarPago();
+        this.cargarRecibos();
+      },
+      error: (err) => {
+        this.error = err?.error?.error || 'No se pudo registrar el pago.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  estadoClase(estado: string): string {
+    return estado?.toLowerCase() === 'pagado' ? 'pagado' : 'pendiente';
+  }
+
+  periodo(recibo: ReciboResponse): string {
+    return `${this.nombreMes(recibo.mes)} ${recibo.anio}`;
+  }
+
+  totalPendientes(): number {
+    return this.recibos.filter(r => r.estadoRecibo === 'PENDIENTE').length;
+  }
+
+  totalPagados(): number {
+    return this.recibos.filter(r => r.estadoRecibo === 'PAGADO').length;
+  }
+
+  montoTotal(): number {
+    return this.recibos.reduce((total, r) => total + Number(r.total), 0);
+  }
+
+  private nombreMes(mes: number): string {
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    return meses[mes - 1] ?? 'Mes inválido';
   }
 }
