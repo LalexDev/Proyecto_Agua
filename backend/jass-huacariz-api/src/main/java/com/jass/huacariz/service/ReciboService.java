@@ -95,20 +95,22 @@ public class ReciboService {
     }
 
     private ReciboResponse convertirAResponse(Recibo recibo) {
-        return ReciboResponse.builder()
-                .id(recibo.getId())
-                .codigoRecibo(recibo.getCodigoRecibo())
-                .anio(recibo.getAnio())
-                .mes(recibo.getMes())
-                .consumoM3(recibo.getConsumoM3())
-                .subtotalAgua(recibo.getSubtotalAgua())
-                .cargoMantenimiento(recibo.getCargoMantenimiento())
-                .cargoLector(recibo.getCargoLector())
-                .mora(recibo.getMora())
-                .total(recibo.getTotal())
-                .estadoRecibo(recibo.getEstadoRecibo())
-                .fechaEmision(recibo.getFechaEmision())
-                .fechaVencimiento(recibo.getFechaVencimiento())
-                .build();
-    }
+  	 return ReciboResponse.builder()
+            	.id(recibo.getId())
+           	.codigoRecibo(recibo.getCodigoRecibo())
+                .codigoSuministro(recibo.getSuministro().getCodigoSuministro())
+            	.direccionSuministro(recibo.getSuministro().getDireccionSuministro())
+           	.anio(recibo.getAnio())
+           	.mes(recibo.getMes())
+          	.consumoM3(recibo.getConsumoM3())
+          	.subtotalAgua(recibo.getSubtotalAgua())
+          	.cargoMantenimiento(recibo.getCargoMantenimiento())
+         	.cargoLector(recibo.getCargoLector())
+    	        .mora(recibo.getMora())
+    	        .total(recibo.getTotal())
+    	        .estadoRecibo(recibo.getEstadoRecibo())
+    	        .fechaEmision(recibo.getFechaEmision())
+    	        .fechaVencimiento(recibo.getFechaVencimiento())
+    	        .build();
+     }
 }

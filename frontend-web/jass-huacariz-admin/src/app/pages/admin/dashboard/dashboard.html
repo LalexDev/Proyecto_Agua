@@ -11,13 +11,21 @@
     <div class="water-icon">💧</div>
   </div>
 
+  <div *ngIf="cargando" class="alert-info">
+    Cargando información del dashboard...
+  </div>
+
+  <div *ngIf="error" class="alert-error">
+    {{ error }}
+  </div>
+
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-icon">👥</div>
       <div>
         <p>Total clientes</p>
-        <h3>128</h3>
-        <span>Usuarios registrados</span>
+        <h3>{{ totalClientes }}</h3>
+        <span>Clientes registrados</span>
       </div>
     </div>
 
@@ -25,17 +33,17 @@
       <div class="stat-icon">🧾</div>
       <div>
         <p>Recibos pendientes</p>
-        <h3>36</h3>
-        <span>Por cobrar este mes</span>
+        <h3>{{ recibosPendientes }}</h3>
+        <span>Por cobrar</span>
       </div>
     </div>
 
     <div class="stat-card">
       <div class="stat-icon">💰</div>
       <div>
-        <p>Pagos registrados</p>
-        <h3>S/ 2,450</h3>
-        <span>Recaudación mensual</span>
+        <p>Total pagado</p>
+        <h3>S/ {{ totalPagado | number:'1.2-2' }}</h3>
+        <span>Recaudación registrada</span>
       </div>
     </div>
 
@@ -43,8 +51,8 @@
       <div class="stat-icon">📊</div>
       <div>
         <p>Consumo promedio</p>
-        <h3>14.5 m³</h3>
-        <span>Promedio mensual</span>
+        <h3>{{ consumoPromedio | number:'1.1-2' }} m³</h3>
+        <span>Promedio de recibos</span>
       </div>
     </div>
   </div>
@@ -53,13 +61,14 @@
     <section class="panel-card">
       <div class="section-title">
         <h3>Últimos recibos generados</h3>
-        <button>Ver todos</button>
+        <button routerLink="/admin/recibos">Ver todos</button>
       </div>
 
       <table>
         <thead>
           <tr>
-            <th>Cliente</th>
+            <th>Código recibo</th>
+            <th>Suministro</th>
             <th>Periodo</th>
             <th>Consumo</th>
             <th>Total</th>
@@ -68,28 +77,23 @@
         </thead>
 
         <tbody>
-          <tr>
-            <td>Juan Pérez</td>
-            <td>Mayo 2026</td>
-            <td>12 m³</td>
-            <td>S/ 36.00</td>
-            <td><span class="badge pendiente">Pendiente</span></td>
+          <tr *ngFor="let recibo of ultimosRecibos">
+            <td>{{ recibo.codigoRecibo }}</td>
+            <td>{{ recibo.codigoSuministro || 'Sin código' }}</td>
+            <td>{{ periodo(recibo) }}</td>
+            <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
+            <td>S/ {{ recibo.total | number:'1.2-2' }}</td>
+            <td>
+              <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
+                {{ recibo.estadoRecibo }}
+              </span>
+            </td>
           </tr>
 
-          <tr>
-            <td>María Rodríguez</td>
-            <td>Mayo 2026</td>
-            <td>18 m³</td>
-            <td>S/ 72.00</td>
-            <td><span class="badge pagado">Pagado</span></td>
-          </tr>
-
-          <tr>
-            <td>Carlos Sánchez</td>
-            <td>Mayo 2026</td>
-            <td>0 m³</td>
-            <td>S/ 3.00</td>
-            <td><span class="badge pendiente">Pendiente</span></td>
+          <tr *ngIf="ultimosRecibos.length === 0 && !cargando">
+            <td colspan="6" class="empty-row">
+              Todavía no hay recibos generados.
+            </td>
           </tr>
         </tbody>
       </table>
@@ -98,10 +102,10 @@
     <section class="panel-card quick-actions">
       <h3>Acciones rápidas</h3>
 
-      <button>Registrar cliente</button>
-      <button>Generar recibo</button>
-      <button>Registrar pago</button>
-      <button>Configurar tarifa</button>
+      <button routerLink="/admin/clientes">Registrar cliente</button>
+      <button routerLink="/admin/recibos">Ver recibos</button>
+      <button routerLink="/admin/pagos">Registrar pago</button>
+      <button routerLink="/admin/tarifas">Configurar tarifa</button>
     </section>
   </div>
 </div>

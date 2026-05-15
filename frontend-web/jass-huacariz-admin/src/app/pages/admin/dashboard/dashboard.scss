@@ -212,3 +212,27 @@ td {
     gap: 22px;
   }
 }
+
+.alert-info,
+.alert-error {
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.alert-info {
+  background: #e8f7fb;
+  color: #146c94;
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.empty-row {
+  text-align: center;
+  color: #7b8794;
+  padding: 22px !important;
+}
