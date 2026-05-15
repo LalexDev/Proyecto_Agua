@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/sectores/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/tarifas/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/recibos/**").hasAuthority("ADMIN")
+			.requestMatchers("/api/pagos/**").hasAuthority("ADMIN")	
 
                         .requestMatchers(HttpMethod.POST, "/api/lecturas/**").hasAnyAuthority("ADMIN", "LECTURADOR")
                         .requestMatchers(HttpMethod.GET, "/api/lecturas/**").hasAnyAuthority("ADMIN", "LECTURADOR")

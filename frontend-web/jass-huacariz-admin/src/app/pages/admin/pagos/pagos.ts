@@ -1,184 +1,85 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
-interface ReciboPendiente {
-  id: number;
-  codigo: string;
-  cliente: string;
-  dni: string;
-  suministro: string;
-  periodo: string;
-  total: number;
-}
-
-interface Pago {
-  codigoPago: string;
-  codigoRecibo: string;
-  cliente: string;
-  dni: string;
-  suministro: string;
-  periodo: string;
-  metodoPago: 'Efectivo' | 'PagoEfectivo' | 'Transferencia';
-  codigoOperacion: string;
-  monto: number;
-  fechaPago: string;
-  estado: 'Registrado' | 'Anulado';
-}
+import { Pago, PagoResponse } from '../../../core/services/pago';
 
 @Component({
   selector: 'app-pagos',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './pagos.html',
-  styleUrl: './pagos.scss'
+  styleUrl: './pagos.scss',
 })
-export class Pagos {
-  mostrarModal = false;
+export class Pagos implements OnInit {
+  pagos: PagoResponse[] = [];
+  pagosFiltrados: PagoResponse[] = [];
 
-  recibosPendientes: ReciboPendiente[] = [
-    {
-      id: 1,
-      codigo: 'REC-0001',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      suministro: 'Casa principal',
-      periodo: 'Mayo 2026',
-      total: 36.00
-    },
-    {
-      id: 2,
-      codigo: 'REC-0003',
-      cliente: 'Juan Pérez Sánchez',
-      dni: '45879632',
-      suministro: 'Vivienda familiar',
-      periodo: 'Mayo 2026',
-      total: 45.00
-    },
-    {
-      id: 3,
-      codigo: 'REC-0004',
-      cliente: 'María Rodríguez Díaz',
-      dni: '47851236',
-      suministro: 'Casa secundaria',
-      periodo: 'Mayo 2026',
-      total: 3.00
-    }
-  ];
+  cargando = false;
+  error = '';
+  busqueda = '';
 
-  pagos: Pago[] = [
-    {
-      codigoPago: 'PAG-0001',
-      codigoRecibo: 'REC-0002',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      suministro: 'Tienda',
-      periodo: 'Mayo 2026',
-      metodoPago: 'Efectivo',
-      codigoOperacion: 'EFECTIVO-001',
-      monto: 90.00,
-      fechaPago: '11/05/2026',
-      estado: 'Registrado'
-    },
-    {
-      codigoPago: 'PAG-0002',
-      codigoRecibo: 'REC-0005',
-      cliente: 'Rosa Mendoza López',
-      dni: '48752147',
-      suministro: 'Local comercial',
-      periodo: 'Mayo 2026',
-      metodoPago: 'PagoEfectivo',
-      codigoOperacion: 'PE-785412',
-      monto: 72.00,
-      fechaPago: '11/05/2026',
-      estado: 'Registrado'
-    }
-  ];
+  constructor(
+    private pagoService: Pago,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  nuevoPago = {
-    idRecibo: 0,
-    metodoPago: 'Efectivo' as 'Efectivo' | 'PagoEfectivo' | 'Transferencia',
-    codigoOperacion: '',
-    monto: 0
-  };
-
-  get totalPagos(): number {
-    return this.pagos.length;
+  ngOnInit(): void {
+    this.cargarPagos();
   }
 
-  get montoRecaudado(): number {
-    return this.pagos
-      .filter(pago => pago.estado === 'Registrado')
-      .reduce((total, pago) => total + pago.monto, 0);
+  cargarPagos(): void {
+    this.cargando = true;
+    this.error = '';
+
+    this.pagoService.listarPagos()
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.pagos = data;
+          this.pagosFiltrados = data;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.error = 'No se pudieron cargar los pagos. Verifica el backend y tu sesión ADMIN.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  get recibosPorCobrar(): number {
-    return this.recibosPendientes.length;
-  }
+  filtrarPagos(): void {
+    const texto = this.busqueda.trim().toLowerCase();
 
-  abrirModal(): void {
-    this.nuevoPago = {
-      idRecibo: 0,
-      metodoPago: 'Efectivo',
-      codigoOperacion: '',
-      monto: 0
-    };
-
-    this.mostrarModal = true;
-  }
-
-  cerrarModal(): void {
-    this.mostrarModal = false;
-  }
-
-  seleccionarRecibo(): void {
-    const recibo = this.recibosPendientes.find(r => r.id === Number(this.nuevoPago.idRecibo));
-
-    if (recibo) {
-      this.nuevoPago.monto = recibo.total;
-      this.nuevoPago.codigoOperacion = this.generarCodigoOperacion();
-    }
-  }
-
-  guardarPago(): void {
-    const recibo = this.recibosPendientes.find(r => r.id === Number(this.nuevoPago.idRecibo));
-
-    if (!recibo) {
+    if (!texto) {
+      this.pagosFiltrados = this.pagos;
       return;
     }
 
-    const pago: Pago = {
-      codigoPago: `PAG-${String(this.pagos.length + 1).padStart(4, '0')}`,
-      codigoRecibo: recibo.codigo,
-      cliente: recibo.cliente,
-      dni: recibo.dni,
-      suministro: recibo.suministro,
-      periodo: recibo.periodo,
-      metodoPago: this.nuevoPago.metodoPago,
-      codigoOperacion: this.nuevoPago.codigoOperacion,
-      monto: this.nuevoPago.monto,
-      fechaPago: new Date().toLocaleDateString('es-PE'),
-      estado: 'Registrado'
-    };
-
-    this.pagos.unshift(pago);
-    this.recibosPendientes = this.recibosPendientes.filter(r => r.id !== recibo.id);
-    this.cerrarModal();
+    this.pagosFiltrados = this.pagos.filter(pago =>
+      pago.codigoRecibo.toLowerCase().includes(texto) ||
+      pago.metodoPago.toLowerCase().includes(texto) ||
+      (pago.codigoOperacion || '').toLowerCase().includes(texto)
+    );
   }
 
-  anularPago(pago: Pago): void {
-    pago.estado = 'Anulado';
+  totalRecaudado(): number {
+    return this.pagos.reduce((total, pago) => total + Number(pago.monto), 0);
   }
 
-  private generarCodigoOperacion(): string {
-    const numero = Math.floor(100000 + Math.random() * 900000);
+  totalPagos(): number {
+    return this.pagos.length;
+  }
 
-    if (this.nuevoPago.metodoPago === 'PagoEfectivo') {
-      return `PE-${numero}`;
-    }
+  pagosPagoEfectivo(): number {
+    return this.pagos.filter(p => p.metodoPago === 'PagoEfectivo').length;
+  }
 
-    if (this.nuevoPago.metodoPago === 'Transferencia') {
-      return `TR-${numero}`;
-    }
-
-    return `EFECTIVO-${String(this.pagos.length + 1).padStart(3, '0')}`;
+  estadoClase(estado: string): string {
+    return estado?.toLowerCase() === 'pagado' ? 'pagado' : 'pendiente';
   }
 }
