@@ -15,18 +15,51 @@ class _LoginPageState extends State<LoginPage> {
   bool cargando = false;
 
   void iniciarSesion() {
-    setState(() {
-      cargando = true;
-    });
+  final usuario = usuarioController.text.trim();
+  final password = passwordController.text.trim();
 
-    Future.delayed(const Duration(milliseconds: 800), () {
-      setState(() {
-        cargando = false;
-      });
-
-      Navigator.pushReplacementNamed(context, '/home');
-    });
+  if (usuario.isEmpty || password.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Ingresa usuario y contraseña.'),
+        backgroundColor: Color(0xFFD93025),
+      ),
+    );
+    return;
   }
+
+  setState(() {
+    cargando = true;
+  });
+
+  Future.delayed(const Duration(milliseconds: 800), () {
+    setState(() {
+      cargando = false;
+    });
+
+    if (usuario == 'admin' && password == '123456') {
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+      return;
+    }
+
+    if (usuario == 'lector' && password == '123456') {
+      Navigator.pushReplacementNamed(context, '/lector-home');
+      return;
+    }
+
+    if (usuario == '12345678' && password == '123456') {
+      Navigator.pushReplacementNamed(context, '/home');
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Usuario o contraseña incorrectos.'),
+        backgroundColor: Color(0xFFD93025),
+      ),
+    );
+  });
+}
 
   @override
   void dispose() {

@@ -2,12 +2,27 @@ import 'package:flutter/material.dart';
 
 import 'features/auth/login_page.dart';
 import 'features/auth/change_password_page.dart';
+
 import 'features/home/home_page.dart';
 import 'features/recibos/recibos_page.dart';
 import 'features/recibos/recibo_detail_page.dart';
 import 'features/recibos/pdf_viewer_page.dart';
 import 'features/pagos/pago_cip_page.dart';
 import 'features/perfil/perfil_page.dart';
+
+import 'features/admin/admin_dashboard_page.dart';
+import 'features/admin/admin_clientes_page.dart';
+import 'features/admin/admin_tarifas_page.dart';
+import 'features/admin/admin_recibos_page.dart';
+import 'features/admin/admin_reportes_page.dart';
+
+import 'features/lector/lector_home_page.dart';
+import 'features/lector/buscar_suministro_page.dart';
+import 'features/lector/registrar_lectura_page.dart';
+import 'features/lector/historial_lecturas_page.dart';
+import 'features/lector/detalle_suministro_page.dart';
+import 'features/lector/comprobante_recibo_page.dart';
+
 import 'shared/theme/app_theme.dart';
 
 class JassHuacarizApp extends StatelessWidget {
@@ -21,14 +36,32 @@ class JassHuacarizApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       initialRoute: '/login',
       routes: {
-        '/login': (_) => const LoginPage(),
-        '/home': (_) => const HomePage(),
-        '/recibos': (_) => const RecibosPage(),
-        '/recibo-detalle': (_) => const ReciboDetailPage(),
-        '/pdf-viewer': (_) => const PdfViewerPage(),
-        '/pago-cip': (_) => const PagoCipPage(),
-        '/perfil': (_) => const PerfilPage(),
-        '/cambiar-password': (_) => const ChangePasswordPage(),
+        // LOGIN
+        '/login': (_) => LoginPage(),
+
+        // ADMINISTRADOR
+        '/admin-dashboard': (_) => AdminDashboardPage(),
+        '/admin-clientes': (_) => AdminClientesPage(),
+        '/admin-tarifas': (_) => AdminTarifasPage(),
+        '/admin-recibos': (_) => AdminRecibosPage(),
+        '/admin-reportes': (_) => AdminReportesPage(),
+
+        // LECTURADOR
+        '/lector-home': (_) => LectorHomePage(),
+        '/buscar-suministro': (_) => BuscarSuministroPage(),
+        '/detalle-suministro': (_) => DetalleSuministroPage(),
+        '/registrar-lectura': (_) => RegistrarLecturaPage(),
+        '/historial-lecturas': (_) => HistorialLecturasPage(),
+        '/comprobante-recibo': (_) => ComprobanteReciboPage(),
+
+        // CLIENTE
+        '/home': (_) => HomePage(),
+        '/recibos': (_) => RecibosPage(),
+        '/recibo-detalle': (_) => ReciboDetailPage(),
+        '/pdf-viewer': (_) => PdfViewerPage(),
+        '/pago-cip': (_) => PagoCipPage(),
+        '/perfil': (_) => PerfilPage(),
+        '/cambiar-password': (_) => ChangePasswordPage(),
       },
     );
   }
