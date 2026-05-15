@@ -1,82 +1,108 @@
-<div class="inicio-page">
-  <section class="welcome-card">
+<div class="cliente-inicio">
+  <div class="welcome-card">
     <div>
-      <span class="tag">Bienvenido</span>
-      <h2>Hola, {{ cliente.nombres }} {{ cliente.apellidos }}</h2>
-      <p>
-        Desde tu portal puedes consultar tus suministros, revisar tus recibos pendientes
-        y realizar el seguimiento de tus pagos.
-      </p>
+      <span class="tag">Portal cliente</span>
+      <h2>Bienvenido, {{ perfil?.nombres || 'Cliente' }}</h2>
+      <p>Consulta tus suministros, recibos y estado de pagos.</p>
     </div>
 
-    <div class="welcome-icon">💧</div>
-  </section>
-
-  <div class="summary-grid">
-    <div class="summary-card">
-      <span>Suministros</span>
-      <h3>{{ totalSuministros }}</h3>
-      <p>Conexiones asociadas</p>
-    </div>
-
-    <div class="summary-card">
-      <span>Deuda total</span>
-      <h3>S/ {{ deudaTotal.toFixed(2) }}</h3>
-      <p>Recibos pendientes</p>
-    </div>
-
-    <div class="summary-card">
-      <span>Consumo total</span>
-      <h3>{{ consumoTotal }} m³</h3>
-      <p>Último periodo registrado</p>
-    </div>
+    <button type="button" (click)="cargarInicio()">Actualizar</button>
   </div>
 
-  <section class="section-card">
-    <div class="section-title">
+  <div *ngIf="error" class="alert-error">{{ error }}</div>
+  <div *ngIf="cargando" class="alert-info">Cargando información...</div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span>🏠</span>
       <div>
-        <h3>Mis suministros</h3>
-        <p>Estos son los suministros asociados a tu usuario.</p>
+        <p>Mis suministros</p>
+        <h3>{{ suministros.length }}</h3>
       </div>
     </div>
 
-    <div class="suministros-grid">
-      @for (suministro of suministros; track suministro.alias) {
-        <article class="suministro-card">
-          <div class="card-header">
-            <div class="water-icon">💧</div>
-
-            <span class="badge" [class.activo]="suministro.estado === 'Activo'" [class.suspendido]="suministro.estado === 'Suspendido'">
-              {{ suministro.estado }}
-            </span>
-          </div>
-
-          <h4>{{ suministro.alias }}</h4>
-          <p class="address">{{ suministro.direccion }}</p>
-
-          <div class="info-list">
-            <div>
-              <span>Sector</span>
-              <strong>{{ suministro.sector }}</strong>
-            </div>
-
-            <div>
-              <span>Lectura actual</span>
-              <strong>{{ suministro.lecturaActual }} m³</strong>
-            </div>
-
-            <div>
-              <span>Último consumo</span>
-              <strong>{{ suministro.ultimoConsumo }} m³</strong>
-            </div>
-
-            <div>
-              <span>Recibo pendiente</span>
-              <strong>S/ {{ suministro.reciboPendiente.toFixed(2) }}</strong>
-            </div>
-          </div>
-        </article>
-      }
+    <div class="stat-card">
+      <span>⏳</span>
+      <div>
+        <p>Recibos pendientes</p>
+        <h3>{{ recibosPendientes() }}</h3>
+      </div>
     </div>
-  </section>
+
+    <div class="stat-card">
+      <span>✅</span>
+      <div>
+        <p>Recibos pagados</p>
+        <h3>{{ recibosPagados() }}</h3>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <span>💰</span>
+      <div>
+        <p>Deuda pendiente</p>
+        <h3>S/ {{ deudaTotal() | number:'1.2-2' }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <section class="panel-card">
+      <div class="section-title">
+        <h3>Mis suministros</h3>
+        <span>{{ suministros.length }} registro(s)</span>
+      </div>
+
+      <div class="suministro-card" *ngFor="let suministro of suministros">
+        <div>
+          <h4>{{ suministro.aliasSuministro || 'Suministro' }}</h4>
+          <p>{{ suministro.direccionSuministro }}</p>
+          <small>{{ suministro.nombreSector }} · {{ suministro.codigoSuministro }}</small>
+        </div>
+
+        <span class="badge pagado">
+          {{ suministro.estado ? 'Activo' : 'Inactivo' }}
+        </span>
+      </div>
+
+      <div *ngIf="suministros.length === 0 && !cargando" class="empty-row">
+        No tienes suministros registrados.
+      </div>
+    </section>
+
+    <section class="panel-card">
+      <div class="section-title">
+        <h3>Últimos recibos</h3>
+        <a routerLink="/cliente/mis-recibos">Ver todos</a>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Recibo</th>
+            <th>Periodo</th>
+            <th>Total</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let recibo of ultimosRecibos()">
+            <td>{{ recibo.codigoRecibo }}</td>
+            <td>{{ periodo(recibo) }}</td>
+            <td>S/ {{ recibo.total | number:'1.2-2' }}</td>
+            <td>
+              <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
+                {{ recibo.estadoRecibo }}
+              </span>
+            </td>
+          </tr>
+
+          <tr *ngIf="ultimosRecibos().length === 0 && !cargando">
+            <td colspan="4" class="empty-row">No tienes recibos registrados.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
 </div>
