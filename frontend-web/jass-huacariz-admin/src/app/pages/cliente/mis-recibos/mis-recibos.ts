@@ -1,124 +1,111 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterModule } from '@angular/router';
+import { finalize } from 'rxjs';
 
-interface ReciboCliente {
-  id: number;
-  codigo: string;
-  suministro: string;
-  direccion: string;
-  periodo: string;
-  lecturaAnterior: number;
-  lecturaActual: number;
-  consumo: number;
-  subtotal: number;
-  pagoLector: number;
-  mantenimiento: number;
-  total: number;
-  fechaEmision: string;
-  fechaVencimiento: string;
-  estado: 'Pendiente' | 'Pagado' | 'Vencido';
-}
+import {
+  ClientePortal,
+  ReciboClienteResponse
+} from '../../../core/services/cliente-portal';
 
 @Component({
   selector: 'app-mis-recibos',
-  imports: [FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './mis-recibos.html',
-  styleUrl: './mis-recibos.scss'
+  styleUrl: './mis-recibos.scss',
 })
-export class MisRecibos {
-  filtroEstado = 'Todos';
+export class MisRecibos implements OnInit {
+  recibos: ReciboClienteResponse[] = [];
+  recibosFiltrados: ReciboClienteResponse[] = [];
 
-  recibos: ReciboCliente[] = [
-    {
-      id: 1,
-      codigo: 'REC-0001',
-      suministro: 'Casa principal',
-      direccion: 'Av. Principal 123',
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 450.345,
-      lecturaActual: 462.345,
-      consumo: 12,
-      subtotal: 36,
-      pagoLector: 1,
-      mantenimiento: 0,
-      total: 37,
-      fechaEmision: '01/05/2026',
-      fechaVencimiento: '15/05/2026',
-      estado: 'Pendiente'
-    },
-    {
-      id: 2,
-      codigo: 'REC-0002',
-      suministro: 'Tienda',
-      direccion: 'Av. Principal 125',
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 220,
-      lecturaActual: 238,
-      consumo: 18,
-      subtotal: 90,
-      pagoLector: 1,
-      mantenimiento: 0,
-      total: 91,
-      fechaEmision: '01/05/2026',
-      fechaVencimiento: '15/05/2026',
-      estado: 'Pagado'
-    },
-    {
-      id: 3,
-      codigo: 'REC-0003',
-      suministro: 'Local comercial',
-      direccion: 'Jr. Lima 560',
-      periodo: 'Mayo 2026',
-      lecturaAnterior: 100,
-      lecturaActual: 110,
-      consumo: 10,
-      subtotal: 30,
-      pagoLector: 1,
-      mantenimiento: 0,
-      total: 31,
-      fechaEmision: '01/05/2026',
-      fechaVencimiento: '15/05/2026',
-      estado: 'Pendiente'
-    },
-    {
-      id: 4,
-      codigo: 'REC-0004',
-      suministro: 'Casa principal',
-      direccion: 'Av. Principal 123',
-      periodo: 'Abril 2026',
-      lecturaAnterior: 438.345,
-      lecturaActual: 450.345,
-      consumo: 12,
-      subtotal: 36,
-      pagoLector: 1,
-      mantenimiento: 0,
-      total: 37,
-      fechaEmision: '01/04/2026',
-      fechaVencimiento: '15/04/2026',
-      estado: 'Pagado'
-    }
-  ];
+  cargando = false;
+  error = '';
 
-  get recibosFiltrados(): ReciboCliente[] {
-    if (this.filtroEstado === 'Todos') {
-      return this.recibos;
-    }
+  filtroEstado = 'TODOS';
+  busqueda = '';
 
-    return this.recibos.filter(recibo => recibo.estado === this.filtroEstado);
+  constructor(
+    private clientePortal: ClientePortal,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarRecibos();
   }
 
-  get recibosPendientes(): number {
-    return this.recibos.filter(recibo => recibo.estado === 'Pendiente').length;
+  cargarRecibos(): void {
+    this.cargando = true;
+    this.error = '';
+
+    this.clientePortal.listarMisRecibos()
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.recibos = data;
+          this.aplicarFiltros();
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.error = 'No se pudieron cargar tus recibos.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  get recibosPagados(): number {
-    return this.recibos.filter(recibo => recibo.estado === 'Pagado').length;
+  aplicarFiltros(): void {
+    const texto = this.busqueda.trim().toLowerCase();
+
+    this.recibosFiltrados = this.recibos.filter(recibo => {
+      const coincideEstado =
+        this.filtroEstado === 'TODOS' ||
+        recibo.estadoRecibo === this.filtroEstado;
+
+      const coincideTexto =
+        !texto ||
+        recibo.codigoRecibo.toLowerCase().includes(texto) ||
+        recibo.codigoSuministro.toLowerCase().includes(texto) ||
+        recibo.direccionSuministro.toLowerCase().includes(texto);
+
+      return coincideEstado && coincideTexto;
+    });
   }
 
-  get deudaTotal(): number {
+  recibosPendientes(): number {
+    return this.recibos.filter(r => r.estadoRecibo === 'PENDIENTE').length;
+  }
+
+  recibosPagados(): number {
+    return this.recibos.filter(r => r.estadoRecibo === 'PAGADO').length;
+  }
+
+  totalPendiente(): number {
     return this.recibos
-      .filter(recibo => recibo.estado === 'Pendiente' || recibo.estado === 'Vencido')
-      .reduce((total, recibo) => total + recibo.total, 0);
+      .filter(r => r.estadoRecibo === 'PENDIENTE')
+      .reduce((total, recibo) => total + Number(recibo.total), 0);
+  }
+
+  totalPagado(): number {
+    return this.recibos
+      .filter(r => r.estadoRecibo === 'PAGADO')
+      .reduce((total, recibo) => total + Number(recibo.total), 0);
+  }
+
+  estadoClase(estado: string): string {
+    return estado?.toLowerCase() === 'pagado' ? 'pagado' : 'pendiente';
+  }
+
+  periodo(recibo: ReciboClienteResponse): string {
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    return `${meses[recibo.mes - 1] ?? 'Mes'} ${recibo.anio}`;
   }
 }
