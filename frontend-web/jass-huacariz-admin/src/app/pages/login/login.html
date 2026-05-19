@@ -1,22 +1,27 @@
 <div class="login-page">
-  <div class="login-left">
-    <div class="brand-box">
-      <div class="logo-circle">💧</div>
-      <h1>JASS Huacariz</h1>
-      <p>Sistema web para gestión de clientes, recibos, pagos y consumo de agua potable.</p>
-    </div>
+  <section class="login-brand">
+    <div class="brand-content">
+      <div class="brand-logo">💧</div>
 
-    <div class="info-card">
-      <h3>Gestión inteligente del servicio de agua</h3>
+      <h1>JASS Huacariz</h1>
+
       <p>
-        Administra usuarios, lecturas, tarifas, recibos y pagos desde una plataforma moderna,
-        segura y fácil de usar.
+        Sistema web para gestión de clientes, recibos, pagos y consumo
+        de agua potable.
       </p>
     </div>
-  </div>
 
-  <div class="login-right">
-    <form class="login-card">
+    <div class="brand-card">
+      <h3>Gestión inteligente del servicio de agua</h3>
+      <p>
+        Administra usuarios, lecturas, tarifas, recibos y pagos desde una
+        plataforma moderna, segura y fácil de usar.
+      </p>
+    </div>
+  </section>
+
+  <section class="login-wrapper">
+    <div class="login-card">
       <h2>Iniciar sesión</h2>
       <p class="subtitle">Ingresa tus credenciales para acceder al sistema</p>
 
@@ -24,9 +29,9 @@
         <label>Código de usuario</label>
         <input
           type="text"
-          name="codigoUsuario"
-          placeholder="ADMIN001 o 12345678"
           [(ngModel)]="codigoUsuario"
+          placeholder="Ejemplo: ADMIN001, 12345678, LECTOR001"
+          autocomplete="username"
         >
       </div>
 
@@ -34,17 +39,20 @@
         <label>Contraseña</label>
         <input
           type="password"
-          name="password"
-          placeholder="••••••••"
           [(ngModel)]="password"
+          placeholder="Ingresa tu contraseña"
+          autocomplete="current-password"
+          (keyup.enter)="ingresar('ADMIN')"
         >
       </div>
 
-      <p class="error-message" *ngIf="error">{{ error }}</p>
+      <div *ngIf="error" class="error-message">
+        {{ error }}
+      </div>
 
       <button
         type="button"
-        class="btn-login"
+        class="btn-primary"
         [disabled]="cargando"
         (click)="ingresar('ADMIN')">
         {{ cargando ? 'Validando...' : 'Ingresar como administrador' }}
@@ -58,11 +66,20 @@
         Ingresar como cliente
       </button>
 
-      <div class="demo-users">
-        <p><strong>Usuarios de prueba:</strong></p>
-        <span>Admin: ADMIN001 / admin123</span>
-        <span>Cliente: 12345678 / cliente123</span>
+      <button
+        type="button"
+        class="btn-secondary"
+        [disabled]="cargando"
+        (click)="ingresar('LECTURADOR')">
+        Ingresar como lecturador
+      </button>
+
+      <div class="test-users">
+        <strong>Usuarios de prueba:</strong>
+        <p>Admin: ADMIN001 / admin123</p>
+        <p>Cliente: 12345678 / tu nueva contraseña</p>
+        <p>Lecturador: LECTOR001 / lector123</p>
       </div>
-    </form>
-  </div>
+    </div>
+  </section>
 </div>

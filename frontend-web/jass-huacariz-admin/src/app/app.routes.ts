@@ -22,6 +22,8 @@ import { Contrasena } from './pages/cliente/contrasena/contrasena';
 import { authGuard } from './core/guards/auth-guard';
 import { roleGuard } from './core/guards/role-guard';
 
+import { LecturasLecturador } from './pages/lecturador/lecturas/lecturas';
+
 export const routes: Routes = [
   {
     path: '',
@@ -63,6 +65,17 @@ export const routes: Routes = [
       { path: 'cambiar-password', redirectTo: 'contrasena', pathMatch: 'full' }
     ]
   },
+  
+  {
+  	path: 'lecturador',
+  	canActivate: [authGuard, roleGuard],
+  	data: { roles: ['LECTURADOR'] },
+  	children: [
+    	{ path: '', redirectTo: 'lecturas', pathMatch: 'full' },
+    	{ path: 'lecturas', component: LecturasLecturador }
+   ]
+  },
+	
   {
     path: '**',
     redirectTo: 'login'

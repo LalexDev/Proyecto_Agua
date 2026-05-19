@@ -1,0 +1,192 @@
+<div class="lecturador-page">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">💧</div>
+      <div>
+        <h3>JASS Huacariz</h3>
+        <p>Panel lecturador</p>
+      </div>
+    </div>
+
+    <div class="menu">
+      <button class="active">Registrar lectura</button>
+    </div>
+
+    <button class="logout" type="button" (click)="cerrarSesion()">
+      Cerrar sesión
+    </button>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <div>
+        <h1>Registro de lecturas</h1>
+        <p>Busca un suministro, registra la lectura actual y genera el recibo automáticamente.</p>
+      </div>
+
+      <span class="role">Lecturador</span>
+    </header>
+
+    <div *ngIf="error" class="alert-error">
+      {{ error }}
+    </div>
+
+    <div *ngIf="exito" class="alert-success">
+      {{ exito }}
+    </div>
+
+    <section class="search-card">
+      <div>
+        <span class="tag">Buscar suministro</span>
+        <h2>Escaneo o ingreso manual</h2>
+        <p>Ingresa el código del suministro o escanéalo con lector QR/código de barras.</p>
+      </div>
+
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="codigoBusqueda"
+          placeholder="Ejemplo: SUM-C6DAD1A0"
+          (keyup.enter)="buscarSuministro()"
+        >
+
+        <button type="button" class="btn-primary" [disabled]="cargando" (click)="buscarSuministro()">
+          {{ cargando ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        <button type="button" class="btn-secondary" (click)="limpiar()">
+          Limpiar
+        </button>
+      </div>
+    </section>
+
+    <section class="suministro-card" *ngIf="suministro">
+      <div class="section-title">
+        <div>
+          <h2>{{ suministro.aliasSuministro || 'Suministro encontrado' }}</h2>
+          <p>{{ suministro.codigoSuministro }}</p>
+        </div>
+
+        <span class="badge" [ngClass]="suministro.estado ? 'activo' : 'inactivo'">
+          {{ suministro.estado ? 'Activo' : 'Inactivo' }}
+        </span>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box">
+          <span>Dirección</span>
+          <strong>{{ suministro.direccionSuministro }}</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Sector</span>
+          <strong>{{ suministro.nombreSector }}</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Referencia</span>
+          <strong>{{ suministro.referencia || '-' }}</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Lectura anterior / inicial</span>
+          <strong>{{ suministro.lecturaInicial | number:'1.2-3' }} m³</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-card" *ngIf="suministro">
+      <div class="section-title">
+        <div>
+          <h2>Nueva lectura</h2>
+          <p>Registra la lectura actual del medidor.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Año</label>
+          <input type="number" [(ngModel)]="lecturaForm.anio">
+        </div>
+
+        <div class="form-group">
+          <label>Mes</label>
+          <select [(ngModel)]="lecturaForm.mes">
+            <option [ngValue]="1">Enero</option>
+            <option [ngValue]="2">Febrero</option>
+            <option [ngValue]="3">Marzo</option>
+            <option [ngValue]="4">Abril</option>
+            <option [ngValue]="5">Mayo</option>
+            <option [ngValue]="6">Junio</option>
+            <option [ngValue]="7">Julio</option>
+            <option [ngValue]="8">Agosto</option>
+            <option [ngValue]="9">Septiembre</option>
+            <option [ngValue]="10">Octubre</option>
+            <option [ngValue]="11">Noviembre</option>
+            <option [ngValue]="12">Diciembre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Lectura actual</label>
+          <input type="number" step="0.001" [(ngModel)]="lecturaForm.lecturaActual">
+        </div>
+
+        <div class="form-group full">
+          <label>Observación</label>
+          <input type="text" [(ngModel)]="lecturaForm.observacion">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn-secondary" (click)="limpiar()">
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="registrando"
+          (click)="registrarLectura()">
+          {{ registrando ? 'Registrando...' : 'Registrar lectura y generar recibo' }}
+        </button>
+      </div>
+    </section>
+
+    <section class="receipt-card" *ngIf="lecturaGenerada">
+      <div class="receipt-header">
+        <div>
+          <span class="tag">Recibo generado</span>
+          <h2>{{ lecturaGenerada.recibo.codigoRecibo }}</h2>
+          <p>{{ nombreMes(lecturaGenerada.recibo.mes) }} {{ lecturaGenerada.recibo.anio }}</p>
+        </div>
+
+        <span class="badge pendiente">
+          {{ lecturaGenerada.recibo.estadoRecibo }}
+        </span>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box">
+          <span>Lectura anterior</span>
+          <strong>{{ lecturaGenerada.lecturaAnterior | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Lectura actual</span>
+          <strong>{{ lecturaGenerada.lecturaActual | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Consumo</span>
+          <strong>{{ lecturaGenerada.consumoM3 | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Total recibo</span>
+          <strong>S/ {{ lecturaGenerada.recibo.total | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
