@@ -1,87 +1,83 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { finalize } from 'rxjs';
 
-interface SuministroPerfil {
-  alias: string;
-  direccion: string;
-  referencia: string;
-  sector: string;
-  lecturaActual: number;
-  estado: 'Activo' | 'Suspendido';
-}
+import {
+  ClientePerfilResponse,
+  ClientePortal,
+  SuministroClienteResponse
+} from '../../../core/services/cliente-portal';
 
 @Component({
   selector: 'app-perfil',
-  imports: [FormsModule, RouterLink],
+  imports: [CommonModule, RouterModule],
   templateUrl: './perfil.html',
-  styleUrl: './perfil.scss'
+  styleUrl: './perfil.scss',
 })
-export class Perfil {
-  modoEdicion = false;
+export class Perfil implements OnInit {
+  perfil: ClientePerfilResponse | null = null;
+  suministros: SuministroClienteResponse[] = [];
 
-  cliente = {
-    dni: '12345678',
-    nombres: 'Dany',
-    apellidos: 'Carmona',
-    telefono: '987654321',
-    correo: 'dany@gmail.com',
-    usuario: '12345678',
-    estado: 'Activo'
-  };
+  cargando = false;
+  error = '';
 
-  clienteTemporal = { ...this.cliente };
+  constructor(
+    private clientePortal: ClientePortal,
+    private cdr: ChangeDetectorRef
+  ) {}
 
-  suministros: SuministroPerfil[] = [
-    {
-      alias: 'Casa principal',
-      direccion: 'Av. Principal 123',
-      referencia: 'Casa color blanco',
-      sector: 'Huacariz',
-      lecturaActual: 462.345,
-      estado: 'Activo'
-    },
-    {
-      alias: 'Tienda',
-      direccion: 'Av. Principal 125',
-      referencia: 'Frente a la tienda',
-      sector: 'Huacariz',
-      lecturaActual: 238,
-      estado: 'Activo'
-    },
-    {
-      alias: 'Local comercial',
-      direccion: 'Jr. Lima 560',
-      referencia: 'Esquina con mercado',
-      sector: 'Huacariz Alto',
-      lecturaActual: 110,
-      estado: 'Activo'
+  ngOnInit(): void {
+    this.cargarPerfil();
+  }
+
+  cargarPerfil(): void {
+    this.cargando = true;
+    this.error = '';
+
+    this.clientePortal.obtenerMiPerfil()
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.perfil = data;
+          this.cargarSuministros();
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.error = 'No se pudo cargar tu perfil.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  cargarSuministros(): void {
+    this.clientePortal.listarMisSuministros()
+      .subscribe({
+        next: (data) => {
+          this.suministros = data;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.suministros = [];
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  nombreCompleto(): string {
+    if (!this.perfil) {
+      return '';
     }
-  ];
 
-  get nombreCompleto(): string {
-    return `${this.cliente.nombres} ${this.cliente.apellidos}`;
+    return `${this.perfil.nombres} ${this.perfil.apellidos}`;
   }
 
-  get totalSuministros(): number {
-    return this.suministros.length;
-  }
-
-  get suministrosActivos(): number {
-    return this.suministros.filter(s => s.estado === 'Activo').length;
-  }
-
-  abrirEdicion(): void {
-    this.clienteTemporal = { ...this.cliente };
-    this.modoEdicion = true;
-  }
-
-  cancelarEdicion(): void {
-    this.modoEdicion = false;
-  }
-
-  guardarCambios(): void {
-    this.cliente = { ...this.clienteTemporal };
-    this.modoEdicion = false;
+  estadoTexto(): string {
+    return this.perfil?.estado ? 'Activo' : 'Inactivo';
   }
 }
