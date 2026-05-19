@@ -1,5 +1,6 @@
 package com.jass.huacariz.service;
 
+import com.jass.huacariz.dto.request.CambiarPasswordRequest;
 import com.jass.huacariz.dto.request.PagoRequest;
 import com.jass.huacariz.dto.response.ClientePerfilResponse;
 import com.jass.huacariz.dto.response.PagoResponse;
@@ -9,11 +10,13 @@ import com.jass.huacariz.entity.Cliente;
 import com.jass.huacariz.entity.Pago;
 import com.jass.huacariz.entity.Recibo;
 import com.jass.huacariz.entity.Suministro;
+import com.jass.huacariz.entity.Usuario;
 import com.jass.huacariz.repository.ClienteRepository;
 import com.jass.huacariz.repository.PagoRepository;
 import com.jass.huacariz.repository.ReciboRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,7 @@ public class ClientePortalService {
     private final ClienteRepository clienteRepository;
     private final ReciboRepository reciboRepository;
     private final PagoRepository pagoRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public ClientePerfilResponse obtenerMiPerfil() {
@@ -104,6 +108,40 @@ public class ClientePortalService {
                 .estadoPago(pago.getEstadoPago())
                 .fechaPago(pago.getFechaPago())
                 .build();
+    }
+
+    @Transactional
+    public String cambiarMiPassword(CambiarPasswordRequest request) {
+        Cliente cliente = obtenerClienteAutenticado();
+        Usuario usuario = cliente.getUsuario();
+
+        if (request.getPasswordActual() == null || request.getPasswordActual().isBlank()) {
+            throw new RuntimeException("Ingrese su contraseña actual.");
+        }
+
+        if (request.getNuevaPassword() == null || request.getNuevaPassword().isBlank()) {
+            throw new RuntimeException("Ingrese la nueva contraseña.");
+        }
+
+        if (request.getConfirmarPassword() == null || request.getConfirmarPassword().isBlank()) {
+            throw new RuntimeException("Confirme la nueva contraseña.");
+        }
+
+        if (!request.getNuevaPassword().equals(request.getConfirmarPassword())) {
+            throw new RuntimeException("La nueva contraseña y la confirmación no coinciden.");
+        }
+
+        if (request.getNuevaPassword().length() < 6) {
+            throw new RuntimeException("La nueva contraseña debe tener al menos 6 caracteres.");
+        }
+
+        if (!passwordEncoder.matches(request.getPasswordActual(), usuario.getPasswordHash())) {
+            throw new RuntimeException("La contraseña actual es incorrecta.");
+        }
+
+        usuario.setPasswordHash(passwordEncoder.encode(request.getNuevaPassword()));
+
+        return "Contraseña actualizada correctamente.";
     }
 
     private Cliente obtenerClienteAutenticado() {

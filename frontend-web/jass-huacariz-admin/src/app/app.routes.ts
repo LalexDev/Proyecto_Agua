@@ -17,7 +17,7 @@ import { MisRecibos } from './pages/cliente/mis-recibos/mis-recibos';
 import { DetalleRecibo } from './pages/cliente/detalle-recibo/detalle-recibo';
 import { PagarRecibo } from './pages/cliente/pagar-recibo/pagar-recibo';
 import { Perfil } from './pages/cliente/perfil/perfil';
-import { CambiarPassword } from './pages/cliente/cambiar-password/cambiar-password';
+import { Contrasena } from './pages/cliente/contrasena/contrasena';
 
 import { authGuard } from './core/guards/auth-guard';
 import { roleGuard } from './core/guards/role-guard';
@@ -59,7 +59,8 @@ export const routes: Routes = [
       { path: 'detalle-recibo/:id', component: DetalleRecibo },
       { path: 'pagar-recibo/:id', component: PagarRecibo },
       { path: 'perfil', component: Perfil },
-      { path: 'cambiar-password', component: CambiarPassword }
+      { path: 'contrasena', component: Contrasena },
+      { path: 'cambiar-password', redirectTo: 'contrasena', pathMatch: 'full' }
     ]
   },
   {

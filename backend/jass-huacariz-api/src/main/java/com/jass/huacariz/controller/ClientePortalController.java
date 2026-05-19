@@ -1,5 +1,6 @@
 package com.jass.huacariz.controller;
 
+import com.jass.huacariz.dto.request.CambiarPasswordRequest;
 import com.jass.huacariz.dto.request.PagoRequest;
 import com.jass.huacariz.dto.response.ClientePerfilResponse;
 import com.jass.huacariz.dto.response.PagoResponse;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cliente")
@@ -40,5 +42,13 @@ public class ClientePortalController {
             @RequestBody PagoRequest request
     ) {
         return ResponseEntity.ok(clientePortalService.pagarMiRecibo(id, request));
+    }
+
+    @PatchMapping("/me/password")
+    public ResponseEntity<Map<String, String>> cambiarMiPassword(
+            @RequestBody CambiarPasswordRequest request
+    ) {
+        String mensaje = clientePortalService.cambiarMiPassword(request);
+        return ResponseEntity.ok(Map.of("mensaje", mensaje));
     }
 }

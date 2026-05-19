@@ -59,6 +59,16 @@ export interface PagoClienteResponse {
   fechaPago: string;
 }
 
+export interface CambiarPasswordRequest {
+  passwordActual: string;
+  nuevaPassword: string;
+  confirmarPassword: string;
+}
+
+export interface CambiarPasswordResponse {
+  mensaje: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -81,5 +91,9 @@ export class ClientePortal {
 
   pagarMiRecibo(idRecibo: number, data: PagoClienteRequest): Observable<PagoClienteResponse> {
     return this.http.patch<PagoClienteResponse>(`${this.apiUrl}/me/recibos/${idRecibo}/pagar`, data);
+  }
+
+  cambiarMiPassword(data: CambiarPasswordRequest): Observable<CambiarPasswordResponse> {
+    return this.http.patch<CambiarPasswordResponse>(`${this.apiUrl}/me/password`, data);
   }
 }
