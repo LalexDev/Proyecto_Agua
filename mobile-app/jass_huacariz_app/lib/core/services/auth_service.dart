@@ -6,25 +6,10 @@ class AuthService {
   final ApiService _apiService = ApiService();
   final SecureStorageService _storage = SecureStorageService();
 
-  final bool usarDatosPrueba = true;
-
   Future<bool> login({
     required String usuario,
     required String password,
   }) async {
-    if (usarDatosPrueba) {
-      await Future.delayed(const Duration(milliseconds: 700));
-
-      if (usuario == '12345678' && password == '123456') {
-        await _storage.saveToken('TOKEN_DE_PRUEBA_JASS_HUACARIZ');
-        await _storage.saveUserRole('CLIENTE');
-        await _storage.saveUserName('Dany Carmona');
-        return true;
-      }
-
-      return false;
-    }
-
     final response = await _apiService.post(
       ApiConfig.login,
       {
@@ -34,13 +19,30 @@ class AuthService {
       withAuth: false,
     );
 
-    final token = response['token'];
-    final role = response['role'];
-    final nombre = response['nombre'];
+    final token = response['token'] ??
+        response['accessToken'] ??
+        response['jwt'] ??
+        '';
 
-    await _storage.saveToken(token);
-    await _storage.saveUserRole(role);
-    await _storage.saveUserName(nombre);
+    final role = response['role'] ??
+        response['rol'] ??
+        response['tipoUsuario'] ??
+        response['authority'] ??
+        '';
+
+    final nombre = response['nombre'] ??
+        response['nombres'] ??
+        response['username'] ??
+        response['usuario'] ??
+        usuario;
+
+    if (token.toString().isEmpty) {
+      throw Exception('El backend no devolvió token.');
+    }
+
+    await _storage.saveToken(token.toString());
+    await _storage.saveUserRole(role.toString());
+    await _storage.saveUserName(nombre.toString());
 
     return true;
   }
@@ -65,11 +67,6 @@ class AuthService {
     required String actual,
     required String nueva,
   }) async {
-    if (usarDatosPrueba) {
-      await Future.delayed(const Duration(milliseconds: 700));
-      return true;
-    }
-
     await _apiService.put(
       ApiConfig.cambiarPassword,
       {

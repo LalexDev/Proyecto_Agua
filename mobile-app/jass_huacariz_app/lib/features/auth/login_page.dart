@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/services/auth_service.dart';
+import '../../core/storage/secure_storage_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,10 +13,13 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  final AuthService authService = AuthService();
+  final SecureStorageService storageService = SecureStorageService();
+
   bool mostrarPassword = false;
   bool cargando = false;
 
-  void iniciarSesion() {
+  Future<void> iniciarSesion() async {
   final usuario = usuarioController.text.trim();
   final password = passwordController.text.trim();
 
@@ -32,41 +37,56 @@ class _LoginPageState extends State<LoginPage> {
     cargando = true;
   });
 
-  Future.delayed(const Duration(milliseconds: 800), () {
+  try {
+    await authService.login(
+      usuario: usuario,
+      password: password,
+    );
+
+    final role = await storageService.getUserRole();
+    final rolNormalizado = role?.toUpperCase().trim() ?? '';
+
     setState(() {
       cargando = false;
     });
 
-    if (usuario == 'admin' && password == '123456') {
+    if (rolNormalizado.contains('ADMIN')) {
       Navigator.pushReplacementNamed(context, '/admin-dashboard');
       return;
     }
 
-    if (usuario == 'lector' && password == '123456') {
+    if (rolNormalizado.contains('LECTOR') ||
+        rolNormalizado.contains('LECTURADOR')) {
       Navigator.pushReplacementNamed(context, '/lector-home');
       return;
     }
 
-    if (usuario == '12345678' && password == '123456') {
+    if (rolNormalizado.contains('CLIENTE') ||
+        rolNormalizado.contains('USER') ||
+        rolNormalizado.contains('USUARIO')) {
       Navigator.pushReplacementNamed(context, '/home');
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Usuario o contraseña incorrectos.'),
-        backgroundColor: Color(0xFFD93025),
+      SnackBar(
+        content: Text('Rol no reconocido: $role'),
+        backgroundColor: const Color(0xFFD93025),
       ),
     );
-  });
-}
+  } catch (e) {
+    setState(() {
+      cargando = false;
+    });
 
-  @override
-  void dispose() {
-    usuarioController.dispose();
-    passwordController.dispose();
-    super.dispose();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error al iniciar sesión: $e'),
+        backgroundColor: const Color(0xFFD93025),
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
