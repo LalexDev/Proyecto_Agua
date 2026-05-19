@@ -42,7 +42,7 @@
           [(ngModel)]="password"
           placeholder="Ingresa tu contraseña"
           autocomplete="current-password"
-          (keyup.enter)="ingresar('ADMIN')"
+          (keyup.enter)="iniciarSesion()"
         >
       </div>
 
@@ -54,24 +54,8 @@
         type="button"
         class="btn-primary"
         [disabled]="cargando"
-        (click)="ingresar('ADMIN')">
-        {{ cargando ? 'Validando...' : 'Ingresar como administrador' }}
-      </button>
-
-      <button
-        type="button"
-        class="btn-secondary"
-        [disabled]="cargando"
-        (click)="ingresar('CLIENTE')">
-        Ingresar como cliente
-      </button>
-
-      <button
-        type="button"
-        class="btn-secondary"
-        [disabled]="cargando"
-        (click)="ingresar('LECTURADOR')">
-        Ingresar como lecturador
+        (click)="iniciarSesion()">
+        {{ cargando ? 'Validando...' : 'Iniciar sesión' }}
       </button>
 
       <div class="test-users">

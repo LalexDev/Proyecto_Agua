@@ -14,8 +14,6 @@ interface LoginResponse {
   mensaje: string;
 }
 
-type RolSistema = 'ADMIN' | 'CLIENTE' | 'LECTURADOR';
-
 @Component({
   selector: 'app-login',
   imports: [CommonModule, FormsModule],
@@ -37,11 +35,7 @@ export class Login {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ingresar(rolEsperado: RolSistema): void {
-    this.iniciarSesion(rolEsperado);
-  }
-
-  iniciarSesion(rolEsperado: RolSistema): void {
+  iniciarSesion(): void {
     this.error = '';
 
     if (!this.codigoUsuario.trim()) {
@@ -70,29 +64,24 @@ export class Login {
       )
       .subscribe({
         next: (response) => {
-          const rolRespuesta = response.rol?.toUpperCase() as RolSistema;
-
-          if (rolRespuesta !== rolEsperado) {
-            this.error = `Este usuario no pertenece al rol ${rolEsperado}.`;
-            this.cdr.detectChanges();
-            return;
-          }
+          const rol = response.rol?.toUpperCase();
 
           localStorage.setItem('token', response.token);
           localStorage.setItem('tipoToken', response.tipoToken || 'Bearer');
           localStorage.setItem('codigoUsuario', response.codigoUsuario);
-          localStorage.setItem('rol', rolRespuesta);
-          localStorage.setItem('role', rolRespuesta);
+          localStorage.setItem('rol', rol);
+          localStorage.setItem('role', rol);
           localStorage.setItem('expiracion', String(response.expiracion));
 
-          if (rolRespuesta === 'ADMIN') {
+          if (rol === 'ADMIN') {
             this.router.navigate(['/admin/dashboard']);
-          } else if (rolRespuesta === 'CLIENTE') {
+          } else if (rol === 'CLIENTE') {
             this.router.navigate(['/cliente/inicio']);
-          } else if (rolRespuesta === 'LECTURADOR') {
+          } else if (rol === 'LECTURADOR') {
             this.router.navigate(['/lecturador/lecturas']);
           } else {
             this.error = 'Rol no autorizado.';
+            localStorage.clear();
           }
 
           this.cdr.detectChanges();
