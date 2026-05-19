@@ -1,20 +1,23 @@
 package com.jass.huacariz.service;
 
+import com.jass.huacariz.dto.request.PagoRequest;
 import com.jass.huacariz.dto.response.ClientePerfilResponse;
+import com.jass.huacariz.dto.response.PagoResponse;
 import com.jass.huacariz.dto.response.ReciboResponse;
 import com.jass.huacariz.dto.response.SuministroResponse;
 import com.jass.huacariz.entity.Cliente;
+import com.jass.huacariz.entity.Pago;
 import com.jass.huacariz.entity.Recibo;
 import com.jass.huacariz.entity.Suministro;
 import com.jass.huacariz.repository.ClienteRepository;
+import com.jass.huacariz.repository.PagoRepository;
 import com.jass.huacariz.repository.ReciboRepository;
-import com.jass.huacariz.repository.SuministroRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,8 +25,8 @@ import java.util.List;
 public class ClientePortalService {
 
     private final ClienteRepository clienteRepository;
-    private final SuministroRepository suministroRepository;
     private final ReciboRepository reciboRepository;
+    private final PagoRepository pagoRepository;
 
     @Transactional(readOnly = true)
     public ClientePerfilResponse obtenerMiPerfil() {
@@ -45,7 +48,7 @@ public class ClientePortalService {
     public List<SuministroResponse> listarMisSuministros() {
         Cliente cliente = obtenerClienteAutenticado();
 
-        return suministroRepository.findByClienteId(cliente.getId())
+        return cliente.getSuministros()
                 .stream()
                 .map(this::convertirSuministroAResponse)
                 .toList();
@@ -55,25 +58,67 @@ public class ClientePortalService {
     public List<ReciboResponse> listarMisRecibos() {
         Cliente cliente = obtenerClienteAutenticado();
 
-        List<Suministro> suministros = suministroRepository.findByClienteId(cliente.getId());
-        List<ReciboResponse> recibosResponse = new ArrayList<>();
+        return reciboRepository.findAll()
+                .stream()
+                .filter(recibo -> perteneceAlCliente(cliente, recibo))
+                .map(this::convertirReciboAResponse)
+                .toList();
+    }
 
-        for (Suministro suministro : suministros) {
-            List<Recibo> recibos = reciboRepository.findBySuministroId(suministro.getId());
+    @Transactional
+    public PagoResponse pagarMiRecibo(Integer reciboId, PagoRequest request) {
+        Cliente cliente = obtenerClienteAutenticado();
 
-            recibos.stream()
-                    .map(this::convertirReciboAResponse)
-                    .forEach(recibosResponse::add);
+        Recibo recibo = reciboRepository.findById(reciboId)
+                .orElseThrow(() -> new RuntimeException("No existe el recibo con ID: " + reciboId));
+
+        if (!perteneceAlCliente(cliente, recibo)) {
+            throw new RuntimeException("No tienes permiso para pagar este recibo.");
         }
 
-        return recibosResponse;
+        if ("PAGADO".equalsIgnoreCase(recibo.getEstadoRecibo())) {
+            throw new RuntimeException("El recibo ya se encuentra pagado.");
+        }
+
+        Pago pago = Pago.builder()
+                .recibo(recibo)
+                .metodoPago(request.getMetodoPago())
+                .codigoOperacion(request.getCodigoOperacion())
+                .monto(recibo.getTotal())
+                .estadoPago("PAGADO")
+                .fechaPago(LocalDateTime.now())
+                .build();
+
+        recibo.setEstadoRecibo("PAGADO");
+
+        pagoRepository.save(pago);
+        reciboRepository.save(recibo);
+
+        return PagoResponse.builder()
+                .id(pago.getId())
+                .idRecibo(recibo.getId())
+                .codigoRecibo(recibo.getCodigoRecibo())
+                .metodoPago(pago.getMetodoPago())
+                .codigoOperacion(pago.getCodigoOperacion())
+                .monto(pago.getMonto())
+                .estadoPago(pago.getEstadoPago())
+                .fechaPago(pago.getFechaPago())
+                .build();
     }
 
     private Cliente obtenerClienteAutenticado() {
-        String codigoUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        String codigoUsuario = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
 
         return clienteRepository.findByUsuarioCodigoUsuario(codigoUsuario)
-                .orElseThrow(() -> new RuntimeException("No existe cliente asociado al usuario autenticado"));
+                .orElseThrow(() -> new RuntimeException("No existe cliente asociado al usuario autenticado."));
+    }
+
+    private boolean perteneceAlCliente(Cliente cliente, Recibo recibo) {
+        return cliente.getSuministros()
+                .stream()
+                .anyMatch(suministro -> suministro.getId().equals(recibo.getSuministro().getId()));
     }
 
     private SuministroResponse convertirSuministroAResponse(Suministro suministro) {

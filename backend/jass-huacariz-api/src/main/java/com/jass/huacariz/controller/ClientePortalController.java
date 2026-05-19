@@ -1,6 +1,8 @@
 package com.jass.huacariz.controller;
 
+import com.jass.huacariz.dto.request.PagoRequest;
 import com.jass.huacariz.dto.response.ClientePerfilResponse;
+import com.jass.huacariz.dto.response.PagoResponse;
 import com.jass.huacariz.dto.response.ReciboResponse;
 import com.jass.huacariz.dto.response.SuministroResponse;
 import com.jass.huacariz.service.ClientePortalService;
@@ -30,5 +32,13 @@ public class ClientePortalController {
     @GetMapping("/me/recibos")
     public ResponseEntity<List<ReciboResponse>> listarMisRecibos() {
         return ResponseEntity.ok(clientePortalService.listarMisRecibos());
+    }
+
+    @PatchMapping("/me/recibos/{id}/pagar")
+    public ResponseEntity<PagoResponse> pagarMiRecibo(
+            @PathVariable Integer id,
+            @RequestBody PagoRequest request
+    ) {
+        return ResponseEntity.ok(clientePortalService.pagarMiRecibo(id, request));
     }
 }

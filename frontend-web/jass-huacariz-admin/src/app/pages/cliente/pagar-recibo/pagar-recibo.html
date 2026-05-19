@@ -1,200 +1,90 @@
-@if (reciboActual) {
-  <div class="pagar-recibo-page">
-    <div class="page-actions">
-      <a routerLink="/cliente/mis-recibos" class="btn-back">
-        ← Volver a mis recibos
-      </a>
-
-      <a [routerLink]="['/cliente/detalle-recibo', reciboActual.id]" class="btn-detail">
-        Ver detalle del recibo
-      </a>
+<div class="pagar-recibo-page">
+  <div class="page-header">
+    <div>
+      <span class="tag">Portal cliente</span>
+      <h2>Pagar recibo</h2>
+      <p>Registra el pago de tu recibo pendiente.</p>
     </div>
 
-    <section class="payment-header">
+    <button type="button" class="btn-secondary" routerLink="/cliente/mis-recibos">
+      Volver
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="exito" class="alert-success">
+    {{ exito }}
+  </div>
+
+  <div *ngIf="cargando" class="alert-info">
+    Cargando recibo...
+  </div>
+
+  <section class="payment-card" *ngIf="recibo">
+    <div class="receipt-summary">
       <div>
-        <span class="module-tag">Pago de recibo</span>
-        <h2>{{ reciboActual.codigo }}</h2>
-        <p>
-          Realiza el pago del recibo correspondiente al suministro
-          <strong>{{ reciboActual.suministro }}</strong>.
-        </p>
+        <span>Recibo</span>
+        <strong>{{ recibo.codigoRecibo }}</strong>
       </div>
 
-      <div class="amount-box">
-        <span>Total a pagar</span>
-        <h1>S/ {{ reciboActual.total.toFixed(2) }}</h1>
+      <div>
+        <span>Suministro</span>
+        <strong>{{ recibo.codigoSuministro }}</strong>
       </div>
-    </section>
 
-    <div class="payment-grid">
-      <section class="payment-card">
-        <div class="section-title">
-          <h3>Información del recibo</h3>
-          <p>Verifica los datos antes de generar el pago.</p>
-        </div>
+      <div>
+        <span>Periodo</span>
+        <strong>{{ periodo() }}</strong>
+      </div>
 
-        <div class="info-list">
-          <div>
-            <span>Cliente</span>
-            <strong>{{ reciboActual.cliente }}</strong>
-          </div>
+      <div>
+        <span>Total</span>
+        <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
+      </div>
+    </div>
 
-          <div>
-            <span>DNI</span>
-            <strong>{{ reciboActual.dni }}</strong>
-          </div>
+    <div *ngIf="recibo.estadoRecibo === 'PAGADO'" class="alert-info">
+      Este recibo ya se encuentra pagado.
+    </div>
 
-          <div>
-            <span>Suministro</span>
-            <strong>{{ reciboActual.suministro }}</strong>
-          </div>
+    <div class="form-card" *ngIf="recibo.estadoRecibo === 'PENDIENTE'">
+      <h3>Datos del pago</h3>
 
-          <div>
-            <span>Dirección</span>
-            <strong>{{ reciboActual.direccion }}</strong>
-          </div>
+      <div class="form-group">
+        <label>Método de pago</label>
+        <select [(ngModel)]="pago.metodoPago">
+          <option value="PagoEfectivo">PagoEfectivo</option>
+          <option value="Yape">Yape</option>
+          <option value="Transferencia">Transferencia</option>
+          <option value="Efectivo">Efectivo</option>
+        </select>
+      </div>
 
-          <div>
-            <span>Periodo</span>
-            <strong>{{ reciboActual.periodo }}</strong>
-          </div>
+      <div class="form-group">
+        <label>Código de operación</label>
+        <input
+          type="text"
+          [(ngModel)]="pago.codigoOperacion"
+          placeholder="Ejemplo: OP-002, voucher, código Yape..."
+        >
+      </div>
 
-          <div>
-            <span>Consumo</span>
-            <strong>{{ reciboActual.consumo }} m³</strong>
-          </div>
-
-          <div>
-            <span>Vencimiento</span>
-            <strong>{{ reciboActual.fechaVencimiento }}</strong>
-          </div>
-
-          <div>
-            <span>Estado</span>
-            <strong>{{ reciboActual.estado }}</strong>
-          </div>
-        </div>
-
-        <div class="amount-detail">
-          <div>
-            <span>Subtotal por consumo</span>
-            <strong>S/ {{ reciboActual.subtotal.toFixed(2) }}</strong>
-          </div>
-
-          <div>
-            <span>Pago de lector</span>
-            <strong>S/ {{ reciboActual.pagoLector.toFixed(2) }}</strong>
-          </div>
-
-          <div>
-            <span>Mantenimiento</span>
-            <strong>S/ {{ reciboActual.mantenimiento.toFixed(2) }}</strong>
-          </div>
-
-          <div>
-            <span>Mora</span>
-            <strong>S/ {{ reciboActual.mora.toFixed(2) }}</strong>
-          </div>
-
-          <div class="total">
-            <span>Total</span>
-            <strong>S/ {{ reciboActual.total.toFixed(2) }}</strong>
-          </div>
-        </div>
-      </section>
-
-      <section class="payment-card">
-        <div class="section-title">
-          <h3>Método de pago</h3>
-          <p>Selecciona cómo deseas pagar tu recibo.</p>
-        </div>
-
-        <div class="method-list">
-          <label class="method-card" [class.active]="metodoSeleccionado === 'PagoEfectivo'">
-            <input type="radio" name="metodoPago" value="PagoEfectivo" [(ngModel)]="metodoSeleccionado">
-            <div>
-              <strong>PagoEfectivo</strong>
-              <span>Genera un código CIP para pagar en agentes o banca móvil.</span>
-            </div>
-          </label>
-
-          <label class="method-card" [class.active]="metodoSeleccionado === 'Transferencia'">
-            <input type="radio" name="metodoPago" value="Transferencia" [(ngModel)]="metodoSeleccionado">
-            <div>
-              <strong>Transferencia bancaria</strong>
-              <span>Registra una operación por transferencia.</span>
-            </div>
-          </label>
-
-          <label class="method-card" [class.active]="metodoSeleccionado === 'Presencial'">
-            <input type="radio" name="metodoPago" value="Presencial" [(ngModel)]="metodoSeleccionado">
-            <div>
-              <strong>Pago presencial</strong>
-              <span>Acércate a la oficina de atención de JASS Huacariz.</span>
-            </div>
-          </label>
-        </div>
-
-        <button class="btn-generate" (click)="generarPago()" [disabled]="reciboActual.estado === 'Pagado'">
-          Generar pago
+      <div class="actions">
+        <button type="button" class="btn-secondary" routerLink="/cliente/mis-recibos">
+          Cancelar
         </button>
 
-        @if (pagoGenerado) {
-          <div class="generated-payment">
-            <div class="success-icon">✓</div>
-
-            <div>
-              <span>Código generado</span>
-              <h3>{{ codigoCip }}</h3>
-              <p>
-                Usa este código para realizar el pago del recibo
-                <strong>{{ reciboActual.codigo }}</strong>.
-              </p>
-            </div>
-
-            @if (metodoSeleccionado === 'PagoEfectivo') {
-              <div class="instructions">
-                <h4>Instrucciones PagoEfectivo</h4>
-                <ol>
-                  <li>Copia el código CIP generado.</li>
-                  <li>Ingresa a tu banca móvil, agente o plataforma afiliada.</li>
-                  <li>Busca la opción PagoEfectivo.</li>
-                  <li>Ingresa el código CIP y confirma el pago.</li>
-                </ol>
-              </div>
-            }
-
-            @if (metodoSeleccionado === 'Transferencia') {
-              <div class="instructions">
-                <h4>Datos para transferencia</h4>
-                <p><strong>Banco:</strong> Banco de la Nación</p>
-                <p><strong>Cuenta:</strong> 000-000000000</p>
-                <p><strong>Concepto:</strong> {{ codigoCip }}</p>
-              </div>
-            }
-
-            @if (metodoSeleccionado === 'Presencial') {
-              <div class="instructions">
-                <h4>Pago presencial</h4>
-                <p>
-                  Presenta el código generado en la oficina de JASS Huacariz para registrar el pago.
-                </p>
-              </div>
-            }
-
-            <button class="btn-confirm" (click)="confirmarPagoVisual()">
-              Simular pago realizado
-            </button>
-          </div>
-        }
-      </section>
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="pagando"
+          (click)="confirmarPago()">
+          {{ pagando ? 'Registrando...' : 'Confirmar pago' }}
+        </button>
+      </div>
     </div>
-  </div>
-} @else {
-  <div class="not-found">
-    <div>💧</div>
-    <h2>Recibo no encontrado</h2>
-    <p>No se encontró información para el recibo solicitado.</p>
-    <a routerLink="/cliente/mis-recibos">Volver a mis recibos</a>
-  </div>
-}
+  </section>
+</div>

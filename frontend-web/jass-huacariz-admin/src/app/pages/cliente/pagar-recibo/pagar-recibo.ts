@@ -1,107 +1,144 @@
-import { Component } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
-interface ReciboPago {
-  id: number;
-  codigo: string;
-  cliente: string;
-  dni: string;
-  suministro: string;
-  direccion: string;
-  periodo: string;
-  consumo: number;
-  fechaVencimiento: string;
-  subtotal: number;
-  pagoLector: number;
-  mantenimiento: number;
-  mora: number;
-  total: number;
-  estado: 'Pendiente' | 'Pagado' | 'Vencido';
-}
+import {
+  ClientePortal,
+  PagoClienteRequest,
+  ReciboClienteResponse
+} from '../../../core/services/cliente-portal';
 
 @Component({
   selector: 'app-pagar-recibo',
-  imports: [RouterLink, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './pagar-recibo.html',
-  styleUrl: './pagar-recibo.scss'
+  styleUrl: './pagar-recibo.scss',
 })
-export class PagarRecibo {
-  idRecibo = 0;
-  metodoSeleccionado: 'PagoEfectivo' | 'Transferencia' | 'Presencial' = 'PagoEfectivo';
-  codigoCip = '';
-  pagoGenerado = false;
+export class PagarRecibo implements OnInit {
+  recibo: ReciboClienteResponse | null = null;
 
-  recibos: ReciboPago[] = [
-    {
-      id: 1,
-      codigo: 'REC-0001',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      suministro: 'Casa principal',
-      direccion: 'Av. Principal 123',
-      periodo: 'Mayo 2026',
-      consumo: 12,
-      fechaVencimiento: '15/05/2026',
-      subtotal: 36,
-      pagoLector: 1,
-      mantenimiento: 0,
-      mora: 0,
-      total: 37,
-      estado: 'Pendiente'
-    },
-    {
-      id: 3,
-      codigo: 'REC-0003',
-      cliente: 'Dany Carmona',
-      dni: '12345678',
-      suministro: 'Local comercial',
-      direccion: 'Jr. Lima 560',
-      periodo: 'Mayo 2026',
-      consumo: 10,
-      fechaVencimiento: '15/05/2026',
-      subtotal: 30,
-      pagoLector: 1,
-      mantenimiento: 0,
-      mora: 0,
-      total: 31,
-      estado: 'Pendiente'
-    }
-  ];
+  pago: PagoClienteRequest = {
+    metodoPago: 'PagoEfectivo',
+    codigoOperacion: ''
+  };
 
-  constructor(private route: ActivatedRoute) {
-    this.idRecibo = Number(this.route.snapshot.paramMap.get('id') || 1);
+  cargando = false;
+  pagando = false;
+  error = '';
+  exito = '';
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private clientePortal: ClientePortal,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarRecibo();
   }
 
-  get reciboActual(): ReciboPago | undefined {
-    return this.recibos.find(recibo => recibo.id === this.idRecibo);
-  }
+  cargarRecibo(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
 
-  generarPago(): void {
-    if (!this.reciboActual) {
+    if (!id) {
+      this.error = 'No se encontró el recibo.';
       return;
     }
 
-    const numero = Math.floor(100000000 + Math.random() * 900000000);
+    this.cargando = true;
+    this.error = '';
 
-    if (this.metodoSeleccionado === 'PagoEfectivo') {
-      this.codigoCip = `CIP-${numero}`;
-    }
+    this.clientePortal.listarMisRecibos()
+      .pipe(
+        finalize(() => {
+          this.cargando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (recibos) => {
+          const encontrado = recibos.find(r => r.id === id);
 
-    if (this.metodoSeleccionado === 'Transferencia') {
-      this.codigoCip = `TR-${numero}`;
-    }
+          if (!encontrado) {
+            this.error = 'No se encontró el recibo solicitado.';
+            this.recibo = null;
+            this.cdr.detectChanges();
+            return;
+          }
 
-    if (this.metodoSeleccionado === 'Presencial') {
-      this.codigoCip = `PRES-${numero}`;
-    }
-
-    this.pagoGenerado = true;
+          this.recibo = encontrado;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.error = 'No se pudo cargar el recibo.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  confirmarPagoVisual(): void {
-    if (this.reciboActual) {
-      this.reciboActual.estado = 'Pagado';
+  confirmarPago(): void {
+    if (!this.recibo) {
+      return;
     }
+
+    if (this.recibo.estadoRecibo === 'PAGADO') {
+      this.error = 'Este recibo ya se encuentra pagado.';
+      return;
+    }
+
+    if (!this.pago.metodoPago.trim()) {
+      this.error = 'Seleccione un método de pago.';
+      return;
+    }
+
+    if (!this.pago.codigoOperacion.trim()) {
+      this.error = 'Ingrese el código de operación.';
+      return;
+    }
+
+    this.pagando = true;
+    this.error = '';
+    this.exito = '';
+
+    this.clientePortal.pagarMiRecibo(this.recibo.id, {
+      metodoPago: this.pago.metodoPago.trim(),
+      codigoOperacion: this.pago.codigoOperacion.trim()
+    })
+    .pipe(
+      finalize(() => {
+        this.pagando = false;
+        this.cdr.detectChanges();
+      })
+    )
+    .subscribe({
+      next: () => {
+        this.exito = 'Pago registrado correctamente.';
+        this.cdr.detectChanges();
+
+        setTimeout(() => {
+          this.router.navigate(['/cliente/mis-recibos']);
+        }, 1200);
+      },
+      error: (err) => {
+        this.error = err?.error?.error || 'No se pudo registrar el pago.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  periodo(): string {
+    if (!this.recibo) {
+      return '';
+    }
+
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    return `${meses[this.recibo.mes - 1] ?? 'Mes'} ${this.recibo.anio}`;
   }
 }

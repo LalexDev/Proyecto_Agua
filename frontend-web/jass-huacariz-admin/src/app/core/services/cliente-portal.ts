@@ -43,6 +43,22 @@ export interface ReciboClienteResponse {
   fechaVencimiento: string;
 }
 
+export interface PagoClienteRequest {
+  metodoPago: string;
+  codigoOperacion: string;
+}
+
+export interface PagoClienteResponse {
+  id: number;
+  idRecibo: number;
+  codigoRecibo: string;
+  metodoPago: string;
+  codigoOperacion: string;
+  monto: number;
+  estadoPago: string;
+  fechaPago: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -61,5 +77,9 @@ export class ClientePortal {
 
   listarMisRecibos(): Observable<ReciboClienteResponse[]> {
     return this.http.get<ReciboClienteResponse[]>(`${this.apiUrl}/me/recibos`);
+  }
+
+  pagarMiRecibo(idRecibo: number, data: PagoClienteRequest): Observable<PagoClienteResponse> {
+    return this.http.patch<PagoClienteResponse>(`${this.apiUrl}/me/recibos/${idRecibo}/pagar`, data);
   }
 }
