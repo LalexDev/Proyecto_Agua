@@ -1,0 +1,153 @@
+<div class="historial-page">
+  <div class="page-header">
+    <div>
+      <span class="tag">Administración</span>
+      <h2>Historial de lecturas</h2>
+      <p>Consulta las lecturas registradas, consumos generados y recibos asociados.</p>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="cargarHistorial()">
+      Actualizar
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert-error">
+    {{ error }}
+  </div>
+
+  <section class="stats-grid">
+    <div class="stat-card">
+      <span>Lecturas</span>
+      <strong>{{ lecturasFiltradas.length }}</strong>
+      <small>Registros encontrados</small>
+    </div>
+
+    <div class="stat-card">
+      <span>Consumo total</span>
+      <strong>{{ totalConsumo() | number:'1.2-3' }} m³</strong>
+      <small>Según filtros aplicados</small>
+    </div>
+
+    <div class="stat-card">
+      <span>Total emitido</span>
+      <strong>S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
+      <small>Importe de recibos</small>
+    </div>
+
+    <div class="stat-card">
+      <span>Pendientes / Pagados</span>
+      <strong>{{ totalPendientes() }} / {{ totalPagados() }}</strong>
+      <small>Estado de recibos</small>
+    </div>
+  </section>
+
+  <section class="filter-card">
+    <input
+      type="text"
+      placeholder="Buscar por suministro, cliente, DNI, sector o recibo..."
+      [(ngModel)]="busqueda"
+      (input)="aplicarFiltros()"
+    >
+
+    <select [(ngModel)]="filtroMes" (change)="aplicarFiltros()">
+      <option [ngValue]="''">Todos los meses</option>
+      <option [ngValue]="1">Enero</option>
+      <option [ngValue]="2">Febrero</option>
+      <option [ngValue]="3">Marzo</option>
+      <option [ngValue]="4">Abril</option>
+      <option [ngValue]="5">Mayo</option>
+      <option [ngValue]="6">Junio</option>
+      <option [ngValue]="7">Julio</option>
+      <option [ngValue]="8">Agosto</option>
+      <option [ngValue]="9">Septiembre</option>
+      <option [ngValue]="10">Octubre</option>
+      <option [ngValue]="11">Noviembre</option>
+      <option [ngValue]="12">Diciembre</option>
+    </select>
+
+    <input
+      type="number"
+      placeholder="Año"
+      [(ngModel)]="filtroAnio"
+      (input)="aplicarFiltros()"
+    >
+
+    <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+      Limpiar
+    </button>
+  </section>
+
+  <div *ngIf="cargando" class="alert-info">
+    Cargando historial de lecturas...
+  </div>
+
+  <section class="table-card">
+    <div class="table-title">
+      <h3>Lecturas registradas</h3>
+      <span>{{ lecturasFiltradas.length }} resultado(s)</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Suministro</th>
+            <th>Cliente</th>
+            <th>Periodo</th>
+            <th>Lectura anterior</th>
+            <th>Lectura actual</th>
+            <th>Consumo</th>
+            <th>Recibo</th>
+            <th>Total</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let item of lecturasFiltradas">
+            <td>
+              <strong>{{ item.codigoSuministro }}</strong>
+              <small>{{ item.aliasSuministro || item.direccionSuministro }}</small>
+              <small>{{ item.sector }}</small>
+            </td>
+
+            <td>
+              <strong>{{ item.cliente }}</strong>
+              <small>DNI: {{ item.dniCliente }}</small>
+            </td>
+
+            <td>
+              {{ nombreMes(item.mes) }} {{ item.anio }}
+            </td>
+
+            <td>{{ item.lecturaAnterior | number:'1.2-3' }} m³</td>
+            <td>{{ item.lecturaActual | number:'1.2-3' }} m³</td>
+            <td>
+              <strong>{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
+            </td>
+
+            <td>
+              <strong>{{ item.codigoRecibo || '-' }}</strong>
+            </td>
+
+            <td>
+              <strong>S/ {{ item.totalRecibo || 0 | number:'1.2-2' }}</strong>
+            </td>
+
+            <td>
+              <span class="badge" [ngClass]="estadoClase(item.estadoRecibo)">
+                {{ item.estadoRecibo || 'PENDIENTE' }}
+              </span>
+            </td>
+          </tr>
+
+          <tr *ngIf="lecturasFiltradas.length === 0 && !cargando">
+            <td colspan="9" class="empty-row">
+              No hay lecturas registradas.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-
+import { HistorialLecturas } from './pages/admin/historial-lecturas/historial-lecturas';
 import { Login } from './pages/login/login';
 
 import { AdminLayout } from './layout/admin-layout/admin-layout';
@@ -50,7 +50,8 @@ export const routes: Routes = [
       { path: 'pagos', component: Pagos },
       { path: 'reportes', component: Reportes },
       { path: 'tarifas', component: Tarifas },
-      { path: 'qr-suministro', component: QrSuministro }
+      { path: 'qr-suministro', component: QrSuministro },
+      { path: 'historial-lecturas', component: HistorialLecturas }
     ]
   },
   {
