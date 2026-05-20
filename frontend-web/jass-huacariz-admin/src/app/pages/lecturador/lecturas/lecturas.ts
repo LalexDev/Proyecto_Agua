@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
+import { Html5Qrcode } from 'html5-qrcode';
 
 import {
   LecturaRequest,
@@ -17,7 +18,7 @@ import {
   templateUrl: './lecturas.html',
   styleUrl: './lecturas.scss',
 })
-export class LecturasLecturador {
+export class LecturasLecturador implements OnDestroy {
   codigoBusqueda = '';
 
   suministro: SuministroLecturadorResponse | null = null;
@@ -25,16 +26,25 @@ export class LecturasLecturador {
 
   cargando = false;
   registrando = false;
+  escaneando = false;
+
   error = '';
   exito = '';
 
   lecturaForm: LecturaRequest = this.crearLecturaVacia();
+
+  private qrScanner: Html5Qrcode | null = null;
+  readonly qrRegionId = 'qr-reader-lecturador';
 
   constructor(
     private lecturadorService: Lecturador,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnDestroy(): void {
+    this.detenerEscaneo();
+  }
 
   buscarSuministro(): void {
     this.error = '';
@@ -49,6 +59,7 @@ export class LecturasLecturador {
       return;
     }
 
+    this.codigoBusqueda = codigo;
     this.cargando = true;
 
     this.lecturadorService.buscarSuministro(codigo)
@@ -68,6 +79,7 @@ export class LecturasLecturador {
             lecturaActual: 0,
             observacion: 'Lectura mensual registrada'
           };
+          this.exito = 'Suministro encontrado correctamente.';
           this.cdr.detectChanges();
         },
         error: (err) => {
@@ -137,7 +149,106 @@ export class LecturasLecturador {
       });
   }
 
+  async iniciarEscaneo(): Promise<void> {
+    this.error = '';
+    this.exito = '';
+
+    if (this.escaneando) {
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.error = 'Tu navegador no permite acceso a la cámara.';
+      return;
+    }
+
+    this.escaneando = true;
+    this.cdr.detectChanges();
+
+    setTimeout(async () => {
+      try {
+        const camaras = await Html5Qrcode.getCameras();
+
+        if (!camaras || camaras.length === 0) {
+          this.error = 'No se encontró ninguna cámara disponible.';
+          this.escaneando = false;
+          this.cdr.detectChanges();
+          return;
+        }
+
+        const camaraTrasera = camaras.find((camara) => {
+          const label = camara.label.toLowerCase();
+          return (
+            label.includes('back') ||
+            label.includes('rear') ||
+            label.includes('environment') ||
+            label.includes('trasera') ||
+            label.includes('posterior')
+          );
+        });
+
+        const cameraId = camaraTrasera?.id || camaras[0].id;
+
+        this.qrScanner = new Html5Qrcode(this.qrRegionId);
+
+        await this.qrScanner.start(
+          cameraId,
+          {
+            fps: 10,
+            qrbox: {
+              width: 260,
+              height: 260
+            }
+          },
+          async (decodedText: string) => {
+            const codigo = this.normalizarCodigoQr(decodedText);
+
+            if (!codigo) {
+              this.error = 'El QR escaneado no contiene un código válido.';
+              this.cdr.detectChanges();
+              return;
+            }
+
+            this.codigoBusqueda = codigo;
+            this.exito = 'QR escaneado correctamente.';
+            this.cdr.detectChanges();
+
+            await this.detenerEscaneo();
+            this.buscarSuministro();
+          },
+          () => {
+            // Lectura fallida temporal. No se muestra error para no llenar la pantalla.
+          }
+        );
+      } catch {
+        this.error = 'No se pudo iniciar la cámara. Verifique permisos del navegador.';
+        this.escaneando = false;
+        this.cdr.detectChanges();
+      }
+    }, 200);
+  }
+
+  async detenerEscaneo(): Promise<void> {
+    try {
+      if (this.qrScanner) {
+        if (this.escaneando) {
+          await this.qrScanner.stop();
+        }
+
+        await this.qrScanner.clear();
+      }
+    } catch {
+      // No hacemos nada porque puede fallar si la cámara ya estaba detenida.
+    } finally {
+      this.qrScanner = null;
+      this.escaneando = false;
+      this.cdr.detectChanges();
+    }
+  }
+
   limpiar(): void {
+    this.detenerEscaneo();
+
     this.codigoBusqueda = '';
     this.suministro = null;
     this.lecturaGenerada = null;
@@ -147,6 +258,8 @@ export class LecturasLecturador {
   }
 
   cerrarSesion(): void {
+    this.detenerEscaneo();
+
     localStorage.clear();
     sessionStorage.clear();
     this.router.navigate(['/login']);
@@ -159,6 +272,28 @@ export class LecturasLecturador {
     ];
 
     return meses[mes - 1] ?? 'Mes inválido';
+  }
+
+  private normalizarCodigoQr(valor: string): string {
+    const texto = String(valor || '').trim();
+
+    if (!texto) {
+      return '';
+    }
+
+    try {
+      const url = new URL(texto);
+      const codigoParam = url.searchParams.get('codigo');
+
+      if (codigoParam) {
+        return codigoParam.trim().toUpperCase();
+      }
+
+      const partes = url.pathname.split('/').filter(Boolean);
+      return (partes.pop() || '').trim().toUpperCase();
+    } catch {
+      return texto.trim().toUpperCase();
+    }
   }
 
   private crearLecturaVacia(): LecturaRequest {

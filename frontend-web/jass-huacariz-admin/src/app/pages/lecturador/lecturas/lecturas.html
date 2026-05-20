@@ -50,13 +50,49 @@
           (keyup.enter)="buscarSuministro()"
         >
 
-        <button type="button" class="btn-primary" [disabled]="cargando" (click)="buscarSuministro()">
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="cargando"
+          (click)="buscarSuministro()"
+        >
           {{ cargando ? 'Buscando...' : 'Buscar' }}
         </button>
 
-        <button type="button" class="btn-secondary" (click)="limpiar()">
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="limpiar()"
+        >
           Limpiar
         </button>
+
+        <button
+          type="button"
+          class="btn-scan"
+          [disabled]="escaneando"
+          (click)="iniciarEscaneo()"
+        >
+          {{ escaneando ? 'Escaneando...' : 'Escanear QR' }}
+        </button>
+
+        <button
+          *ngIf="escaneando"
+          type="button"
+          class="btn-secondary"
+          (click)="detenerEscaneo()"
+        >
+          Detener cámara
+        </button>
+      </div>
+
+      <div class="qr-scanner-card" *ngIf="escaneando">
+        <div class="qr-scanner-header">
+          <strong>Escaneando QR del suministro</strong>
+          <span>Apunta la cámara al código QR pegado en el medidor o vivienda.</span>
+        </div>
+
+        <div id="qr-reader-lecturador"></div>
       </div>
     </section>
 
@@ -147,7 +183,8 @@
           type="button"
           class="btn-primary"
           [disabled]="registrando"
-          (click)="registrarLectura()">
+          (click)="registrarLectura()"
+        >
           {{ registrando ? 'Registrando...' : 'Registrar lectura y generar recibo' }}
         </button>
       </div>
