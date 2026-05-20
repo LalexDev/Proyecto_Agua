@@ -6,9 +6,19 @@
       <p>Resumen operativo del sistema de agua potable JASS Huacariz.</p>
     </div>
 
-    <button type="button" class="btn-primary" (click)="cargarReportes()">
-      Actualizar reportes
-    </button>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="exportarExcel()">
+        Exportar Excel
+      </button>
+
+      <button type="button" class="btn-secondary" (click)="imprimirReporte()">
+        Imprimir PDF
+      </button>
+
+      <button type="button" class="btn-primary" (click)="cargarReportes()">
+        Actualizar reportes
+      </button>
+    </div>
   </div>
 
   <div *ngIf="error" class="alert-error">
@@ -19,79 +29,77 @@
     Cargando reportes...
   </div>
 
-  <div class="stats-grid">
+  <section class="stats-grid">
     <div class="stat-card">
-      <span>👥</span>
+      <div class="icon">👥</div>
       <div>
-        <p>Total clientes</p>
-        <h3>{{ totalClientes() }}</h3>
+        <span>Total clientes</span>
+        <strong>{{ totalClientes() }}</strong>
       </div>
     </div>
 
     <div class="stat-card">
-      <span>🏠</span>
+      <div class="icon">🏠</div>
       <div>
-        <p>Total suministros</p>
-        <h3>{{ totalSuministros() }}</h3>
+        <span>Total suministros</span>
+        <strong>{{ totalSuministros() }}</strong>
       </div>
     </div>
 
     <div class="stat-card">
-      <span>🧾</span>
+      <div class="icon">🧾</div>
       <div>
-        <p>Total recibos</p>
-        <h3>{{ totalRecibos() }}</h3>
+        <span>Total recibos</span>
+        <strong>{{ totalRecibos() }}</strong>
       </div>
     </div>
 
     <div class="stat-card">
-      <span>💰</span>
+      <div class="icon">💰</div>
       <div>
-        <p>Total recaudado</p>
-        <h3>S/ {{ totalRecaudado() | number:'1.2-2' }}</h3>
+        <span>Total recaudado</span>
+        <strong>S/ {{ totalRecaudado() | number:'1.2-2' }}</strong>
       </div>
     </div>
-  </div>
 
-  <div class="stats-grid secondary">
     <div class="stat-card">
-      <span>⏳</span>
+      <div class="icon">⏳</div>
       <div>
-        <p>Recibos pendientes</p>
-        <h3>{{ recibosPendientes() }}</h3>
+        <span>Recibos pendientes</span>
+        <strong>{{ recibosPendientes() }}</strong>
         <small>{{ porcentajePendientes() | number:'1.1-1' }}%</small>
       </div>
     </div>
 
     <div class="stat-card">
-      <span>✅</span>
+      <div class="icon">✅</div>
       <div>
-        <p>Recibos pagados</p>
-        <h3>{{ recibosPagados() }}</h3>
+        <span>Recibos pagados</span>
+        <strong>{{ recibosPagados() }}</strong>
         <small>{{ porcentajePagados() | number:'1.1-1' }}%</small>
       </div>
     </div>
 
     <div class="stat-card">
-      <span>💧</span>
+      <div class="icon">💧</div>
       <div>
-        <p>Consumo total</p>
-        <h3>{{ consumoTotal() | number:'1.2-2' }} m³</h3>
+        <span>Consumo total</span>
+        <strong>{{ consumoTotal() | number:'1.2-3' }} m³</strong>
       </div>
     </div>
 
     <div class="stat-card">
-      <span>📊</span>
+      <div class="icon">📊</div>
       <div>
-        <p>Consumo promedio</p>
-        <h3>{{ consumoPromedio() | number:'1.2-2' }} m³</h3>
+        <span>Consumo promedio</span>
+        <strong>{{ consumoPromedio() | number:'1.2-2' }} m³</strong>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="content-grid">
-    <section class="panel-card">
-      <div class="section-title">
+  <section class="content-grid">
+    <div class="table-card wide">
+      <div class="table-title">
         <h3>Últimos recibos</h3>
         <span>{{ ultimosRecibos().length }} registro(s)</span>
       </div>
@@ -109,28 +117,28 @@
 
         <tbody>
           <tr *ngFor="let recibo of ultimosRecibos()">
-            <td>{{ recibo.codigoRecibo }}</td>
-            <td>{{ recibo.codigoSuministro || '-' }}</td>
+            <td>{{ $any(recibo).codigoRecibo }}</td>
+            <td>{{ $any(recibo).codigoSuministro }}</td>
             <td>{{ periodo(recibo) }}</td>
-            <td>S/ {{ recibo.total | number:'1.2-2' }}</td>
+            <td>S/ {{ $any(recibo).total | number:'1.2-2' }}</td>
             <td>
-              <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
-                {{ recibo.estadoRecibo }}
+              <span class="badge" [ngClass]="estadoClase($any(recibo).estadoRecibo)">
+                {{ $any(recibo).estadoRecibo }}
               </span>
             </td>
           </tr>
 
-          <tr *ngIf="ultimosRecibos().length === 0 && !cargando">
+          <tr *ngIf="ultimosRecibos().length === 0">
             <td colspan="5" class="empty-row">
               No hay recibos registrados.
             </td>
           </tr>
         </tbody>
       </table>
-    </section>
+    </div>
 
-    <section class="panel-card">
-      <div class="section-title">
+    <div class="table-card">
+      <div class="table-title">
         <h3>Últimos pagos</h3>
         <span>{{ ultimosPagos().length }} registro(s)</span>
       </div>
@@ -147,25 +155,23 @@
 
         <tbody>
           <tr *ngFor="let pago of ultimosPagos()">
-            <td>{{ pago.codigoRecibo }}</td>
-            <td>{{ pago.metodoPago }}</td>
-            <td>S/ {{ pago.monto | number:'1.2-2' }}</td>
-            <td>{{ pago.fechaPago | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ $any(pago).codigoRecibo || $any(pago).reciboCodigo || '-' }}</td>
+            <td>{{ $any(pago).metodoPago || $any(pago).metodo || '-' }}</td>
+            <td>S/ {{ $any(pago).monto | number:'1.2-2' }}</td>
+            <td>{{ $any(pago).fechaPago || $any(pago).fechaRegistro || $any(pago).fecha || '-' }}</td>
           </tr>
 
-          <tr *ngIf="ultimosPagos().length === 0 && !cargando">
+          <tr *ngIf="ultimosPagos().length === 0">
             <td colspan="4" class="empty-row">
               No hay pagos registrados.
             </td>
           </tr>
         </tbody>
       </table>
-    </section>
-  </div>
+    </div>
 
-  <div class="content-grid">
-    <section class="panel-card">
-      <div class="section-title">
+    <div class="table-card">
+      <div class="table-title">
         <h3>Clientes con más suministros</h3>
         <span>{{ clientesConMasSuministros().length }} cliente(s)</span>
       </div>
@@ -182,26 +188,26 @@
 
         <tbody>
           <tr *ngFor="let cliente of clientesConMasSuministros()">
-            <td>{{ cliente.dni }}</td>
+            <td>{{ $any(cliente).dni }}</td>
             <td>{{ nombreCompleto(cliente) }}</td>
-            <td>{{ cliente.suministros.length }}</td>
+            <td>{{ $any(cliente).suministros?.length || 0 }}</td>
             <td>
-              <span class="badge" [ngClass]="cliente.estado ? 'pagado' : 'pendiente'">
-                {{ cliente.estado ? 'Activo' : 'Inactivo' }}
+              <span class="badge" [ngClass]="$any(cliente).estado === false ? 'pendiente' : 'pagado'">
+                {{ $any(cliente).estado === false ? 'Inactivo' : 'Activo' }}
               </span>
             </td>
           </tr>
 
-          <tr *ngIf="clientesConMasSuministros().length === 0 && !cargando">
+          <tr *ngIf="clientesConMasSuministros().length === 0">
             <td colspan="4" class="empty-row">
               No hay clientes registrados.
             </td>
           </tr>
         </tbody>
       </table>
-    </section>
+    </div>
 
-    <section class="panel-card summary-card">
+    <div class="summary-card">
       <h3>Resumen económico</h3>
 
       <div class="summary-row">
@@ -216,7 +222,7 @@
 
       <div class="summary-row">
         <span>Saldo pendiente</span>
-        <strong>S/ {{ (totalEmitido() - totalRecaudado()) | number:'1.2-2' }}</strong>
+        <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
       </div>
 
       <div class="summary-row">
@@ -228,6 +234,6 @@
         <span>Precio promedio m³</span>
         <strong>S/ {{ tarifaPromedio() | number:'1.2-2' }}</strong>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
 </div>

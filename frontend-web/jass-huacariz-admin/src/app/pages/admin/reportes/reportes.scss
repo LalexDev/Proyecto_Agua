@@ -6,7 +6,8 @@
 
 .page-header,
 .stat-card,
-.panel-card {
+.table-card,
+.summary-card {
   background: #ffffff;
   border-radius: 22px;
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
@@ -16,6 +17,7 @@
   padding: 24px;
   display: flex;
   justify-content: space-between;
+  gap: 18px;
   align-items: center;
 
   h2 {
@@ -40,14 +42,32 @@
   font-weight: 800;
 }
 
-.btn-primary {
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
   border: none;
   border-radius: 14px;
   padding: 12px 18px;
-  background: #1ba3c7;
-  color: #ffffff;
   font-weight: 800;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: #1ba3c7;
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: #edf4f7;
+  color: #153848;
 }
 
 .stats-grid {
@@ -59,34 +79,34 @@
 .stat-card {
   padding: 20px;
   display: flex;
-  align-items: center;
   gap: 14px;
+  align-items: center;
 
-  span {
+  .icon {
     width: 48px;
     height: 48px;
-    border-radius: 14px;
+    border-radius: 16px;
     display: grid;
     place-items: center;
     background: #e8f7fb;
-    font-size: 24px;
+    font-size: 22px;
   }
 
-  p {
-    margin: 0;
+  span {
     color: #64748b;
     font-size: 13px;
   }
 
-  h3 {
-    margin: 4px 0 0;
+  strong {
+    display: block;
+    margin-top: 5px;
     color: #0f2f3d;
-    font-size: 24px;
+    font-size: 23px;
   }
 
   small {
-    color: #64748b;
-    font-weight: 700;
+    color: #94a3b8;
+    font-size: 12px;
   }
 }
 
@@ -96,20 +116,26 @@
   gap: 18px;
 }
 
-.panel-card {
-  padding: 24px;
-  overflow-x: auto;
+.table-card,
+.summary-card {
+  padding: 22px;
 }
 
-.section-title {
+.table-card.wide {
+  grid-column: span 1;
+}
+
+.table-title {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 
   h3 {
     margin: 0;
     color: #0f2f3d;
+    font-size: 20px;
   }
 
   span {
@@ -121,53 +147,61 @@
 table {
   width: 100%;
   border-collapse: collapse;
+}
 
-  th {
-    text-align: left;
-    padding: 14px 12px;
-    background: #f6fafc;
-    color: #64748b;
-    font-size: 13px;
-  }
+th {
+  text-align: left;
+  padding: 13px 12px;
+  background: #f6fafc;
+  color: #64748b;
+  font-size: 13px;
+}
 
-  td {
-    padding: 15px 12px;
-    border-bottom: 1px solid #edf3f7;
-    color: #153848;
-    font-size: 14px;
-  }
+td {
+  padding: 13px 12px;
+  border-bottom: 1px solid #eef3f6;
+  color: #0f2f3d;
+  font-size: 14px;
+  vertical-align: top;
 }
 
 .badge {
-  padding: 7px 12px;
+  display: inline-flex;
+  padding: 7px 13px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
+}
 
-  &.pagado {
-    background: #dcfce7;
-    color: #166534;
-  }
+.badge.pagado {
+  background: #dcfce7;
+  color: #166534;
+}
 
-  &.pendiente {
-    background: #fef3c7;
-    color: #92400e;
-  }
+.badge.pendiente {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.badge.vencido {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .summary-card {
   h3 {
     margin: 0 0 18px;
     color: #0f2f3d;
+    font-size: 20px;
   }
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid #edf3f7;
+  border-bottom: 1px solid #eef3f6;
 
   span {
     color: #64748b;
@@ -175,25 +209,15 @@ table {
 
   strong {
     color: #0f2f3d;
-    font-size: 17px;
-  }
-
-  &:last-child {
-    border-bottom: none;
   }
 }
 
-.alert-info,
-.alert-error {
+.alert-error,
+.alert-info {
   padding: 14px 18px;
   border-radius: 14px;
   font-size: 14px;
   font-weight: 700;
-}
-
-.alert-info {
-  background: #e8f7fb;
-  color: #146c94;
 }
 
 .alert-error {
@@ -201,14 +225,22 @@ table {
   color: #b91c1c;
 }
 
-.empty-row {
-  text-align: center;
-  color: #7b8794;
-  padding: 22px !important;
+.alert-info {
+  background: #e8f7fb;
+  color: #1583a3;
 }
 
-@media (max-width: 1000px) {
-  .stats-grid,
+.empty-row {
+  text-align: center;
+  padding: 24px;
+  color: #64748b;
+}
+
+@media (max-width: 1150px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .content-grid {
     grid-template-columns: 1fr;
   }
@@ -216,6 +248,19 @@ table {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+  }
+}
+
+@media (max-width: 700px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions button {
+    width: 100%;
   }
 }
