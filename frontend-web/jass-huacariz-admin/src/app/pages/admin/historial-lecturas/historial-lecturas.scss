@@ -240,3 +240,15 @@ td {
     grid-template-columns: 1fr;
   }
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.header-actions .btn-secondary,
+.header-actions .btn-primary {
+  min-width: 130px;
+}
