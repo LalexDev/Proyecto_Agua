@@ -22,6 +22,8 @@ import { Contrasena } from './pages/cliente/contrasena/contrasena';
 import { authGuard } from './core/guards/auth-guard';
 import { roleGuard } from './core/guards/role-guard';
 
+import { QrSuministro } from './pages/admin/qr-suministro/qr-suministro';
+
 import { LecturasLecturador } from './pages/lecturador/lecturas/lecturas';
 
 export const routes: Routes = [
@@ -33,7 +35,8 @@ export const routes: Routes = [
   {
     path: 'login',
     component: Login
-  },
+  },  
+
   {
     path: 'admin',
     component: AdminLayout,
@@ -46,7 +49,8 @@ export const routes: Routes = [
       { path: 'recibos', component: Recibos },
       { path: 'pagos', component: Pagos },
       { path: 'reportes', component: Reportes },
-      { path: 'tarifas', component: Tarifas }
+      { path: 'tarifas', component: Tarifas },
+      { path: 'qr-suministro', component: QrSuministro }
     ]
   },
   {

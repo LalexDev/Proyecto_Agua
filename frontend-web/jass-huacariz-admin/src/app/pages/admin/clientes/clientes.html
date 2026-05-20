@@ -114,7 +114,11 @@
 
         <div class="form-group">
           <label>Alias</label>
-          <input type="text" [(ngModel)]="suministro.aliasSuministro" placeholder="Casa, tienda, local...">
+          <input
+            type="text"
+            [(ngModel)]="suministro.aliasSuministro"
+            placeholder="Casa, tienda, local..."
+          >
         </div>
 
         <div class="form-group">
@@ -129,7 +133,12 @@
         Cancelar
       </button>
 
-      <button type="button" class="btn-primary" [disabled]="guardando" (click)="registrarCliente()">
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="guardando"
+        (click)="registrarCliente()"
+      >
         {{ guardando ? 'Guardando...' : 'Guardar cliente' }}
       </button>
     </div>
@@ -157,18 +166,37 @@
       <tbody>
         <tr *ngFor="let cliente of clientesFiltrados">
           <td>{{ cliente.dni }}</td>
+
           <td>
             <strong>{{ nombreCompleto(cliente) }}</strong>
-            <div class="suministros-list">
-              <span *ngFor="let suministro of cliente.suministros">
-                {{ suministro.codigoSuministro }} - {{ suministro.aliasSuministro || suministro.direccionSuministro }}
-              </span>
+
+            <div class="suministros-list" *ngIf="cliente.suministros?.length">
+              <div
+                class="suministro-linea"
+                *ngFor="let suministro of cliente.suministros"
+              >
+                <span>
+                  {{ suministro.codigoSuministro || suministro.codigo }}
+                  -
+                  {{ suministro.aliasSuministro || suministro.alias || suministro.direccionSuministro || 'Suministro de agua' }}
+                </span>
+
+                <button
+                  type="button"
+                  class="btn-qr"
+                  (click)="abrirQrSuministro(suministro)"
+                >
+                  QR
+                </button>
+              </div>
             </div>
           </td>
+
           <td>{{ cliente.telefono || '-' }}</td>
           <td>{{ cliente.correo || '-' }}</td>
-          <td>{{ cliente.codigoUsuario }}</td>
+          <td>{{ cliente.codigoUsuario || cliente.usuario || cliente.dni }}</td>
           <td>{{ totalSuministros(cliente) }}</td>
+
           <td>
             <span class="badge" [ngClass]="cliente.estado ? 'activo' : 'inactivo'">
               {{ estadoTexto(cliente.estado) }}

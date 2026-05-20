@@ -1,0 +1,82 @@
+<div class="qr-page">
+  <div class="page-header">
+    <div>
+      <span class="tag">Administración</span>
+      <h2>QR de suministro</h2>
+      <p>Genera e imprime un código QR para identificar cada suministro de agua.</p>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert-error">
+    {{ error }}
+  </div>
+
+  <section class="qr-card">
+    <div class="form-panel">
+      <h3>Datos del suministro</h3>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Código de suministro</label>
+          <input
+            type="text"
+            [(ngModel)]="codigoSuministro"
+            placeholder="Ejemplo: SUM-C6DAD1A0"
+            (keyup.enter)="generarQr()"
+          >
+        </div>
+
+        <div class="form-group">
+          <label>Alias del suministro</label>
+          <input
+            type="text"
+            [(ngModel)]="aliasSuministro"
+            placeholder="Ejemplo: Casa principal"
+          >
+        </div>
+
+        <div class="form-group full">
+          <label>Dirección</label>
+          <input
+            type="text"
+            [(ngModel)]="direccionSuministro"
+            placeholder="Ejemplo: Av. Principal 123"
+          >
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn-secondary" (click)="limpiar()">
+          Limpiar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="generarQr()">
+          Generar QR
+        </button>
+      </div>
+    </div>
+
+    <div class="preview-panel">
+      <div class="empty-state" *ngIf="!qrDataUrl">
+        <div class="icon">💧</div>
+        <h3>QR pendiente</h3>
+        <p>Ingresa el código del suministro para generar el QR.</p>
+      </div>
+
+      <div class="qr-preview" *ngIf="qrDataUrl">
+        <span class="tag">QR generado</span>
+
+        <div class="qr-box">
+          <img [src]="qrDataUrl" alt="QR de suministro">
+        </div>
+
+        <h3>{{ codigoSuministro }}</h3>
+        <p>{{ aliasSuministro || 'Suministro de agua' }}</p>
+
+        <button type="button" class="btn-primary" (click)="imprimirQr()">
+          Imprimir / guardar PDF
+        </button>
+      </div>
+    </div>
+  </section>
+</div>

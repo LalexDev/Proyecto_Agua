@@ -292,3 +292,40 @@ table {
     overflow-x: auto;
   }
 }
+
+
+.suministros-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.suministro-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: 320px;
+}
+
+.suministro-info span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.btn-qr {
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  background: #e8f7fb;
+  color: #1583a3;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.btn-qr:hover {
+  background: #1ba3c7;
+  color: #ffffff;
+}
