@@ -16,6 +16,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 
   h2 {
     margin: 8px 0;
@@ -27,6 +28,12 @@
     margin: 0;
     color: #64748b;
   }
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .tag {
@@ -43,22 +50,73 @@
   padding: 26px;
 }
 
-.receipt-header {
-  display: flex;
-  justify-content: space-between;
+.receipt-top {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
-  margin-bottom: 24px;
+  gap: 18px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #edf3f7;
+  margin-bottom: 22px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 
   h3 {
-    margin: 0 0 6px;
+    margin: 0;
     color: #0f2f3d;
-    font-size: 26px;
+    font-size: 24px;
   }
 
   p {
-    margin: 0;
+    margin: 5px 0 0;
+    color: #64748b;
+  }
+}
+
+.water-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: #1ba3c7;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+}
+
+.receipt-code {
+  text-align: right;
+
+  span {
+    display: block;
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  strong {
+    display: block;
+    color: #0f2f3d;
+    font-size: 22px;
+    font-weight: 900;
+  }
+
+  small {
     color: #64748b;
     font-weight: 700;
+  }
+}
+
+.client-panel {
+  margin-bottom: 22px;
+
+  h3 {
+    margin: 0 0 14px;
+    color: #0f2f3d;
   }
 }
 
@@ -66,6 +124,10 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+}
+
+.client-grid {
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .info-box {
@@ -134,6 +196,7 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 900;
+  width: fit-content;
 
   &.pagado {
     background: #dcfce7;
@@ -151,10 +214,12 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .btn-primary,
 .btn-secondary,
+.btn-outline,
 .btn-disabled {
   border: none;
   border-radius: 14px;
@@ -171,6 +236,12 @@
 .btn-secondary {
   background: #edf4f7;
   color: #153848;
+}
+
+.btn-outline {
+  background: #ffffff;
+  border: 1px solid #1ba3c7;
+  color: #1583a3;
 }
 
 .btn-disabled {
@@ -197,16 +268,25 @@
   color: #b91c1c;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .page-header,
-  .receipt-header,
+  .header-actions,
   .actions {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
   }
 
-  .info-grid {
+  .receipt-top {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .receipt-code {
+    text-align: left;
+  }
+
+  .info-grid,
+  .client-grid {
     grid-template-columns: 1fr;
   }
 }

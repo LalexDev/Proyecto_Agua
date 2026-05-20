@@ -3,12 +3,22 @@
     <div>
       <span class="tag">Portal cliente</span>
       <h2>Detalle del recibo</h2>
-      <p>Consulta el detalle completo de tu consumo y pago.</p>
+      <p>Consulta el detalle completo de tu consumo, pago y comprobante.</p>
     </div>
 
-    <button type="button" class="btn-secondary" routerLink="/cliente/mis-recibos">
-      Volver a mis recibos
-    </button>
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" routerLink="/cliente/mis-recibos">
+        Volver a mis recibos
+      </button>
+
+      <button
+        type="button"
+        class="btn-primary"
+        *ngIf="recibo"
+        (click)="imprimirRecibo()">
+        Imprimir / guardar PDF
+      </button>
+    </div>
   </div>
 
   <div *ngIf="error" class="alert-error">
@@ -20,15 +30,50 @@
   </div>
 
   <section class="receipt-card" *ngIf="recibo">
-    <div class="receipt-header">
-      <div>
-        <h3>{{ recibo.codigoRecibo }}</h3>
-        <p>{{ periodo() }}</p>
+    <div class="receipt-top">
+      <div class="brand-block">
+        <div class="water-icon">💧</div>
+        <div>
+          <h3>JASS Huacariz</h3>
+          <p>Servicio de agua potable</p>
+        </div>
+      </div>
+
+      <div class="receipt-code">
+        <span>Recibo</span>
+        <strong>{{ recibo.codigoRecibo }}</strong>
+        <small>{{ periodo() }}</small>
       </div>
 
       <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
         {{ recibo.estadoRecibo }}
       </span>
+    </div>
+
+    <div class="client-panel" *ngIf="perfil">
+      <h3>Datos del cliente</h3>
+
+      <div class="info-grid client-grid">
+        <div class="info-box">
+          <span>Cliente</span>
+          <strong>{{ nombreCliente() }}</strong>
+        </div>
+
+        <div class="info-box">
+          <span>DNI</span>
+          <strong>{{ perfil.dni }}</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Teléfono</span>
+          <strong>{{ perfil.telefono || '-' }}</strong>
+        </div>
+
+        <div class="info-box">
+          <span>Correo</span>
+          <strong>{{ perfil.correo || '-' }}</strong>
+        </div>
+      </div>
     </div>
 
     <div class="info-grid">
@@ -95,6 +140,10 @@
     <div class="actions">
       <button type="button" class="btn-secondary" routerLink="/cliente/mis-recibos">
         Volver
+      </button>
+
+      <button type="button" class="btn-outline" (click)="imprimirRecibo()">
+        Imprimir / guardar PDF
       </button>
 
       <button
