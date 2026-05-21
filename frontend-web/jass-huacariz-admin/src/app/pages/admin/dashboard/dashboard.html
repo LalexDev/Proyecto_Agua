@@ -1,67 +1,117 @@
 <div class="dashboard-page">
-  <div class="welcome-card">
+  <section class="hero-card">
     <div>
       <span class="tag">Panel administrativo</span>
       <h2>Bienvenido al sistema JASS Huacariz</h2>
-      <p>
-        Gestiona clientes, recibos, pagos, tarifas y reportes del servicio de agua potable.
-      </p>
+      <p>Gestiona clientes, suministros, recibos, pagos, lecturas y reportes del servicio de agua potable.</p>
+
+      <div class="hero-actions">
+        <button type="button" class="btn-secondary" (click)="exportarExcel()">
+          Exportar Excel
+        </button>
+
+        <button type="button" class="btn-secondary" (click)="imprimirDashboard()">
+          Imprimir PDF
+        </button>
+
+        <button type="button" class="btn-primary" (click)="cargarDashboard()">
+          Actualizar
+        </button>
+      </div>
     </div>
 
-    <div class="water-icon">💧</div>
-  </div>
-
-  <div *ngIf="cargando" class="alert-info">
-    Cargando información del dashboard...
-  </div>
+    <div class="hero-icon">
+      💧
+    </div>
+  </section>
 
   <div *ngIf="error" class="alert-error">
     {{ error }}
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon">👥</div>
-      <div>
-        <p>Total clientes</p>
-        <h3>{{ totalClientes }}</h3>
-        <span>Clientes registrados</span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">🧾</div>
-      <div>
-        <p>Recibos pendientes</p>
-        <h3>{{ recibosPendientes }}</h3>
-        <span>Por cobrar</span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">💰</div>
-      <div>
-        <p>Total pagado</p>
-        <h3>S/ {{ totalPagado | number:'1.2-2' }}</h3>
-        <span>Recaudación registrada</span>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">📊</div>
-      <div>
-        <p>Consumo promedio</p>
-        <h3>{{ consumoPromedio | number:'1.1-2' }} m³</h3>
-        <span>Promedio de recibos</span>
-      </div>
-    </div>
+  <div *ngIf="cargando" class="alert-info">
+    Cargando dashboard...
   </div>
 
-  <div class="content-grid">
-    <section class="panel-card">
-      <div class="section-title">
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="icon">👥</div>
+      <div>
+        <span>Total clientes</span>
+        <strong>{{ totalClientes() }}</strong>
+        <small>Clientes registrados</small>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">🏠</div>
+      <div>
+        <span>Total suministros</span>
+        <strong>{{ totalSuministros() }}</strong>
+        <small>Conexiones activas</small>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">🧾</div>
+      <div>
+        <span>Recibos pendientes</span>
+        <strong>{{ recibosPendientes() }}</strong>
+        <small>Por cobrar</small>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">💰</div>
+      <div>
+        <span>Total pagado</span>
+        <strong>S/ {{ totalPagado() | number:'1.2-2' }}</strong>
+        <small>Recaudación registrada</small>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">📄</div>
+      <div>
+        <span>Total emitido</span>
+        <strong>S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
+        <small>Recibos generados</small>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">⏳</div>
+      <div>
+        <span>Saldo pendiente</span>
+        <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
+        <small>Monto por cobrar</small>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">💧</div>
+      <div>
+        <span>Consumo total</span>
+        <strong>{{ consumoTotal() | number:'1.2-3' }} m³</strong>
+        <small>Consumo registrado</small>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="icon">📊</div>
+      <div>
+        <span>Consumo promedio</span>
+        <strong>{{ consumoPromedio() | number:'1.2-2' }} m³</strong>
+        <small>Promedio de recibos</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="main-grid">
+    <div class="table-card">
+      <div class="table-title">
         <h3>Últimos recibos generados</h3>
-        <button routerLink="/admin/recibos">Ver todos</button>
+        <a routerLink="/admin/recibos">Ver todos</a>
       </div>
 
       <table>
@@ -77,35 +127,60 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let recibo of ultimosRecibos">
-            <td>{{ recibo.codigoRecibo }}</td>
-            <td>{{ recibo.codigoSuministro || 'Sin código' }}</td>
+          <tr *ngFor="let recibo of ultimosRecibos()">
+            <td>{{ $any(recibo).codigoRecibo }}</td>
+            <td>{{ $any(recibo).codigoSuministro }}</td>
             <td>{{ periodo(recibo) }}</td>
-            <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
-            <td>S/ {{ recibo.total | number:'1.2-2' }}</td>
+            <td>{{ $any(recibo).consumoM3 | number:'1.2-3' }} m³</td>
+            <td>S/ {{ $any(recibo).total | number:'1.2-2' }}</td>
             <td>
-              <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
-                {{ recibo.estadoRecibo }}
+              <span class="badge" [ngClass]="estadoClase($any(recibo).estadoRecibo)">
+                {{ $any(recibo).estadoRecibo }}
               </span>
             </td>
           </tr>
 
-          <tr *ngIf="ultimosRecibos.length === 0 && !cargando">
+          <tr *ngIf="ultimosRecibos().length === 0">
             <td colspan="6" class="empty-row">
-              Todavía no hay recibos generados.
+              No hay recibos registrados.
             </td>
           </tr>
         </tbody>
       </table>
-    </section>
+    </div>
 
-    <section class="panel-card quick-actions">
+    <div class="actions-card">
       <h3>Acciones rápidas</h3>
 
-      <button routerLink="/admin/clientes">Registrar cliente</button>
-      <button routerLink="/admin/recibos">Ver recibos</button>
-      <button routerLink="/admin/pagos">Registrar pago</button>
-      <button routerLink="/admin/tarifas">Configurar tarifa</button>
-    </section>
-  </div>
+      <a routerLink="/admin/clientes" class="quick-action">
+        <span>👤</span>
+        Registrar cliente
+      </a>
+
+      <a routerLink="/admin/recibos" class="quick-action">
+        <span>🧾</span>
+        Ver recibos
+      </a>
+
+      <a routerLink="/admin/pagos" class="quick-action">
+        <span>💰</span>
+        Registrar pago
+      </a>
+
+      <a routerLink="/admin/qr-suministro" class="quick-action">
+        <span>🔳</span>
+        Generar QR
+      </a>
+
+      <a routerLink="/admin/historial-lecturas" class="quick-action">
+        <span>📚</span>
+        Historial lecturas
+      </a>
+
+      <a routerLink="/admin/reportes" class="quick-action">
+        <span>📊</span>
+        Reportes generales
+      </a>
+    </div>
+  </section>
 </div>
