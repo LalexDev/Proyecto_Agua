@@ -3,10 +3,8 @@ import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
-import {
-  CambiarPasswordRequest,
-  ClientePortal
-} from '../../../core/services/cliente-portal';
+import { Auth } from '../../../core/services/auth';
+import { ClientePortal } from '../../../core/services/cliente-portal';
 
 @Component({
   selector: 'app-contrasena',
@@ -15,13 +13,7 @@ import {
   styleUrl: './contrasena.scss',
 })
 export class Contrasena {
-  form: CambiarPasswordRequest = {
-    passwordActual: '',
-    nuevaPassword: '',
-    confirmarPassword: ''
-  };
-
-  cargando = false;
+  guardando = false;
   error = '';
   exito = '';
 
@@ -29,12 +21,19 @@ export class Contrasena {
   mostrarNueva = false;
   mostrarConfirmar = false;
 
+  form = {
+    contrasenaActual: '',
+    nuevaContrasena: '',
+    confirmarContrasena: ''
+  };
+
   constructor(
     private clientePortal: ClientePortal,
+    private auth: Auth,
     private cdr: ChangeDetectorRef
   ) {}
 
-  cambiarPassword(): void {
+  cambiarContrasena(): void {
     this.error = '';
     this.exito = '';
 
@@ -42,67 +41,187 @@ export class Contrasena {
       return;
     }
 
-    this.cargando = true;
+    const payload = {
+      contrasenaActual: this.form.contrasenaActual.trim(),
+      nuevaContrasena: this.form.nuevaContrasena.trim(),
+      confirmarContrasena: this.form.confirmarContrasena.trim(),
+      passwordActual: this.form.contrasenaActual.trim(),
+      passwordNueva: this.form.nuevaContrasena.trim(),
+      passwordConfirmacion: this.form.confirmarContrasena.trim(),
+      currentPassword: this.form.contrasenaActual.trim(),
+      newPassword: this.form.nuevaContrasena.trim(),
+      confirmPassword: this.form.confirmarContrasena.trim()
+    };
 
-    this.clientePortal.cambiarMiPassword({
-      passwordActual: this.form.passwordActual.trim(),
-      nuevaPassword: this.form.nuevaPassword.trim(),
-      confirmarPassword: this.form.confirmarPassword.trim()
-    })
-    .pipe(
-      finalize(() => {
-        this.cargando = false;
-        this.cdr.detectChanges();
-      })
-    )
-    .subscribe({
-      next: (response) => {
-        this.exito = response?.mensaje || 'Contraseña actualizada correctamente.';
-        this.form = {
-          passwordActual: '',
-          nuevaPassword: '',
-          confirmarPassword: ''
-        };
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.error = err?.error?.error || err?.error?.mensaje || 'No se pudo actualizar la contraseña.';
-        this.cdr.detectChanges();
+    const servicios: any[] = [
+      this.clientePortal as any,
+      this.auth as any
+    ];
+
+    let peticion: any = null;
+
+    for (const servicio of servicios) {
+      if (!servicio) {
+        continue;
       }
-    });
+
+      if (typeof servicio.cambiarContrasena === 'function') {
+        peticion = servicio.cambiarContrasena(payload);
+        break;
+      }
+
+      if (typeof servicio.cambiarPassword === 'function') {
+        peticion = servicio.cambiarPassword(payload);
+        break;
+      }
+
+      if (typeof servicio.actualizarContrasena === 'function') {
+        peticion = servicio.actualizarContrasena(payload);
+        break;
+      }
+
+      if (typeof servicio.actualizarPassword === 'function') {
+        peticion = servicio.actualizarPassword(payload);
+        break;
+      }
+
+      if (typeof servicio.cambiarMiContrasena === 'function') {
+        peticion = servicio.cambiarMiContrasena(payload);
+        break;
+      }
+
+      if (typeof servicio.changePassword === 'function') {
+        peticion = servicio.changePassword(payload);
+        break;
+      }
+    }
+
+    if (!peticion) {
+      this.error = 'No se encontró el método para cambiar contraseña en el frontend. Revisa cliente-portal.ts o auth.ts.';
+      return;
+    }
+
+    this.guardando = true;
+
+    peticion
+      .pipe(
+        finalize(() => {
+          this.guardando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.exito = 'Contraseña actualizada correctamente.';
+          this.limpiarFormulario();
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          this.error = err?.error?.error ||
+            err?.error?.message ||
+            'No se pudo actualizar la contraseña. Verifica tu contraseña actual.';
+          this.cdr.detectChanges();
+        }
+      });
   }
 
-  private validarFormulario(): boolean {
-    if (!this.form.passwordActual.trim()) {
-      this.error = 'Ingrese su contraseña actual.';
+  validarFormulario(): boolean {
+    if (!this.form.contrasenaActual.trim()) {
+      this.error = 'Ingresa tu contraseña actual.';
       return false;
     }
 
-    if (!this.form.nuevaPassword.trim()) {
-      this.error = 'Ingrese la nueva contraseña.';
+    if (!this.form.nuevaContrasena.trim()) {
+      this.error = 'Ingresa tu nueva contraseña.';
       return false;
     }
 
-    if (this.form.nuevaPassword.trim().length < 6) {
-      this.error = 'La nueva contraseña debe tener al menos 6 caracteres.';
+    if (this.form.nuevaContrasena.trim().length < 6) {
+      this.error = 'La nueva contraseña debe tener como mínimo 6 caracteres.';
       return false;
     }
 
-    if (!this.form.confirmarPassword.trim()) {
-      this.error = 'Confirme la nueva contraseña.';
+    if (this.form.nuevaContrasena.trim() !== this.form.confirmarContrasena.trim()) {
+      this.error = 'La confirmación no coincide con la nueva contraseña.';
       return false;
     }
 
-    if (this.form.nuevaPassword.trim() !== this.form.confirmarPassword.trim()) {
-      this.error = 'La nueva contraseña y la confirmación no coinciden.';
-      return false;
-    }
-
-    if (this.form.passwordActual.trim() === this.form.nuevaPassword.trim()) {
-      this.error = 'La nueva contraseña debe ser diferente a la actual.';
+    if (this.form.contrasenaActual.trim() === this.form.nuevaContrasena.trim()) {
+      this.error = 'La nueva contraseña debe ser diferente a la contraseña actual.';
       return false;
     }
 
     return true;
+  }
+
+  limpiarFormulario(): void {
+    this.form = {
+      contrasenaActual: '',
+      nuevaContrasena: '',
+      confirmarContrasena: ''
+    };
+  }
+
+  seguridadContrasena(): number {
+    const value = this.form.nuevaContrasena || '';
+    let score = 0;
+
+    if (value.length >= 6) {
+      score += 25;
+    }
+
+    if (value.length >= 10) {
+      score += 25;
+    }
+
+    if (/[A-Z]/.test(value)) {
+      score += 15;
+    }
+
+    if (/[0-9]/.test(value)) {
+      score += 15;
+    }
+
+    if (/[^A-Za-z0-9]/.test(value)) {
+      score += 20;
+    }
+
+    return Math.min(score, 100);
+  }
+
+  textoSeguridad(): string {
+    const score = this.seguridadContrasena();
+
+    if (!this.form.nuevaContrasena) {
+      return 'Sin evaluar';
+    }
+
+    if (score < 40) {
+      return 'Débil';
+    }
+
+    if (score < 75) {
+      return 'Media';
+    }
+
+    return 'Fuerte';
+  }
+
+  claseSeguridad(): string {
+    const score = this.seguridadContrasena();
+
+    if (!this.form.nuevaContrasena) {
+      return 'neutral';
+    }
+
+    if (score < 40) {
+      return 'debil';
+    }
+
+    if (score < 75) {
+      return 'media';
+    }
+
+    return 'fuerte';
   }
 }

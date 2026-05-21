@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 
 import {
   ClientePerfilResponse,
@@ -35,7 +35,10 @@ export class Perfil implements OnInit {
     this.cargando = true;
     this.error = '';
 
-    this.clientePortal.obtenerMiPerfil()
+    forkJoin({
+      perfil: this.clientePortal.obtenerMiPerfil(),
+      suministros: this.clientePortal.listarMisSuministros()
+    })
       .pipe(
         finalize(() => {
           this.cargando = false;
@@ -43,26 +46,14 @@ export class Perfil implements OnInit {
         })
       )
       .subscribe({
-        next: (data) => {
-          this.perfil = data;
-          this.cargarSuministros();
+        next: ({ perfil, suministros }) => {
+          this.perfil = perfil;
+          this.suministros = suministros || [];
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar tu perfil.';
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  cargarSuministros(): void {
-    this.clientePortal.listarMisSuministros()
-      .subscribe({
-        next: (data) => {
-          this.suministros = data;
-          this.cdr.detectChanges();
-        },
-        error: () => {
+          this.error = 'No se pudo cargar la información de tu perfil.';
+          this.perfil = null;
           this.suministros = [];
           this.cdr.detectChanges();
         }
@@ -71,13 +62,91 @@ export class Perfil implements OnInit {
 
   nombreCompleto(): string {
     if (!this.perfil) {
-      return '';
+      return 'Cliente';
     }
 
-    return `${this.perfil.nombres} ${this.perfil.apellidos}`;
+    const item: any = this.perfil;
+    return `${item.nombres || ''} ${item.apellidos || ''}`.trim() || 'Cliente';
   }
 
-  estadoTexto(): string {
-    return this.perfil?.estado ? 'Activo' : 'Inactivo';
+  iniciales(): string {
+    const nombre = this.nombreCompleto();
+    const partes = nombre.split(' ').filter(Boolean);
+
+    if (partes.length >= 2) {
+      return `${partes[0][0]}${partes[1][0]}`.toUpperCase();
+    }
+
+    return nombre.substring(0, 1).toUpperCase();
+  }
+
+  valorPerfil(campo: string): string {
+    const item: any = this.perfil || {};
+    return item[campo] || '-';
+  }
+
+  codigoUsuario(): string {
+    const item: any = this.perfil || {};
+    return item.codigoUsuario || item.usuario || localStorage.getItem('codigoUsuario') || '-';
+  }
+
+  dniCliente(): string {
+    const item: any = this.perfil || {};
+    return item.dni || item.documento || item.numeroDocumento || '-';
+  }
+
+  telefonoCliente(): string {
+    const item: any = this.perfil || {};
+    return item.telefono || item.celular || '-';
+  }
+
+  correoCliente(): string {
+    const item: any = this.perfil || {};
+    return item.correo || item.email || '-';
+  }
+
+  direccionPrincipal(): string {
+    const principal = this.suministros.length ? this.suministros[0] : null;
+
+    if (!principal) {
+      return '-';
+    }
+
+    const item: any = principal;
+    return item.direccionSuministro || item.direccion || '-';
+  }
+
+  suministrosActivos(): number {
+    return this.suministros.filter((item: any) => {
+      return item.estado === true ||
+        String(item.estado || '').toUpperCase() === 'ACTIVO' ||
+        String(item.estadoSuministro || '').toUpperCase() === 'ACTIVO' ||
+        String(item.estadoInstalacion || '').toUpperCase() === 'INSTALADO';
+    }).length;
+  }
+
+  estadoSuministro(suministro: SuministroClienteResponse): string {
+    const item: any = suministro;
+
+    if (
+      item.estado === false ||
+      String(item.estado || '').toUpperCase() === 'SUSPENDIDO' ||
+      String(item.estadoSuministro || '').toUpperCase() === 'SUSPENDIDO'
+    ) {
+      return 'Suspendido';
+    }
+
+    return 'Activo';
+  }
+
+  estadoClase(suministro: SuministroClienteResponse): string {
+    return this.estadoSuministro(suministro).toLowerCase() === 'activo'
+      ? 'activo'
+      : 'suspendido';
+  }
+
+  suministroValor(suministro: SuministroClienteResponse, campo: string): string {
+    const item: any = suministro || {};
+    return item[campo] || '-';
   }
 }

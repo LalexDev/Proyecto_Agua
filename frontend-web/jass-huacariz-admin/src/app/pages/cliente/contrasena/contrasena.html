@@ -1,88 +1,122 @@
 <div class="contrasena-page">
-  <div class="page-header">
+  <section class="page-header">
     <div>
       <span class="tag">Portal cliente</span>
       <h2>Cambiar contraseña</h2>
-      <p>Actualiza tu contraseña de acceso al sistema.</p>
+      <p>Actualiza tu clave de acceso para mantener segura tu cuenta.</p>
     </div>
-  </div>
+  </section>
 
-  <div *ngIf="error" class="alert-error">
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
-  <div *ngIf="exito" class="alert-success">
+  <div *ngIf="exito" class="alert alert-success">
     {{ exito }}
   </div>
 
-  <section class="password-card">
-    <div class="card-info">
-      <div class="icon-box">🔐</div>
-      <div>
-        <h3>Seguridad de la cuenta</h3>
-        <p>Ingresa tu contraseña actual y define una nueva contraseña segura.</p>
-      </div>
-    </div>
+  <section class="security-layout">
+    <article class="security-card">
+      <div class="security-icon">🔐</div>
+      <span class="tag light">Seguridad de cuenta</span>
+      <h3>Protege tu acceso</h3>
+      <p>
+        Usa una contraseña diferente a la inicial entregada por la administración.
+        Evita compartirla con otras personas.
+      </p>
 
-    <div class="form-group">
-      <label>Contraseña actual</label>
-      <div class="input-password">
-        <input
-          [type]="mostrarActual ? 'text' : 'password'"
-          [(ngModel)]="form.passwordActual"
-          placeholder="Ingresa tu contraseña actual"
-        >
-        <button type="button" (click)="mostrarActual = !mostrarActual">
-          {{ mostrarActual ? 'Ocultar' : 'Ver' }}
+      <div class="tips">
+        <div>
+          <strong>✓</strong>
+          <span>Mínimo 6 caracteres</span>
+        </div>
+
+        <div>
+          <strong>✓</strong>
+          <span>Combina letras y números</span>
+        </div>
+
+        <div>
+          <strong>✓</strong>
+          <span>No uses tu DNI como contraseña</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="form-card">
+      <div class="form-title">
+        <span class="tag">Nueva clave</span>
+        <h3>Datos de seguridad</h3>
+        <p>Completa los campos para actualizar tu contraseña.</p>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Contraseña actual
+          <div class="password-field">
+            <input
+              [type]="mostrarActual ? 'text' : 'password'"
+              [(ngModel)]="form.contrasenaActual"
+              placeholder="Ingresa tu contraseña actual"
+            >
+
+            <button type="button" (click)="mostrarActual = !mostrarActual">
+              {{ mostrarActual ? 'Ocultar' : 'Ver' }}
+            </button>
+          </div>
+        </label>
+
+        <label>
+          Nueva contraseña
+          <div class="password-field">
+            <input
+              [type]="mostrarNueva ? 'text' : 'password'"
+              [(ngModel)]="form.nuevaContrasena"
+              placeholder="Ingresa tu nueva contraseña"
+            >
+
+            <button type="button" (click)="mostrarNueva = !mostrarNueva">
+              {{ mostrarNueva ? 'Ocultar' : 'Ver' }}
+            </button>
+          </div>
+        </label>
+
+        <label>
+          Confirmar nueva contraseña
+          <div class="password-field">
+            <input
+              [type]="mostrarConfirmar ? 'text' : 'password'"
+              [(ngModel)]="form.confirmarContrasena"
+              placeholder="Repite tu nueva contraseña"
+            >
+
+            <button type="button" (click)="mostrarConfirmar = !mostrarConfirmar">
+              {{ mostrarConfirmar ? 'Ocultar' : 'Ver' }}
+            </button>
+          </div>
+        </label>
+      </div>
+
+      <div class="strength-card" [ngClass]="claseSeguridad()">
+        <div class="strength-header">
+          <span>Nivel de seguridad</span>
+          <strong>{{ textoSeguridad() }}</strong>
+        </div>
+
+        <div class="strength-bar">
+          <div [style.width.%]="seguridadContrasena()"></div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="limpiarFormulario()" [disabled]="guardando">
+          Limpiar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="cambiarContrasena()" [disabled]="guardando">
+          {{ guardando ? 'Actualizando...' : 'Actualizar contraseña' }}
         </button>
       </div>
-    </div>
-
-    <div class="form-group">
-      <label>Nueva contraseña</label>
-      <div class="input-password">
-        <input
-          [type]="mostrarNueva ? 'text' : 'password'"
-          [(ngModel)]="form.nuevaPassword"
-          placeholder="Mínimo 6 caracteres"
-        >
-        <button type="button" (click)="mostrarNueva = !mostrarNueva">
-          {{ mostrarNueva ? 'Ocultar' : 'Ver' }}
-        </button>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Confirmar nueva contraseña</label>
-      <div class="input-password">
-        <input
-          [type]="mostrarConfirmar ? 'text' : 'password'"
-          [(ngModel)]="form.confirmarPassword"
-          placeholder="Repite la nueva contraseña"
-        >
-        <button type="button" (click)="mostrarConfirmar = !mostrarConfirmar">
-          {{ mostrarConfirmar ? 'Ocultar' : 'Ver' }}
-        </button>
-      </div>
-    </div>
-
-    <div class="recommendations">
-      <h4>Recomendaciones</h4>
-      <ul>
-        <li>Usa una contraseña de al menos 6 caracteres.</li>
-        <li>No reutilices tu contraseña inicial.</li>
-        <li>Guarda tu nueva contraseña en un lugar seguro.</li>
-      </ul>
-    </div>
-
-    <div class="actions">
-      <button
-        type="button"
-        class="btn-primary"
-        [disabled]="cargando"
-        (click)="cambiarPassword()">
-        {{ cargando ? 'Actualizando...' : 'Actualizar contraseña' }}
-      </button>
-    </div>
+    </article>
   </section>
 </div>

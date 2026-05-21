@@ -1,95 +1,150 @@
 <div class="perfil-page">
-  <div class="page-header">
+  <section class="page-header">
     <div>
       <span class="tag">Portal cliente</span>
       <h2>Mi perfil</h2>
-      <p>Consulta tus datos personales y suministros asociados.</p>
+      <p>Consulta tus datos personales, usuario de acceso y suministros asignados.</p>
     </div>
 
-    <button type="button" class="btn-primary" (click)="cargarPerfil()">
-      Actualizar
-    </button>
-  </div>
+    <div class="header-actions">
+      <button type="button" class="btn-primary" (click)="cargarPerfil()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+      </button>
+    </div>
+  </section>
 
-  <div *ngIf="error" class="alert-error">
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
-  <div *ngIf="cargando" class="alert-info">
-    Cargando perfil...
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando información del perfil...
   </div>
 
-  <section class="profile-card" *ngIf="perfil">
-    <div class="profile-header">
-      <div class="avatar">
-        {{ perfil.nombres.charAt(0) }}
+  <ng-container *ngIf="perfil">
+    <section class="profile-hero">
+      <div class="avatar-big">
+        {{ iniciales() }}
       </div>
 
-      <div>
+      <div class="profile-info">
+        <span class="tag light">Cliente JASS Huacariz</span>
         <h3>{{ nombreCompleto() }}</h3>
-        <p>Usuario: {{ perfil.codigoUsuario }}</p>
+        <p>DNI: {{ dniCliente() }} · Usuario: {{ codigoUsuario() }}</p>
       </div>
 
-      <span class="badge" [ngClass]="perfil.estado ? 'activo' : 'inactivo'">
-        {{ estadoTexto() }}
-      </span>
-    </div>
+      <div class="profile-actions">
+        <a routerLink="/cliente/contrasena" class="btn-white">
+          Cambiar contraseña
+        </a>
 
-    <div class="info-grid">
-      <div class="info-box">
-        <span>DNI</span>
-        <strong>{{ perfil.dni }}</strong>
+        <a routerLink="/cliente/mis-recibos" class="btn-soft">
+          Ver recibos
+        </a>
       </div>
+    </section>
 
-      <div class="info-box">
-        <span>Nombres</span>
-        <strong>{{ perfil.nombres }}</strong>
-      </div>
+    <section class="stats-grid">
+      <article class="stat-card">
+        <div class="stat-icon">👤</div>
+        <div>
+          <span>Usuario</span>
+          <strong>{{ codigoUsuario() }}</strong>
+          <small>Credencial de acceso</small>
+        </div>
+      </article>
 
-      <div class="info-box">
-        <span>Apellidos</span>
-        <strong>{{ perfil.apellidos }}</strong>
-      </div>
+      <article class="stat-card">
+        <div class="stat-icon">🏠</div>
+        <div>
+          <span>Suministros</span>
+          <strong>{{ suministros.length }}</strong>
+          <small>Conexiones registradas</small>
+        </div>
+      </article>
 
-      <div class="info-box">
-        <span>Teléfono</span>
-        <strong>{{ perfil.telefono || '-' }}</strong>
-      </div>
+      <article class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div>
+          <span>Activos</span>
+          <strong>{{ suministrosActivos() }}</strong>
+          <small>Suministros habilitados</small>
+        </div>
+      </article>
 
-      <div class="info-box">
-        <span>Correo</span>
-        <strong>{{ perfil.correo || '-' }}</strong>
-      </div>
+      <article class="stat-card">
+        <div class="stat-icon">📍</div>
+        <div>
+          <span>Dirección principal</span>
+          <strong>{{ direccionPrincipal() }}</strong>
+          <small>Primer suministro registrado</small>
+        </div>
+      </article>
+    </section>
 
-      <div class="info-box">
-        <span>Código de usuario</span>
-        <strong>{{ perfil.codigoUsuario }}</strong>
-      </div>
-    </div>
-  </section>
+    <section class="content-grid">
+      <article class="panel-card">
+        <div class="panel-title">
+          <span class="tag">Datos personales</span>
+          <h3>Información del cliente</h3>
+        </div>
 
-  <section class="suministros-card">
-    <div class="section-title">
-      <h3>Mis suministros</h3>
-      <span>{{ suministros.length }} registro(s)</span>
-    </div>
+        <div class="info-list">
+          <div>
+            <span>Nombres</span>
+            <strong>{{ valorPerfil('nombres') }}</strong>
+          </div>
 
-    <div class="suministro-item" *ngFor="let suministro of suministros">
-      <div>
-        <h4>{{ suministro.aliasSuministro || 'Suministro' }}</h4>
-        <p>{{ suministro.direccionSuministro }}</p>
-        <small>
-          {{ suministro.nombreSector }} · {{ suministro.codigoSuministro }}
-        </small>
-      </div>
+          <div>
+            <span>Apellidos</span>
+            <strong>{{ valorPerfil('apellidos') }}</strong>
+          </div>
 
-      <span class="badge" [ngClass]="suministro.estado ? 'activo' : 'inactivo'">
-        {{ suministro.estado ? 'Activo' : 'Inactivo' }}
-      </span>
-    </div>
+          <div>
+            <span>DNI</span>
+            <strong>{{ dniCliente() }}</strong>
+          </div>
 
-    <div *ngIf="suministros.length === 0 && !cargando" class="empty-row">
-      No tienes suministros registrados.
-    </div>
-  </section>
+          <div>
+            <span>Teléfono</span>
+            <strong>{{ telefonoCliente() }}</strong>
+          </div>
+
+          <div>
+            <span>Correo</span>
+            <strong>{{ correoCliente() }}</strong>
+          </div>
+
+          <div>
+            <span>Usuario</span>
+            <strong>{{ codigoUsuario() }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel-card">
+        <div class="panel-title">
+          <span class="tag">Conexiones</span>
+          <h3>Mis suministros</h3>
+        </div>
+
+        <div class="suministro-card" *ngFor="let suministro of suministros">
+          <div>
+            <h4>{{ suministroValor(suministro, 'codigoSuministro') }}</h4>
+            <p>{{ suministroValor(suministro, 'aliasSuministro') }}</p>
+            <small>{{ suministroValor(suministro, 'direccionSuministro') }}</small>
+            <small>{{ suministroValor(suministro, 'nombreSector') }}</small>
+          </div>
+
+          <span class="badge" [ngClass]="estadoClase(suministro)">
+            {{ estadoSuministro(suministro) }}
+          </span>
+        </div>
+
+        <div *ngIf="suministros.length === 0 && !cargando" class="empty-row">
+          No tienes suministros registrados.
+        </div>
+      </article>
+    </section>
+  </ng-container>
 </div>
