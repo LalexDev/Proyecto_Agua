@@ -3,7 +3,7 @@
     <div class="page-header__content">
       <span class="tag">Administración</span>
       <h2>Clientes y suministros</h2>
-      <p>Gestiona usuarios, conexiones de agua, estados de instalación y accesos al sistema.</p>
+      <p>Gestiona usuarios, conexiones de agua, instalación de suministros y accesos al sistema.</p>
     </div>
 
     <div class="page-header__actions">
@@ -17,6 +17,10 @@
 
       <button type="button" class="btn-primary" (click)="abrirFormulario()">
         + Registrar cliente
+      </button>
+
+      <button type="button" class="btn-secondary" (click)="cargarClientes()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
       </button>
     </div>
   </section>
@@ -33,16 +37,89 @@
     Cargando clientes...
   </div>
 
+  <section class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-card__icon">👥</div>
+      <div class="stat-card__content">
+        <span>Total clientes</span>
+        <strong>{{ totalClientes() }}</strong>
+        <small>Clientes registrados</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">✅</div>
+      <div class="stat-card__content">
+        <span>Clientes activos</span>
+        <strong>{{ clientesActivos() }}</strong>
+        <small>Usuarios habilitados</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">💧</div>
+      <div class="stat-card__content">
+        <span>Suministros</span>
+        <strong>{{ totalSuministros() }}</strong>
+        <small>Conexiones registradas</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">🏠</div>
+      <div class="stat-card__content">
+        <span>Instalados</span>
+        <strong>{{ suministrosInstalados() }}</strong>
+        <small>Suministros activos</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="summary-panel">
+    <div>
+      <span class="tag">Estado general</span>
+      <h3>Control de clientes y conexiones</h3>
+      <p>
+        Desde este módulo el administrador puede activar clientes, suspender accesos,
+        marcar suministros como instalados, generar QR y exportar reportes.
+      </p>
+    </div>
+
+    <div class="summary-items">
+      <div>
+        <span>Clientes inactivos</span>
+        <strong>{{ clientesInactivos() }}</strong>
+      </div>
+
+      <div>
+        <span>Suministros pendientes</span>
+        <strong>{{ suministrosPendientes() }}</strong>
+      </div>
+    </div>
+  </section>
+
   <section class="filters-row">
     <input
       type="text"
-      placeholder="Buscar por DNI, nombres, correo, usuario, suministro, dirección o estado..."
+      placeholder="Buscar por DNI, cliente, correo, usuario, suministro, dirección, sector o estado..."
       [(ngModel)]="busqueda"
-      (input)="filtrarClientes()"
+      (input)="aplicarFiltros()"
     >
 
-    <button type="button" class="btn-secondary" (click)="cargarClientes()">
-      Actualizar
+    <select [(ngModel)]="filtroEstadoCliente" (change)="aplicarFiltros()">
+      <option value="TODOS">Todos los clientes</option>
+      <option value="ACTIVO">Clientes activos</option>
+      <option value="INACTIVO">Clientes inactivos</option>
+    </select>
+
+    <select [(ngModel)]="filtroEstadoSuministro" (change)="aplicarFiltros()">
+      <option value="TODOS">Todos los suministros</option>
+      <option value="INSTALADO">Instalados</option>
+      <option value="PENDIENTE">Pendientes / suspendidos</option>
+    </select>
+
+    <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+      Limpiar
     </button>
   </section>
 
@@ -58,61 +135,66 @@
           <tr>
             <th>DNI</th>
             <th>Cliente</th>
-            <th>Teléfono</th>
-            <th>Correo</th>
+            <th>Contacto</th>
             <th>Usuario</th>
             <th>Suministros</th>
-            <th>Estado</th>
+            <th>Estado cliente</th>
             <th>Acciones</th>
           </tr>
         </thead>
 
         <tbody>
           <tr *ngFor="let cliente of clientesFiltrados">
-            <td>{{ cliente.dni }}</td>
+            <td>
+              <strong>{{ cliente.dni }}</strong>
+            </td>
 
             <td>
               <strong>{{ nombreCompleto(cliente) }}</strong>
 
               <div class="suministros-mini">
                 <div class="suministro-mini" *ngFor="let suministro of (cliente.suministros || []).slice(0, 2)">
-                  <span>
-                    {{ suministro.codigoSuministro }} - {{ suministro.aliasSuministro || suministro.direccionSuministro }}
-                  </span>
+                  <div>
+                    <span>{{ suministro.codigoSuministro }}</span>
+                    <small>{{ suministro.aliasSuministro || suministro.direccionSuministro }}</small>
+                  </div>
 
                   <button type="button" class="qr-mini-btn" (click)="irQr(suministro)">
                     QR
                   </button>
                 </div>
 
-                <small *ngIf="totalSuministros(cliente) > 2">
-                  + {{ totalSuministros(cliente) - 2 }} suministro(s) más
+                <small *ngIf="totalSuministrosCliente(cliente) > 2">
+                  + {{ totalSuministrosCliente(cliente) - 2 }} suministro(s) más
                 </small>
               </div>
             </td>
 
-            <td>{{ cliente.telefono || '-' }}</td>
-
-            <td>{{ cliente.correo || '-' }}</td>
+            <td>
+              <div class="contact-cell">
+                <span>{{ cliente.telefono || '-' }}</span>
+                <small>{{ cliente.correo || '-' }}</small>
+              </div>
+            </td>
 
             <td>{{ cliente.codigoUsuario || cliente.dni }}</td>
 
             <td>
               <span class="count-badge">
-                {{ totalSuministros(cliente) }}
+                {{ totalSuministrosCliente(cliente) }}
               </span>
             </td>
 
             <td>
-              <span class="status-badge" [ngClass]="estadoClase(cliente.estado)">
-                {{ estadoTexto(cliente.estado) }}
+              <span class="status-badge" [ngClass]="estadoClienteClase(cliente.estado)">
+                {{ estadoClienteTexto(cliente.estado) }}
               </span>
             </td>
 
             <td>
               <div class="actions-cell">
                 <button type="button" class="table-action" (click)="verDetalle(cliente)">
-                  Ver
+                  Ver detalle
                 </button>
 
                 <button
@@ -128,8 +210,8 @@
           </tr>
 
           <tr *ngIf="!cargando && clientesFiltrados.length === 0">
-            <td colspan="8" class="empty-state">
-              No hay clientes registrados.
+            <td colspan="7" class="empty-state">
+              No hay clientes registrados con los filtros seleccionados.
             </td>
           </tr>
         </tbody>
@@ -178,7 +260,7 @@
         </label>
 
         <label>
-          Estado
+          Estado inicial
           <select [(ngModel)]="nuevoCliente.estado">
             <option [ngValue]="true">Activo</option>
             <option [ngValue]="false">Inactivo</option>
@@ -271,19 +353,19 @@
         <div>
           <span>Estado cliente</span>
           <strong>
-            <span class="status-badge" [ngClass]="estadoClase(clienteDetalle.estado)">
-              {{ estadoTexto(clienteDetalle.estado) }}
+            <span class="status-badge" [ngClass]="estadoClienteClase(clienteDetalle.estado)">
+              {{ estadoClienteTexto(clienteDetalle.estado) }}
             </span>
           </strong>
         </div>
 
         <div>
           <span>Total suministros</span>
-          <strong>{{ totalSuministros(clienteDetalle) }}</strong>
+          <strong>{{ totalSuministrosCliente(clienteDetalle) }}</strong>
         </div>
       </div>
 
-      <h4 class="section-title">Suministros</h4>
+      <h4 class="section-title">Suministros del cliente</h4>
 
       <div class="suministro-detail-card" *ngFor="let suministro of clienteDetalle.suministros">
         <div class="suministro-detail-info">
@@ -301,7 +383,7 @@
 
         <div class="suministro-detail-actions">
           <button type="button" class="table-action" (click)="irQr(suministro)">
-            QR
+            Generar QR
           </button>
 
           <button
@@ -325,7 +407,16 @@
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn-secondary" (click)="cerrarDetalle()">
+        <button
+          type="button"
+          class="btn-secondary"
+          [ngClass]="clienteDetalle.estado ? 'danger-soft' : 'success-soft'"
+          (click)="abrirCambiarEstadoCliente(clienteDetalle)"
+        >
+          {{ clienteDetalle.estado ? 'Desactivar cliente' : 'Activar cliente' }}
+        </button>
+
+        <button type="button" class="btn-primary" (click)="cerrarDetalle()">
           Cerrar
         </button>
       </div>

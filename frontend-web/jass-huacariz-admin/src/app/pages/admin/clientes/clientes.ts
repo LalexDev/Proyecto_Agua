@@ -40,7 +40,10 @@ export class Clientes implements OnInit {
 
   error = '';
   exito = '';
+
   busqueda = '';
+  filtroEstadoCliente = 'TODOS';
+  filtroEstadoSuministro = 'TODOS';
 
   mostrarFormulario = false;
   mostrarDetalle = false;
@@ -74,8 +77,11 @@ export class Clientes implements OnInit {
       )
       .subscribe({
         next: (data) => {
-          this.clientes = data || [];
-          this.filtrarClientes();
+          this.clientes = (data || []).sort((a, b) => {
+            return this.nombreCompleto(a).localeCompare(this.nombreCompleto(b));
+          });
+
+          this.aplicarFiltros();
           this.cdr.detectChanges();
         },
         error: () => {
@@ -87,41 +93,49 @@ export class Clientes implements OnInit {
       });
   }
 
-  cargarDatos(): void {
-    this.cargarClientes();
-  }
-
-  filtrarClientes(): void {
+  aplicarFiltros(): void {
     const texto = this.busqueda.trim().toLowerCase();
 
-    if (!texto) {
-      this.clientesFiltrados = [...this.clientes];
-      return;
-    }
-
     this.clientesFiltrados = this.clientes.filter((cliente) => {
-      const nombreCompleto = this.nombreCompleto(cliente).toLowerCase();
-
-      const coincideCliente =
+      const coincideTexto =
+        !texto ||
         String(cliente.dni || '').toLowerCase().includes(texto) ||
-        nombreCompleto.includes(texto) ||
+        this.nombreCompleto(cliente).toLowerCase().includes(texto) ||
         String(cliente.telefono || '').toLowerCase().includes(texto) ||
         String(cliente.correo || '').toLowerCase().includes(texto) ||
         String(cliente.codigoUsuario || '').toLowerCase().includes(texto) ||
-        this.estadoTexto(cliente.estado).toLowerCase().includes(texto);
+        this.estadoClienteTexto(cliente.estado).toLowerCase().includes(texto) ||
+        (cliente.suministros || []).some((suministro) => {
+          return (
+            String(suministro.codigoSuministro || '').toLowerCase().includes(texto) ||
+            String(suministro.aliasSuministro || '').toLowerCase().includes(texto) ||
+            String(suministro.direccionSuministro || '').toLowerCase().includes(texto) ||
+            String(suministro.nombreSector || '').toLowerCase().includes(texto) ||
+            this.estadoSuministroTexto(suministro.estado).toLowerCase().includes(texto)
+          );
+        });
 
-      const coincideSuministro = (cliente.suministros || []).some((suministro) => {
-        return (
-          String(suministro.codigoSuministro || '').toLowerCase().includes(texto) ||
-          String(suministro.aliasSuministro || '').toLowerCase().includes(texto) ||
-          String(suministro.direccionSuministro || '').toLowerCase().includes(texto) ||
-          String(suministro.nombreSector || '').toLowerCase().includes(texto) ||
-          this.estadoSuministroTexto(suministro.estado).toLowerCase().includes(texto)
-        );
-      });
+      const coincideEstadoCliente =
+        this.filtroEstadoCliente === 'TODOS' ||
+        (this.filtroEstadoCliente === 'ACTIVO' && cliente.estado) ||
+        (this.filtroEstadoCliente === 'INACTIVO' && !cliente.estado);
 
-      return coincideCliente || coincideSuministro;
+      const suministros = cliente.suministros || [];
+
+      const coincideEstadoSuministro =
+        this.filtroEstadoSuministro === 'TODOS' ||
+        (this.filtroEstadoSuministro === 'INSTALADO' && suministros.some(s => s.estado)) ||
+        (this.filtroEstadoSuministro === 'PENDIENTE' && suministros.some(s => !s.estado));
+
+      return coincideTexto && coincideEstadoCliente && coincideEstadoSuministro;
     });
+  }
+
+  limpiarFiltros(): void {
+    this.busqueda = '';
+    this.filtroEstadoCliente = 'TODOS';
+    this.filtroEstadoSuministro = 'TODOS';
+    this.aplicarFiltros();
   }
 
   abrirFormulario(): void {
@@ -134,7 +148,6 @@ export class Clientes implements OnInit {
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.error = '';
-    this.exito = '';
     this.nuevoCliente = this.crearClienteVacio();
   }
 
@@ -238,8 +251,8 @@ export class Clientes implements OnInit {
       titulo: estadoNuevo ? 'Marcar suministro instalado' : 'Suspender suministro',
       mensaje: estadoNuevo
         ? `¿Confirmas que el suministro ${suministro.codigoSuministro} ya fue instalado y quedará activo?`
-        : `¿Deseas suspender el suministro ${suministro.codigoSuministro}?`,
-      textoBoton: estadoNuevo ? 'Marcar instalado' : 'Suspender suministro'
+        : `¿Deseas suspender el suministro ${suministro.codigoSuministro}? No se recomienda generar lecturas mientras esté suspendido.`,
+      textoBoton: estadoNuevo ? 'Marcar instalado' : 'Suspender'
     };
   }
 
@@ -273,6 +286,7 @@ export class Clientes implements OnInit {
               : 'Cliente desactivado correctamente.';
 
             this.accionPendiente = null;
+            this.cerrarDetalle();
             this.cargarClientes();
           },
           error: (err) => {
@@ -341,7 +355,7 @@ export class Clientes implements OnInit {
             <td>${this.textoSeguro(cliente.telefono)}</td>
             <td>${this.textoSeguro(cliente.correo)}</td>
             <td>${this.textoSeguro(cliente.codigoUsuario)}</td>
-            <td>${this.estadoTexto(cliente.estado)}</td>
+            <td>${this.estadoClienteTexto(cliente.estado)}</td>
             <td>-</td>
             <td>-</td>
             <td>-</td>
@@ -359,7 +373,7 @@ export class Clientes implements OnInit {
             <td>${this.textoSeguro(cliente.telefono)}</td>
             <td>${this.textoSeguro(cliente.correo)}</td>
             <td>${this.textoSeguro(cliente.codigoUsuario)}</td>
-            <td>${this.estadoTexto(cliente.estado)}</td>
+            <td>${this.estadoClienteTexto(cliente.estado)}</td>
             <td>${this.textoSeguro(suministro.codigoSuministro)}</td>
             <td>${this.textoSeguro(suministro.aliasSuministro)}</td>
             <td>${this.textoSeguro(suministro.direccionSuministro)}</td>
@@ -431,7 +445,7 @@ export class Clientes implements OnInit {
             <td>${this.textoSeguro(this.nombreCompleto(cliente))}</td>
             <td>${this.textoSeguro(cliente.telefono)}</td>
             <td>${this.textoSeguro(cliente.correo)}</td>
-            <td>${this.estadoTexto(cliente.estado)}</td>
+            <td>${this.estadoClienteTexto(cliente.estado)}</td>
             <td colspan="4">Sin suministros registrados</td>
           </tr>
         `;
@@ -445,7 +459,7 @@ export class Clientes implements OnInit {
             <td>${this.textoSeguro(this.nombreCompleto(cliente))}</td>
             <td>${this.textoSeguro(cliente.telefono)}</td>
             <td>${this.textoSeguro(cliente.correo)}</td>
-            <td>${this.estadoTexto(cliente.estado)}</td>
+            <td>${this.estadoClienteTexto(cliente.estado)}</td>
             <td>${this.textoSeguro(suministro.codigoSuministro)}</td>
             <td>${this.textoSeguro(suministro.aliasSuministro)}</td>
             <td>${this.textoSeguro(suministro.direccionSuministro)}</td>
@@ -578,19 +592,49 @@ export class Clientes implements OnInit {
     ventana.document.close();
   }
 
+  totalClientes(): number {
+    return this.clientes.length;
+  }
+
+  clientesActivos(): number {
+    return this.clientes.filter(c => c.estado).length;
+  }
+
+  clientesInactivos(): number {
+    return this.clientes.filter(c => !c.estado).length;
+  }
+
+  totalSuministros(): number {
+    return this.clientes.reduce((total, cliente) => {
+      return total + (cliente.suministros?.length || 0);
+    }, 0);
+  }
+
+  suministrosInstalados(): number {
+    return this.clientes.reduce((total, cliente) => {
+      return total + (cliente.suministros || []).filter(s => s.estado).length;
+    }, 0);
+  }
+
+  suministrosPendientes(): number {
+    return this.clientes.reduce((total, cliente) => {
+      return total + (cliente.suministros || []).filter(s => !s.estado).length;
+    }, 0);
+  }
+
   nombreCompleto(cliente: ClienteResponse): string {
     return `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim();
   }
 
-  totalSuministros(cliente: ClienteResponse): number {
+  totalSuministrosCliente(cliente: ClienteResponse): number {
     return cliente.suministros?.length || 0;
   }
 
-  estadoTexto(estado: boolean): string {
+  estadoClienteTexto(estado: boolean): string {
     return estado ? 'Activo' : 'Inactivo';
   }
 
-  estadoClase(estado: boolean): string {
+  estadoClienteClase(estado: boolean): string {
     return estado ? 'activo' : 'inactivo';
   }
 
@@ -599,7 +643,7 @@ export class Clientes implements OnInit {
   }
 
   estadoSuministroClase(estado: boolean): string {
-    return estado ? 'activo' : 'pendiente';
+    return estado ? 'instalado' : 'pendiente';
   }
 
   private validarFormulario(): boolean {
