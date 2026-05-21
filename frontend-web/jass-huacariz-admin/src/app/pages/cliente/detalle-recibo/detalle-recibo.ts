@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { finalize, forkJoin } from 'rxjs';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import {
-  ClientePerfilResponse,
   ClientePortal,
   ReciboClienteResponse
 } from '../../../core/services/cliente-portal';
@@ -17,13 +16,13 @@ import {
 })
 export class DetalleRecibo implements OnInit {
   recibo: ReciboClienteResponse | null = null;
-  perfil: ClientePerfilResponse | null = null;
 
   cargando = false;
   error = '';
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private clientePortal: ClientePortal,
     private cdr: ChangeDetectorRef
   ) {}
@@ -35,7 +34,7 @@ export class DetalleRecibo implements OnInit {
   cargarDetalle(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
 
-    if (!id || Number.isNaN(id)) {
+    if (!id) {
       this.error = 'No se encontró el identificador del recibo.';
       return;
     }
@@ -43,10 +42,7 @@ export class DetalleRecibo implements OnInit {
     this.cargando = true;
     this.error = '';
 
-    forkJoin({
-      perfil: this.clientePortal.obtenerMiPerfil(),
-      recibos: this.clientePortal.listarMisRecibos()
-    })
+    this.clientePortal.listarMisRecibos()
       .pipe(
         finalize(() => {
           this.cargando = false;
@@ -54,55 +50,83 @@ export class DetalleRecibo implements OnInit {
         })
       )
       .subscribe({
-        next: ({ perfil, recibos }) => {
-          this.perfil = perfil;
+        next: (data) => {
+          const recibos = data || [];
+          this.recibo = recibos.find((item) => Number(item.id) === id) || null;
 
-          const encontrado = recibos.find(r => Number(r.id) === id);
-
-          if (!encontrado) {
+          if (!this.recibo) {
             this.error = 'No se encontró el recibo solicitado.';
-            this.recibo = null;
-            this.cdr.detectChanges();
-            return;
           }
 
-          this.recibo = encontrado;
           this.cdr.detectChanges();
         },
         error: () => {
           this.error = 'No se pudo cargar el detalle del recibo.';
+          this.recibo = null;
           this.cdr.detectChanges();
         }
       });
   }
 
-  estadoClase(estado: string): string {
-    return estado?.toLowerCase() === 'pagado' ? 'pagado' : 'pendiente';
+  volver(): void {
+    this.router.navigate(['/cliente/mis-recibos']);
+  }
+
+  irPagar(): void {
+    if (!this.recibo) {
+      return;
+    }
+
+    this.router.navigate(['/cliente/pagar-recibo', this.recibo.id]);
+  }
+
+  puedePagar(): boolean {
+    if (!this.recibo) {
+      return false;
+    }
+
+    return String(this.recibo.estadoRecibo || '').toUpperCase() !== 'PAGADO';
   }
 
   periodo(): string {
     if (!this.recibo) {
-      return '';
+      return '-';
     }
 
+    return `${this.nombreMes(Number(this.recibo.mes))} ${this.recibo.anio}`;
+  }
+
+  estadoClase(estado: string): string {
+    const valor = String(estado || '').toLowerCase();
+
+    if (valor === 'pagado') {
+      return 'pagado';
+    }
+
+    if (valor === 'vencido') {
+      return 'vencido';
+    }
+
+    return 'pendiente';
+  }
+
+  totalCargos(): number {
+    if (!this.recibo) {
+      return 0;
+    }
+
+    return Number(this.recibo.cargoMantenimiento || 0) +
+      Number(this.recibo.cargoLector || 0) +
+      Number(this.recibo.mora || 0);
+  }
+
+  nombreMes(mes: number): string {
     const meses = [
       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return `${meses[this.recibo.mes - 1] ?? 'Mes'} ${this.recibo.anio}`;
-  }
-
-  nombreCliente(): string {
-    if (!this.perfil) {
-      return '-';
-    }
-
-    return `${this.perfil.nombres} ${this.perfil.apellidos}`;
-  }
-
-  puedePagar(): boolean {
-    return this.recibo?.estadoRecibo === 'PENDIENTE';
+    return meses[mes - 1] || 'Mes inválido';
   }
 
   imprimirRecibo(): void {
@@ -111,381 +135,544 @@ export class DetalleRecibo implements OnInit {
     }
 
     const recibo = this.recibo;
-    const perfil = this.perfil;
-
-    const ventana = window.open('', '_blank', 'width=900,height=700');
+    const ventana = window.open('', '_blank', 'width=1100,height=900');
 
     if (!ventana) {
-      this.error = 'El navegador bloqueó la ventana de impresión.';
+      alert('El navegador bloqueó la ventana de impresión.');
       return;
     }
 
-    const html = `
+    const consumo = Number(recibo.consumoM3 || 0);
+    const total = Number(recibo.total || 0);
+    const subtotalAgua = Number(recibo.subtotalAgua || 0);
+    const mantenimiento = Number(recibo.cargoMantenimiento || 0);
+    const lector = Number(recibo.cargoLector || 0);
+    const mora = Number(recibo.mora || 0);
+    const cargos = mantenimiento + lector + mora;
+
+    const barrasConsumo = [45, 30, 58, 42, 66, 34, 50, 71, 44, 63, 52, 47];
+
+    const barrasHtml = barrasConsumo.map((alto, index) => {
+      const color = index % 2 === 0 ? '#111827' : '#1ba3c7';
+      return `<span style="height:${alto}px;background:${color}"></span>`;
+    }).join('');
+
+    const codigoBarra = String(recibo.codigoRecibo || 'RECIBO')
+      .split('')
+      .map((_, index) => {
+        const ancho = index % 3 === 0 ? 4 : index % 2 === 0 ? 2 : 1;
+        return `<i style="width:${ancho}px"></i>`;
+      })
+      .join('');
+
+    ventana.document.open();
+    ventana.document.write(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="UTF-8">
         <title>Recibo ${this.textoSeguro(recibo.codigoRecibo)}</title>
         <style>
-          * {
-            box-sizing: border-box;
-          }
+          * { box-sizing: border-box; }
 
           body {
             margin: 0;
-            padding: 30px;
-            font-family: Arial, sans-serif;
-            color: #0f2f3d;
-            background: #f3f7fa;
+            background: #edf4f7;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #0f2f44;
           }
 
-          .receipt {
-            max-width: 820px;
-            margin: auto;
-            background: white;
-            border-radius: 18px;
-            padding: 34px;
-            border: 1px solid #dbe7ec;
-          }
-
-          .top {
+          .top-actions {
+            width: 920px;
+            margin: 18px auto 10px;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #e5eef3;
-            padding-bottom: 20px;
-            margin-bottom: 22px;
+            justify-content: center;
+            gap: 12px;
+          }
+
+          button {
+            border: none;
+            border-radius: 10px;
+            padding: 11px 18px;
+            font-weight: 900;
+            cursor: pointer;
+            font-size: 13px;
+          }
+
+          .download {
+            background: #1ba3c7;
+            color: white;
+          }
+
+          .print {
+            background: #ffffff;
+            color: #0f2f44;
+            border: 1px solid #cfe5ee;
+          }
+
+          .receipt-page {
+            width: 920px;
+            min-height: 1180px;
+            margin: 0 auto 30px;
+            background: #f9fdff;
+            border: 3px solid #148aad;
+            padding: 22px;
+            box-shadow: 0 20px 50px rgba(15, 47, 68, 0.18);
+          }
+
+          .receipt-header {
+            display: grid;
+            grid-template-columns: 1fr 190px;
+            gap: 18px;
+            border-bottom: 2px solid #b9dde8;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
           }
 
           .brand {
             display: flex;
-            gap: 14px;
             align-items: center;
+            gap: 12px;
           }
 
-          .logo {
-            width: 58px;
-            height: 58px;
-            border-radius: 16px;
-            background: #1ba3c7;
-            color: white;
+          .brand-logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            background: #e8f7fb;
             display: grid;
             place-items: center;
-            font-size: 28px;
+            font-size: 30px;
+            border: 1px solid #b9dde8;
           }
 
-          h1, h2, h3, p {
+          .brand h1 {
             margin: 0;
+            letter-spacing: 2px;
+            color: #148aad;
+            font-size: 28px;
+            font-weight: 900;
           }
 
-          h1 {
-            font-size: 26px;
-            letter-spacing: 1px;
-          }
-
-          .muted {
+          .brand p {
+            margin: 3px 0 0;
             color: #64748b;
-            font-size: 13px;
-            margin-top: 5px;
+            font-size: 12px;
+            font-weight: 700;
           }
 
-          .status {
-            padding: 9px 16px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 800;
+          .period-box {
+            border: 1px solid #d8d395;
+            background: #fff176;
+            padding: 10px;
             text-align: center;
           }
 
-          .pagado {
-            background: #dcfce7;
-            color: #166534;
-          }
-
-          .pendiente {
-            background: #fef3c7;
-            color: #92400e;
-          }
-
-          .receipt-code {
-            text-align: right;
-          }
-
-          .receipt-code h2 {
-            font-size: 22px;
-            margin-bottom: 8px;
-          }
-
-          .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
-            margin-bottom: 22px;
-          }
-
-          .box {
-            background: #f6fafc;
-            border-radius: 12px;
-            padding: 14px;
-          }
-
-          .box span {
+          .period-box span {
             display: block;
             font-size: 12px;
             color: #64748b;
-            margin-bottom: 6px;
+            font-weight: 800;
           }
 
-          .box strong {
+          .period-box strong {
+            display: block;
+            margin-top: 3px;
+            color: #0f2f44;
+            font-size: 18px;
+            font-weight: 900;
+          }
+
+          .top-info {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+          }
+
+          .box {
+            border: 1px solid #b9dde8;
+            background: #f6fbfd;
+            padding: 12px;
+            min-height: 118px;
+          }
+
+          .box-title {
+            display: block;
+            font-weight: 900;
+            color: #0f2f44;
+            margin-bottom: 8px;
             font-size: 14px;
           }
 
-          .section-title {
-            font-size: 17px;
-            margin: 22px 0 12px;
-            color: #0f2f3d;
+          .info-line {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 8px;
+            font-size: 12px;
+            margin: 5px 0;
+          }
+
+          .info-line span {
+            color: #64748b;
+            font-weight: 800;
+          }
+
+          .info-line strong {
+            color: #0f2f44;
+            font-weight: 900;
+          }
+
+          .chart-box {
+            border: 1px solid #b9dde8;
+            background: #f6fbfd;
+            padding: 12px;
+          }
+
+          .chart-title {
+            font-size: 12px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 8px;
+          }
+
+          .bars {
+            height: 88px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
+            border-bottom: 2px solid #94b9c4;
+            padding: 0 8px;
+          }
+
+          .bars span {
+            width: 20px;
+            display: block;
+            border-radius: 4px 4px 0 0;
+          }
+
+          .reading-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            border: 1px solid #b9dde8;
+            margin-bottom: 12px;
+          }
+
+          .reading-grid div {
+            padding: 9px;
+            border-right: 1px solid #b9dde8;
+            background: #f6fbfd;
+          }
+
+          .reading-grid div:last-child {
+            border-right: none;
+          }
+
+          .reading-grid span {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 800;
+            margin-bottom: 5px;
+          }
+
+          .reading-grid strong {
+            font-size: 13px;
+            color: #0f2f44;
+            font-weight: 900;
           }
 
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-bottom: 12px;
+            font-size: 12px;
           }
 
           th {
+            background: #e8f7fb;
+            color: #0f2f44;
+            padding: 9px;
+            border: 1px solid #b9dde8;
+            font-weight: 900;
             text-align: left;
-            background: #f6fafc;
-            padding: 12px;
-            color: #64748b;
-            font-size: 13px;
           }
 
           td {
+            padding: 9px;
+            border: 1px solid #b9dde8;
+            background: #fbfeff;
+          }
+
+          .money {
+            text-align: right;
+            font-weight: 900;
+          }
+
+          .bottom-layout {
+            display: grid;
+            grid-template-columns: 1fr 270px;
+            gap: 14px;
+            align-items: end;
+          }
+
+          .notes {
+            border: 1px solid #b9dde8;
+            background: #f6fbfd;
             padding: 12px;
-            border-bottom: 1px solid #e8eff3;
+            min-height: 118px;
+            font-size: 12px;
+            color: #0f2f44;
+            line-height: 1.45;
+          }
+
+          .barcode {
+            margin-top: 14px;
+            height: 66px;
+            background: #ffffff;
+            border: 1px solid #d7e9ef;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 8px;
+            overflow: hidden;
+          }
+
+          .barcode i {
+            height: 48px;
+            background: #111827;
+            display: block;
+          }
+
+          .barcode-text {
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 800;
+            margin-top: 5px;
+          }
+
+          .total-box {
+            border: 2px solid #148aad;
+            background: #ffffff;
+          }
+
+          .total-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            border-bottom: 1px solid #b9dde8;
+          }
+
+          .total-row:last-child {
+            border-bottom: none;
+          }
+
+          .total-row span {
+            padding: 10px;
+            background: #e8f7fb;
+            font-weight: 900;
+            font-size: 12px;
+          }
+
+          .total-row strong {
+            padding: 10px;
+            text-align: right;
             font-size: 14px;
           }
 
-          .right {
-            text-align: right;
+          .total-row.final span {
+            background: #fff176;
           }
 
-          .total-row td {
-            font-size: 20px;
-            font-weight: 900;
-            color: #0f2f3d;
-            border-bottom: none;
-            padding-top: 18px;
+          .total-row.final strong {
+            font-size: 28px;
           }
 
           .footer {
-            margin-top: 26px;
-            padding-top: 18px;
-            border-top: 1px dashed #cbd5e1;
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            font-size: 11px;
             color: #64748b;
-            font-size: 12px;
-            text-align: center;
-            line-height: 1.6;
           }
 
-          .actions {
-            max-width: 820px;
-            margin: 18px auto 0;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-          }
-
-          button {
-            border: none;
-            border-radius: 12px;
-            padding: 12px 18px;
-            font-weight: 800;
-            cursor: pointer;
-          }
-
-          .print {
-            background: #1ba3c7;
-            color: white;
-          }
-
-          .close {
-            background: #e2e8f0;
-            color: #0f2f3d;
+          .footer div {
+            border: 1px solid #b9dde8;
+            background: #f6fbfd;
+            padding: 10px;
           }
 
           @media print {
-            body {
-              background: white;
-              padding: 0;
-            }
+            body { background: #ffffff; }
+            .top-actions { display: none; }
 
-            .receipt {
-              border: none;
-              border-radius: 0;
-              max-width: 100%;
-            }
-
-            .actions {
-              display: none;
+            .receipt-page {
+              width: 100%;
+              min-height: auto;
+              margin: 0;
+              box-shadow: none;
+              border: 3px solid #148aad;
             }
           }
         </style>
       </head>
 
       <body>
-        <div class="receipt">
-          <div class="top">
+        <div class="top-actions">
+          <button class="download" onclick="window.print()">Descargar PDF</button>
+          <button class="print" onclick="window.print()">Imprimir</button>
+        </div>
+
+        <main class="receipt-page">
+          <section class="receipt-header">
             <div class="brand">
-              <div class="logo">💧</div>
+              <div class="brand-logo">💧</div>
               <div>
-                <h1>JASS Huacariz</h1>
-                <p class="muted">Servicio de agua potable</p>
-                <p class="muted">Comprobante informativo de consumo</p>
+                <h1>JASS HUACARIZ</h1>
+                <p>Servicio de agua potable · Recibo de cobranza</p>
+                <p>Cajamarca, Perú · Sistema de Gestión de Agua</p>
               </div>
             </div>
 
-            <div class="receipt-code">
-              <h2>${this.textoSeguro(recibo.codigoRecibo)}</h2>
-              <div class="status ${this.estadoClase(recibo.estadoRecibo)}">
-                ${this.textoSeguro(recibo.estadoRecibo)}
-              </div>
-            </div>
-          </div>
-
-          <h3 class="section-title">Datos del cliente</h3>
-
-          <div class="grid">
-            <div class="box">
-              <span>Cliente</span>
-              <strong>${this.textoSeguro(this.nombreCliente())}</strong>
-            </div>
-
-            <div class="box">
-              <span>DNI / Usuario</span>
-              <strong>${this.textoSeguro(perfil?.dni || perfil?.codigoUsuario || '-')}</strong>
-            </div>
-
-            <div class="box">
-              <span>Teléfono</span>
-              <strong>${this.textoSeguro(perfil?.telefono || '-')}</strong>
-            </div>
-
-            <div class="box">
-              <span>Correo</span>
-              <strong>${this.textoSeguro(perfil?.correo || '-')}</strong>
-            </div>
-          </div>
-
-          <h3 class="section-title">Datos del suministro</h3>
-
-          <div class="grid">
-            <div class="box">
-              <span>Código de suministro</span>
-              <strong>${this.textoSeguro(recibo.codigoSuministro)}</strong>
-            </div>
-
-            <div class="box">
-              <span>Dirección</span>
-              <strong>${this.textoSeguro(recibo.direccionSuministro)}</strong>
-            </div>
-
-            <div class="box">
-              <span>Periodo</span>
+            <div class="period-box">
+              <span>PERIODO DE FACTURACIÓN</span>
               <strong>${this.textoSeguro(this.periodo())}</strong>
             </div>
+          </section>
 
+          <section class="top-info">
             <div class="box">
-              <span>Consumo registrado</span>
-              <strong>${Number(recibo.consumoM3).toFixed(2)} m³</strong>
+              <span class="box-title">Datos del servicio</span>
+
+              <div class="info-line">
+                <span>Recibo:</span>
+                <strong>${this.textoSeguro(recibo.codigoRecibo)}</strong>
+              </div>
+
+              <div class="info-line">
+                <span>Suministro:</span>
+                <strong>${this.textoSeguro(recibo.codigoSuministro)}</strong>
+              </div>
+
+              <div class="info-line">
+                <span>Dirección:</span>
+                <strong>${this.textoSeguro(recibo.direccionSuministro)}</strong>
+              </div>
+
+              <div class="info-line">
+                <span>Estado:</span>
+                <strong>${this.textoSeguro(recibo.estadoRecibo || 'PENDIENTE')}</strong>
+              </div>
             </div>
 
-            <div class="box">
-              <span>Fecha de emisión</span>
-              <strong>${this.formatearFecha(recibo.fechaEmision)}</strong>
+            <div class="chart-box">
+              <div class="chart-title">Historial gráfico de consumo referencial</div>
+              <div class="bars">${barrasHtml}</div>
             </div>
+          </section>
 
-            <div class="box">
-              <span>Fecha de vencimiento</span>
-              <strong>${this.textoSeguro(recibo.fechaVencimiento)}</strong>
-            </div>
-          </div>
-
-          <h3 class="section-title">Detalle del importe</h3>
+          <section class="reading-grid">
+            <div><span>Periodo</span><strong>${this.textoSeguro(this.periodo())}</strong></div>
+            <div><span>Consumo</span><strong>${consumo.toFixed(3)} m³</strong></div>
+            <div><span>Emisión</span><strong>${this.textoSeguro(recibo.fechaEmision || '-')}</strong></div>
+            <div><span>Vencimiento</span><strong>${this.textoSeguro(recibo.fechaVencimiento || '-')}</strong></div>
+            <div><span>Total</span><strong>S/ ${total.toFixed(2)}</strong></div>
+          </section>
 
           <table>
             <thead>
               <tr>
                 <th>Concepto</th>
-                <th class="right">Importe</th>
+                <th>Descripción</th>
+                <th>Importe</th>
               </tr>
             </thead>
 
             <tbody>
               <tr>
-                <td>Subtotal agua</td>
-                <td class="right">S/ ${Number(recibo.subtotalAgua).toFixed(2)}</td>
+                <td>Consumo de agua</td>
+                <td>Consumo registrado: ${consumo.toFixed(3)} m³</td>
+                <td class="money">S/ ${subtotalAgua.toFixed(2)}</td>
               </tr>
 
               <tr>
-                <td>Cargo mantenimiento</td>
-                <td class="right">S/ ${Number(recibo.cargoMantenimiento).toFixed(2)}</td>
+                <td>Mantenimiento</td>
+                <td>Cargo de mantenimiento del sistema</td>
+                <td class="money">S/ ${mantenimiento.toFixed(2)}</td>
               </tr>
 
               <tr>
-                <td>Cargo lector</td>
-                <td class="right">S/ ${Number(recibo.cargoLector).toFixed(2)}</td>
+                <td>Lector</td>
+                <td>Cargo por registro de lectura</td>
+                <td class="money">S/ ${lector.toFixed(2)}</td>
               </tr>
 
               <tr>
                 <td>Mora</td>
-                <td class="right">S/ ${Number(recibo.mora).toFixed(2)}</td>
-              </tr>
-
-              <tr class="total-row">
-                <td>Total a pagar</td>
-                <td class="right">S/ ${Number(recibo.total).toFixed(2)}</td>
+                <td>Cargo por vencimiento, si corresponde</td>
+                <td class="money">S/ ${mora.toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
 
-          <div class="footer">
-            Documento generado desde el sistema web JASS Huacariz.<br>
-            Este comprobante es informativo y resume el consumo registrado en el periodo correspondiente.
-          </div>
-        </div>
+          <section class="bottom-layout">
+            <div>
+              <div class="notes">
+                <strong>Estimado usuario:</strong>
+                Cumpla con realizar sus pagos antes de la fecha de vencimiento para evitar mora,
+                suspensión del servicio o restricciones administrativas. Conserve este recibo como
+                constancia de cobranza del servicio de agua potable.
+              </div>
 
-        <div class="actions">
-          <button class="close" onclick="window.close()">Cerrar</button>
-          <button class="print" onclick="window.print()">Imprimir / guardar PDF</button>
-        </div>
+              <div class="barcode">${codigoBarra}</div>
+
+              <div class="barcode-text">
+                ${this.textoSeguro(recibo.codigoRecibo)} · ${this.textoSeguro(recibo.codigoSuministro)}
+              </div>
+            </div>
+
+            <div class="total-box">
+              <div class="total-row">
+                <span>Subtotal agua</span>
+                <strong>S/ ${subtotalAgua.toFixed(2)}</strong>
+              </div>
+
+              <div class="total-row">
+                <span>Cargos</span>
+                <strong>S/ ${cargos.toFixed(2)}</strong>
+              </div>
+
+              <div class="total-row final">
+                <span>Total a pagar</span>
+                <strong>S/ ${total.toFixed(2)}</strong>
+              </div>
+
+              <div class="total-row">
+                <span>Vence</span>
+                <strong>${this.textoSeguro(recibo.fechaVencimiento || '-')}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="footer">
+            <div>
+              <strong>Atención:</strong>
+              Este documento es emitido por el sistema de gestión de agua JASS Huacariz.
+            </div>
+
+            <div>
+              <strong>Validación:</strong>
+              Código de recibo ${this.textoSeguro(recibo.codigoRecibo)} · Suministro ${this.textoSeguro(recibo.codigoSuministro)}.
+            </div>
+          </section>
+        </main>
       </body>
       </html>
-    `;
+    `);
 
-    ventana.document.open();
-    ventana.document.write(html);
     ventana.document.close();
-  }
-
-  private formatearFecha(fecha: string): string {
-    if (!fecha) {
-      return '-';
-    }
-
-    const date = new Date(fecha);
-
-    if (Number.isNaN(date.getTime())) {
-      return fecha;
-    }
-
-    return date.toLocaleString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   }
 
   private textoSeguro(value: unknown): string {
