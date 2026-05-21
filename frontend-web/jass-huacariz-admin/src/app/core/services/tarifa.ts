@@ -34,4 +34,16 @@ export class Tarifa {
   registrarTarifa(data: TarifaRequest): Observable<TarifaResponse> {
     return this.http.post<TarifaResponse>(this.apiUrl, data);
   }
+
+  actualizarTarifa(id: number, data: TarifaRequest): Observable<TarifaResponse> {
+    return this.http.put<TarifaResponse>(`${this.apiUrl}/${id}`, data);
+  }
+
+  cambiarEstadoTarifa(id: number, estado: boolean): Observable<TarifaResponse> {
+    return this.http.patch<TarifaResponse>(`${this.apiUrl}/${id}/estado?estado=${estado}`, {});
+  }
+
+  eliminarTarifa(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }

@@ -44,4 +44,21 @@ public class ClienteController {
     public ResponseEntity<List<SuministroResponse>> listarSuministrosPorCliente(@PathVariable Integer id) {
         return ResponseEntity.ok(clienteService.listarSuministrosPorCliente(id));
     }
+
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<ClienteResponse> cambiarEstadoCliente(
+            @PathVariable Integer id,
+            @RequestParam Boolean estado
+    ) {
+        return ResponseEntity.ok(clienteService.cambiarEstadoCliente(id, estado));
+    }
+
+    @PatchMapping("/{clienteId}/suministros/{suministroId}/estado")
+    public ResponseEntity<SuministroResponse> cambiarEstadoSuministro(
+            @PathVariable Integer clienteId,
+            @PathVariable Integer suministroId,
+            @RequestParam Boolean estado
+    ) {
+        return ResponseEntity.ok(clienteService.cambiarEstadoSuministro(clienteId, suministroId, estado));
+    }
 }

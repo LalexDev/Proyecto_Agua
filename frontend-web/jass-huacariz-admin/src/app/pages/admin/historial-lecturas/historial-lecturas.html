@@ -1,12 +1,12 @@
 <div class="historial-page">
-  <div class="page-header">
-    <div>
+  <section class="page-header">
+    <div class="page-header__content">
       <span class="tag">Administración</span>
       <h2>Historial de lecturas</h2>
       <p>Consulta las lecturas registradas, consumos generados y recibos asociados.</p>
     </div>
 
-    <div class="header-actions">
+    <div class="page-header__actions">
       <button type="button" class="btn-secondary" (click)="exportarExcel()">
         Exportar Excel
       </button>
@@ -19,36 +19,52 @@
         Actualizar
       </button>
     </div>
-  </div>
+  </section>
 
-  <div *ngIf="error" class="alert-error">
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando historial de lecturas...
+  </div>
+
   <section class="stats-grid">
-    <div class="stat-card">
-      <span>Lecturas</span>
-      <strong>{{ lecturasFiltradas.length }}</strong>
-      <small>Registros encontrados</small>
-    </div>
+    <article class="stat-card">
+      <div class="stat-card__icon">📚</div>
+      <div class="stat-card__content">
+        <span class="stat-card__label">Lecturas</span>
+        <strong class="stat-card__value">{{ lecturasFiltradas.length }}</strong>
+        <small class="stat-card__meta">Registros encontrados</small>
+      </div>
+    </article>
 
-    <div class="stat-card">
-      <span>Consumo total</span>
-      <strong>{{ totalConsumo() | number:'1.2-3' }} m³</strong>
-      <small>Según filtros aplicados</small>
-    </div>
+    <article class="stat-card">
+      <div class="stat-card__icon">💧</div>
+      <div class="stat-card__content">
+        <span class="stat-card__label">Consumo total</span>
+        <strong class="stat-card__value">{{ totalConsumo() | number:'1.2-3' }} m³</strong>
+        <small class="stat-card__meta">Según filtros aplicados</small>
+      </div>
+    </article>
 
-    <div class="stat-card">
-      <span>Total emitido</span>
-      <strong>S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
-      <small>Importe de recibos</small>
-    </div>
+    <article class="stat-card">
+      <div class="stat-card__icon">💰</div>
+      <div class="stat-card__content">
+        <span class="stat-card__label">Total emitido</span>
+        <strong class="stat-card__value">S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
+        <small class="stat-card__meta">Importe de recibos</small>
+      </div>
+    </article>
 
-    <div class="stat-card">
-      <span>Pendientes / Pagados</span>
-      <strong>{{ totalPendientes() }} / {{ totalPagados() }}</strong>
-      <small>Estado de recibos</small>
-    </div>
+    <article class="stat-card">
+      <div class="stat-card__icon">🧾</div>
+      <div class="stat-card__content">
+        <span class="stat-card__label">Pendientes / Pagados</span>
+        <strong class="stat-card__value">{{ totalPendientes() }} / {{ totalPagados() }}</strong>
+        <small class="stat-card__meta">Estado de recibos</small>
+      </div>
+    </article>
   </section>
 
   <section class="filter-card">
@@ -87,17 +103,13 @@
     </button>
   </section>
 
-  <div *ngIf="cargando" class="alert-info">
-    Cargando historial de lecturas...
-  </div>
-
   <section class="table-card">
-    <div class="table-title">
+    <div class="table-card__header">
       <h3>Lecturas registradas</h3>
       <span>{{ lecturasFiltradas.length }} resultado(s)</span>
     </div>
 
-    <div class="table-wrapper">
+    <div class="table-responsive">
       <table>
         <thead>
           <tr>
@@ -126,9 +138,7 @@
               <small>DNI: {{ item.dniCliente }}</small>
             </td>
 
-            <td>
-              {{ nombreMes(item.mes) }} {{ item.anio }}
-            </td>
+            <td>{{ nombreMes(item.mes) }} {{ item.anio }}</td>
 
             <td>{{ item.lecturaAnterior | number:'1.2-3' }} m³</td>
 
@@ -147,14 +157,14 @@
             </td>
 
             <td>
-              <span class="badge" [ngClass]="estadoClase(item.estadoRecibo)">
+              <span class="status-badge" [ngClass]="estadoClase(item.estadoRecibo)">
                 {{ item.estadoRecibo || 'PENDIENTE' }}
               </span>
             </td>
           </tr>
 
           <tr *ngIf="lecturasFiltradas.length === 0 && !cargando">
-            <td colspan="9" class="empty-row">
+            <td colspan="9" class="empty-state">
               No hay lecturas registradas.
             </td>
           </tr>

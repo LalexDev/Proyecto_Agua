@@ -4,7 +4,25 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
-import { Cliente } from '../../../core/services/cliente';
+import {
+  Cliente,
+  ClienteRequest,
+  ClienteResponse,
+  SuministroRequest,
+  SuministroResponse
+} from '../../../core/services/cliente';
+
+type TipoAccion = 'CLIENTE' | 'SUMINISTRO';
+
+interface AccionPendiente {
+  tipo: TipoAccion;
+  cliente: ClienteResponse;
+  suministro?: SuministroResponse;
+  estadoNuevo: boolean;
+  titulo: string;
+  mensaje: string;
+  textoBoton: string;
+}
 
 @Component({
   selector: 'app-clientes',
@@ -13,70 +31,41 @@ import { Cliente } from '../../../core/services/cliente';
   styleUrl: './clientes.scss',
 })
 export class Clientes implements OnInit {
-  clientes: any[] = [];
-  clientesFiltrados: any[] = [];
-
-  sectores: any[] = [
-    { id: 1, nombre: 'Sector 1' },
-    { id: 2, nombre: 'Sector 2' },
-    { id: 3, nombre: 'Sector 3' },
-    { id: 4, nombre: 'Sector 4' }
-  ];
-
-  busqueda = '';
+  clientes: ClienteResponse[] = [];
+  clientesFiltrados: ClienteResponse[] = [];
 
   cargando = false;
   guardando = false;
+  procesandoAccion = false;
 
   error = '';
   exito = '';
-  mensaje = '';
+  busqueda = '';
 
   mostrarFormulario = false;
+  mostrarDetalle = false;
 
-  nuevoCliente: any = {
-    dni: '',
-    nombres: '',
-    apellidos: '',
-    telefono: '',
-    correo: '',
-    estado: true,
-    suministros: []
-  };
+  clienteDetalle: ClienteResponse | null = null;
+  accionPendiente: AccionPendiente | null = null;
+
+  nuevoCliente: ClienteRequest = this.crearClienteVacio();
 
   constructor(
     private clienteService: Cliente,
-    private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.cargarDatos();
-  }
-
-  cargarDatos(): void {
     this.cargarClientes();
   }
 
   cargarClientes(): void {
     this.cargando = true;
     this.error = '';
+    this.exito = '';
 
-    const servicio: any = this.clienteService;
-
-    const request$ =
-      servicio.listarClientes?.() ||
-      servicio.listar?.() ||
-      servicio.obtenerClientes?.() ||
-      servicio.getClientes?.();
-
-    if (!request$) {
-      this.error = 'No se encontró el método para listar clientes.';
-      this.cargando = false;
-      return;
-    }
-
-    request$
+    this.clienteService.listarClientes()
       .pipe(
         finalize(() => {
           this.cargando = false;
@@ -84,18 +73,22 @@ export class Clientes implements OnInit {
         })
       )
       .subscribe({
-        next: (data: any[]) => {
+        next: (data) => {
           this.clientes = data || [];
           this.filtrarClientes();
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar la lista de clientes.';
+          this.error = 'No se pudieron cargar los clientes. Verifica el backend y tu sesión ADMIN.';
           this.clientes = [];
           this.clientesFiltrados = [];
           this.cdr.detectChanges();
         }
       });
+  }
+
+  cargarDatos(): void {
+    this.cargarClientes();
   }
 
   filtrarClientes(): void {
@@ -106,115 +99,72 @@ export class Clientes implements OnInit {
       return;
     }
 
-    this.clientesFiltrados = this.clientes.filter((cliente: any) => {
-      const dni = String(cliente?.dni || '').toLowerCase();
-      const nombres = String(cliente?.nombres || '').toLowerCase();
-      const apellidos = String(cliente?.apellidos || '').toLowerCase();
-      const telefono = String(cliente?.telefono || '').toLowerCase();
-      const correo = String(cliente?.correo || '').toLowerCase();
-      const usuario = String(cliente?.codigoUsuario || cliente?.usuario || '').toLowerCase();
+    this.clientesFiltrados = this.clientes.filter((cliente) => {
+      const nombreCompleto = this.nombreCompleto(cliente).toLowerCase();
 
-      const suministrosTexto = (cliente?.suministros || [])
-        .map((s: any) => {
-          return [
-            s?.codigoSuministro,
-            s?.codigo,
-            s?.aliasSuministro,
-            s?.alias,
-            s?.nombre,
-            s?.direccionSuministro,
-            s?.direccion
-          ].join(' ');
-        })
-        .join(' ')
-        .toLowerCase();
+      const coincideCliente =
+        String(cliente.dni || '').toLowerCase().includes(texto) ||
+        nombreCompleto.includes(texto) ||
+        String(cliente.telefono || '').toLowerCase().includes(texto) ||
+        String(cliente.correo || '').toLowerCase().includes(texto) ||
+        String(cliente.codigoUsuario || '').toLowerCase().includes(texto) ||
+        this.estadoTexto(cliente.estado).toLowerCase().includes(texto);
 
-      return (
-        dni.includes(texto) ||
-        nombres.includes(texto) ||
-        apellidos.includes(texto) ||
-        telefono.includes(texto) ||
-        correo.includes(texto) ||
-        usuario.includes(texto) ||
-        suministrosTexto.includes(texto)
-      );
+      const coincideSuministro = (cliente.suministros || []).some((suministro) => {
+        return (
+          String(suministro.codigoSuministro || '').toLowerCase().includes(texto) ||
+          String(suministro.aliasSuministro || '').toLowerCase().includes(texto) ||
+          String(suministro.direccionSuministro || '').toLowerCase().includes(texto) ||
+          String(suministro.nombreSector || '').toLowerCase().includes(texto) ||
+          this.estadoSuministroTexto(suministro.estado).toLowerCase().includes(texto)
+        );
+      });
+
+      return coincideCliente || coincideSuministro;
     });
   }
 
   abrirFormulario(): void {
+    this.mostrarFormulario = true;
     this.error = '';
     this.exito = '';
-    this.mensaje = '';
-    this.mostrarFormulario = true;
-
-    if (!this.nuevoCliente.suministros || this.nuevoCliente.suministros.length === 0) {
-      this.agregarSuministro();
-    }
+    this.nuevoCliente = this.crearClienteVacio();
   }
 
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
-  }
-
-  agregarSuministro(): void {
-    this.nuevoCliente.suministros.push({
-      idSector: 1,
-      direccionSuministro: '',
-      referencia: '',
-      aliasSuministro: '',
-      lecturaInicial: 0
-    });
-  }
-
-  quitarSuministro(index: number): void {
-    this.nuevoCliente.suministros.splice(index, 1);
-
-    if (this.nuevoCliente.suministros.length === 0) {
-      this.agregarSuministro();
-    }
+    this.error = '';
+    this.exito = '';
+    this.nuevoCliente = this.crearClienteVacio();
   }
 
   registrarCliente(): void {
     this.error = '';
     this.exito = '';
-    this.mensaje = '';
 
-    if (!this.nuevoCliente.dni?.trim()) {
-      this.error = 'Ingrese el DNI del cliente.';
-      return;
-    }
-
-    if (!this.nuevoCliente.nombres?.trim()) {
-      this.error = 'Ingrese los nombres del cliente.';
-      return;
-    }
-
-    if (!this.nuevoCliente.apellidos?.trim()) {
-      this.error = 'Ingrese los apellidos del cliente.';
-      return;
-    }
-
-    if (!this.nuevoCliente.suministros || this.nuevoCliente.suministros.length === 0) {
-      this.error = 'Agregue al menos un suministro.';
-      return;
-    }
-
-    const servicio: any = this.clienteService;
-
-    const request$ =
-      servicio.registrarCliente?.(this.nuevoCliente) ||
-      servicio.crearCliente?.(this.nuevoCliente) ||
-      servicio.guardarCliente?.(this.nuevoCliente) ||
-      servicio.registrar?.(this.nuevoCliente);
-
-    if (!request$) {
-      this.error = 'No se encontró el método para registrar cliente.';
+    if (!this.validarFormulario()) {
       return;
     }
 
     this.guardando = true;
 
-    request$
+    const payload: ClienteRequest = {
+      dni: this.nuevoCliente.dni.trim(),
+      nombres: this.nuevoCliente.nombres.trim(),
+      apellidos: this.nuevoCliente.apellidos.trim(),
+      telefono: this.nuevoCliente.telefono.trim(),
+      correo: this.nuevoCliente.correo.trim(),
+      estado: this.nuevoCliente.estado,
+      suministros: this.nuevoCliente.suministros.map((suministro) => ({
+        idSector: Number(suministro.idSector),
+        direccionSuministro: suministro.direccionSuministro.trim(),
+        referencia: suministro.referencia?.trim() || '',
+        aliasSuministro: suministro.aliasSuministro.trim(),
+        lecturaInicial: Number(suministro.lecturaInicial || 0)
+      }))
+    };
+
+    this.clienteService.registrarCliente(payload)
       .pipe(
         finalize(() => {
           this.guardando = false;
@@ -222,101 +172,510 @@ export class Clientes implements OnInit {
         })
       )
       .subscribe({
-        next: (resp: any) => {
-          const usuario = resp?.codigoUsuario || resp?.usuario || this.nuevoCliente.dni;
-          const password = resp?.passwordInicial || resp?.password || 'cliente123';
-
-          this.exito = `Cliente registrado correctamente. Usuario: ${usuario} / Contraseña inicial: ${password}`;
-          this.mensaje = this.exito;
-
-          this.limpiarFormulario();
-          this.cerrarFormulario();
+        next: () => {
+          this.exito = 'Cliente registrado correctamente.';
+          this.mostrarFormulario = false;
+          this.nuevoCliente = this.crearClienteVacio();
           this.cargarClientes();
-          this.cdr.detectChanges();
         },
-        error: (err: any) => {
-          this.error =
-            err?.error?.error ||
-            err?.error?.mensaje ||
-            'No se pudo registrar el cliente.';
+        error: (err) => {
+          this.error = err?.error?.error || 'No se pudo registrar el cliente.';
           this.cdr.detectChanges();
         }
       });
   }
 
-  limpiarFormulario(): void {
-    this.nuevoCliente = {
+  agregarSuministroFormulario(): void {
+    this.nuevoCliente.suministros.push(this.crearSuministroVacio());
+  }
+
+  quitarSuministroFormulario(index: number): void {
+    if (this.nuevoCliente.suministros.length === 1) {
+      this.error = 'El cliente debe tener al menos un suministro.';
+      return;
+    }
+
+    this.nuevoCliente.suministros.splice(index, 1);
+  }
+
+  verDetalle(cliente: ClienteResponse): void {
+    this.clienteDetalle = cliente;
+    this.mostrarDetalle = true;
+    this.error = '';
+    this.exito = '';
+  }
+
+  cerrarDetalle(): void {
+    this.clienteDetalle = null;
+    this.mostrarDetalle = false;
+  }
+
+  abrirCambiarEstadoCliente(cliente: ClienteResponse): void {
+    const estadoNuevo = !cliente.estado;
+
+    this.accionPendiente = {
+      tipo: 'CLIENTE',
+      cliente,
+      estadoNuevo,
+      titulo: estadoNuevo ? 'Activar cliente' : 'Desactivar cliente',
+      mensaje: estadoNuevo
+        ? `¿Deseas activar a ${this.nombreCompleto(cliente)}? También se habilitará su usuario de acceso.`
+        : `¿Deseas desactivar a ${this.nombreCompleto(cliente)}? También se deshabilitará su usuario de acceso.`,
+      textoBoton: estadoNuevo ? 'Activar cliente' : 'Desactivar cliente'
+    };
+  }
+
+  abrirCambiarEstadoSuministro(
+    cliente: ClienteResponse,
+    suministro: SuministroResponse,
+    estadoNuevo: boolean
+  ): void {
+    this.accionPendiente = {
+      tipo: 'SUMINISTRO',
+      cliente,
+      suministro,
+      estadoNuevo,
+      titulo: estadoNuevo ? 'Marcar suministro instalado' : 'Suspender suministro',
+      mensaje: estadoNuevo
+        ? `¿Confirmas que el suministro ${suministro.codigoSuministro} ya fue instalado y quedará activo?`
+        : `¿Deseas suspender el suministro ${suministro.codigoSuministro}?`,
+      textoBoton: estadoNuevo ? 'Marcar instalado' : 'Suspender suministro'
+    };
+  }
+
+  cerrarConfirmacion(): void {
+    this.accionPendiente = null;
+  }
+
+  confirmarAccion(): void {
+    if (!this.accionPendiente) {
+      return;
+    }
+
+    this.procesandoAccion = true;
+    this.error = '';
+    this.exito = '';
+
+    const accion = this.accionPendiente;
+
+    if (accion.tipo === 'CLIENTE') {
+      this.clienteService.cambiarEstadoCliente(accion.cliente.id, accion.estadoNuevo)
+        .pipe(
+          finalize(() => {
+            this.procesandoAccion = false;
+            this.cdr.detectChanges();
+          })
+        )
+        .subscribe({
+          next: () => {
+            this.exito = accion.estadoNuevo
+              ? 'Cliente activado correctamente.'
+              : 'Cliente desactivado correctamente.';
+
+            this.accionPendiente = null;
+            this.cargarClientes();
+          },
+          error: (err) => {
+            this.error = err?.error?.error || 'No se pudo cambiar el estado del cliente.';
+            this.cdr.detectChanges();
+          }
+        });
+
+      return;
+    }
+
+    if (accion.tipo === 'SUMINISTRO' && accion.suministro) {
+      this.clienteService.cambiarEstadoSuministro(
+        accion.cliente.id,
+        accion.suministro.id,
+        accion.estadoNuevo
+      )
+        .pipe(
+          finalize(() => {
+            this.procesandoAccion = false;
+            this.cdr.detectChanges();
+          })
+        )
+        .subscribe({
+          next: () => {
+            this.exito = accion.estadoNuevo
+              ? 'Suministro marcado como instalado correctamente.'
+              : 'Suministro suspendido correctamente.';
+
+            this.accionPendiente = null;
+            this.cerrarDetalle();
+            this.cargarClientes();
+          },
+          error: (err) => {
+            this.error = err?.error?.error || 'No se pudo cambiar el estado del suministro.';
+            this.cdr.detectChanges();
+          }
+        });
+    }
+  }
+
+  irQr(suministro: SuministroResponse): void {
+    this.router.navigate(['/admin/qr-suministro'], {
+      queryParams: {
+        codigo: suministro.codigoSuministro,
+        alias: suministro.aliasSuministro,
+        direccion: suministro.direccionSuministro
+      }
+    });
+  }
+
+  exportarClientesExcel(): void {
+    const fecha = new Date().toISOString().slice(0, 10);
+    const clientes = this.clientesFiltrados.length ? this.clientesFiltrados : this.clientes;
+
+    let filas = '';
+
+    clientes.forEach((cliente) => {
+      const suministros = cliente.suministros || [];
+
+      if (!suministros.length) {
+        filas += `
+          <tr>
+            <td>${this.textoSeguro(cliente.dni)}</td>
+            <td>${this.textoSeguro(this.nombreCompleto(cliente))}</td>
+            <td>${this.textoSeguro(cliente.telefono)}</td>
+            <td>${this.textoSeguro(cliente.correo)}</td>
+            <td>${this.textoSeguro(cliente.codigoUsuario)}</td>
+            <td>${this.estadoTexto(cliente.estado)}</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+        `;
+        return;
+      }
+
+      suministros.forEach((suministro) => {
+        filas += `
+          <tr>
+            <td>${this.textoSeguro(cliente.dni)}</td>
+            <td>${this.textoSeguro(this.nombreCompleto(cliente))}</td>
+            <td>${this.textoSeguro(cliente.telefono)}</td>
+            <td>${this.textoSeguro(cliente.correo)}</td>
+            <td>${this.textoSeguro(cliente.codigoUsuario)}</td>
+            <td>${this.estadoTexto(cliente.estado)}</td>
+            <td>${this.textoSeguro(suministro.codigoSuministro)}</td>
+            <td>${this.textoSeguro(suministro.aliasSuministro)}</td>
+            <td>${this.textoSeguro(suministro.direccionSuministro)}</td>
+            <td>${this.estadoSuministroTexto(suministro.estado)}</td>
+          </tr>
+        `;
+      });
+    });
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            table { border-collapse: collapse; width: 100%; font-family: Arial; }
+            th { background: #07384A; color: white; font-weight: bold; padding: 10px; border: 1px solid #dbe7ec; }
+            td { padding: 9px; border: 1px solid #dbe7ec; }
+            .titulo { background: #1BA3C7; color: white; font-size: 18px; font-weight: bold; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <tr><td class="titulo" colspan="10">JASS HUACARIZ - CLIENTES Y SUMINISTROS</td></tr>
+            <tr><td colspan="10">Fecha de exportación: ${new Date().toLocaleString('es-PE')}</td></tr>
+            <tr>
+              <th>DNI</th>
+              <th>Cliente</th>
+              <th>Teléfono</th>
+              <th>Correo</th>
+              <th>Usuario</th>
+              <th>Estado cliente</th>
+              <th>Código suministro</th>
+              <th>Alias</th>
+              <th>Dirección</th>
+              <th>Estado suministro</th>
+            </tr>
+            ${filas}
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([html], {
+      type: 'application/vnd.ms-excel;charset=utf-8;'
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `clientes_suministros_jass_huacariz_${fecha}.xls`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  imprimirClientesPdf(): void {
+    const clientes = this.clientesFiltrados.length ? this.clientesFiltrados : this.clientes;
+
+    let filas = '';
+
+    clientes.forEach((cliente) => {
+      const suministros = cliente.suministros || [];
+
+      if (!suministros.length) {
+        filas += `
+          <tr>
+            <td>${this.textoSeguro(cliente.dni)}</td>
+            <td>${this.textoSeguro(this.nombreCompleto(cliente))}</td>
+            <td>${this.textoSeguro(cliente.telefono)}</td>
+            <td>${this.textoSeguro(cliente.correo)}</td>
+            <td>${this.estadoTexto(cliente.estado)}</td>
+            <td colspan="4">Sin suministros registrados</td>
+          </tr>
+        `;
+        return;
+      }
+
+      suministros.forEach((suministro) => {
+        filas += `
+          <tr>
+            <td>${this.textoSeguro(cliente.dni)}</td>
+            <td>${this.textoSeguro(this.nombreCompleto(cliente))}</td>
+            <td>${this.textoSeguro(cliente.telefono)}</td>
+            <td>${this.textoSeguro(cliente.correo)}</td>
+            <td>${this.estadoTexto(cliente.estado)}</td>
+            <td>${this.textoSeguro(suministro.codigoSuministro)}</td>
+            <td>${this.textoSeguro(suministro.aliasSuministro)}</td>
+            <td>${this.textoSeguro(suministro.direccionSuministro)}</td>
+            <td>${this.estadoSuministroTexto(suministro.estado)}</td>
+          </tr>
+        `;
+      });
+    });
+
+    const ventana = window.open('', '_blank', 'width=1200,height=800');
+
+    if (!ventana) {
+      alert('El navegador bloqueó la ventana de impresión.');
+      return;
+    }
+
+    ventana.document.open();
+    ventana.document.write(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Clientes y suministros - JASS Huacariz</title>
+        <style>
+          body {
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 24px;
+            color: #0f2f44;
+          }
+
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #1ba3c7;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+          }
+
+          h1 {
+            margin: 0;
+            font-size: 24px;
+          }
+
+          p {
+            margin: 4px 0;
+            color: #64748b;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+          }
+
+          th {
+            background: #e8f7fb;
+            color: #0f2f44;
+            padding: 9px;
+            border: 1px solid #dbe7ec;
+            text-align: left;
+          }
+
+          td {
+            padding: 8px;
+            border: 1px solid #dbe7ec;
+          }
+
+          .actions {
+            margin-top: 18px;
+            text-align: right;
+          }
+
+          button {
+            border: none;
+            border-radius: 10px;
+            padding: 11px 16px;
+            font-weight: 800;
+            cursor: pointer;
+          }
+
+          .print {
+            background: #1ba3c7;
+            color: white;
+          }
+
+          @media print {
+            .actions {
+              display: none;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="header">
+          <div>
+            <h1>JASS Huacariz</h1>
+            <p>Reporte de clientes y suministros</p>
+            <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
+          </div>
+          <strong>Administración</strong>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>DNI</th>
+              <th>Cliente</th>
+              <th>Teléfono</th>
+              <th>Correo</th>
+              <th>Estado cliente</th>
+              <th>Código suministro</th>
+              <th>Alias</th>
+              <th>Dirección</th>
+              <th>Estado suministro</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filas || '<tr><td colspan="9">No hay clientes registrados.</td></tr>'}
+          </tbody>
+        </table>
+
+        <div class="actions">
+          <button class="print" onclick="window.print()">Imprimir / guardar PDF</button>
+        </div>
+      </body>
+      </html>
+    `);
+    ventana.document.close();
+  }
+
+  nombreCompleto(cliente: ClienteResponse): string {
+    return `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim();
+  }
+
+  totalSuministros(cliente: ClienteResponse): number {
+    return cliente.suministros?.length || 0;
+  }
+
+  estadoTexto(estado: boolean): string {
+    return estado ? 'Activo' : 'Inactivo';
+  }
+
+  estadoClase(estado: boolean): string {
+    return estado ? 'activo' : 'inactivo';
+  }
+
+  estadoSuministroTexto(estado: boolean): string {
+    return estado ? 'Instalado' : 'Pendiente / suspendido';
+  }
+
+  estadoSuministroClase(estado: boolean): string {
+    return estado ? 'activo' : 'pendiente';
+  }
+
+  private validarFormulario(): boolean {
+    if (!this.nuevoCliente.dni || this.nuevoCliente.dni.trim().length !== 8) {
+      this.error = 'Ingrese un DNI válido de 8 dígitos.';
+      return false;
+    }
+
+    if (!this.nuevoCliente.nombres.trim()) {
+      this.error = 'Ingrese los nombres del cliente.';
+      return false;
+    }
+
+    if (!this.nuevoCliente.apellidos.trim()) {
+      this.error = 'Ingrese los apellidos del cliente.';
+      return false;
+    }
+
+    if (!this.nuevoCliente.suministros.length) {
+      this.error = 'Agregue al menos un suministro.';
+      return false;
+    }
+
+    for (const suministro of this.nuevoCliente.suministros) {
+      if (!suministro.idSector || Number(suministro.idSector) <= 0) {
+        this.error = 'Ingrese el ID del sector en cada suministro.';
+        return false;
+      }
+
+      if (!suministro.direccionSuministro.trim()) {
+        this.error = 'Ingrese la dirección del suministro.';
+        return false;
+      }
+
+      if (!suministro.aliasSuministro.trim()) {
+        this.error = 'Ingrese el alias del suministro.';
+        return false;
+      }
+
+      if (Number(suministro.lecturaInicial) < 0) {
+        this.error = 'La lectura inicial no puede ser negativa.';
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private crearClienteVacio(): ClienteRequest {
+    return {
       dni: '',
       nombres: '',
       apellidos: '',
       telefono: '',
       correo: '',
       estado: true,
-      suministros: []
+      suministros: [this.crearSuministroVacio()]
     };
   }
 
-  nombreCompleto(cliente: any): string {
-  const nombres = cliente?.nombres || '';
-  const apellidos = cliente?.apellidos || '';
-
-    return `${nombres} ${apellidos}`.trim() || 'Sin nombre';
-  }
-  totalSuministros(cliente: any): number {
-    return cliente?.suministros?.length || 0;
-  }
-
-  estadoTexto(estado: any): string {
-    return estado === false || estado === 'INACTIVO' ? 'Inactivo' : 'Activo';
+  private crearSuministroVacio(): SuministroRequest {
+    return {
+      idSector: 1,
+      direccionSuministro: '',
+      referencia: '',
+      aliasSuministro: '',
+      lecturaInicial: 0
+    };
   }
 
-  estadoClase(estado: any): string {
-    return estado === false || estado === 'INACTIVO' ? 'inactivo' : 'activo';
-  }
-
-  obtenerCodigoSuministro(suministro: any): string {
-    return (
-      suministro?.codigoSuministro ||
-      suministro?.codigo ||
-      suministro?.codigo_suministro ||
-      ''
-    );
-  }
-
-  obtenerAliasSuministro(suministro: any): string {
-    return (
-      suministro?.aliasSuministro ||
-      suministro?.alias ||
-      suministro?.nombre ||
-      'Suministro de agua'
-    );
-  }
-
-  obtenerDireccionSuministro(suministro: any): string {
-    return (
-      suministro?.direccionSuministro ||
-      suministro?.direccion ||
-      suministro?.direccionSuministroCompleta ||
-      ''
-    );
-  }
-
-  abrirQrSuministro(suministro: any): void {
-    const codigo = this.obtenerCodigoSuministro(suministro);
-    const alias = this.obtenerAliasSuministro(suministro);
-    const direccion = this.obtenerDireccionSuministro(suministro);
-
-    if (!codigo) {
-      alert('No se encontró el código del suministro.');
-      return;
-    }
-
-    this.router.navigate(['/admin/qr-suministro'], {
-      queryParams: {
-        codigo,
-        alias,
-        direccion
-      }
-    });
+  private textoSeguro(value: unknown): string {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 }

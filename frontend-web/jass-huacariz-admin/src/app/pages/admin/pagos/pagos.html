@@ -1,99 +1,159 @@
 <div class="pagos-page">
-  <div class="page-header">
-    <div>
+  <section class="page-header">
+    <div class="page-header__content">
       <span class="tag">Administración</span>
       <h2>Pagos</h2>
-      <p>Consulta el historial de pagos registrados en el sistema.</p>
+      <p>Consulta pagos registrados, métodos utilizados y recaudación del servicio de agua potable.</p>
     </div>
 
-    <button type="button" class="btn-primary" (click)="cargarPagos()">
-      Actualizar
-    </button>
-  </div>
+    <div class="page-header__actions">
+      <button type="button" class="btn-primary" (click)="cargarPagos()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+      </button>
+    </div>
+  </section>
 
-  <div *ngIf="error" class="alert-error">
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <span>💰</span>
-      <div>
-        <p>Total recaudado</p>
-        <h3>S/ {{ totalRecaudado() | number:'1.2-2' }}</h3>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <span>✅</span>
-      <div>
-        <p>Pagos registrados</p>
-        <h3>{{ totalPagos() }}</h3>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <span>🏦</span>
-      <div>
-        <p>PagoEfectivo</p>
-        <h3>{{ pagosPagoEfectivo() }}</h3>
-      </div>
-    </div>
+  <div *ngIf="exito" class="alert alert-success">
+    {{ exito }}
   </div>
 
-  <div class="toolbar">
-    <input
-      type="text"
-      placeholder="Buscar por recibo, método de pago o código de operación..."
-      [(ngModel)]="busqueda"
-      (input)="filtrarPagos()"
-    >
-  </div>
-
-  <div *ngIf="cargando" class="alert-info">
+  <div *ngIf="cargando" class="alert alert-info">
     Cargando pagos...
   </div>
 
+  <section class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-card__icon">💳</div>
+      <div class="stat-card__content">
+        <span>Total pagos</span>
+        <strong>{{ totalPagos() }}</strong>
+        <small>Pagos registrados</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">💰</div>
+      <div class="stat-card__content">
+        <span>Monto recaudado</span>
+        <strong>S/ {{ montoTotalPagado() | number:'1.2-2' }}</strong>
+        <small>Total acumulado</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">📅</div>
+      <div class="stat-card__content">
+        <span>Pagos del mes</span>
+        <strong>{{ pagosDelMes() }}</strong>
+        <small>Mes actual</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">🏦</div>
+      <div class="stat-card__content">
+        <span>Método principal</span>
+        <strong>{{ metodoMasUsado() }}</strong>
+        <small>Método más usado</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="chart-card">
+    <div class="chart-info">
+      <span class="tag">Indicadores</span>
+      <h3>Métodos de pago</h3>
+      <p>Distribución de pagos registrados por método de cobranza.</p>
+
+      <div class="legend-list">
+        <div class="legend-item" *ngFor="let item of resumenMetodos(); let i = index">
+          <span class="dot" [style.background]="colorMetodo(i)"></span>
+
+          <div>
+            <strong>{{ item.metodo }}</strong>
+            <small>
+              {{ item.cantidad }} pago(s) -
+              {{ item.porcentaje | number:'1.0-1' }}% -
+              S/ {{ item.monto | number:'1.2-2' }}
+            </small>
+          </div>
+        </div>
+
+        <div class="empty-chart" *ngIf="resumenMetodos().length === 0">
+          No hay pagos para graficar.
+        </div>
+      </div>
+    </div>
+
+    <div class="donut-wrapper">
+      <div class="donut-chart" [style.background]="graficoMetodos()">
+        <div class="donut-center">
+          <strong>{{ totalPagos() }}</strong>
+          <span>pagos</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="filters-row">
+    <input
+      type="text"
+      placeholder="Buscar por recibo, método, operación, monto o fecha..."
+      [(ngModel)]="busqueda"
+      (input)="filtrarPagos()"
+    >
+
+    <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+      Limpiar
+    </button>
+  </section>
+
   <section class="table-card">
-    <div class="table-title">
-      <h3>Historial de pagos</h3>
+    <div class="table-card__header">
+      <h3>Pagos registrados</h3>
       <span>{{ pagosFiltrados.length }} resultado(s)</span>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID pago</th>
-          <th>Recibo</th>
-          <th>Método</th>
-          <th>Operación</th>
-          <th>Monto</th>
-          <th>Estado</th>
-          <th>Fecha de pago</th>
-        </tr>
-      </thead>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Recibo</th>
+            <th>Método de pago</th>
+            <th>Código operación</th>
+            <th>Monto</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
 
-      <tbody>
-        <tr *ngFor="let pago of pagosFiltrados">
-          <td>{{ pago.id }}</td>
-          <td>{{ pago.codigoRecibo }}</td>
-          <td>{{ pago.metodoPago }}</td>
-          <td>{{ pago.codigoOperacion || '-' }}</td>
-          <td>S/ {{ pago.monto | number:'1.2-2' }}</td>
-          <td>
-            <span class="badge" [ngClass]="estadoClase(pago.estadoPago)">
-              {{ pago.estadoPago }}
-            </span>
-          </td>
-          <td>{{ pago.fechaPago | date:'dd/MM/yyyy HH:mm' }}</td>
-        </tr>
+        <tbody>
+          <tr *ngFor="let pago of pagosFiltrados">
+            <td>
+              <strong>{{ pago.codigoRecibo }}</strong>
+            </td>
 
-        <tr *ngIf="pagosFiltrados.length === 0 && !cargando">
-          <td colspan="7" class="empty-row">
-            No hay pagos registrados.
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <td>{{ pago.metodoPago }}</td>
+
+            <td>{{ pago.codigoOperacion || '-' }}</td>
+
+            <td>
+              <strong>S/ {{ pago.monto | number:'1.2-2' }}</strong>
+            </td>
+
+            <td>{{ fechaPagoTexto(pago) }}</td>
+          </tr>
+
+          <tr *ngIf="!cargando && pagosFiltrados.length === 0">
+            <td colspan="5" class="empty-state">
+              No hay pagos registrados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 </div>

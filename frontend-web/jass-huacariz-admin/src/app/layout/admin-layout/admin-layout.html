@@ -2,6 +2,7 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-icon">💧</div>
+
       <div>
         <h2>JASS Huacariz</h2>
         <p>Panel administrativo</p>
@@ -9,21 +10,55 @@
     </div>
 
     <nav class="menu">
-      <a routerLink="/admin/dashboard" routerLinkActive="active">Dashboard</a>
-      <a routerLink="/admin/clientes" routerLinkActive="active">Clientes</a>
-      <a routerLink="/admin/recibos" routerLinkActive="active">Recibos</a>
-      <a routerLink="/admin/pagos" routerLinkActive="active">Pagos</a>
-      <a routerLink="/admin/tarifas" routerLinkActive="active">Tarifas</a>
-      <a routerLink="/admin/qr-suministro" routerLinkActive="active" class="nav-link">
-      QR Suministro
+      <a
+        routerLink="/admin/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <span>🏠</span>
+        Dashboard
       </a>
-      <a routerLink="/admin/historial-lecturas" routerLinkActive="active" class="nav-link">
-  	Historial lecturas
+
+      <a routerLink="/admin/clientes" routerLinkActive="active">
+        <span>👥</span>
+        Clientes
       </a>
-      <a routerLink="/admin/reportes" routerLinkActive="active">Reportes</a>
+
+      <a routerLink="/admin/recibos" routerLinkActive="active">
+        <span>🧾</span>
+        Recibos
+      </a>
+
+      <a routerLink="/admin/pagos" routerLinkActive="active">
+        <span>💰</span>
+        Pagos
+      </a>
+
+      <a routerLink="/admin/tarifas" routerLinkActive="active">
+        <span>⚙️</span>
+        Tarifas
+      </a>
+
+      <a routerLink="/admin/qr-suministro" routerLinkActive="active">
+        <span>▣</span>
+        QR Suministro
+      </a>
+
+      <a routerLink="/admin/historial-lecturas" routerLinkActive="active">
+        <span>📚</span>
+        Historial lecturas
+      </a>
+
+      <a routerLink="/admin/reportes" routerLinkActive="active">
+        <span>📊</span>
+        Reportes
+      </a>
     </nav>
 
-    <button class="logout">Cerrar sesión</button>
+    <button type="button" class="logout" (click)="cerrarSesion()">
+      <span>⏻</span>
+      Cerrar sesión
+    </button>
   </aside>
 
   <main class="content">

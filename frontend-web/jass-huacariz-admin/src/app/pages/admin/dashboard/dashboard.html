@@ -1,27 +1,32 @@
-<div class="dashboard-page">
-  <section class="hero-card">
-    <div>
-      <span class="tag">Panel administrativo</span>
-      <h2>Bienvenido al sistema JASS Huacariz</h2>
-      <p>Gestiona clientes, suministros, recibos, pagos, lecturas y reportes del servicio de agua potable.</p>
-
-      <div class="hero-actions">
-        <button type="button" class="btn-secondary" (click)="exportarExcel()">
-          Exportar Excel
-        </button>
-
-        <button type="button" class="btn-secondary" (click)="imprimirDashboard()">
-          Imprimir PDF
-        </button>
-
-        <button type="button" class="btn-primary" (click)="cargarDashboard()">
-          Actualizar
-        </button>
-      </div>
+<div class="dashboard-premium">
+  <section class="dashboard-top">
+    <div class="top-left">
+      <span class="page-kicker">Dashboard / Home</span>
+      <h2>Panel administrativo</h2>
+      <p>Resumen general del sistema de agua potable JASS Huacariz.</p>
     </div>
 
-    <div class="hero-icon">
-      💧
+    <div class="top-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Buscar cliente, recibo o suministro..." disabled>
+    </div>
+
+    <div class="top-actions">
+      <button type="button" class="icon-button" title="Actualizar" (click)="cargarDashboard()">
+        ↻
+      </button>
+
+      <button type="button" class="icon-button" title="Exportar Excel" (click)="exportarExcel()">
+        ⇩
+      </button>
+
+      <button type="button" class="icon-button" title="Imprimir PDF" (click)="imprimirDashboard()">
+        ⎙
+      </button>
+
+      <button type="button" class="logout-button" (click)="cerrarSesion()">
+        Cerrar sesión
+      </button>
     </div>
   </section>
 
@@ -30,157 +35,314 @@
   </div>
 
   <div *ngIf="cargando" class="alert-info">
-    Cargando dashboard...
+    Cargando información del dashboard...
   </div>
 
-  <section class="stats-grid">
-    <div class="stat-card">
-      <div class="icon">👥</div>
-      <div>
-        <span>Total clientes</span>
-        <strong>{{ totalClientes() }}</strong>
-        <small>Clientes registrados</small>
+  <section class="summary-layout">
+    <article class="mini-stat featured">
+      <div class="circle-ring">
+        <span>{{ totalClientes() }}</span>
       </div>
-    </div>
 
-    <div class="stat-card">
-      <div class="icon">🏠</div>
       <div>
-        <span>Total suministros</span>
-        <strong>{{ totalSuministros() }}</strong>
-        <small>Conexiones activas</small>
+        <small>Total clientes</small>
+        <strong>Clientes activos</strong>
+        <p>Usuarios registrados en el servicio.</p>
       </div>
-    </div>
+    </article>
 
-    <div class="stat-card">
-      <div class="icon">🧾</div>
-      <div>
-        <span>Recibos pendientes</span>
-        <strong>{{ recibosPendientes() }}</strong>
-        <small>Por cobrar</small>
+    <article class="mini-stat">
+      <div class="circle-ring">
+        <span>{{ totalSuministros() }}</span>
       </div>
-    </div>
 
-    <div class="stat-card">
-      <div class="icon">💰</div>
       <div>
-        <span>Total pagado</span>
-        <strong>S/ {{ totalPagado() | number:'1.2-2' }}</strong>
-        <small>Recaudación registrada</small>
+        <small>Suministros</small>
+        <strong>Conexiones</strong>
+        <p>Puntos de agua registrados.</p>
       </div>
-    </div>
+    </article>
 
-    <div class="stat-card">
-      <div class="icon">📄</div>
-      <div>
-        <span>Total emitido</span>
-        <strong>S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
-        <small>Recibos generados</small>
+    <article class="mini-stat">
+      <div class="circle-ring warning">
+        <span>{{ recibosPendientes() }}</span>
       </div>
-    </div>
 
-    <div class="stat-card">
-      <div class="icon">⏳</div>
       <div>
-        <span>Saldo pendiente</span>
-        <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
-        <small>Monto por cobrar</small>
+        <small>Pendientes</small>
+        <strong>Por cobrar</strong>
+        <p>{{ porcentajePendientes() | number:'1.1-1' }}% de recibos.</p>
       </div>
-    </div>
+    </article>
 
-    <div class="stat-card">
-      <div class="icon">💧</div>
-      <div>
-        <span>Consumo total</span>
-        <strong>{{ consumoTotal() | number:'1.2-3' }} m³</strong>
-        <small>Consumo registrado</small>
-      </div>
-    </div>
+    <article class="income-card">
+      <div class="income-head">
+        <div>
+          <span>Recaudación</span>
+          <strong>S/ {{ totalPagado() | number:'1.2-2' }}</strong>
+        </div>
 
-    <div class="stat-card">
-      <div class="icon">📊</div>
-      <div>
-        <span>Consumo promedio</span>
-        <strong>{{ consumoPromedio() | number:'1.2-2' }} m³</strong>
-        <small>Promedio de recibos</small>
+        <div class="income-icon">💧</div>
       </div>
-    </div>
+
+      <div class="income-line">
+        <div [style.width.%]="porcentajeRecaudado()"></div>
+      </div>
+
+      <p>{{ porcentajeRecaudado() | number:'1.0-0' }}% del total emitido cobrado</p>
+    </article>
+
+    <article class="progress-card">
+      <div class="progress-title">
+        <div>
+          <span>Estado financiero</span>
+          <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
+        </div>
+
+        <small>Saldo pendiente</small>
+      </div>
+
+      <div class="progress-group">
+        <div class="progress-row">
+          <span>Total emitido</span>
+          <div class="bar">
+            <div class="bar-fill blue" style="width: 100%"></div>
+          </div>
+          <strong>S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="progress-row">
+          <span>Total pagado</span>
+          <div class="bar">
+            <div class="bar-fill aqua" [style.width.%]="porcentajeRecaudado()"></div>
+          </div>
+          <strong>S/ {{ totalPagado() | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="progress-row">
+          <span>Pendiente</span>
+          <div class="bar">
+            <div class="bar-fill orange" [style.width.%]="100 - porcentajeRecaudado()"></div>
+          </div>
+          <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </article>
   </section>
 
-  <section class="main-grid">
-    <div class="table-card">
-      <div class="table-title">
-        <h3>Últimos recibos generados</h3>
+  <section class="main-dashboard-grid">
+    <article class="chart-card">
+      <div class="panel-title">
+        <div>
+          <span>Indicadores</span>
+          <h3>Resumen de consumo</h3>
+        </div>
+
+        <button type="button" (click)="cargarDashboard()">Actualizar</button>
+      </div>
+
+      <div class="fake-chart">
+        <div class="chart-lines">
+          <span style="height: 36%"></span>
+          <span style="height: 58%"></span>
+          <span style="height: 44%"></span>
+          <span style="height: 72%"></span>
+          <span style="height: 50%"></span>
+          <span style="height: 66%"></span>
+          <span style="height: 40%"></span>
+          <span style="height: 78%"></span>
+          <span style="height: 62%"></span>
+          <span style="height: 48%"></span>
+        </div>
+
+        <div class="chart-data">
+          <div>
+            <span>Consumo total</span>
+            <strong>{{ consumoTotal() | number:'1.2-3' }} m³</strong>
+          </div>
+
+          <div>
+            <span>Consumo promedio</span>
+            <strong>{{ consumoPromedio() | number:'1.2-2' }} m³</strong>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="receipt-card">
+      <div class="panel-title">
+        <div>
+          <span>Actividad reciente</span>
+          <h3>Últimos recibos generados</h3>
+        </div>
+
         <a routerLink="/admin/recibos">Ver todos</a>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Código recibo</th>
-            <th>Suministro</th>
-            <th>Periodo</th>
-            <th>Consumo</th>
-            <th>Total</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Recibo</th>
+              <th>Suministro</th>
+              <th>Periodo</th>
+              <th>Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr *ngFor="let recibo of ultimosRecibos()">
-            <td>{{ $any(recibo).codigoRecibo }}</td>
-            <td>{{ $any(recibo).codigoSuministro }}</td>
-            <td>{{ periodo(recibo) }}</td>
-            <td>{{ $any(recibo).consumoM3 | number:'1.2-3' }} m³</td>
-            <td>S/ {{ $any(recibo).total | number:'1.2-2' }}</td>
-            <td>
-              <span class="badge" [ngClass]="estadoClase($any(recibo).estadoRecibo)">
-                {{ $any(recibo).estadoRecibo }}
-              </span>
-            </td>
-          </tr>
+          <tbody>
+            <tr *ngFor="let recibo of ultimosRecibos()">
+              <td>
+                <strong>{{ $any(recibo).codigoRecibo }}</strong>
+              </td>
 
-          <tr *ngIf="ultimosRecibos().length === 0">
-            <td colspan="6" class="empty-row">
-              No hay recibos registrados.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              <td>{{ $any(recibo).codigoSuministro }}</td>
 
-    <div class="actions-card">
-      <h3>Acciones rápidas</h3>
+              <td>{{ periodo(recibo) }}</td>
 
-      <a routerLink="/admin/clientes" class="quick-action">
-        <span>👤</span>
-        Registrar cliente
-      </a>
+              <td>
+                <strong>S/ {{ $any(recibo).total | number:'1.2-2' }}</strong>
+              </td>
 
-      <a routerLink="/admin/recibos" class="quick-action">
-        <span>🧾</span>
-        Ver recibos
-      </a>
+              <td>
+                <span class="badge" [ngClass]="estadoClase($any(recibo).estadoRecibo)">
+                  {{ $any(recibo).estadoRecibo }}
+                </span>
+              </td>
+            </tr>
 
-      <a routerLink="/admin/pagos" class="quick-action">
-        <span>💰</span>
-        Registrar pago
-      </a>
+            <tr *ngIf="ultimosRecibos().length === 0">
+              <td colspan="5" class="empty-row">
+                No hay recibos registrados.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
 
-      <a routerLink="/admin/qr-suministro" class="quick-action">
-        <span>🔳</span>
-        Generar QR
-      </a>
+    <article class="actions-panel">
+      <div class="panel-title">
+        <div>
+          <span>Accesos directos</span>
+          <h3>Operaciones rápidas</h3>
+        </div>
+      </div>
 
-      <a routerLink="/admin/historial-lecturas" class="quick-action">
-        <span>📚</span>
-        Historial lecturas
-      </a>
+      <div class="quick-grid">
+        <a routerLink="/admin/clientes" class="quick-tile">
+          <span>👤</span>
+          <strong>Clientes</strong>
+          <small>Registrar y consultar</small>
+        </a>
 
-      <a routerLink="/admin/reportes" class="quick-action">
-        <span>📊</span>
-        Reportes generales
-      </a>
-    </div>
+        <a routerLink="/admin/recibos" class="quick-tile">
+          <span>🧾</span>
+          <strong>Recibos</strong>
+          <small>Estados y detalle</small>
+        </a>
+
+        <a routerLink="/admin/pagos" class="quick-tile">
+          <span>💰</span>
+          <strong>Pagos</strong>
+          <small>Registrar pago</small>
+        </a>
+
+        <a routerLink="/admin/qr-suministro" class="quick-tile">
+          <span>▣</span>
+          <strong>QR</strong>
+          <small>Generar código</small>
+        </a>
+
+        <a routerLink="/admin/historial-lecturas" class="quick-tile">
+          <span>📚</span>
+          <strong>Lecturas</strong>
+          <small>Historial</small>
+        </a>
+
+        <a routerLink="/admin/reportes" class="quick-tile">
+          <span>📊</span>
+          <strong>Reportes</strong>
+          <small>Excel y PDF</small>
+        </a>
+      </div>
+    </article>
+
+    <article class="status-card">
+      <div class="panel-title">
+        <div>
+          <span>Estado</span>
+          <h3>Recibos del sistema</h3>
+        </div>
+      </div>
+
+      <div class="donut-area">
+        <div class="donut" [style.background]="donutCobranza()">
+          <div>
+            <strong>{{ porcentajeRecaudado() | number:'1.0-0' }}%</strong>
+            <span>pagado</span>
+          </div>
+        </div>
+
+        <div class="status-list">
+          <div class="status-item">
+            <div>
+              <span>Pagados</span>
+              <strong>{{ recibosPagados() }}</strong>
+            </div>
+            <div class="small-bar">
+              <div class="small-fill paid" [style.width.%]="porcentajePagados()"></div>
+            </div>
+          </div>
+
+          <div class="status-item">
+            <div>
+              <span>Pendientes</span>
+              <strong>{{ recibosPendientes() }}</strong>
+            </div>
+            <div class="small-bar">
+              <div class="small-fill pending" [style.width.%]="porcentajePendientes()"></div>
+            </div>
+          </div>
+
+          <div class="status-item">
+            <div>
+              <span>Vencidos</span>
+              <strong>{{ recibosVencidos() }}</strong>
+            </div>
+            <div class="small-bar">
+              <div class="small-fill expired" [style.width.%]="porcentajeVencidos()"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="payments-card">
+      <div class="panel-title">
+        <div>
+          <span>Movimientos</span>
+          <h3>Últimos pagos</h3>
+        </div>
+      </div>
+
+      <div class="payment-list">
+        <div class="payment-row" *ngFor="let pago of ultimosPagos()">
+          <div class="pay-icon">S/</div>
+
+          <div>
+            <strong>{{ $any(pago).codigoRecibo || $any(pago).reciboCodigo || 'Recibo' }}</strong>
+            <small>{{ $any(pago).metodoPago || $any(pago).metodo || 'PagoEfectivo' }}</small>
+          </div>
+
+          <span>S/ {{ $any(pago).monto | number:'1.2-2' }}</span>
+        </div>
+
+        <div class="empty-box" *ngIf="ultimosPagos().length === 0">
+          No hay pagos registrados.
+        </div>
+      </div>
+    </article>
   </section>
 </div>

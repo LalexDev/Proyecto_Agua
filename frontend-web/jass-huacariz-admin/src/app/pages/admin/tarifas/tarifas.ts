@@ -5,6 +5,17 @@ import { finalize } from 'rxjs';
 
 import { Tarifa, TarifaRequest, TarifaResponse } from '../../../core/services/tarifa';
 
+type TipoAccionTarifa = 'ESTADO' | 'ELIMINAR';
+
+interface AccionTarifa {
+  tipo: TipoAccionTarifa;
+  tarifa: TarifaResponse;
+  estadoNuevo?: boolean;
+  titulo: string;
+  mensaje: string;
+  textoBoton: string;
+}
+
 @Component({
   selector: 'app-tarifas',
   imports: [CommonModule, FormsModule],
@@ -16,12 +27,18 @@ export class Tarifas implements OnInit {
 
   cargando = false;
   guardando = false;
+  procesando = false;
+
   error = '';
   exito = '';
 
   mostrarFormulario = false;
+  modoEdicion = false;
+  tarifaEditandoId: number | null = null;
 
-  nuevaTarifa: TarifaRequest = this.crearTarifaVacia();
+  accionPendiente: AccionTarifa | null = null;
+
+  tarifaForm: TarifaRequest = this.crearTarifaVacia();
 
   constructor(
     private tarifaService: Tarifa,
@@ -45,31 +62,58 @@ export class Tarifas implements OnInit {
         })
       )
       .subscribe({
-        next: (data) => {
-          this.tarifas = data;
-          this.cdr.detectChanges();
-        },
+       next: (data) => {
+  	this.tarifas = (data || []).sort((a, b) => {
+    		return Number(a.consumoDesde || 0) - Number(b.consumoDesde || 0);
+ 	 });
+
+ 	 this.cdr.detectChanges();
+	},
         error: () => {
           this.error = 'No se pudieron cargar las tarifas. Verifica el backend y tu sesión ADMIN.';
+          this.tarifas = [];
           this.cdr.detectChanges();
         }
       });
   }
 
-  abrirFormulario(): void {
+  abrirNuevaTarifa(): void {
     this.mostrarFormulario = true;
+    this.modoEdicion = false;
+    this.tarifaEditandoId = null;
+    this.tarifaForm = this.crearTarifaVacia();
     this.error = '';
     this.exito = '';
-    this.nuevaTarifa = this.crearTarifaVacia();
+  }
+
+  abrirEditarTarifa(tarifa: TarifaResponse): void {
+    this.mostrarFormulario = true;
+    this.modoEdicion = true;
+    this.tarifaEditandoId = tarifa.id;
+
+    this.tarifaForm = {
+      nombreTarifa: tarifa.nombreTarifa || '',
+      consumoDesde: Number(tarifa.consumoDesde || 0),
+      consumoHasta: tarifa.consumoHasta === null || tarifa.consumoHasta === undefined
+        ? null
+        : Number(tarifa.consumoHasta),
+      precioM3: Number(tarifa.precioM3 || 0),
+      estado: tarifa.estado
+    };
+
+    this.error = '';
+    this.exito = '';
   }
 
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
+    this.modoEdicion = false;
+    this.tarifaEditandoId = null;
+    this.tarifaForm = this.crearTarifaVacia();
     this.error = '';
-    this.exito = '';
   }
 
-  registrarTarifa(): void {
+  guardarTarifa(): void {
     this.error = '';
     this.exito = '';
 
@@ -80,16 +124,22 @@ export class Tarifas implements OnInit {
     this.guardando = true;
 
     const payload: TarifaRequest = {
-      nombreTarifa: this.nuevaTarifa.nombreTarifa.trim(),
-      consumoDesde: Number(this.nuevaTarifa.consumoDesde),
-      consumoHasta: this.nuevaTarifa.consumoHasta === null || this.nuevaTarifa.consumoHasta === undefined
-        ? null
-        : Number(this.nuevaTarifa.consumoHasta),
-      precioM3: Number(this.nuevaTarifa.precioM3),
-      estado: this.nuevaTarifa.estado
+      nombreTarifa: this.tarifaForm.nombreTarifa.trim(),
+      consumoDesde: Number(this.tarifaForm.consumoDesde),
+      consumoHasta: this.tarifaForm.consumoHasta === null ||
+        this.tarifaForm.consumoHasta === undefined ||
+        String(this.tarifaForm.consumoHasta).trim() === ''
+          ? null
+          : Number(this.tarifaForm.consumoHasta),
+      precioM3: Number(this.tarifaForm.precioM3),
+      estado: this.tarifaForm.estado
     };
 
-    this.tarifaService.registrarTarifa(payload)
+    const peticion = this.modoEdicion && this.tarifaEditandoId
+      ? this.tarifaService.actualizarTarifa(this.tarifaEditandoId, payload)
+      : this.tarifaService.registrarTarifa(payload);
+
+    peticion
       .pipe(
         finalize(() => {
           this.guardando = false;
@@ -98,19 +148,154 @@ export class Tarifas implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.exito = 'Tarifa registrada correctamente.';
-          this.mostrarFormulario = false;
+          this.exito = this.modoEdicion
+            ? 'Tarifa actualizada correctamente.'
+            : 'Tarifa registrada correctamente.';
+
+          this.cerrarFormulario();
           this.cargarTarifas();
         },
         error: (err) => {
-          this.error = err?.error?.error || 'No se pudo registrar la tarifa.';
+          this.error = err?.error?.error || 'No se pudo guardar la tarifa.';
           this.cdr.detectChanges();
         }
       });
   }
 
+  abrirCambiarEstado(tarifa: TarifaResponse): void {
+    const estadoNuevo = !tarifa.estado;
+
+    this.accionPendiente = {
+      tipo: 'ESTADO',
+      tarifa,
+      estadoNuevo,
+      titulo: estadoNuevo ? 'Activar tarifa' : 'Desactivar tarifa',
+      mensaje: estadoNuevo
+        ? `¿Deseas activar la tarifa "${tarifa.nombreTarifa}"?`
+        : `¿Deseas desactivar la tarifa "${tarifa.nombreTarifa}"? Ya no se usará para nuevos cálculos.`,
+      textoBoton: estadoNuevo ? 'Activar' : 'Desactivar'
+    };
+  }
+
+  abrirEliminar(tarifa: TarifaResponse): void {
+    this.accionPendiente = {
+      tipo: 'ELIMINAR',
+      tarifa,
+      titulo: 'Eliminar tarifa',
+      mensaje: `¿Deseas eliminar la tarifa "${tarifa.nombreTarifa}"? Se marcará como inactiva para no afectar recibos históricos.`,
+      textoBoton: 'Eliminar'
+    };
+  }
+
+  cerrarConfirmacion(): void {
+    this.accionPendiente = null;
+  }
+
+  confirmarAccion(): void {
+    if (!this.accionPendiente) {
+      return;
+    }
+
+    this.procesando = true;
+    this.error = '';
+    this.exito = '';
+
+    const accion = this.accionPendiente;
+
+    if (accion.tipo === 'ESTADO') {
+      this.tarifaService.cambiarEstadoTarifa(accion.tarifa.id, !!accion.estadoNuevo)
+        .pipe(
+          finalize(() => {
+            this.procesando = false;
+            this.cdr.detectChanges();
+          })
+        )
+        .subscribe({
+          next: () => {
+            this.exito = accion.estadoNuevo
+              ? 'Tarifa activada correctamente.'
+              : 'Tarifa desactivada correctamente.';
+
+            this.accionPendiente = null;
+            this.cargarTarifas();
+          },
+          error: (err) => {
+            this.error = err?.error?.error || 'No se pudo cambiar el estado de la tarifa.';
+            this.cdr.detectChanges();
+          }
+        });
+
+      return;
+    }
+
+    if (accion.tipo === 'ELIMINAR') {
+      this.tarifaService.eliminarTarifa(accion.tarifa.id)
+        .pipe(
+          finalize(() => {
+            this.procesando = false;
+            this.cdr.detectChanges();
+          })
+        )
+        .subscribe({
+          next: () => {
+            this.exito = 'Tarifa eliminada correctamente.';
+            this.accionPendiente = null;
+            this.cargarTarifas();
+          },
+          error: (err) => {
+            this.error = err?.error?.error || 'No se pudo eliminar la tarifa.';
+            this.cdr.detectChanges();
+          }
+        });
+    }
+  }
+
+  totalTarifas(): number {
+    return this.tarifas.length;
+  }
+
+  tarifasActivas(): number {
+    return this.tarifas.filter((tarifa) => tarifa.estado).length;
+  }
+
+  tarifasInactivas(): number {
+    return this.tarifas.filter((tarifa) => !tarifa.estado).length;
+  }
+
+  precioPromedio(): number {
+    if (!this.tarifas.length) {
+      return 0;
+    }
+
+    const total = this.tarifas.reduce((suma, tarifa) => suma + Number(tarifa.precioM3 || 0), 0);
+    return total / this.tarifas.length;
+  }
+
+  precioMaximo(): number {
+    if (!this.tarifas.length) {
+      return 0;
+    }
+
+    return Math.max(...this.tarifas.map((tarifa) => Number(tarifa.precioM3 || 0)));
+  }
+
+  anchoBarra(tarifa: TarifaResponse): string {
+    const maximo = this.precioMaximo();
+
+    if (maximo <= 0) {
+      return '0%';
+    }
+
+    const porcentaje = (Number(tarifa.precioM3 || 0) / maximo) * 100;
+    return `${Math.max(porcentaje, 8)}%`;
+  }
+
   estadoTexto(estado: boolean): string {
     return estado ? 'Activa' : 'Inactiva';
+  }
+
+  estadoClase(estado: boolean): string {
+    return estado ? 'activa' : 'inactiva';
   }
 
   rangoConsumo(tarifa: TarifaResponse): string {
@@ -121,37 +306,37 @@ export class Tarifas implements OnInit {
     return `${tarifa.consumoDesde} m³ - ${tarifa.consumoHasta} m³`;
   }
 
-  totalActivas(): number {
-    return this.tarifas.filter(t => t.estado).length;
-  }
-
-  precioPromedio(): number {
-    if (this.tarifas.length === 0) {
-      return 0;
+  consumoHastaTexto(tarifa: TarifaResponse): string {
+    if (tarifa.consumoHasta === null || tarifa.consumoHasta === undefined) {
+      return 'A más';
     }
 
-    const total = this.tarifas.reduce((suma, tarifa) => suma + Number(tarifa.precioM3), 0);
-    return total / this.tarifas.length;
+    return `${tarifa.consumoHasta} m³`;
   }
 
   private validarFormulario(): boolean {
-    if (!this.nuevaTarifa.nombreTarifa.trim()) {
+    if (!this.tarifaForm.nombreTarifa || !this.tarifaForm.nombreTarifa.trim()) {
       this.error = 'Ingrese el nombre de la tarifa.';
       return false;
     }
 
-    if (this.nuevaTarifa.consumoDesde < 0) {
+    if (Number(this.tarifaForm.consumoDesde) < 0) {
       this.error = 'El consumo desde no puede ser negativo.';
       return false;
     }
 
-    if (this.nuevaTarifa.consumoHasta !== null && this.nuevaTarifa.consumoHasta < this.nuevaTarifa.consumoDesde) {
+    if (
+      this.tarifaForm.consumoHasta !== null &&
+      this.tarifaForm.consumoHasta !== undefined &&
+      String(this.tarifaForm.consumoHasta).trim() !== '' &&
+      Number(this.tarifaForm.consumoHasta) < Number(this.tarifaForm.consumoDesde)
+    ) {
       this.error = 'El consumo hasta no puede ser menor al consumo desde.';
       return false;
     }
 
-    if (this.nuevaTarifa.precioM3 <= 0) {
-      this.error = 'El precio por m³ debe ser mayor a 0.';
+    if (Number(this.tarifaForm.precioM3) <= 0) {
+      this.error = 'El precio por m³ debe ser mayor a cero.';
       return false;
     }
 

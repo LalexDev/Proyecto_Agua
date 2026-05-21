@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { forkJoin, finalize } from 'rxjs';
 import * as XLSX from 'xlsx-js-style';
 
@@ -26,6 +26,7 @@ export class Dashboard implements OnInit {
     private clienteService: Cliente,
     private reciboService: Recibo,
     private pagoService: Pago,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -60,6 +61,12 @@ export class Dashboard implements OnInit {
           this.cdr.detectChanges();
         }
       });
+  }
+
+  cerrarSesion(): void {
+    localStorage.clear();
+    sessionStorage.clear();
+    this.router.navigate(['/login']);
   }
 
   totalClientes(): number {
@@ -107,7 +114,8 @@ export class Dashboard implements OnInit {
   }
 
   saldoPendiente(): number {
-    return this.totalEmitido() - this.totalPagado();
+    const saldo = this.totalEmitido() - this.totalPagado();
+    return saldo < 0 ? 0 : saldo;
   }
 
   consumoTotal(): number {
@@ -124,6 +132,42 @@ export class Dashboard implements OnInit {
     return this.consumoTotal() / this.recibos.length;
   }
 
+  porcentajeRecaudado(): number {
+    if (this.totalEmitido() <= 0) {
+      return 0;
+    }
+
+    return Math.min(100, Math.max(0, (this.totalPagado() / this.totalEmitido()) * 100));
+  }
+
+  porcentajePendientes(): number {
+    if (this.totalRecibos() === 0) {
+      return 0;
+    }
+
+    return (this.recibosPendientes() / this.totalRecibos()) * 100;
+  }
+
+  porcentajePagados(): number {
+    if (this.totalRecibos() === 0) {
+      return 0;
+    }
+
+    return (this.recibosPagados() / this.totalRecibos()) * 100;
+  }
+
+  porcentajeVencidos(): number {
+    if (this.totalRecibos() === 0) {
+      return 0;
+    }
+
+    return (this.recibosVencidos() / this.totalRecibos()) * 100;
+  }
+
+  donutCobranza(): string {
+    return `conic-gradient(#1ba3c7 ${this.porcentajeRecaudado()}%, #143f50 0)`;
+  }
+
   ultimosRecibos(): ReciboResponse[] {
     return [...this.recibos]
       .sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))
@@ -133,7 +177,7 @@ export class Dashboard implements OnInit {
   ultimosPagos(): PagoResponse[] {
     return [...this.pagos]
       .sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))
-      .slice(0, 5);
+      .slice(0, 4);
   }
 
   estadoClase(estado: string): string {
@@ -178,15 +222,6 @@ export class Dashboard implements OnInit {
         `${Number(recibo.consumoM3 || 0).toFixed(3)} m³`,
         `S/ ${Number(recibo.total || 0).toFixed(2)}`,
         recibo.estadoRecibo || '-'
-      ]),
-      [],
-      ['ÚLTIMOS PAGOS'],
-      ['Recibo', 'Método', 'Monto', 'Fecha'],
-      ...this.ultimosPagos().map((pago: any) => [
-        pago.codigoRecibo || pago.reciboCodigo || '-',
-        pago.metodoPago || pago.metodo || '-',
-        `S/ ${Number(pago.monto || 0).toFixed(2)}`,
-        pago.fechaPago || pago.fechaRegistro || pago.fecha || '-'
       ])
     ];
 
@@ -221,12 +256,6 @@ export class Dashboard implements OnInit {
     this.aplicarEstiloRango(worksheet, 12, 0, 12, 5, estilos.seccion);
     this.aplicarEstiloRango(worksheet, 13, 0, 13, 5, estilos.cabeceraTabla);
 
-    const filaPagosTitulo = 15 + this.ultimosRecibos().length;
-    const filaPagosCabecera = filaPagosTitulo + 1;
-
-    this.aplicarEstiloRango(worksheet, filaPagosTitulo, 0, filaPagosTitulo, 5, estilos.seccion);
-    this.aplicarEstiloRango(worksheet, filaPagosCabecera, 0, filaPagosCabecera, 3, estilos.cabeceraTabla);
-
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Dashboard');
 
@@ -259,10 +288,8 @@ export class Dashboard implements OnInit {
       <head>
         <meta charset="UTF-8">
         <title>Dashboard - JASS Huacariz</title>
-
         <style>
           * { box-sizing: border-box; }
-
           body {
             margin: 0;
             padding: 28px;
@@ -270,7 +297,6 @@ export class Dashboard implements OnInit {
             color: #0f2f3d;
             background: #ffffff;
           }
-
           .header {
             display: flex;
             justify-content: space-between;
@@ -279,13 +305,11 @@ export class Dashboard implements OnInit {
             padding-bottom: 16px;
             margin-bottom: 20px;
           }
-
           .brand {
             display: flex;
             align-items: center;
             gap: 12px;
           }
-
           .logo {
             width: 52px;
             height: 52px;
@@ -296,51 +320,43 @@ export class Dashboard implements OnInit {
             place-items: center;
             font-size: 26px;
           }
-
           h1 {
             margin: 0;
             font-size: 24px;
             font-weight: 900;
           }
-
           p {
             margin: 4px 0;
             color: #64748b;
             font-size: 13px;
           }
-
           .summary {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 22px;
           }
-
           .card {
             border: 1px solid #dbe7ec;
             border-radius: 12px;
             padding: 12px;
             background: #f8fcfd;
           }
-
           .card span {
             display: block;
             color: #64748b;
             font-size: 12px;
           }
-
           .card strong {
             display: block;
             margin-top: 6px;
             font-size: 18px;
           }
-
           table {
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
           }
-
           th {
             background: #e8f7fb;
             color: #0f2f3d;
@@ -348,19 +364,16 @@ export class Dashboard implements OnInit {
             text-align: left;
             border: 1px solid #dbe7ec;
           }
-
           td {
             padding: 8px;
             border: 1px solid #e2eef3;
           }
-
           .actions {
             margin-top: 18px;
             display: flex;
             justify-content: flex-end;
             gap: 10px;
           }
-
           button {
             border: none;
             border-radius: 10px;
@@ -368,24 +381,20 @@ export class Dashboard implements OnInit {
             font-weight: 800;
             cursor: pointer;
           }
-
           .print {
             background: #1ba3c7;
             color: white;
           }
-
           .close {
             background: #e2e8f0;
             color: #0f2f3d;
           }
-
           @media print {
             body { padding: 10px; }
             .actions { display: none; }
           }
         </style>
       </head>
-
       <body>
         <div class="header">
           <div class="brand">
@@ -396,7 +405,6 @@ export class Dashboard implements OnInit {
               <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
             </div>
           </div>
-
           <div>
             <strong>Administración</strong>
           </div>
@@ -414,7 +422,6 @@ export class Dashboard implements OnInit {
         </div>
 
         <h2>Últimos recibos generados</h2>
-
         <table>
           <thead>
             <tr>
@@ -426,7 +433,6 @@ export class Dashboard implements OnInit {
               <th>Estado</th>
             </tr>
           </thead>
-
           <tbody>
             ${filasRecibos || '<tr><td colspan="6">Sin recibos registrados.</td></tr>'}
           </tbody>

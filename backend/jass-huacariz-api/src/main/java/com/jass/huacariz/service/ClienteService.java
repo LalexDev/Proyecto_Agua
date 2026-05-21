@@ -132,6 +132,45 @@ public class ClienteService {
                 .toList();
     }
 
+    @Transactional
+    public ClienteResponse cambiarEstadoCliente(Integer clienteId, Boolean estado) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new RuntimeException("No existe el cliente con ID: " + clienteId));
+
+        cliente.setEstado(estado);
+
+        Usuario usuario = cliente.getUsuario();
+
+        if (usuario != null) {
+            usuario.setEstado(estado);
+            usuarioRepository.save(usuario);
+        }
+
+        cliente = clienteRepository.save(cliente);
+
+        List<Suministro> suministros = suministroRepository.findByClienteId(cliente.getId());
+
+        return convertirAResponse(cliente, cliente.getUsuario(), suministros);
+    }
+
+    @Transactional
+    public SuministroResponse cambiarEstadoSuministro(Integer clienteId, Integer suministroId, Boolean estado) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new RuntimeException("No existe el cliente con ID: " + clienteId));
+
+        Suministro suministro = suministroRepository.findById(suministroId)
+                .orElseThrow(() -> new RuntimeException("No existe el suministro con ID: " + suministroId));
+
+        if (!suministro.getCliente().getId().equals(cliente.getId())) {
+            throw new RuntimeException("El suministro no pertenece al cliente seleccionado.");
+        }
+
+        suministro.setEstado(estado);
+        suministro = suministroRepository.save(suministro);
+
+        return convertirSuministroAResponse(suministro);
+    }
+
     private ClienteResponse convertirAResponse(Cliente cliente, Usuario usuario, List<Suministro> suministros) {
         List<SuministroResponse> suministrosResponse = suministros.stream()
                 .map(this::convertirSuministroAResponse)
@@ -145,7 +184,7 @@ public class ClienteService {
                 .telefono(cliente.getTelefono())
                 .correo(cliente.getCorreo())
                 .estado(cliente.getEstado())
-                .codigoUsuario(usuario.getCodigoUsuario())
+                .codigoUsuario(usuario != null ? usuario.getCodigoUsuario() : cliente.getDni())
                 .passwordInicial(PASSWORD_INICIAL_CLIENTE)
                 .suministros(suministrosResponse)
                 .build();

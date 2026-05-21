@@ -53,7 +53,7 @@ export class HistorialLecturas implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar el historial de lecturas.';
+          this.error = 'No se pudo cargar el historial de lecturas. Verifica el backend y tu sesión ADMIN.';
           this.lecturas = [];
           this.lecturasFiltradas = [];
           this.cdr.detectChanges();
@@ -64,7 +64,7 @@ export class HistorialLecturas implements OnInit {
   aplicarFiltros(): void {
     const texto = this.busqueda.trim().toLowerCase();
 
-    this.lecturasFiltradas = this.lecturas.filter((item) => {
+    this.lecturasFiltradas = this.lecturas.filter((item: any) => {
       const coincideTexto =
         !texto ||
         String(item.codigoSuministro || '').toLowerCase().includes(texto) ||
@@ -73,7 +73,8 @@ export class HistorialLecturas implements OnInit {
         String(item.cliente || '').toLowerCase().includes(texto) ||
         String(item.dniCliente || '').toLowerCase().includes(texto) ||
         String(item.codigoRecibo || '').toLowerCase().includes(texto) ||
-        String(item.sector || '').toLowerCase().includes(texto);
+        String(item.sector || '').toLowerCase().includes(texto) ||
+        String(item.estadoRecibo || '').toLowerCase().includes(texto);
 
       const coincideAnio =
         !this.filtroAnio || Number(item.anio) === Number(this.filtroAnio);
@@ -102,32 +103,26 @@ export class HistorialLecturas implements OnInit {
   }
 
   totalConsumo(): number {
-    return this.lecturasFiltradas.reduce((total, item) => {
+    return this.lecturasFiltradas.reduce((total: number, item: any) => {
       return total + Number(item.consumoM3 || 0);
     }, 0);
   }
 
   totalEmitido(): number {
-    return this.lecturasFiltradas.reduce((total, item) => {
+    return this.lecturasFiltradas.reduce((total: number, item: any) => {
       return total + Number(item.totalRecibo || 0);
     }, 0);
   }
 
   totalPendientes(): number {
-    return this.lecturasFiltradas.filter((item) => {
+    return this.lecturasFiltradas.filter((item: any) => {
       return String(item.estadoRecibo || '').toUpperCase() === 'PENDIENTE';
     }).length;
   }
 
   totalPagados(): number {
-    return this.lecturasFiltradas.filter((item) => {
+    return this.lecturasFiltradas.filter((item: any) => {
       return String(item.estadoRecibo || '').toUpperCase() === 'PAGADO';
-    }).length;
-  }
-
-  totalVencidos(): number {
-    return this.lecturasFiltradas.filter((item) => {
-      return String(item.estadoRecibo || '').toUpperCase() === 'VENCIDO';
     }).length;
   }
 
@@ -146,78 +141,82 @@ export class HistorialLecturas implements OnInit {
   }
 
   exportarExcel(): void {
-    if (!this.lecturasFiltradas.length) {
-      alert('No hay datos para exportar.');
-      return;
-    }
+    const fechaArchivo = new Date().toISOString().slice(0, 10);
+    const fechaTexto = new Date().toLocaleString('es-PE');
 
     const filas: any[][] = [];
 
-    const filaTitulo = filas.length;
-    filas.push(['JASS Huacariz']);
-
-    const filaSubtitulo = filas.length;
-    filas.push(['Reporte de historial de lecturas']);
-
-    const filaFecha = filas.length;
-    filas.push([`Fecha de emisión: ${new Date().toLocaleString('es-PE')}`]);
-
+    filas.push(['JASS HUACARIZ - HISTORIAL DE LECTURAS']);
+    filas.push(['Reporte administrativo de lecturas, consumos y recibos generados']);
+    filas.push([`Fecha de exportación: ${fechaTexto}`]);
     filas.push([]);
 
     const filaResumenTitulo = filas.length;
-    filas.push(['RESUMEN DEL HISTORIAL']);
+    filas.push(['RESUMEN GENERAL']);
 
     const filaResumenCabecera = filas.length;
     filas.push(['Indicador', 'Valor', '', 'Indicador', 'Valor']);
 
-    filas.push(['Total lecturas', this.lecturasFiltradas.length, '', 'Consumo total', `${this.totalConsumo().toFixed(3)} m³`]);
-    filas.push(['Total emitido', `S/ ${this.totalEmitido().toFixed(2)}`, '', 'Pendientes', this.totalPendientes()]);
-    filas.push(['Pagados', this.totalPagados(), '', 'Vencidos', this.totalVencidos()]);
-    filas.push(['Mes filtrado', this.filtroMes ? this.nombreMes(Number(this.filtroMes)) : 'Todos', '', 'Año filtrado', this.filtroAnio || 'Todos']);
-
+    filas.push(['Lecturas registradas', this.lecturasFiltradas.length, '', 'Pendientes', this.totalPendientes()]);
+    filas.push(['Consumo total m³', Number(this.totalConsumo().toFixed(3)), '', 'Pagados', this.totalPagados()]);
+    filas.push(['Total emitido S/', Number(this.totalEmitido().toFixed(2)), '', 'Filtros aplicados', `${this.filtroMes ? this.nombreMes(Number(this.filtroMes)) : 'Todos los meses'} / ${this.filtroAnio || 'Todos los años'}`]);
     filas.push([]);
 
     const filaDetalleTitulo = filas.length;
-    filas.push(['LECTURAS REGISTRADAS']);
+    filas.push(['DETALLE DE LECTURAS']);
 
     const filaDetalleCabecera = filas.length;
     filas.push([
       'Suministro',
-      'Alias',
+      'Alias / Dirección',
       'Cliente',
       'DNI',
       'Sector',
       'Periodo',
       'Lectura anterior',
       'Lectura actual',
-      'Consumo',
+      'Consumo m³',
       'Recibo',
-      'Total',
+      'Total S/',
       'Estado'
     ]);
 
-    this.lecturasFiltradas.forEach((item) => {
+    const primeraFilaDatos = filas.length;
+
+    this.lecturasFiltradas.forEach((item: any) => {
       filas.push([
-        item.codigoSuministro || '-',
-        item.aliasSuministro || item.direccionSuministro || '-',
-        item.cliente || '-',
-        item.dniCliente || '-',
-        item.sector || '-',
-        `${this.nombreMes(item.mes)} ${item.anio}`,
-        `${Number(item.lecturaAnterior || 0).toFixed(3)} m³`,
-        `${Number(item.lecturaActual || 0).toFixed(3)} m³`,
-        `${Number(item.consumoM3 || 0).toFixed(3)} m³`,
+        item.codigoSuministro || '',
+        item.aliasSuministro || item.direccionSuministro || '',
+        item.cliente || '',
+        item.dniCliente || '',
+        item.sector || '',
+        `${this.nombreMes(Number(item.mes))} ${item.anio}`,
+        Number(item.lecturaAnterior || 0),
+        Number(item.lecturaActual || 0),
+        Number(item.consumoM3 || 0),
         item.codigoRecibo || '-',
-        `S/ ${Number(item.totalRecibo || 0).toFixed(2)}`,
+        Number(item.totalRecibo || 0),
         item.estadoRecibo || 'PENDIENTE'
       ]);
     });
 
+    if (this.lecturasFiltradas.length === 0) {
+      filas.push(['No hay lecturas registradas']);
+    }
+
     const worksheet: any = XLSX.utils.aoa_to_sheet(filas);
 
+    worksheet['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
+      { s: { r: filaResumenTitulo, c: 0 }, e: { r: filaResumenTitulo, c: 11 } },
+      { s: { r: filaDetalleTitulo, c: 0 }, e: { r: filaDetalleTitulo, c: 11 } }
+    ];
+
     worksheet['!cols'] = [
-      { wch: 22 },
-      { wch: 28 },
+      { wch: 20 },
+      { wch: 32 },
       { wch: 28 },
       { wch: 14 },
       { wch: 18 },
@@ -226,43 +225,36 @@ export class HistorialLecturas implements OnInit {
       { wch: 18 },
       { wch: 16 },
       { wch: 18 },
-      { wch: 15 },
-      { wch: 16 }
-    ];
-
-    worksheet['!merges'] = [
-      { s: { r: filaTitulo, c: 0 }, e: { r: filaTitulo, c: 11 } },
-      { s: { r: filaSubtitulo, c: 0 }, e: { r: filaSubtitulo, c: 11 } },
-      { s: { r: filaFecha, c: 0 }, e: { r: filaFecha, c: 11 } },
-      { s: { r: filaResumenTitulo, c: 0 }, e: { r: filaResumenTitulo, c: 11 } },
-      { s: { r: filaDetalleTitulo, c: 0 }, e: { r: filaDetalleTitulo, c: 11 } }
+      { wch: 14 },
+      { wch: 15 }
     ];
 
     worksheet['!rows'] = [
       { hpt: 30 },
       { hpt: 22 },
-      { hpt: 20 }
+      { hpt: 22 },
+      { hpt: 10 }
     ];
 
     worksheet['!autofilter'] = {
       ref: `A${filaDetalleCabecera + 1}:L${filas.length}`
     };
 
-    this.estilizarHistorialExcel(
+    this.aplicarEstilosExcel(
       worksheet,
-      filaTitulo,
-      filaSubtitulo,
-      filaFecha,
       filaResumenTitulo,
       filaResumenCabecera,
       filaDetalleTitulo,
-      filaDetalleCabecera
+      filaDetalleCabecera,
+      primeraFilaDatos,
+      filas.length - 1,
+      filas
     );
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Historial lecturas');
 
-    const detalleCompleto = this.lecturasFiltradas.map((item) => ({
+    const detalleCompleto = this.lecturasFiltradas.map((item: any) => ({
       'Código suministro': item.codigoSuministro || '',
       'Alias suministro': item.aliasSuministro || '',
       'Dirección': item.direccionSuministro || '',
@@ -270,7 +262,7 @@ export class HistorialLecturas implements OnInit {
       'DNI': item.dniCliente || '',
       'Sector': item.sector || '',
       'Año': item.anio || '',
-      'Mes': this.nombreMes(item.mes),
+      'Mes': this.nombreMes(Number(item.mes)),
       'Lectura anterior': Number(item.lecturaAnterior || 0),
       'Lectura actual': Number(item.lecturaActual || 0),
       'Consumo m³': Number(item.consumoM3 || 0),
@@ -280,13 +272,9 @@ export class HistorialLecturas implements OnInit {
       'Fecha registro': item.fechaRegistro || ''
     }));
 
-    XLSX.utils.book_append_sheet(
-      workbook,
-      this.crearHojaDetalle(detalleCompleto),
-      'Detalle completo'
-    );
+    const worksheetDetalle = this.crearHojaDetalle(detalleCompleto);
+    XLSX.utils.book_append_sheet(workbook, worksheetDetalle, 'Detalle completo');
 
-    const fechaArchivo = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(workbook, `historial_lecturas_jass_huacariz_${fechaArchivo}.xlsx`);
   }
 
@@ -296,14 +284,14 @@ export class HistorialLecturas implements OnInit {
       return;
     }
 
-    const filas = this.lecturasFiltradas.map((item) => `
+    const filas = this.lecturasFiltradas.map((item: any) => `
       <tr>
         <td>${this.textoSeguro(item.codigoSuministro)}</td>
         <td>${this.textoSeguro(item.aliasSuministro || item.direccionSuministro || '-')}</td>
         <td>${this.textoSeguro(item.cliente)}</td>
         <td>${this.textoSeguro(item.dniCliente)}</td>
         <td>${this.textoSeguro(item.sector)}</td>
-        <td>${this.nombreMes(item.mes)} ${item.anio}</td>
+        <td>${this.nombreMes(Number(item.mes))} ${item.anio}</td>
         <td>${Number(item.lecturaAnterior || 0).toFixed(3)} m³</td>
         <td>${Number(item.lecturaActual || 0).toFixed(3)} m³</td>
         <td>${Number(item.consumoM3 || 0).toFixed(3)} m³</td>
@@ -320,20 +308,22 @@ export class HistorialLecturas implements OnInit {
       return;
     }
 
-    const html = `
+    ventana.document.open();
+    ventana.document.write(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="UTF-8">
         <title>Historial de lecturas - JASS Huacariz</title>
-
         <style>
-          * { box-sizing: border-box; }
+          * {
+            box-sizing: border-box;
+          }
 
           body {
             margin: 0;
             padding: 28px;
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             color: #0f2f3d;
             background: #ffffff;
           }
@@ -448,9 +438,17 @@ export class HistorialLecturas implements OnInit {
           }
 
           @media print {
-            body { padding: 10px; }
-            .actions { display: none; }
-            table { font-size: 10px; }
+            body {
+              padding: 10px;
+            }
+
+            .actions {
+              display: none;
+            }
+
+            table {
+              font-size: 10px;
+            }
           }
         </style>
       </head>
@@ -466,9 +464,7 @@ export class HistorialLecturas implements OnInit {
             </div>
           </div>
 
-          <div>
-            <strong>Administración</strong>
-          </div>
+          <strong>Administración</strong>
         </div>
 
         <div class="summary">
@@ -522,10 +518,7 @@ export class HistorialLecturas implements OnInit {
         </div>
       </body>
       </html>
-    `;
-
-    ventana.document.open();
-    ventana.document.write(html);
+    `);
     ventana.document.close();
   }
 
@@ -540,38 +533,24 @@ export class HistorialLecturas implements OnInit {
 
     const estilos = this.estilosExcel();
 
-    this.aplicarEstiloRango(
-      worksheet,
-      0,
-      0,
-      0,
-      range.e.c,
-      estilos.cabeceraTabla
-    );
+    this.aplicarEstiloRango(worksheet, 0, 0, 0, range.e.c, estilos.cabeceraTabla);
 
     if (range.e.r >= 1) {
-      this.aplicarEstiloRango(
-        worksheet,
-        1,
-        0,
-        range.e.r,
-        range.e.c,
-        estilos.celda
-      );
+      this.aplicarEstiloRango(worksheet, 1, 0, range.e.r, range.e.c, estilos.celda);
     }
 
     return worksheet;
   }
 
-  private estilizarHistorialExcel(
+  private aplicarEstilosExcel(
     worksheet: any,
-    filaTitulo: number,
-    filaSubtitulo: number,
-    filaFecha: number,
     filaResumenTitulo: number,
     filaResumenCabecera: number,
     filaDetalleTitulo: number,
-    filaDetalleCabecera: number
+    filaDetalleCabecera: number,
+    primeraFilaDatos: number,
+    ultimaFilaDatos: number,
+    filas: any[][]
   ): void {
     const estilos = this.estilosExcel();
     const ref = worksheet['!ref'] || 'A1:A1';
@@ -579,26 +558,53 @@ export class HistorialLecturas implements OnInit {
 
     this.aplicarEstiloRango(worksheet, 0, 0, range.e.r, range.e.c, estilos.celda);
 
-    this.aplicarEstiloRango(worksheet, filaTitulo, 0, filaTitulo, 11, estilos.titulo);
-    this.aplicarEstiloRango(worksheet, filaSubtitulo, 0, filaSubtitulo, 11, estilos.subtitulo);
-    this.aplicarEstiloRango(worksheet, filaFecha, 0, filaFecha, 11, estilos.fecha);
+    this.aplicarEstiloRango(worksheet, 0, 0, 0, 11, estilos.titulo);
+    this.aplicarEstiloRango(worksheet, 1, 0, 1, 11, estilos.subtitulo);
+    this.aplicarEstiloRango(worksheet, 2, 0, 2, 11, estilos.fecha);
 
     this.aplicarEstiloRango(worksheet, filaResumenTitulo, 0, filaResumenTitulo, 11, estilos.seccion);
     this.aplicarEstiloRango(worksheet, filaResumenCabecera, 0, filaResumenCabecera, 4, estilos.cabeceraTabla);
-    this.aplicarEstiloRango(worksheet, filaResumenCabecera + 1, 0, filaResumenCabecera + 4, 4, estilos.resumen);
+    this.aplicarEstiloRango(worksheet, filaResumenCabecera + 1, 0, filaResumenCabecera + 3, 4, estilos.resumen);
 
     this.aplicarEstiloRango(worksheet, filaDetalleTitulo, 0, filaDetalleTitulo, 11, estilos.seccion);
     this.aplicarEstiloRango(worksheet, filaDetalleCabecera, 0, filaDetalleCabecera, 11, estilos.cabeceraTabla);
 
-    if (range.e.r > filaDetalleCabecera) {
-      this.aplicarEstiloRango(
-        worksheet,
-        filaDetalleCabecera + 1,
-        0,
-        range.e.r,
-        11,
-        estilos.celda
-      );
+    if (ultimaFilaDatos >= primeraFilaDatos) {
+      this.aplicarEstiloRango(worksheet, primeraFilaDatos, 0, ultimaFilaDatos, 11, estilos.celda);
+
+      for (let fila = primeraFilaDatos; fila <= ultimaFilaDatos; fila++) {
+        [6, 7, 8].forEach((columna) => {
+          const celda = XLSX.utils.encode_cell({ r: fila, c: columna });
+          if (worksheet[celda]) {
+            worksheet[celda].z = '#,##0.000';
+          }
+        });
+
+        const celdaTotal = XLSX.utils.encode_cell({ r: fila, c: 10 });
+        if (worksheet[celdaTotal]) {
+          worksheet[celdaTotal].z = '"S/ "#,##0.00';
+        }
+
+        const estado = String(filas[fila][11] || '').toUpperCase();
+        const celdaEstado = XLSX.utils.encode_cell({ r: fila, c: 11 });
+
+        if (worksheet[celdaEstado]) {
+          worksheet[celdaEstado].s = {
+            ...estilos.estado,
+            font: {
+              bold: true,
+              color: {
+                rgb: estado === 'PAGADO' ? '166534' : estado === 'VENCIDO' ? 'B91C1C' : 'C2410C'
+              }
+            },
+            fill: {
+              fgColor: {
+                rgb: estado === 'PAGADO' ? 'DCFCE7' : estado === 'VENCIDO' ? 'FEE2E2' : 'FFEDD5'
+              }
+            }
+          };
+        }
+      }
     }
   }
 
@@ -610,9 +616,9 @@ export class HistorialLecturas implements OnInit {
     columnaFin: number,
     estilo: any
   ): void {
-    for (let r = filaInicio; r <= filaFin; r++) {
-      for (let c = columnaInicio; c <= columnaFin; c++) {
-        const celda = XLSX.utils.encode_cell({ r, c });
+    for (let fila = filaInicio; fila <= filaFin; fila++) {
+      for (let columna = columnaInicio; columna <= columnaFin; columna++) {
+        const celda = XLSX.utils.encode_cell({ r: fila, c: columna });
 
         if (!worksheet[celda]) {
           worksheet[celda] = { t: 's', v: '' };
@@ -634,7 +640,7 @@ export class HistorialLecturas implements OnInit {
     return {
       titulo: {
         font: { bold: true, sz: 20, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '0B3A4A' } },
+        fill: { fgColor: { rgb: '07384A' } },
         alignment: { horizontal: 'center', vertical: 'center' },
         border: borde
       },
@@ -658,18 +664,22 @@ export class HistorialLecturas implements OnInit {
       cabeceraTabla: {
         font: { bold: true, color: { rgb: 'FFFFFF' } },
         fill: { fgColor: { rgb: '0F766E' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
         border: borde
       },
       resumen: {
         font: { color: { rgb: '0F2F3D' } },
         fill: { fgColor: { rgb: 'F8FCFD' } },
-        alignment: { vertical: 'center' },
+        alignment: { vertical: 'center', wrapText: true },
         border: borde
       },
       celda: {
         font: { color: { rgb: '0F2F3D' } },
-        alignment: { vertical: 'center' },
+        alignment: { vertical: 'center', wrapText: true },
+        border: borde
+      },
+      estado: {
+        alignment: { horizontal: 'center', vertical: 'center' },
         border: borde
       }
     };

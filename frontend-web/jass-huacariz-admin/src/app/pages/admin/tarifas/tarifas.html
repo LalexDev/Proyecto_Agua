@@ -1,141 +1,270 @@
 <div class="tarifas-page">
-  <div class="page-header">
-    <div>
+  <section class="page-header">
+    <div class="page-header__content">
       <span class="tag">Administración</span>
       <h2>Tarifas</h2>
-      <p>Configura los tramos de consumo y precio por metro cúbico del servicio de agua.</p>
+      <p>Configura, edita y controla los tramos de consumo y precio por metro cúbico.</p>
     </div>
 
-    <button type="button" class="btn-primary" (click)="abrirFormulario()">
-      + Nueva tarifa
-    </button>
-  </div>
+    <div class="page-header__actions">
+      <button type="button" class="btn-secondary" (click)="abrirNuevaTarifa()">
+        Nueva tarifa
+      </button>
 
-  <div *ngIf="error" class="alert-error">
+      <button type="button" class="btn-primary" (click)="cargarTarifas()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
-  <div *ngIf="exito" class="alert-success">
+  <div *ngIf="exito" class="alert alert-success">
     {{ exito }}
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <span>📋</span>
-      <div>
-        <p>Total tarifas</p>
-        <h3>{{ tarifas.length }}</h3>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <span>✅</span>
-      <div>
-        <p>Tarifas activas</p>
-        <h3>{{ totalActivas() }}</h3>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <span>💧</span>
-      <div>
-        <p>Precio promedio</p>
-        <h3>S/ {{ precioPromedio() | number:'1.2-2' }}</h3>
-      </div>
-    </div>
-  </div>
-
-  <div *ngIf="cargando" class="alert-info">
+  <div *ngIf="cargando" class="alert alert-info">
     Cargando tarifas...
   </div>
 
-  <section class="form-card" *ngIf="mostrarFormulario">
-    <div class="form-title">
+  <section class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-card__icon">📋</div>
+      <div class="stat-card__content">
+        <span>Total tarifas</span>
+        <strong>{{ totalTarifas() }}</strong>
+        <small>Tarifas registradas</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">✅</div>
+      <div class="stat-card__content">
+        <span>Tarifas activas</span>
+        <strong>{{ tarifasActivas() }}</strong>
+        <small>Disponibles para cálculo</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">🚫</div>
+      <div class="stat-card__content">
+        <span>Tarifas inactivas</span>
+        <strong>{{ tarifasInactivas() }}</strong>
+        <small>No aplicadas</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon">💧</div>
+      <div class="stat-card__content">
+        <span>Precio promedio</span>
+        <strong>S/ {{ precioPromedio() | number:'1.2-2' }}</strong>
+        <small>Promedio por m³</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="chart-card">
+    <div class="chart-header">
       <div>
-        <h3>Registrar nueva tarifa</h3>
-        <p>Define el tramo de consumo y el precio por m³.</p>
-      </div>
-
-      <button type="button" class="btn-close" (click)="cerrarFormulario()">×</button>
-    </div>
-
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Nombre de tarifa</label>
-        <input type="text" [(ngModel)]="nuevaTarifa.nombreTarifa" placeholder="Tramo básico, intermedio...">
-      </div>
-
-      <div class="form-group">
-        <label>Consumo desde</label>
-        <input type="number" step="0.001" [(ngModel)]="nuevaTarifa.consumoDesde">
-      </div>
-
-      <div class="form-group">
-        <label>Consumo hasta</label>
-        <input type="number" step="0.001" [(ngModel)]="nuevaTarifa.consumoHasta" placeholder="Vacío si no tiene límite">
-      </div>
-
-      <div class="form-group">
-        <label>Precio por m³</label>
-        <input type="number" step="0.01" [(ngModel)]="nuevaTarifa.precioM3">
-      </div>
-
-      <div class="form-group">
-        <label>Estado</label>
-        <select [(ngModel)]="nuevaTarifa.estado">
-          <option [ngValue]="true">Activa</option>
-          <option [ngValue]="false">Inactiva</option>
-        </select>
+        <span class="tag">Análisis</span>
+        <h3>Precios por tramo</h3>
+        <p>Vista rápida del precio configurado para cada rango de consumo.</p>
       </div>
     </div>
 
-    <div class="form-actions">
-      <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
-        Cancelar
-      </button>
+    <div class="bars-list">
+      <div class="bar-item" *ngFor="let tarifa of tarifas">
+        <div class="bar-info">
+          <strong>{{ tarifa.nombreTarifa }}</strong>
+          <span>{{ rangoConsumo(tarifa) }}</span>
+        </div>
 
-      <button type="button" class="btn-primary" [disabled]="guardando" (click)="registrarTarifa()">
-        {{ guardando ? 'Guardando...' : 'Guardar tarifa' }}
-      </button>
+        <div class="bar-track">
+          <div class="bar-fill" [style.width]="anchoBarra(tarifa)"></div>
+        </div>
+
+        <strong class="bar-price">S/ {{ tarifa.precioM3 | number:'1.2-2' }}</strong>
+      </div>
+
+      <div class="empty-chart" *ngIf="!tarifas.length && !cargando">
+        No hay tarifas para graficar.
+      </div>
     </div>
   </section>
 
   <section class="table-card">
-    <div class="table-title">
+    <div class="table-card__header">
       <h3>Tarifas registradas</h3>
-      <button type="button" (click)="cargarTarifas()">Actualizar</button>
+      <span>{{ tarifas.length }} resultado(s)</span>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Rango de consumo</th>
-          <th>Precio m³</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Rango de consumo</th>
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Precio m³</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
 
-      <tbody>
-        <tr *ngFor="let tarifa of tarifas">
-          <td>{{ tarifa.id }}</td>
-          <td>{{ tarifa.nombreTarifa }}</td>
-          <td>{{ rangoConsumo(tarifa) }}</td>
-          <td>S/ {{ tarifa.precioM3 | number:'1.2-2' }}</td>
-          <td>
-            <span class="badge" [ngClass]="tarifa.estado ? 'activo' : 'inactivo'">
-              {{ estadoTexto(tarifa.estado) }}
-            </span>
-          </td>
-        </tr>
+        <tbody>
+          <tr *ngFor="let tarifa of tarifas">
+            <td>
+              <strong>{{ tarifa.nombreTarifa }}</strong>
+            </td>
 
-        <tr *ngIf="tarifas.length === 0 && !cargando">
-          <td colspan="5" class="empty-row">
-            No hay tarifas registradas.
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <td>{{ rangoConsumo(tarifa) }}</td>
+
+            <td>{{ tarifa.consumoDesde }} m³</td>
+
+            <td>{{ consumoHastaTexto(tarifa) }}</td>
+
+            <td>
+              <strong>S/ {{ tarifa.precioM3 | number:'1.2-2' }}</strong>
+            </td>
+
+            <td>
+              <span class="status-badge" [ngClass]="estadoClase(tarifa.estado)">
+                {{ estadoTexto(tarifa.estado) }}
+              </span>
+            </td>
+
+            <td>
+              <div class="actions-cell">
+                <button type="button" class="table-action" (click)="abrirEditarTarifa(tarifa)">
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  class="table-action"
+                  [ngClass]="tarifa.estado ? 'danger-soft' : 'success-soft'"
+                  (click)="abrirCambiarEstado(tarifa)"
+                >
+                  {{ tarifa.estado ? 'Desactivar' : 'Activar' }}
+                </button>
+
+                <button type="button" class="table-action danger-soft" (click)="abrirEliminar(tarifa)">
+                  Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!cargando && tarifas.length === 0">
+            <td colspan="7" class="empty-state">
+              No hay tarifas registradas.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
+
+  <div class="modal-backdrop" *ngIf="mostrarFormulario">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="tag">{{ modoEdicion ? 'Editar tarifa' : 'Nueva tarifa' }}</span>
+          <h3>{{ modoEdicion ? 'Actualizar tarifa' : 'Registrar tarifa' }}</h3>
+          <p>Define el rango de consumo y el precio por metro cúbico.</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarFormulario()">
+          ✕
+        </button>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Nombre de tarifa
+          <input
+            type="text"
+            [(ngModel)]="tarifaForm.nombreTarifa"
+            placeholder="Ejemplo: 0 m³ - 12 m³"
+          >
+        </label>
+
+        <label>
+          Consumo desde
+          <input
+            type="number"
+            [(ngModel)]="tarifaForm.consumoDesde"
+            placeholder="0"
+          >
+        </label>
+
+        <label>
+          Consumo hasta
+          <input
+            type="number"
+            [(ngModel)]="tarifaForm.consumoHasta"
+            placeholder="Vacío si es a más"
+          >
+        </label>
+
+        <label>
+          Precio por m³
+          <input
+            type="number"
+            [(ngModel)]="tarifaForm.precioM3"
+            placeholder="0.00"
+          >
+        </label>
+
+        <label>
+          Estado
+          <select [(ngModel)]="tarifaForm.estado">
+            <option [ngValue]="true">Activa</option>
+            <option [ngValue]="false">Inactiva</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="guardarTarifa()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : (modoEdicion ? 'Actualizar tarifa' : 'Registrar tarifa') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="accionPendiente">
+    <div class="modal-card confirm">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Confirmación</span>
+          <h3>{{ accionPendiente.titulo }}</h3>
+          <p>{{ accionPendiente.mensaje }}</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarConfirmacion()">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarConfirmacion()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="confirmarAccion()" [disabled]="procesando">
+          {{ procesando ? 'Procesando...' : accionPendiente.textoBoton }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

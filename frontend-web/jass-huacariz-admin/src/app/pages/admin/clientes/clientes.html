@@ -1,215 +1,365 @@
 <div class="clientes-page">
-  <div class="page-header">
-    <div>
+  <section class="page-header">
+    <div class="page-header__content">
       <span class="tag">Administración</span>
       <h2>Clientes y suministros</h2>
-      <p>Gestiona los usuarios del servicio de agua potable y sus conexiones.</p>
+      <p>Gestiona usuarios, conexiones de agua, estados de instalación y accesos al sistema.</p>
     </div>
 
-    <button class="btn-primary" type="button" (click)="abrirFormulario()">
-      + Registrar cliente
-    </button>
-  </div>
+    <div class="page-header__actions">
+      <button type="button" class="btn-secondary" (click)="exportarClientesExcel()">
+        Exportar Excel
+      </button>
 
-  <div *ngIf="error" class="alert-error">
+      <button type="button" class="btn-secondary" (click)="imprimirClientesPdf()">
+        Imprimir PDF
+      </button>
+
+      <button type="button" class="btn-primary" (click)="abrirFormulario()">
+        + Registrar cliente
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
-  <div *ngIf="exito" class="alert-success">
+  <div *ngIf="exito" class="alert alert-success">
     {{ exito }}
   </div>
 
-  <div class="toolbar">
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando clientes...
+  </div>
+
+  <section class="filters-row">
     <input
       type="text"
-      placeholder="Buscar por DNI, nombres, apellidos o usuario..."
+      placeholder="Buscar por DNI, nombres, correo, usuario, suministro, dirección o estado..."
       [(ngModel)]="busqueda"
       (input)="filtrarClientes()"
     >
 
-    <button type="button" (click)="cargarDatos()">
+    <button type="button" class="btn-secondary" (click)="cargarClientes()">
       Actualizar
     </button>
-  </div>
-
-  <div *ngIf="cargando" class="alert-info">
-    Cargando clientes...
-  </div>
-
-  <section class="form-card" *ngIf="mostrarFormulario">
-    <div class="form-title">
-      <div>
-        <h3>Registrar nuevo cliente</h3>
-        <p>El sistema creará automáticamente el usuario de acceso con contraseña inicial cliente123.</p>
-      </div>
-
-      <button type="button" class="btn-close" (click)="cerrarFormulario()">×</button>
-    </div>
-
-    <div class="form-grid">
-      <div class="form-group">
-        <label>DNI</label>
-        <input type="text" maxlength="8" [(ngModel)]="nuevoCliente.dni">
-      </div>
-
-      <div class="form-group">
-        <label>Nombres</label>
-        <input type="text" [(ngModel)]="nuevoCliente.nombres">
-      </div>
-
-      <div class="form-group">
-        <label>Apellidos</label>
-        <input type="text" [(ngModel)]="nuevoCliente.apellidos">
-      </div>
-
-      <div class="form-group">
-        <label>Teléfono</label>
-        <input type="text" [(ngModel)]="nuevoCliente.telefono">
-      </div>
-
-      <div class="form-group">
-        <label>Correo</label>
-        <input type="email" [(ngModel)]="nuevoCliente.correo">
-      </div>
-
-      <div class="form-group">
-        <label>Estado</label>
-        <select [(ngModel)]="nuevoCliente.estado">
-          <option [ngValue]="true">Activo</option>
-          <option [ngValue]="false">Inactivo</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="suministros-header">
-      <h4>Suministros del cliente</h4>
-      <button type="button" (click)="agregarSuministro()">+ Agregar suministro</button>
-    </div>
-
-    <div class="suministro-card" *ngFor="let suministro of nuevoCliente.suministros; let i = index">
-      <div class="suministro-title">
-        <strong>Suministro {{ i + 1 }}</strong>
-        <button type="button" (click)="quitarSuministro(i)">Eliminar</button>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Sector</label>
-          <select [(ngModel)]="suministro.idSector">
-            <option *ngFor="let sector of sectores" [ngValue]="sector.id">
-              {{ sector.nombre }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Dirección del suministro</label>
-          <input type="text" [(ngModel)]="suministro.direccionSuministro">
-        </div>
-
-        <div class="form-group">
-          <label>Referencia</label>
-          <input type="text" [(ngModel)]="suministro.referencia">
-        </div>
-
-        <div class="form-group">
-          <label>Alias</label>
-          <input
-            type="text"
-            [(ngModel)]="suministro.aliasSuministro"
-            placeholder="Casa, tienda, local..."
-          >
-        </div>
-
-        <div class="form-group">
-          <label>Lectura inicial</label>
-          <input type="number" step="0.001" [(ngModel)]="suministro.lecturaInicial">
-        </div>
-      </div>
-    </div>
-
-    <div class="form-actions">
-      <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
-        Cancelar
-      </button>
-
-      <button
-        type="button"
-        class="btn-primary"
-        [disabled]="guardando"
-        (click)="registrarCliente()"
-      >
-        {{ guardando ? 'Guardando...' : 'Guardar cliente' }}
-      </button>
-    </div>
   </section>
 
   <section class="table-card">
-    <div class="table-title">
+    <div class="table-card__header">
       <h3>Clientes registrados</h3>
       <span>{{ clientesFiltrados.length }} resultado(s)</span>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>DNI</th>
-          <th>Cliente</th>
-          <th>Teléfono</th>
-          <th>Correo</th>
-          <th>Usuario</th>
-          <th>Suministros</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>DNI</th>
+            <th>Cliente</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
+            <th>Usuario</th>
+            <th>Suministros</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
 
-      <tbody>
-        <tr *ngFor="let cliente of clientesFiltrados">
-          <td>{{ cliente.dni }}</td>
+        <tbody>
+          <tr *ngFor="let cliente of clientesFiltrados">
+            <td>{{ cliente.dni }}</td>
 
-          <td>
-            <strong>{{ nombreCompleto(cliente) }}</strong>
+            <td>
+              <strong>{{ nombreCompleto(cliente) }}</strong>
 
-            <div class="suministros-list" *ngIf="cliente.suministros?.length">
-              <div
-                class="suministro-linea"
-                *ngFor="let suministro of cliente.suministros"
-              >
-                <span>
-                  {{ suministro.codigoSuministro || suministro.codigo }}
-                  -
-                  {{ suministro.aliasSuministro || suministro.alias || suministro.direccionSuministro || 'Suministro de agua' }}
-                </span>
+              <div class="suministros-mini">
+                <div class="suministro-mini" *ngFor="let suministro of (cliente.suministros || []).slice(0, 2)">
+                  <span>
+                    {{ suministro.codigoSuministro }} - {{ suministro.aliasSuministro || suministro.direccionSuministro }}
+                  </span>
+
+                  <button type="button" class="qr-mini-btn" (click)="irQr(suministro)">
+                    QR
+                  </button>
+                </div>
+
+                <small *ngIf="totalSuministros(cliente) > 2">
+                  + {{ totalSuministros(cliente) - 2 }} suministro(s) más
+                </small>
+              </div>
+            </td>
+
+            <td>{{ cliente.telefono || '-' }}</td>
+
+            <td>{{ cliente.correo || '-' }}</td>
+
+            <td>{{ cliente.codigoUsuario || cliente.dni }}</td>
+
+            <td>
+              <span class="count-badge">
+                {{ totalSuministros(cliente) }}
+              </span>
+            </td>
+
+            <td>
+              <span class="status-badge" [ngClass]="estadoClase(cliente.estado)">
+                {{ estadoTexto(cliente.estado) }}
+              </span>
+            </td>
+
+            <td>
+              <div class="actions-cell">
+                <button type="button" class="table-action" (click)="verDetalle(cliente)">
+                  Ver
+                </button>
 
                 <button
                   type="button"
-                  class="btn-qr"
-                  (click)="abrirQrSuministro(suministro)"
+                  class="table-action"
+                  [ngClass]="cliente.estado ? 'danger-soft' : 'success-soft'"
+                  (click)="abrirCambiarEstadoCliente(cliente)"
                 >
-                  QR
+                  {{ cliente.estado ? 'Desactivar' : 'Activar' }}
                 </button>
               </div>
-            </div>
-          </td>
+            </td>
+          </tr>
 
-          <td>{{ cliente.telefono || '-' }}</td>
-          <td>{{ cliente.correo || '-' }}</td>
-          <td>{{ cliente.codigoUsuario || cliente.usuario || cliente.dni }}</td>
-          <td>{{ totalSuministros(cliente) }}</td>
-
-          <td>
-            <span class="badge" [ngClass]="cliente.estado ? 'activo' : 'inactivo'">
-              {{ estadoTexto(cliente.estado) }}
-            </span>
-          </td>
-        </tr>
-
-        <tr *ngIf="clientesFiltrados.length === 0 && !cargando">
-          <td colspan="7" class="empty-row">
-            No hay clientes registrados.
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          <tr *ngIf="!cargando && clientesFiltrados.length === 0">
+            <td colspan="8" class="empty-state">
+              No hay clientes registrados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
+
+  <div class="modal-backdrop" *ngIf="mostrarFormulario">
+    <div class="modal-card large">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Nuevo cliente</span>
+          <h3>Registrar cliente y suministro</h3>
+          <p>El usuario se creará con contraseña inicial cliente123.</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarFormulario()">
+          ✕
+        </button>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          DNI
+          <input type="text" maxlength="8" [(ngModel)]="nuevoCliente.dni" placeholder="Ejemplo: 12345678">
+        </label>
+
+        <label>
+          Nombres
+          <input type="text" [(ngModel)]="nuevoCliente.nombres" placeholder="Nombres">
+        </label>
+
+        <label>
+          Apellidos
+          <input type="text" [(ngModel)]="nuevoCliente.apellidos" placeholder="Apellidos">
+        </label>
+
+        <label>
+          Teléfono
+          <input type="text" [(ngModel)]="nuevoCliente.telefono" placeholder="Teléfono">
+        </label>
+
+        <label>
+          Correo
+          <input type="email" [(ngModel)]="nuevoCliente.correo" placeholder="correo@ejemplo.com">
+        </label>
+
+        <label>
+          Estado
+          <select [(ngModel)]="nuevoCliente.estado">
+            <option [ngValue]="true">Activo</option>
+            <option [ngValue]="false">Inactivo</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="suministros-form-header">
+        <h4>Suministros del cliente</h4>
+
+        <button type="button" class="btn-secondary" (click)="agregarSuministroFormulario()">
+          + Agregar suministro
+        </button>
+      </div>
+
+      <div class="suministro-form-card" *ngFor="let suministro of nuevoCliente.suministros; let i = index">
+        <div class="suministro-form-title">
+          <strong>Suministro {{ i + 1 }}</strong>
+
+          <button type="button" class="remove-btn" (click)="quitarSuministroFormulario(i)">
+            Quitar
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            ID sector
+            <input type="number" [(ngModel)]="suministro.idSector" placeholder="Ejemplo: 1">
+          </label>
+
+          <label>
+            Alias
+            <input type="text" [(ngModel)]="suministro.aliasSuministro" placeholder="Casa principal">
+          </label>
+
+          <label class="full">
+            Dirección del suministro
+            <input type="text" [(ngModel)]="suministro.direccionSuministro" placeholder="Av. Principal 123">
+          </label>
+
+          <label>
+            Referencia
+            <input type="text" [(ngModel)]="suministro.referencia" placeholder="Referencia opcional">
+          </label>
+
+          <label>
+            Lectura inicial
+            <input type="number" [(ngModel)]="suministro.lecturaInicial" placeholder="0">
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="registrarCliente()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : 'Registrar cliente' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="mostrarDetalle && clienteDetalle">
+    <div class="modal-card large">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Detalle del cliente</span>
+          <h3>{{ nombreCompleto(clienteDetalle) }}</h3>
+          <p>DNI: {{ clienteDetalle.dni }} | Usuario: {{ clienteDetalle.codigoUsuario }}</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarDetalle()">
+          ✕
+        </button>
+      </div>
+
+      <div class="detail-grid">
+        <div>
+          <span>Teléfono</span>
+          <strong>{{ clienteDetalle.telefono || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Correo</span>
+          <strong>{{ clienteDetalle.correo || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Estado cliente</span>
+          <strong>
+            <span class="status-badge" [ngClass]="estadoClase(clienteDetalle.estado)">
+              {{ estadoTexto(clienteDetalle.estado) }}
+            </span>
+          </strong>
+        </div>
+
+        <div>
+          <span>Total suministros</span>
+          <strong>{{ totalSuministros(clienteDetalle) }}</strong>
+        </div>
+      </div>
+
+      <h4 class="section-title">Suministros</h4>
+
+      <div class="suministro-detail-card" *ngFor="let suministro of clienteDetalle.suministros">
+        <div class="suministro-detail-info">
+          <strong>{{ suministro.codigoSuministro }}</strong>
+          <span>{{ suministro.aliasSuministro || 'Sin alias' }}</span>
+          <small>{{ suministro.direccionSuministro }}</small>
+          <small>{{ suministro.nombreSector }}</small>
+        </div>
+
+        <div class="suministro-detail-status">
+          <span class="status-badge" [ngClass]="estadoSuministroClase(suministro.estado)">
+            {{ estadoSuministroTexto(suministro.estado) }}
+          </span>
+        </div>
+
+        <div class="suministro-detail-actions">
+          <button type="button" class="table-action" (click)="irQr(suministro)">
+            QR
+          </button>
+
+          <button
+            type="button"
+            class="table-action success-soft"
+            *ngIf="!suministro.estado"
+            (click)="abrirCambiarEstadoSuministro(clienteDetalle, suministro, true)"
+          >
+            Marcar instalado
+          </button>
+
+          <button
+            type="button"
+            class="table-action danger-soft"
+            *ngIf="suministro.estado"
+            (click)="abrirCambiarEstadoSuministro(clienteDetalle, suministro, false)"
+          >
+            Suspender
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarDetalle()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="accionPendiente">
+    <div class="modal-card confirm">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Confirmación</span>
+          <h3>{{ accionPendiente.titulo }}</h3>
+          <p>{{ accionPendiente.mensaje }}</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarConfirmacion()">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarConfirmacion()">
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="confirmarAccion()"
+          [disabled]="procesandoAccion"
+        >
+          {{ procesandoAccion ? 'Procesando...' : accionPendiente.textoBoton }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

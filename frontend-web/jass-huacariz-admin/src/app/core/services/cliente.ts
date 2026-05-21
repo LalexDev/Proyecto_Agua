@@ -68,4 +68,19 @@ export class Cliente {
   listarSuministrosPorCliente(id: number): Observable<SuministroResponse[]> {
     return this.http.get<SuministroResponse[]>(`${this.apiUrl}/${id}/suministros`);
   }
+
+  cambiarEstadoCliente(id: number, estado: boolean): Observable<ClienteResponse> {
+    return this.http.patch<ClienteResponse>(`${this.apiUrl}/${id}/estado?estado=${estado}`, {});
+  }
+
+  cambiarEstadoSuministro(
+    clienteId: number,
+    suministroId: number,
+    estado: boolean
+  ): Observable<SuministroResponse> {
+    return this.http.patch<SuministroResponse>(
+      `${this.apiUrl}/${clienteId}/suministros/${suministroId}/estado?estado=${estado}`,
+      {}
+    );
+  }
 }
