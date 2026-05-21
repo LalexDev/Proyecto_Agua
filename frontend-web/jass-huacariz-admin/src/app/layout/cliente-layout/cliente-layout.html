@@ -1,7 +1,8 @@
 <div class="cliente-layout">
-  <header class="cliente-header">
+  <aside class="cliente-sidebar">
     <div class="brand">
       <div class="brand-icon">💧</div>
+
       <div>
         <h2>JASS Huacariz</h2>
         <p>Portal del cliente</p>
@@ -9,19 +10,57 @@
     </div>
 
     <nav class="cliente-menu">
-      <a routerLink="/cliente/inicio" routerLinkActive="active">Inicio</a>
-      <a routerLink="/cliente/mis-recibos" routerLinkActive="active">Mis recibos</a>
-      <a routerLink="/cliente/perfil" routerLinkActive="active">Perfil</a>
-      <a routerLink="/cliente/cambiar-password" routerLinkActive="active">Contraseña</a>
+      <a
+        routerLink="/cliente/inicio"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <span>🏠</span>
+        Inicio
+      </a>
+
+      <a routerLink="/cliente/mis-recibos" routerLinkActive="active">
+        <span>🧾</span>
+        Mis recibos
+      </a>
+
+      <a routerLink="/cliente/perfil" routerLinkActive="active">
+        <span>👤</span>
+        Perfil
+      </a>
+
+      <a routerLink="/cliente/contrasena" routerLinkActive="active">
+        <span>🔐</span>
+        Contraseña
+      </a>
+
+      <button type="button" class="logout-btn" (click)="cerrarSesion()">
+        <span>⏻</span>
+        Cerrar sesión
+      </button>
     </nav>
+  </aside>
 
-    <div class="cliente-user">
-      <span>Dany Carmona</span>
-      <div class="avatar">D</div>
-    </div>
-  </header>
+  <section class="cliente-main">
+    <header class="cliente-header">
+      <div>
+        <h1>Sistema de Gestión de Agua</h1>
+        <p>Consulta tus suministros, recibos, pagos y datos personales.</p>
+      </div>
 
-  <main class="cliente-content">
-    <router-outlet></router-outlet>
-  </main>
+      <div class="cliente-user">
+        <div class="user-info">
+          <strong>{{ nombreCliente() }}</strong>
+          <span>{{ codigoUsuario() }}</span>
+        </div>
+
+        <div class="avatar">
+          {{ inicialCliente() }}
+        </div>
+      </div>
+    </header>
+
+    <main class="cliente-content">
+      <router-outlet></router-outlet>
+    </main>
+  </section>
 </div>
