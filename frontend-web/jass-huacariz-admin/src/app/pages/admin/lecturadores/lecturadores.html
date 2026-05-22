@@ -1,0 +1,257 @@
+<div class="lecturadores-page">
+  <section class="page-header">
+    <div>
+      <span class="tag">Administración</span>
+      <h2>Lecturadores</h2>
+      <p>Gestiona el personal encargado de escanear QR y registrar lecturas de consumo.</p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="cargarLecturadores()">
+        Actualizar
+      </button>
+
+      <button type="button" class="btn-primary" (click)="abrirNuevo()">
+        + Nuevo lecturador
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="error && !mostrarFormulario" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="exito && !mostrarFormulario" class="alert alert-success">
+    {{ exito }}
+  </div>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-icon">📲</div>
+      <div>
+        <span>Total lecturadores</span>
+        <strong>{{ totalLecturadores() }}</strong>
+        <small>Registrados en el sistema</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div>
+        <span>Activos</span>
+        <strong>{{ lecturadoresActivos() }}</strong>
+        <small>Pueden iniciar sesión</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon">🚫</div>
+      <div>
+        <span>Inactivos</span>
+        <strong>{{ lecturadoresInactivos() }}</strong>
+        <small>Acceso bloqueado</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-icon">📍</div>
+      <div>
+        <span>Sectores asignados</span>
+        <strong>{{ sectoresAsignados() }}</strong>
+        <small>Zonas de trabajo</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="filter-card">
+    <input
+      type="text"
+      placeholder="Buscar por DNI, nombre, usuario, correo, teléfono o sector..."
+      [(ngModel)]="busqueda"
+      (input)="aplicarFiltros()"
+    >
+
+    <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
+      <option value="TODOS">Todos</option>
+      <option value="ACTIVO">Activos</option>
+      <option value="INACTIVO">Inactivos</option>
+    </select>
+
+    <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+      Limpiar
+    </button>
+  </section>
+
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando lecturadores...
+  </div>
+
+  <section class="table-card">
+    <div class="table-title">
+      <h3>Lecturadores registrados</h3>
+      <span>{{ lecturadoresFiltrados.length }} resultado(s)</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>DNI</th>
+            <th>Lecturador</th>
+            <th>Usuario</th>
+            <th>Contacto</th>
+            <th>Sector asignado</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let item of lecturadoresFiltrados">
+            <td>
+              <strong>{{ item.dni }}</strong>
+            </td>
+
+            <td>
+              <strong>{{ nombreCompleto(item) }}</strong>
+              <small>Rol: {{ item.rol || 'LECTURADOR' }}</small>
+            </td>
+
+            <td>
+              <strong>{{ item.codigoUsuario }}</strong>
+            </td>
+
+            <td>
+              <span>{{ item.telefono || '-' }}</span>
+              <small>{{ item.correo || '-' }}</small>
+            </td>
+
+            <td>
+              {{ item.sectorAsignado || 'Sin sector asignado' }}
+            </td>
+
+            <td>
+              <span class="badge" [ngClass]="estadoClase(item.estado)">
+                {{ estadoTexto(item.estado) }}
+              </span>
+            </td>
+
+            <td>
+              <div class="actions-cell">
+                <button type="button" class="btn-table" (click)="abrirEditar(item)">
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-table"
+                  [ngClass]="item.estado ? 'danger-soft' : 'success-soft'"
+                  (click)="cambiarEstado(item)"
+                >
+                  {{ item.estado ? 'Inactivar' : 'Activar' }}
+                </button>
+
+                <button type="button" class="btn-table danger-soft" (click)="eliminarLecturador(item)">
+                  Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!cargando && lecturadoresFiltrados.length === 0">
+            <td colspan="7" class="empty-row">
+              No hay lecturadores registrados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="mostrarFormulario">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="tag">{{ modoEdicion ? 'Editar lecturador' : 'Nuevo lecturador' }}</span>
+          <h3>{{ modoEdicion ? 'Actualizar datos del lecturador' : 'Registrar lecturador' }}</h3>
+          <p>
+            {{ modoEdicion ? 'Modifica los datos del personal encargado de lecturas.' : 'Crea un usuario con rol LECTURADOR.' }}
+          </p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarFormulario()">
+          ✕
+        </button>
+      </div>
+
+      <div *ngIf="error" class="alert alert-error modal-alert">
+        {{ error }}
+      </div>
+
+      <div class="form-grid">
+        <label>
+          DNI
+          <input type="text" maxlength="8" [(ngModel)]="form.dni" placeholder="Ejemplo: 87654321">
+        </label>
+
+        <label>
+          Nombres
+          <input type="text" [(ngModel)]="form.nombres" placeholder="Nombres">
+        </label>
+
+        <label>
+          Apellidos
+          <input type="text" [(ngModel)]="form.apellidos" placeholder="Apellidos">
+        </label>
+
+        <label>
+          Teléfono
+          <input type="text" [(ngModel)]="form.telefono" placeholder="Teléfono">
+        </label>
+
+        <label>
+          Correo
+          <input type="email" [(ngModel)]="form.correo" placeholder="correo@ejemplo.com">
+        </label>
+
+        <label>
+          Sector asignado
+          <input type="text" [(ngModel)]="form.sectorAsignado" placeholder="Ejemplo: Sector 1">
+        </label>
+
+        <label>
+          Usuario de acceso
+          <input type="text" [(ngModel)]="form.codigoUsuario" placeholder="Ejemplo: lector01">
+        </label>
+
+        <label>
+          {{ modoEdicion ? 'Nueva contraseña opcional' : 'Contraseña inicial' }}
+          <input type="text" [(ngModel)]="form.password" placeholder="lector123">
+        </label>
+
+        <label>
+          Estado
+          <select [(ngModel)]="form.estado">
+            <option [ngValue]="true">Activo</option>
+            <option [ngValue]="false">Inactivo</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="info-note">
+        <strong>Importante:</strong>
+        Si el lecturador está inactivo, no podrá iniciar sesión ni registrar lecturas.
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="guardarLecturador()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : (modoEdicion ? 'Guardar cambios' : 'Registrar lecturador') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

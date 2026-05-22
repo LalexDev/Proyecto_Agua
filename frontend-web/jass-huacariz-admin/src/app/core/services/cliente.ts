@@ -45,11 +45,38 @@ export interface ClienteRequest {
   suministros: SuministroRequest[];
 }
 
+export interface LecturadorRequest {
+  dni: string;
+  nombres: string;
+  apellidos: string;
+  telefono: string;
+  correo: string;
+  codigoUsuario: string;
+  password: string;
+  estado: boolean;
+  sectorAsignado?: string;
+}
+
+export interface LecturadorResponse {
+  id: number;
+  dni: string;
+  nombres: string;
+  apellidos: string;
+  telefono: string;
+  correo: string;
+  codigoUsuario: string;
+  estado: boolean;
+  rol: string;
+  sectorAsignado?: string;
+  passwordInicial?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class Cliente {
   private readonly apiUrl = 'http://localhost:8080/api/clientes';
+  private readonly usuariosUrl = 'http://localhost:8080/api/usuarios';
 
   constructor(private http: HttpClient) {}
 
@@ -82,5 +109,28 @@ export class Cliente {
       `${this.apiUrl}/${clienteId}/suministros/${suministroId}/estado?estado=${estado}`,
       {}
     );
+  }
+
+  listarLecturadores(): Observable<LecturadorResponse[]> {
+    return this.http.get<LecturadorResponse[]>(`${this.usuariosUrl}/lecturadores`);
+  }
+
+  registrarLecturador(data: LecturadorRequest): Observable<LecturadorResponse> {
+    return this.http.post<LecturadorResponse>(`${this.usuariosUrl}/lecturadores`, data);
+  }
+
+  actualizarLecturador(id: number, data: LecturadorRequest): Observable<LecturadorResponse> {
+    return this.http.put<LecturadorResponse>(`${this.usuariosUrl}/lecturadores/${id}`, data);
+  }
+
+  cambiarEstadoLecturador(id: number, estado: boolean): Observable<LecturadorResponse> {
+    return this.http.patch<LecturadorResponse>(
+      `${this.usuariosUrl}/lecturadores/${id}/estado?estado=${estado}`,
+      {}
+    );
+  }
+
+  eliminarLecturador(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.usuariosUrl}/lecturadores/${id}`);
   }
 }

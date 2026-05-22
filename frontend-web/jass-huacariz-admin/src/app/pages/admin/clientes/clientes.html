@@ -16,7 +16,7 @@
       </button>
 
       <button type="button" class="btn-primary" (click)="abrirFormulario()">
-        + Registrar cliente
+        + Nuevo usuario
       </button>
 
       <button type="button" class="btn-secondary" (click)="cargarClientes()" [disabled]="cargando">
@@ -25,12 +25,12 @@
     </div>
   </section>
 
-  <div *ngIf="error" class="alert alert-error">
-    {{ error }}
+  <div *ngIf="error && !mostrarFormulario" class="alert alert-error">
+  {{ error }}
   </div>
 
-  <div *ngIf="exito" class="alert alert-success">
-    {{ exito }}
+  <div *ngIf="exito && !mostrarFormulario" class="alert alert-success">
+   {{ exito }}
   </div>
 
   <div *ngIf="cargando" class="alert alert-info">
@@ -80,7 +80,7 @@
       <span class="tag">Estado general</span>
       <h3>Control de clientes y conexiones</h3>
       <p>
-        Desde este módulo el administrador puede activar clientes, suspender accesos,
+        Desde este módulo el administrador puede activar clientes, registrar lecturadores,
         marcar suministros como instalados, generar QR y exportar reportes.
       </p>
     </div>
@@ -223,9 +223,9 @@
     <div class="modal-card large">
       <div class="modal-header">
         <div>
-          <span class="tag">Nuevo cliente</span>
-          <h3>Registrar cliente y suministro</h3>
-          <p>El usuario se creará con contraseña inicial cliente123.</p>
+          <span class="tag">Nuevo usuario</span>
+          <h3>Registrar usuario del sistema</h3>
+          <p>Selecciona si vas a registrar un cliente del servicio de agua o un lecturador.</p>
         </div>
 
         <button type="button" class="close-btn" (click)="cerrarFormulario()">
@@ -233,93 +233,192 @@
         </button>
       </div>
 
-      <div class="form-grid">
-        <label>
-          DNI
-          <input type="text" maxlength="8" [(ngModel)]="nuevoCliente.dni" placeholder="Ejemplo: 12345678">
-        </label>
 
-        <label>
-          Nombres
-          <input type="text" [(ngModel)]="nuevoCliente.nombres" placeholder="Nombres">
-        </label>
-
-        <label>
-          Apellidos
-          <input type="text" [(ngModel)]="nuevoCliente.apellidos" placeholder="Apellidos">
-        </label>
-
-        <label>
-          Teléfono
-          <input type="text" [(ngModel)]="nuevoCliente.telefono" placeholder="Teléfono">
-        </label>
-
-        <label>
-          Correo
-          <input type="email" [(ngModel)]="nuevoCliente.correo" placeholder="correo@ejemplo.com">
-        </label>
-
-        <label>
-          Estado inicial
-          <select [(ngModel)]="nuevoCliente.estado">
-            <option [ngValue]="true">Activo</option>
-            <option [ngValue]="false">Inactivo</option>
-          </select>
-        </label>
+      <div *ngIf="error" class="alert alert-error modal-alert">
+        {{ error }}
       </div>
 
-      <div class="suministros-form-header">
-        <h4>Suministros del cliente</h4>
+      <div *ngIf="exito" class="alert alert-success modal-alert">
+        {{ exito }}
+      </div>
 
-        <button type="button" class="btn-secondary" (click)="agregarSuministroFormulario()">
-          + Agregar suministro
+      <div class="tipo-usuario-tabs">
+        <button
+          type="button"
+          [class.active]="tipoUsuarioFormulario === 'CLIENTE'"
+          (click)="cambiarTipoUsuarioFormulario('CLIENTE')"
+        >
+          👤 Cliente / Usuario
+          <small>Con suministro, recibos y portal cliente</small>
+        </button>
+
+        <button
+          type="button"
+          [class.active]="tipoUsuarioFormulario === 'LECTURADOR'"
+          (click)="cambiarTipoUsuarioFormulario('LECTURADOR')"
+        >
+          📲 Lecturador
+          <small>Escanea QR y registra lecturas</small>
         </button>
       </div>
 
-      <div class="suministro-form-card" *ngFor="let suministro of nuevoCliente.suministros; let i = index">
-        <div class="suministro-form-title">
-          <strong>Suministro {{ i + 1 }}</strong>
-
-          <button type="button" class="remove-btn" (click)="quitarSuministroFormulario(i)">
-            Quitar
-          </button>
+      <ng-container *ngIf="tipoUsuarioFormulario === 'CLIENTE'">
+        <div class="form-section-title">
+          <h4>Datos del cliente</h4>
+          <p>El sistema creará automáticamente el usuario de acceso del cliente.</p>
         </div>
 
         <div class="form-grid">
           <label>
-            ID sector
-            <input type="number" [(ngModel)]="suministro.idSector" placeholder="Ejemplo: 1">
+            DNI
+            <input type="text" maxlength="8" [(ngModel)]="nuevoCliente.dni" placeholder="Ejemplo: 12345678">
           </label>
 
           <label>
-            Alias
-            <input type="text" [(ngModel)]="suministro.aliasSuministro" placeholder="Casa principal">
-          </label>
-
-          <label class="full">
-            Dirección del suministro
-            <input type="text" [(ngModel)]="suministro.direccionSuministro" placeholder="Av. Principal 123">
+            Nombres
+            <input type="text" [(ngModel)]="nuevoCliente.nombres" placeholder="Nombres">
           </label>
 
           <label>
-            Referencia
-            <input type="text" [(ngModel)]="suministro.referencia" placeholder="Referencia opcional">
+            Apellidos
+            <input type="text" [(ngModel)]="nuevoCliente.apellidos" placeholder="Apellidos">
           </label>
 
           <label>
-            Lectura inicial
-            <input type="number" [(ngModel)]="suministro.lecturaInicial" placeholder="0">
+            Teléfono
+            <input type="text" [(ngModel)]="nuevoCliente.telefono" placeholder="Teléfono">
+          </label>
+
+          <label>
+            Correo
+            <input type="email" [(ngModel)]="nuevoCliente.correo" placeholder="correo@ejemplo.com">
+          </label>
+
+          <label>
+            Estado inicial
+            <select [(ngModel)]="nuevoCliente.estado">
+              <option [ngValue]="true">Activo</option>
+              <option [ngValue]="false">Inactivo</option>
+            </select>
           </label>
         </div>
-      </div>
+
+        <div class="suministros-form-header">
+          <h4>Suministros del cliente</h4>
+
+          <button type="button" class="btn-secondary" (click)="agregarSuministroFormulario()">
+            + Agregar suministro
+          </button>
+        </div>
+
+        <div class="suministro-form-card" *ngFor="let suministro of nuevoCliente.suministros; let i = index">
+          <div class="suministro-form-title">
+            <strong>Suministro {{ i + 1 }}</strong>
+
+            <button type="button" class="remove-btn" (click)="quitarSuministroFormulario(i)">
+              Quitar
+            </button>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              ID sector
+              <input type="number" [(ngModel)]="suministro.idSector" placeholder="Ejemplo: 1">
+            </label>
+
+            <label>
+              Alias
+              <input type="text" [(ngModel)]="suministro.aliasSuministro" placeholder="Casa principal">
+            </label>
+
+            <label class="full">
+              Dirección del suministro
+              <input type="text" [(ngModel)]="suministro.direccionSuministro" placeholder="Av. Principal 123">
+            </label>
+
+            <label>
+              Referencia
+              <input type="text" [(ngModel)]="suministro.referencia" placeholder="Referencia opcional">
+            </label>
+
+            <label>
+              Lectura inicial
+              <input type="number" [(ngModel)]="suministro.lecturaInicial" placeholder="0">
+            </label>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="tipoUsuarioFormulario === 'LECTURADOR'">
+        <div class="form-section-title">
+          <h4>Datos del lecturador</h4>
+          <p>Este usuario podrá ingresar al panel de lecturador para escanear QR y registrar lecturas.</p>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            DNI
+            <input type="text" maxlength="8" [(ngModel)]="nuevoLecturador.dni" placeholder="Ejemplo: 87654321">
+          </label>
+
+          <label>
+            Nombres
+            <input type="text" [(ngModel)]="nuevoLecturador.nombres" placeholder="Nombres">
+          </label>
+
+          <label>
+            Apellidos
+            <input type="text" [(ngModel)]="nuevoLecturador.apellidos" placeholder="Apellidos">
+          </label>
+
+          <label>
+            Teléfono
+            <input type="text" [(ngModel)]="nuevoLecturador.telefono" placeholder="Teléfono">
+          </label>
+
+          <label>
+            Correo
+            <input type="email" [(ngModel)]="nuevoLecturador.correo" placeholder="correo@ejemplo.com">
+          </label>
+
+          <label>
+            Sector asignado
+            <input type="text" [(ngModel)]="nuevoLecturador.sectorAsignado" placeholder="Ejemplo: Sector 1">
+          </label>
+
+          <label>
+            Usuario de acceso
+            <input type="text" [(ngModel)]="nuevoLecturador.codigoUsuario" placeholder="Ejemplo: lector01">
+          </label>
+
+          <label>
+            Contraseña inicial
+            <input type="text" [(ngModel)]="nuevoLecturador.password" placeholder="lector123">
+          </label>
+
+          <label>
+            Estado inicial
+            <select [(ngModel)]="nuevoLecturador.estado">
+              <option [ngValue]="true">Activo</option>
+              <option [ngValue]="false">Inactivo</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="info-note">
+          <strong>Importante:</strong>
+          El lecturador no tendrá suministros propios. Solo podrá ingresar al panel para buscar suministros,
+          escanear QR y registrar lecturas.
+        </div>
+      </ng-container>
 
       <div class="modal-actions">
         <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
           Cancelar
         </button>
 
-        <button type="button" class="btn-primary" (click)="registrarCliente()" [disabled]="guardando">
-          {{ guardando ? 'Guardando...' : 'Registrar cliente' }}
+        <button type="button" class="btn-primary" (click)="registrarUsuario()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : (tipoUsuarioFormulario === 'CLIENTE' ? 'Registrar cliente' : 'Registrar lecturador') }}
         </button>
       </div>
     </div>

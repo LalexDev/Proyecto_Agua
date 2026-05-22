@@ -8,11 +8,13 @@ import {
   Cliente,
   ClienteRequest,
   ClienteResponse,
+  LecturadorRequest,
   SuministroRequest,
   SuministroResponse
 } from '../../../core/services/cliente';
 
 type TipoAccion = 'CLIENTE' | 'SUMINISTRO';
+type TipoUsuarioFormulario = 'CLIENTE' | 'LECTURADOR';
 
 interface AccionPendiente {
   tipo: TipoAccion;
@@ -51,7 +53,10 @@ export class Clientes implements OnInit {
   clienteDetalle: ClienteResponse | null = null;
   accionPendiente: AccionPendiente | null = null;
 
+  tipoUsuarioFormulario: TipoUsuarioFormulario = 'CLIENTE';
+
   nuevoCliente: ClienteRequest = this.crearClienteVacio();
+  nuevoLecturador: LecturadorRequest = this.crearLecturadorVacio();
 
   constructor(
     private clienteService: Cliente,
@@ -142,20 +147,45 @@ export class Clientes implements OnInit {
     this.mostrarFormulario = true;
     this.error = '';
     this.exito = '';
+    this.tipoUsuarioFormulario = 'CLIENTE';
     this.nuevoCliente = this.crearClienteVacio();
+    this.nuevoLecturador = this.crearLecturadorVacio();
   }
 
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.error = '';
+    this.tipoUsuarioFormulario = 'CLIENTE';
     this.nuevoCliente = this.crearClienteVacio();
+    this.nuevoLecturador = this.crearLecturadorVacio();
+  }
+
+  cambiarTipoUsuarioFormulario(tipo: TipoUsuarioFormulario): void {
+    this.tipoUsuarioFormulario = tipo;
+    this.error = '';
+    this.exito = '';
+
+    if (tipo === 'CLIENTE') {
+      this.nuevoCliente = this.crearClienteVacio();
+    } else {
+      this.nuevoLecturador = this.crearLecturadorVacio();
+    }
+  }
+
+  registrarUsuario(): void {
+    if (this.tipoUsuarioFormulario === 'CLIENTE') {
+      this.registrarCliente();
+      return;
+    }
+
+    this.registrarLecturador();
   }
 
   registrarCliente(): void {
     this.error = '';
     this.exito = '';
 
-    if (!this.validarFormulario()) {
+    if (!this.validarFormularioCliente()) {
       return;
     }
 
@@ -193,6 +223,52 @@ export class Clientes implements OnInit {
         },
         error: (err) => {
           this.error = err?.error?.error || 'No se pudo registrar el cliente.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  registrarLecturador(): void {
+    this.error = '';
+    this.exito = '';
+
+    if (!this.validarLecturador()) {
+      return;
+    }
+
+    this.guardando = true;
+
+    const payload: LecturadorRequest = {
+      dni: this.nuevoLecturador.dni.trim(),
+      nombres: this.nuevoLecturador.nombres.trim(),
+      apellidos: this.nuevoLecturador.apellidos.trim(),
+      telefono: this.nuevoLecturador.telefono.trim(),
+      correo: this.nuevoLecturador.correo.trim(),
+      codigoUsuario: this.nuevoLecturador.codigoUsuario.trim(),
+      password: this.nuevoLecturador.password.trim(),
+      estado: this.nuevoLecturador.estado,
+      sectorAsignado: this.nuevoLecturador.sectorAsignado?.trim() || ''
+    };
+
+    this.clienteService.registrarLecturador(payload)
+      .pipe(
+        finalize(() => {
+          this.guardando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.exito = 'Lecturador registrado correctamente.';
+          this.mostrarFormulario = false;
+          this.nuevoLecturador = this.crearLecturadorVacio();
+          this.cargarClientes();
+        },
+        error: (err) => {
+          this.error =
+            err?.error?.error ||
+            err?.error?.message ||
+            'No se pudo registrar el lecturador. Falta verificar el endpoint del backend: /api/usuarios/lecturadores.';
           this.cdr.detectChanges();
         }
       });
@@ -329,11 +405,15 @@ export class Clientes implements OnInit {
   }
 
   irQr(suministro: SuministroResponse): void {
+    const cliente = this.buscarClientePorSuministro(suministro.id);
+
     this.router.navigate(['/admin/qr-suministro'], {
       queryParams: {
         codigo: suministro.codigoSuministro,
         alias: suministro.aliasSuministro,
-        direccion: suministro.direccionSuministro
+        direccion: suministro.direccionSuministro,
+        cliente: cliente ? this.nombreCompleto(cliente) : '',
+        dni: cliente ? cliente.dni : ''
       }
     });
   }
@@ -646,7 +726,19 @@ export class Clientes implements OnInit {
     return estado ? 'instalado' : 'pendiente';
   }
 
-  private validarFormulario(): boolean {
+  private buscarClientePorSuministro(suministroId: number): ClienteResponse | null {
+    for (const cliente of this.clientes) {
+      const existe = (cliente.suministros || []).some(s => s.id === suministroId);
+
+      if (existe) {
+        return cliente;
+      }
+    }
+
+    return null;
+  }
+
+  private validarFormularioCliente(): boolean {
     if (!this.nuevoCliente.dni || this.nuevoCliente.dni.trim().length !== 8) {
       this.error = 'Ingrese un DNI válido de 8 dígitos.';
       return false;
@@ -692,6 +784,35 @@ export class Clientes implements OnInit {
     return true;
   }
 
+  private validarLecturador(): boolean {
+    if (!this.nuevoLecturador.dni || this.nuevoLecturador.dni.trim().length !== 8) {
+      this.error = 'Ingrese un DNI válido de 8 dígitos para el lecturador.';
+      return false;
+    }
+
+    if (!this.nuevoLecturador.nombres.trim()) {
+      this.error = 'Ingrese los nombres del lecturador.';
+      return false;
+    }
+
+    if (!this.nuevoLecturador.apellidos.trim()) {
+      this.error = 'Ingrese los apellidos del lecturador.';
+      return false;
+    }
+
+    if (!this.nuevoLecturador.codigoUsuario.trim()) {
+      this.error = 'Ingrese el usuario de acceso del lecturador.';
+      return false;
+    }
+
+    if (!this.nuevoLecturador.password.trim() || this.nuevoLecturador.password.trim().length < 6) {
+      this.error = 'Ingrese una contraseña inicial de mínimo 6 caracteres.';
+      return false;
+    }
+
+    return true;
+  }
+
   private crearClienteVacio(): ClienteRequest {
     return {
       dni: '',
@@ -711,6 +832,20 @@ export class Clientes implements OnInit {
       referencia: '',
       aliasSuministro: '',
       lecturaInicial: 0
+    };
+  }
+
+  private crearLecturadorVacio(): LecturadorRequest {
+    return {
+      dni: '',
+      nombres: '',
+      apellidos: '',
+      telefono: '',
+      correo: '',
+      codigoUsuario: '',
+      password: 'lector123',
+      estado: true,
+      sectorAsignado: ''
     };
   }
 

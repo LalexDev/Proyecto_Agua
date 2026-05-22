@@ -25,6 +25,7 @@ import { roleGuard } from './core/guards/role-guard';
 import { QrSuministro } from './pages/admin/qr-suministro/qr-suministro';
 
 import { LecturasLecturador } from './pages/lecturador/lecturas/lecturas';
+import { Lecturadores } from './pages/admin/lecturadores/lecturadores';
 
 export const routes: Routes = [
   {
@@ -51,7 +52,8 @@ export const routes: Routes = [
       { path: 'reportes', component: Reportes },
       { path: 'tarifas', component: Tarifas },
       { path: 'qr-suministro', component: QrSuministro },
-      { path: 'historial-lecturas', component: HistorialLecturas }
+      { path: 'historial-lecturas', component: HistorialLecturas },
+      { path: 'lecturadores', component: Lecturadores }
     ]
   },
   {
