@@ -14,9 +14,12 @@ export class QrSuministro implements OnInit {
   codigoSuministro = '';
   aliasSuministro = '';
   direccionSuministro = '';
+  nombreCliente = '';
+  dniCliente = '';
 
   qrDataUrl = '';
   error = '';
+  exito = '';
 
   constructor(private route: ActivatedRoute) {}
 
@@ -25,11 +28,15 @@ export class QrSuministro implements OnInit {
       const codigo = params.get('codigo');
       const alias = params.get('alias');
       const direccion = params.get('direccion');
+      const cliente = params.get('cliente');
+      const dni = params.get('dni');
 
       if (codigo) {
         this.codigoSuministro = codigo.trim().toUpperCase();
         this.aliasSuministro = alias || '';
         this.direccionSuministro = direccion || '';
+        this.nombreCliente = cliente || '';
+        this.dniCliente = dni || '';
         this.generarQr();
       }
     });
@@ -37,6 +44,7 @@ export class QrSuministro implements OnInit {
 
   async generarQr(): Promise<void> {
     this.error = '';
+    this.exito = '';
     this.qrDataUrl = '';
 
     const codigo = this.codigoSuministro.trim().toUpperCase();
@@ -50,10 +58,16 @@ export class QrSuministro implements OnInit {
       this.codigoSuministro = codigo;
 
       this.qrDataUrl = await QRCode.toDataURL(codigo, {
-        width: 320,
+        width: 420,
         margin: 2,
         errorCorrectionLevel: 'H',
+        color: {
+          dark: '#07384A',
+          light: '#FFFFFF'
+        }
       });
+
+      this.exito = 'Código QR generado correctamente.';
     } catch {
       this.error = 'No se pudo generar el código QR.';
     }
@@ -63,11 +77,55 @@ export class QrSuministro implements OnInit {
     this.codigoSuministro = '';
     this.aliasSuministro = '';
     this.direccionSuministro = '';
+    this.nombreCliente = '';
+    this.dniCliente = '';
     this.qrDataUrl = '';
     this.error = '';
+    this.exito = '';
+  }
+
+  async copiarCodigo(): Promise<void> {
+    this.error = '';
+    this.exito = '';
+
+    const codigo = this.codigoSuministro.trim().toUpperCase();
+
+    if (!codigo) {
+      this.error = 'Primero ingrese o genere un código de suministro.';
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(codigo);
+      this.exito = 'Código copiado al portapapeles.';
+    } catch {
+      this.error = 'No se pudo copiar el código. Copia manualmente el código del suministro.';
+    }
+  }
+
+  descargarQr(): void {
+    this.error = '';
+    this.exito = '';
+
+    if (!this.qrDataUrl) {
+      this.error = 'Primero genere el código QR.';
+      return;
+    }
+
+    const codigo = this.codigoSuministro || 'suministro';
+    const enlace = document.createElement('a');
+
+    enlace.href = this.qrDataUrl;
+    enlace.download = `qr_${codigo}.png`;
+    enlace.click();
+
+    this.exito = 'QR descargado correctamente.';
   }
 
   imprimirQr(): void {
+    this.error = '';
+    this.exito = '';
+
     if (!this.qrDataUrl) {
       this.error = 'Primero genere el código QR.';
       return;
@@ -76,8 +134,10 @@ export class QrSuministro implements OnInit {
     const codigo = this.textoSeguro(this.codigoSuministro);
     const alias = this.textoSeguro(this.aliasSuministro || 'Suministro de agua');
     const direccion = this.textoSeguro(this.direccionSuministro || '-');
+    const cliente = this.textoSeguro(this.nombreCliente || '-');
+    const dni = this.textoSeguro(this.dniCliente || '-');
 
-    const ventana = window.open('', '_blank', 'width=700,height=700');
+    const ventana = window.open('', '_blank', 'width=760,height=850');
 
     if (!ventana) {
       this.error = 'El navegador bloqueó la ventana de impresión.';
@@ -91,104 +151,157 @@ export class QrSuministro implements OnInit {
         <meta charset="UTF-8">
         <title>QR Suministro ${codigo}</title>
         <style>
-          * { box-sizing: border-box; }
+          * {
+            box-sizing: border-box;
+          }
 
           body {
             margin: 0;
-            padding: 30px;
+            padding: 28px;
             font-family: Arial, sans-serif;
-            background: #f3f7fa;
-            color: #0f2f3d;
+            background: #eef4f7;
+            color: #0f2f44;
           }
 
           .sheet {
-            max-width: 520px;
+            max-width: 620px;
             margin: auto;
             background: #ffffff;
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 24px;
+            padding: 28px;
             border: 1px solid #dbe7ec;
-            text-align: center;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
           }
 
           .brand {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 18px;
+            justify-content: space-between;
+            gap: 16px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #e8f1f6;
+          }
+
+          .brand-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
           }
 
           .logo {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
             background: #1ba3c7;
             color: white;
             display: grid;
             place-items: center;
-            font-size: 28px;
+            font-size: 32px;
           }
 
-          h1, h2, p { margin: 0; }
+          h1, h2, h3, p {
+            margin: 0;
+          }
 
           h1 {
-            font-size: 24px;
+            font-size: 25px;
             font-weight: 900;
+            color: #0f2f44;
           }
 
           .subtitle {
             color: #64748b;
             margin-top: 4px;
             font-size: 13px;
+            font-weight: 700;
+          }
+
+          .tag {
+            display: inline-flex;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #e8f7fb;
+            color: #1583a3;
+            font-size: 12px;
+            font-weight: 900;
+          }
+
+          .qr-section {
+            margin-top: 22px;
+            text-align: center;
+            padding: 24px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #07384a, #1ba3c7);
+            color: #ffffff;
           }
 
           .qr-box {
-            margin: 24px auto;
+            width: 330px;
+            height: 330px;
+            margin: 20px auto;
             padding: 18px;
-            border-radius: 18px;
-            background: #f8fcfd;
-            border: 1px solid #e2eef3;
+            border-radius: 24px;
+            background: #ffffff;
+            display: grid;
+            place-items: center;
           }
 
           .qr-box img {
-            width: 280px;
-            height: 280px;
+            width: 285px;
+            height: 285px;
           }
 
           .code {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 900;
             letter-spacing: 1px;
-            margin-top: 10px;
+          }
+
+          .alias {
+            margin-top: 8px;
+            color: #e5f6fb;
+            font-weight: 700;
           }
 
           .info {
-            margin-top: 18px;
-            text-align: left;
-            background: #f6fafc;
-            padding: 16px;
+            margin-top: 20px;
+            display: grid;
+            gap: 10px;
+          }
+
+          .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 13px 15px;
+            background: #f8fcfd;
+            border: 1px solid #e8f1f6;
             border-radius: 14px;
           }
 
-          .info p {
-            margin: 8px 0;
-            color: #334155;
+          .row span {
+            color: #64748b;
+            font-weight: 800;
           }
 
-          .info strong {
-            color: #0f2f3d;
+          .row strong {
+            color: #0f2f44;
+            text-align: right;
           }
 
           .footer {
-            margin-top: 20px;
-            color: #64748b;
-            font-size: 12px;
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 16px;
+            background: #fff7ed;
+            color: #9a3412;
+            font-size: 13px;
             line-height: 1.5;
+            font-weight: 700;
           }
 
           .actions {
-            max-width: 520px;
+            max-width: 620px;
             margin: 18px auto 0;
             display: flex;
             justify-content: flex-end;
@@ -197,9 +310,9 @@ export class QrSuministro implements OnInit {
 
           button {
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 12px 18px;
-            font-weight: 800;
+            font-weight: 900;
             cursor: pointer;
           }
 
@@ -210,7 +323,7 @@ export class QrSuministro implements OnInit {
 
           .close {
             background: #e2e8f0;
-            color: #0f2f3d;
+            color: #0f2f44;
           }
 
           @media print {
@@ -221,6 +334,7 @@ export class QrSuministro implements OnInit {
 
             .sheet {
               border: none;
+              box-shadow: none;
               border-radius: 0;
               max-width: 100%;
             }
@@ -235,26 +349,53 @@ export class QrSuministro implements OnInit {
       <body>
         <div class="sheet">
           <div class="brand">
-            <div class="logo">💧</div>
-            <div>
-              <h1>JASS Huacariz</h1>
-              <p class="subtitle">Código QR de suministro</p>
+            <div class="brand-left">
+              <div class="logo">💧</div>
+              <div>
+                <h1>JASS Huacariz</h1>
+                <p class="subtitle">Ficha de identificación de suministro</p>
+              </div>
             </div>
+
+            <span class="tag">QR Suministro</span>
           </div>
 
-          <div class="qr-box">
-            <img src="${this.qrDataUrl}" alt="QR suministro">
+          <div class="qr-section">
+            <h2>Código de suministro</h2>
+
+            <div class="qr-box">
+              <img src="${this.qrDataUrl}" alt="QR suministro">
+            </div>
+
             <div class="code">${codigo}</div>
+            <div class="alias">${alias}</div>
           </div>
 
           <div class="info">
-            <p><strong>Alias:</strong> ${alias}</p>
-            <p><strong>Dirección:</strong> ${direccion}</p>
-            <p><strong>Uso:</strong> Escanear este código para registrar lectura del medidor.</p>
+            <div class="row">
+              <span>Cliente</span>
+              <strong>${cliente}</strong>
+            </div>
+
+            <div class="row">
+              <span>DNI</span>
+              <strong>${dni}</strong>
+            </div>
+
+            <div class="row">
+              <span>Dirección</span>
+              <strong>${direccion}</strong>
+            </div>
+
+            <div class="row">
+              <span>Uso del QR</span>
+              <strong>Escaneo para registrar lectura</strong>
+            </div>
           </div>
 
           <div class="footer">
             Este código identifica únicamente el suministro registrado en el sistema JASS Huacariz.
+            Debe colocarse en un lugar visible para facilitar el registro mensual de lectura.
           </div>
         </div>
 
