@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/services/cliente_portal_service.dart';
+import '../../core/storage/secure_storage_service.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -16,6 +18,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final TextEditingController actualController = TextEditingController();
   final TextEditingController nuevaController = TextEditingController();
   final TextEditingController confirmarController = TextEditingController();
+  final ClientePortalService clientePortalService = ClientePortalService();
+  final SecureStorageService storageService = SecureStorageService();
 
   bool verActual = false;
   bool verNueva = false;
@@ -30,54 +34,81 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     super.dispose();
   }
 
-  void cambiarPassword() {
-    final actual = actualController.text.trim();
-    final nueva = nuevaController.text.trim();
-    final confirmar = confirmarController.text.trim();
+Future<void> cambiarPassword() async {
+  final actual = actualController.text.trim();
+  final nueva = nuevaController.text.trim();
+  final confirmar = confirmarController.text.trim();
 
-    if (actual.isEmpty || nueva.isEmpty || confirmar.isEmpty) {
-      mostrarMensaje(
-        'Completa todos los campos.',
-        esError: true,
-      );
-      return;
-    }
+  if (actual.isEmpty || nueva.isEmpty || confirmar.isEmpty) {
+    mostrarMensaje(
+      'Completa todos los campos.',
+      esError: true,
+    );
+    return;
+  }
 
-    if (nueva.length < 6) {
-      mostrarMensaje(
-        'La nueva contraseña debe tener mínimo 6 caracteres.',
-        esError: true,
-      );
-      return;
-    }
+  if (nueva.length < 6) {
+    mostrarMensaje(
+      'La nueva contraseña debe tener mínimo 6 caracteres.',
+      esError: true,
+    );
+    return;
+  }
 
-    if (nueva != confirmar) {
-      mostrarMensaje(
-        'La nueva contraseña y la confirmación no coinciden.',
-        esError: true,
-      );
-      return;
-    }
+  if (nueva != confirmar) {
+    mostrarMensaje(
+      'La nueva contraseña y la confirmación no coinciden.',
+      esError: true,
+    );
+    return;
+  }
+
+  setState(() {
+    cargando = true;
+  });
+
+  try {
+    await clientePortalService.cambiarPassword(
+      passwordActual: actual,
+      nuevaPassword: nueva,
+      confirmarPassword: confirmar,
+    );
+
+    await storageService.clearSession();
+
+    if (!mounted) return;
 
     setState(() {
-      cargando = true;
+      cargando = false;
     });
 
-    Future.delayed(const Duration(milliseconds: 900), () {
-      setState(() {
-        cargando = false;
-      });
+    actualController.clear();
+    nuevaController.clear();
+    confirmarController.clear();
 
-      actualController.clear();
-      nuevaController.clear();
-      confirmarController.clear();
+    mostrarMensaje(
+      'Contraseña actualizada correctamente. Inicia sesión nuevamente.',
+      esError: false,
+    );
 
-      mostrarMensaje(
-        'Contraseña actualizada correctamente.',
-        esError: false,
-      );
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() {
+      cargando = false;
     });
+
+    mostrarMensaje(
+      'Error al cambiar contraseña: ${e.toString().replaceFirst('Exception: ', '')}',
+      esError: true,
+    );
   }
+}
 
   void mostrarMensaje(String mensaje, {required bool esError}) {
     ScaffoldMessenger.of(context).showSnackBar(

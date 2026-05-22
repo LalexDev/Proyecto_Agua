@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/services/recibo_service.dart';
+import '../../core/services/pago_service.dart';
 
 class PagoCipPage extends StatefulWidget {
   const PagoCipPage({super.key});
@@ -10,13 +12,22 @@ class PagoCipPage extends StatefulWidget {
 class _PagoCipPageState extends State<PagoCipPage> {
   static const Color primary = Color(0xFF0F3D57);
   static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFF4F8FB);
-  static const Color textMuted = Color(0xFF7B8794);
+  static const Color background = Color(0xFFEFF7FB);
+  static const Color muted = Color(0xFF7B8794);
 
-  String metodoSeleccionado = 'PagoEfectivo';
-  String codigoGenerado = '';
-  bool pagoGenerado = false;
-  bool pagoConfirmado = false;
+  final PagoService pagoService = PagoService();
+  final ReciboService reciboService = ReciboService();
+  final TextEditingController codigoOperacionController =
+      TextEditingController();
+
+  bool cargando = false;
+  String metodoPago = 'EFECTIVO';
+
+  @override
+  void dispose() {
+    codigoOperacionController.dispose();
+    super.dispose();
+  }
 
   Map<String, dynamic> _getRecibo(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -25,88 +36,216 @@ class _PagoCipPageState extends State<PagoCipPage> {
       return args;
     }
 
-    return {
-      'id': 1,
-      'codigo': 'REC-0001',
-      'suministro': 'Casa principal',
-      'direccion': 'Av. Principal 123',
-      'periodo': 'Mayo 2026',
-      'consumo': 12,
-      'total': 37.00,
-      'vencimiento': '15/05/2026',
-      'estado': 'Pendiente',
-    };
+    return {};
   }
 
-  void generarCodigo() {
-    final int numero = DateTime.now().millisecondsSinceEpoch % 1000000000;
+  int _id(Map<String, dynamic> recibo) {
+    final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
 
-    setState(() {
-      if (metodoSeleccionado == 'PagoEfectivo') {
-        codigoGenerado = 'CIP-$numero';
-      } else if (metodoSeleccionado == 'Transferencia') {
-        codigoGenerado = 'TR-$numero';
-      } else {
-        codigoGenerado = 'PRES-$numero';
-      }
+    if (value is int) return value;
 
-      pagoGenerado = true;
-      pagoConfirmado = false;
-    });
+    return int.tryParse(value.toString()) ?? 0;
   }
 
-  void confirmarPagoVisual() {
+  String _texto(dynamic value, [String fallback = '-']) {
+    if (value == null) return fallback;
+
+    final text = value.toString().trim();
+
+    if (text.isEmpty || text == 'null') return fallback;
+
+    return text;
+  }
+
+  double _numero(dynamic value) {
+    if (value is num) return value.toDouble();
+
+    return double.tryParse(value.toString()) ?? 0.0;
+  }
+
+  String _codigoRecibo(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['codigoRecibo'] ??
+          recibo['numeroRecibo'] ??
+          recibo['codigo'] ??
+          'REC-${_id(recibo)}',
+    );
+  }
+
+  String _codigoSuministro(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['codigoSuministro'] ??
+          recibo['suministroCodigo'] ??
+          recibo['suministro'] ??
+          'SIN-SUMINISTRO',
+    );
+  }
+
+  String _periodo(Map<String, dynamic> recibo) {
+    final mes = recibo['mes'];
+    final anio = recibo['anio'];
+
+    if (mes != null && anio != null) {
+      const meses = [
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre',
+      ];
+
+      final mesNumero = int.tryParse(mes.toString()) ?? 1;
+      final index = (mesNumero - 1).clamp(0, 11);
+
+      return '${meses[index]} $anio';
+    }
+
+    return _texto(
+      recibo['periodo'] ?? recibo['mesFacturado'],
+      'Periodo no registrado',
+    );
+  }
+
+  double _total(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['total'] ?? recibo['montoTotal'] ?? recibo['importeTotal'] ?? 0,
+    );
+  }
+
+  String _estado(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
+      'PENDIENTE',
+    );
+  }
+
+Future<void> registrarPago(Map<String, dynamic> recibo) async {
+  final idRecibo = _id(recibo);
+
+  if (idRecibo <= 0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No se encontró el ID del recibo.'),
+        backgroundColor: Color(0xFFD93025),
+      ),
+    );
+    return;
+  }
+
+  setState(() {
+    cargando = true;
+  });
+
+  try {
+    // Verifica que el recibo realmente pertenezca al cliente logueado.
+    final reciboCliente = await reciboService.obtenerMiReciboPorId(idRecibo);
+
+    if (reciboCliente == null) {
+      if (!mounted) return;
+
+      setState(() {
+        cargando = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Este recibo no pertenece al cliente autenticado. Cierra sesión e ingresa con el usuario correcto.',
+          ),
+          backgroundColor: Color(0xFFD93025),
+        ),
+      );
+      return;
+    }
+
+    if (_estado(reciboCliente).toUpperCase() == 'PAGADO') {
+      if (!mounted) return;
+
+      setState(() {
+        cargando = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Este recibo ya se encuentra pagado.'),
+          backgroundColor: Color(0xFF1F8F4D),
+        ),
+      );
+      return;
+    }
+
+    final codigoOperacion = codigoOperacionController.text.trim().isEmpty
+        ? 'APP-${DateTime.now().millisecondsSinceEpoch}'
+        : codigoOperacionController.text.trim();
+
+    await pagoService.pagarMiRecibo(
+      idRecibo: idRecibo,
+      metodoPago: metodoPago,
+      codigoOperacion: codigoOperacion,
+    );
+
+    if (!mounted) return;
+
     setState(() {
-      pagoConfirmado = true;
+      cargando = false;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Pago simulado correctamente.'),
+        content: Text('Pago registrado correctamente.'),
         backgroundColor: Color(0xFF1F8F4D),
       ),
     );
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/recibos',
+      (route) => false,
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    setState(() {
+      cargando = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error al registrar pago: $e'),
+        backgroundColor: const Color(0xFFD93025),
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
     final recibo = _getRecibo(context);
-    final double total = recibo['total'] as double;
 
     return Scaffold(
       backgroundColor: background,
-      appBar: AppBar(
-        title: const Text(
-          'Pagar recibo',
-          style: TextStyle(
-            color: primary,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(recibo, total),
+              _buildHeader(context),
               const SizedBox(height: 18),
-              _buildReciboInfo(recibo),
+              _buildResumenPago(recibo),
               const SizedBox(height: 18),
               _buildMetodoPago(),
               const SizedBox(height: 18),
-              _buildBotonGenerar(),
-              if (pagoGenerado) ...[
-                const SizedBox(height: 18),
-                _buildCodigoGenerado(recibo),
-              ],
+              _buildOperacionInput(),
+              const SizedBox(height: 22),
+              _buildBotonPagar(recibo),
             ],
           ),
         ),
@@ -114,16 +253,71 @@ class _PagoCipPageState extends State<PagoCipPage> {
     );
   }
 
-  Widget _buildHeader(Map<String, dynamic> recibo, double total) {
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: primary.withOpacity(0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: primary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Portal cliente',
+                style: TextStyle(
+                  color: muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Pagar recibo',
+                style: TextStyle(
+                  color: primary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResumenPago(Map<String, dynamic> recibo) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            primary,
-            Color(0xFF146C94),
-            secondary,
+            Color(0xFF0F3D57),
+            Color(0xFF1DA1C2),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -131,7 +325,7 @@ class _PagoCipPageState extends State<PagoCipPage> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.18),
+            color: primary.withOpacity(0.12),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -140,49 +334,66 @@ class _PagoCipPageState extends State<PagoCipPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _HeaderTag(text: 'Pago de recibo'),
-          const SizedBox(height: 16),
+          const Text(
+            'Resumen del recibo',
+            style: TextStyle(
+              color: Color(0xFFE7F8FF),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
           Text(
-            recibo['codigo'],
+            _codigoRecibo(recibo),
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            '${recibo['suministro']} · ${recibo['periodo']}',
+            'Suministro: ${_codigoSuministro(recibo)}',
             style: const TextStyle(
               color: Color(0xFFE7F8FF),
-              fontSize: 14,
-              height: 1.5,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 22),
+          Text(
+            'Periodo: ${_periodo(recibo)}',
+            style: const TextStyle(
+              color: Color(0xFFE7F8FF),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 18),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.16),
-              borderRadius: BorderRadius.circular(22),
+              color: Colors.white.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.18)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                const Text(
-                  'Total a pagar',
-                  style: TextStyle(
-                    color: Color(0xFFDFF6FF),
-                    fontSize: 14,
+                const Expanded(
+                  child: Text(
+                    'Total a pagar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 6),
                 Text(
-                  'S/ ${total.toStringAsFixed(2)}',
+                  'S/ ${_total(recibo).toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 40,
+                    fontSize: 28,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -194,69 +405,60 @@ class _PagoCipPageState extends State<PagoCipPage> {
     );
   }
 
-  Widget _buildReciboInfo(Map<String, dynamic> recibo) {
-    return _SectionCard(
-      title: 'Información del recibo',
-      subtitle: 'Verifica los datos antes de generar el pago.',
-      child: Column(
-        children: [
-          _InfoRow(label: 'Código', value: recibo['codigo']),
-          _InfoRow(label: 'Suministro', value: recibo['suministro']),
-          _InfoRow(label: 'Dirección', value: recibo['direccion']),
-          _InfoRow(label: 'Periodo', value: recibo['periodo']),
-          _InfoRow(label: 'Consumo', value: '${recibo['consumo']} m³'),
-          _InfoRow(label: 'Vencimiento', value: recibo['vencimiento']),
-          _InfoRow(
-            label: 'Total',
-            value: 'S/ ${(recibo['total'] as double).toStringAsFixed(2)}',
-            isTotal: true,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildMetodoPago() {
-    return _SectionCard(
-      title: 'Método de pago',
-      subtitle: 'Selecciona cómo deseas pagar el recibo.',
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2EDF3)),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _PaymentMethodCard(
-            title: 'PagoEfectivo',
-            description: 'Genera un código CIP para pagar en agentes, banca móvil o plataformas afiliadas.',
-            icon: Icons.confirmation_number_outlined,
-            selected: metodoSeleccionado == 'PagoEfectivo',
-            onTap: () {
+          const Text(
+            'Método de pago',
+            style: TextStyle(
+              color: primary,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _MetodoPagoTile(
+            title: 'Efectivo',
+            subtitle: 'Pago registrado como efectivo',
+            icon: Icons.payments_rounded,
+            value: 'EFECTIVO',
+            groupValue: metodoPago,
+            onChanged: (value) {
               setState(() {
-                metodoSeleccionado = 'PagoEfectivo';
-                pagoGenerado = false;
+                metodoPago = value;
               });
             },
           ),
-          const SizedBox(height: 12),
-          _PaymentMethodCard(
+          _MetodoPagoTile(
+            title: 'Yape / Plin',
+            subtitle: 'Pago con código de operación',
+            icon: Icons.phone_android_rounded,
+            value: 'YAPE',
+            groupValue: metodoPago,
+            onChanged: (value) {
+              setState(() {
+                metodoPago = value;
+              });
+            },
+          ),
+          _MetodoPagoTile(
             title: 'Transferencia',
-            description: 'Usa una operación bancaria y registra el concepto del pago.',
-            icon: Icons.account_balance_outlined,
-            selected: metodoSeleccionado == 'Transferencia',
-            onTap: () {
+            subtitle: 'Pago mediante operación bancaria',
+            icon: Icons.account_balance_rounded,
+            value: 'TRANSFERENCIA',
+            groupValue: metodoPago,
+            onChanged: (value) {
               setState(() {
-                metodoSeleccionado = 'Transferencia';
-                pagoGenerado = false;
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-          _PaymentMethodCard(
-            title: 'Pago presencial',
-            description: 'Presenta el código generado en la oficina de JASS Huacariz.',
-            icon: Icons.storefront_outlined,
-            selected: metodoSeleccionado == 'Presencial',
-            onTap: () {
-              setState(() {
-                metodoSeleccionado = 'Presencial';
-                pagoGenerado = false;
+                metodoPago = value;
               });
             },
           ),
@@ -265,18 +467,82 @@ class _PagoCipPageState extends State<PagoCipPage> {
     );
   }
 
-  Widget _buildBotonGenerar() {
+  Widget _buildOperacionInput() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2EDF3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Código de operación',
+            style: TextStyle(
+              color: primary,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Si el pago es en efectivo, este campo puede quedar vacío.',
+            style: TextStyle(
+              color: muted,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: codigoOperacionController,
+            decoration: InputDecoration(
+              hintText: 'Ej. 842913 / APP automático',
+              filled: true,
+              fillColor: const Color(0xFFF8FBFD),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFD8E6EE)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: Color(0xFFD8E6EE)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: secondary, width: 1.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBotonPagar(Map<String, dynamic> recibo) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: 54,
       child: ElevatedButton.icon(
-        onPressed: generarCodigo,
-        icon: const Icon(Icons.qr_code_2_rounded),
-        label: const Text(
-          'Generar código de pago',
-          style: TextStyle(
+        onPressed: cargando ? null : () => registrarPago(recibo),
+        icon: cargando
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.4,
+                ),
+              )
+            : const Icon(Icons.check_circle_rounded),
+        label: Text(
+          cargando ? 'Registrando pago...' : 'Confirmar pago',
+          style: const TextStyle(
             fontWeight: FontWeight.w900,
-            fontSize: 15,
+            fontSize: 16,
           ),
         ),
         style: ElevatedButton.styleFrom(
@@ -284,295 +550,58 @@ class _PagoCipPageState extends State<PagoCipPage> {
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(17),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCodigoGenerado(Map<String, dynamic> recibo) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: const Color(0xFFE8EEF3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withOpacity(0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 74,
-              height: 74,
-              decoration: BoxDecoration(
-                color: pagoConfirmado
-                    ? const Color(0xFFEAF8EF)
-                    : const Color(0xFFE8F7FB),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Icon(
-                pagoConfirmado
-                    ? Icons.check_circle_outline
-                    : Icons.qr_code_2_rounded,
-                color: pagoConfirmado
-                    ? const Color(0xFF1F8F4D)
-                    : secondary,
-                size: 42,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Center(
-            child: Text(
-              pagoConfirmado ? 'Pago confirmado' : 'Código generado',
-              style: const TextStyle(
-                color: primary,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              codigoGenerado,
-              style: const TextStyle(
-                color: secondary,
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          _buildInstructions(),
-          const SizedBox(height: 18),
-          if (!pagoConfirmado)
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: confirmarPagoVisual,
-                icon: const Icon(Icons.check_rounded),
-                label: const Text(
-                  'Simular pago realizado',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
-            )
-          else
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/recibos');
-                },
-                icon: const Icon(Icons.receipt_long_outlined),
-                label: const Text(
-                  'Volver a mis recibos',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: secondary,
-                  side: const BorderSide(color: secondary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInstructions() {
-    if (metodoSeleccionado == 'PagoEfectivo') {
-      return const _InstructionBox(
-        title: 'Instrucciones PagoEfectivo',
-        items: [
-          'Copia el código CIP generado.',
-          'Ingresa a tu banca móvil, agente o plataforma afiliada.',
-          'Busca la opción PagoEfectivo.',
-          'Ingresa el código CIP y confirma el pago.',
-        ],
-      );
-    }
-
-    if (metodoSeleccionado == 'Transferencia') {
-      return const _BankInfoBox();
-    }
-
-    return const _PresentialInfoBox();
-  }
-}
-
-class _HeaderTag extends StatelessWidget {
-  final String text;
-
-  const _HeaderTag({
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
         ),
       ),
     );
   }
 }
 
-class _SectionCard extends StatelessWidget {
+class _MetodoPagoTile extends StatelessWidget {
   final String title;
   final String subtitle;
-  final Widget child;
+  final IconData icon;
+  final String value;
+  final String groupValue;
+  final ValueChanged<String> onChanged;
 
-  const _SectionCard({
+  const _MetodoPagoTile({
     required this.title,
     required this.subtitle,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color textMuted = Color(0xFF7B8794);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: const Color(0xFFE8EEF3),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withOpacity(0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: primary,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              color: textMuted,
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 18),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _PaymentMethodCard extends StatelessWidget {
-  final String title;
-  final String description;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _PaymentMethodCard({
-    required this.title,
-    required this.description,
     required this.icon,
-    required this.selected,
-    required this.onTap,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
-    const Color textMuted = Color(0xFF7B8794);
+    final selected = value == groupValue;
 
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(16),
+      onTap: () {
+        onChanged(value);
+      },
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: selected ? const Color(0xFFE8F7FB) : const Color(0xFFF8FBFD),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? secondary : const Color(0xFFE8EEF3),
-            width: selected ? 1.6 : 1,
+            color: selected ? const Color(0xFF1DA1C2) : const Color(0xFFE2EDF3),
+            width: selected ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: selected ? secondary : textMuted,
-            ),
-            const SizedBox(width: 12),
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: selected ? secondary : Colors.white,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Icon(
-                icon,
-                color: selected ? Colors.white : secondary,
-              ),
+              icon,
+              color: selected
+                  ? const Color(0xFF1DA1C2)
+                  : const Color(0xFF7B8794),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -581,189 +610,39 @@ class _PaymentMethodCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: primary,
-                      fontWeight: FontWeight.w900,
+                    style: TextStyle(
+                      color: selected
+                          ? const Color(0xFF0F3D57)
+                          : const Color(0xFF52616B),
                       fontSize: 15,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
-                    description,
+                    subtitle,
                     style: const TextStyle(
-                      color: textMuted,
-                      fontSize: 12.5,
-                      height: 1.4,
+                      color: Color(0xFF7B8794),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
+            ),
+            Radio<String>(
+              value: value,
+              groupValue: groupValue,
+              activeColor: const Color(0xFF1DA1C2),
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(value);
+                }
+              },
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isTotal;
-
-  const _InfoRow({
-    required this.label,
-    required this.value,
-    this.isTotal = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color textMuted = Color(0xFF7B8794);
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: isTotal ? 14 : 11,
-        horizontal: isTotal ? 14 : 0,
-      ),
-      margin: EdgeInsets.only(top: isTotal ? 8 : 0),
-      decoration: BoxDecoration(
-        color: isTotal ? const Color(0xFFE8F7FB) : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        border: Border(
-          bottom: isTotal
-              ? BorderSide.none
-              : const BorderSide(color: Color(0xFFE8EEF3)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isTotal ? primary : textMuted,
-                fontSize: isTotal ? 15 : 14,
-                fontWeight: isTotal ? FontWeight.w800 : FontWeight.w500,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: primary,
-                fontSize: isTotal ? 16 : 14,
-                fontWeight: isTotal ? FontWeight.w900 : FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InstructionBox extends StatelessWidget {
-  final String title;
-  final List<String> items;
-
-  const _InstructionBox({
-    required this.title,
-    required this.items,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color textMuted = Color(0xFF52616B);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFE8EEF3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: primary,
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...items.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '• ',
-                    style: TextStyle(
-                      color: primary,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      item,
-                      style: const TextStyle(
-                        color: textMuted,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BankInfoBox extends StatelessWidget {
-  const _BankInfoBox();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _InstructionBox(
-      title: 'Datos para transferencia',
-      items: [
-        'Banco: Banco de la Nación.',
-        'Cuenta: 000-000000000.',
-        'Titular: JASS Huacariz.',
-        'Usa el código generado como concepto de pago.',
-      ],
-    );
-  }
-}
-
-class _PresentialInfoBox extends StatelessWidget {
-  const _PresentialInfoBox();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _InstructionBox(
-      title: 'Pago presencial',
-      items: [
-        'Acércate a la oficina de atención de JASS Huacariz.',
-        'Presenta el código generado.',
-        'Solicita la constancia de pago correspondiente.',
-      ],
     );
   }
 }

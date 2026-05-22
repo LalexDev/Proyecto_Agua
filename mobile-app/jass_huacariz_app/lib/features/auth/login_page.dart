@@ -19,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   bool mostrarPassword = false;
   bool cargando = false;
 
-  Future<void> iniciarSesion() async {
+Future<void> iniciarSesion() async {
   final usuario = usuarioController.text.trim();
   final password = passwordController.text.trim();
 
@@ -39,12 +39,14 @@ class _LoginPageState extends State<LoginPage> {
 
   try {
     await authService.login(
-      usuario: usuario,
+      codigoUsuario: usuario,
       password: password,
     );
 
     final role = await storageService.getUserRole();
     final rolNormalizado = role?.toUpperCase().trim() ?? '';
+
+    if (!mounted) return;
 
     setState(() {
       cargando = false;
@@ -55,15 +57,15 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    if (rolNormalizado.contains('LECTOR') ||
-        rolNormalizado.contains('LECTURADOR')) {
+    if (rolNormalizado.contains('LECTURADOR') ||
+        rolNormalizado.contains('LECTOR')) {
       Navigator.pushReplacementNamed(context, '/lector-home');
       return;
     }
 
     if (rolNormalizado.contains('CLIENTE') ||
-        rolNormalizado.contains('USER') ||
-        rolNormalizado.contains('USUARIO')) {
+        rolNormalizado.contains('USUARIO') ||
+        rolNormalizado.contains('USER')) {
       Navigator.pushReplacementNamed(context, '/home');
       return;
     }
@@ -75,6 +77,8 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   } catch (e) {
+    if (!mounted) return;
+
     setState(() {
       cargando = false;
     });
@@ -331,27 +335,23 @@ class _LoginPageState extends State<LoginPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Usuario de prueba',
+                                  '¿No tienes cuenta?',
                                   style: TextStyle(
                                     color: primary,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
                                   ),
                                 ),
                                 SizedBox(height: 6),
                                 Text(
-                                  'DNI: 12345678',
+                                  'Contacta a tu administrador para crear una cuenta.',
                                   style: TextStyle(
-                                    color: Color(0xFF52616B),
+                                    color: Color(0xFF7B8794),
                                     fontSize: 13,
+                                    height: 1.4,
                                   ),
                                 ),
-                                Text(
-                                  'Contraseña: 123456',
-                                  style: TextStyle(
-                                    color: Color(0xFF52616B),
-                                    fontSize: 13,
-                                  ),
-                                ),
+                                
                               ],
                             ),
                           ),

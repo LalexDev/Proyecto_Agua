@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
@@ -7,7 +9,9 @@ import '../storage/secure_storage_service.dart';
 class ApiService {
   final SecureStorageService _storage = SecureStorageService();
 
-  Uri _buildUri(String endpoint) {
+  static const Duration _timeout = Duration(seconds: 15);
+
+  Uri _uri(String endpoint) {
     return Uri.parse('${ApiConfig.baseUrl}$endpoint');
   }
 
@@ -29,12 +33,22 @@ class ApiService {
   }
 
   Future<dynamic> get(String endpoint, {bool withAuth = true}) async {
-    final response = await http.get(
-      _buildUri(endpoint),
-      headers: await _headers(withAuth: withAuth),
-    );
+    try {
+      final response = await http
+          .get(
+            _uri(endpoint),
+            headers: await _headers(withAuth: withAuth),
+          )
+          .timeout(_timeout);
 
-    return _processResponse(response);
+      return _processResponse(response);
+    } on TimeoutException {
+      throw Exception(
+        'Tiempo de espera agotado. Verifica que el backend esté encendido.',
+      );
+    } catch (e) {
+  throw Exception(e.toString().replaceFirst('Exception: ', ''));
+}
   }
 
   Future<dynamic> post(
@@ -42,13 +56,23 @@ class ApiService {
     Map<String, dynamic> body, {
     bool withAuth = true,
   }) async {
-    final response = await http.post(
-      _buildUri(endpoint),
-      headers: await _headers(withAuth: withAuth),
-      body: jsonEncode(body),
-    );
+    try {
+      final response = await http
+          .post(
+            _uri(endpoint),
+            headers: await _headers(withAuth: withAuth),
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
 
-    return _processResponse(response);
+      return _processResponse(response);
+    } on TimeoutException {
+      throw Exception(
+        'Tiempo de espera agotado. Verifica que el backend esté encendido.',
+      );
+    } catch (e) {
+  throw Exception(e.toString().replaceFirst('Exception: ', ''));
+}
   }
 
   Future<dynamic> put(
@@ -56,28 +80,73 @@ class ApiService {
     Map<String, dynamic> body, {
     bool withAuth = true,
   }) async {
-    final response = await http.put(
-      _buildUri(endpoint),
-      headers: await _headers(withAuth: withAuth),
-      body: jsonEncode(body),
-    );
+    try {
+      final response = await http
+          .put(
+            _uri(endpoint),
+            headers: await _headers(withAuth: withAuth),
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
 
-    return _processResponse(response);
+      return _processResponse(response);
+    } on TimeoutException {
+      throw Exception(
+        'Tiempo de espera agotado. Verifica que el backend esté encendido.',
+      );
+    } catch (e) {
+  throw Exception(e.toString().replaceFirst('Exception: ', ''));
+}
+  }
+
+  Future<dynamic> patch(
+    String endpoint,
+    Map<String, dynamic> body, {
+    bool withAuth = true,
+  }) async {
+    try {
+      final response = await http
+          .patch(
+            _uri(endpoint),
+            headers: await _headers(withAuth: withAuth),
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+
+      return _processResponse(response);
+    } on TimeoutException {
+      throw Exception(
+        'Tiempo de espera agotado. Verifica que el backend esté encendido.',
+      );
+    } catch (e) {
+  throw Exception(e.toString().replaceFirst('Exception: ', ''));
+}
   }
 
   Future<dynamic> delete(String endpoint, {bool withAuth = true}) async {
-    final response = await http.delete(
-      _buildUri(endpoint),
-      headers: await _headers(withAuth: withAuth),
-    );
+    try {
+      final response = await http
+          .delete(
+            _uri(endpoint),
+            headers: await _headers(withAuth: withAuth),
+          )
+          .timeout(_timeout);
 
-    return _processResponse(response);
+      return _processResponse(response);
+    } on TimeoutException {
+      throw Exception(
+        'Tiempo de espera agotado. Verifica que el backend esté encendido.',
+      );
+    } catch (e) {
+  throw Exception(e.toString().replaceFirst('Exception: ', ''));
+}
   }
 
   dynamic _processResponse(http.Response response) {
     final statusCode = response.statusCode;
+    final body = response.body;
 
-    if (response.body.isEmpty) {
+    if (body.isEmpty) {
       if (statusCode >= 200 && statusCode < 300) {
         return null;
       }
@@ -85,16 +154,24 @@ class ApiService {
       throw Exception('Error HTTP $statusCode');
     }
 
-    final decodedBody = jsonDecode(response.body);
+    final decoded = jsonDecode(body);
 
     if (statusCode >= 200 && statusCode < 300) {
-      return decodedBody;
+      return decoded;
     }
 
-    final message = decodedBody is Map && decodedBody['message'] != null
-        ? decodedBody['message']
-        : 'Error HTTP $statusCode';
+    if (decoded is Map && decoded['mensaje'] != null) {
+      throw Exception(decoded['mensaje']);
+    }
 
-    throw Exception(message);
+    if (decoded is Map && decoded['message'] != null) {
+      throw Exception(decoded['message']);
+    }
+
+    if (decoded is Map && decoded['error'] != null) {
+      throw Exception(decoded['error']);
+    }
+
+    throw Exception('Error HTTP $statusCode');
   }
 }

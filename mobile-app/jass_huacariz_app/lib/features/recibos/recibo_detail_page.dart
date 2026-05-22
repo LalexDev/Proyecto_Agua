@@ -15,80 +15,229 @@ class ReciboDetailPage extends StatelessWidget {
       return args;
     }
 
-    return {
-      'id': 1,
-      'codigo': 'REC-0001',
-      'numero': 'N° R-2026-0714',
-      'cliente': 'Carmona Cusquisiban Dany',
-      'suministro': 'SK-2034-5',
-      'sector': 'Huacariz Bambamarca',
-      'periodo': 'Julio 2026',
-      'consumo': 10,
-      'total': 22.20,
-      'vencimiento': '17/07/2026',
-      'estado': 'Pendiente',
-      'origen': 'cliente',
-    };
+    return {};
   }
 
-  double _toDouble(dynamic value, double fallback) {
-    if (value is num) return value.toDouble();
-    return double.tryParse(value.toString()) ?? fallback;
+  String _texto(dynamic value, [String fallback = '-']) {
+    if (value == null) return fallback;
+
+    final text = value.toString().trim();
+
+    if (text.isEmpty || text == 'null') return fallback;
+
+    return text;
   }
 
-  int _toInt(dynamic value, int fallback) {
+  int _id(Map<String, dynamic> recibo) {
+    final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
+
     if (value is int) return value;
-    if (value is num) return value.toInt();
-    return int.tryParse(value.toString()) ?? fallback;
+
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  String _codigoRecibo(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['codigoRecibo'] ??
+          recibo['numeroRecibo'] ??
+          recibo['codigo'] ??
+          'REC-${_id(recibo)}',
+    );
+  }
+
+  String _codigoSuministro(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['codigoSuministro'] ??
+          recibo['suministroCodigo'] ??
+          recibo['suministro'] ??
+          'SIN-SUMINISTRO',
+    );
+  }
+
+  String _titular(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['titular'] ??
+          recibo['cliente'] ??
+          recibo['nombreCliente'] ??
+          recibo['nombres'] ??
+          recibo['usuario'],
+      'Usuario del servicio',
+    );
+  }
+
+  String _direccion(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['direccionSuministro'] ??
+          recibo['direccion'] ??
+          recibo['direccionCliente'],
+      'Dirección no registrada',
+    );
+  }
+
+  String _sector(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['sector'] ?? recibo['nombreSector'] ?? recibo['sectorNombre'],
+      'Huacariz',
+    );
+  }
+
+  String _dni(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['dni'] ?? recibo['documento'] ?? recibo['codigoUsuario'],
+    );
+  }
+
+  String _periodo(Map<String, dynamic> recibo) {
+    final mes = recibo['mes'];
+    final anio = recibo['anio'];
+
+    if (mes != null && anio != null) {
+      const meses = [
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre',
+      ];
+
+      final mesNumero = int.tryParse(mes.toString()) ?? 1;
+      final index = (mesNumero - 1).clamp(0, 11);
+
+      return '${meses[index]} $anio';
+    }
+
+    return _texto(
+      recibo['periodo'] ?? recibo['mesFacturado'],
+      'Periodo no registrado',
+    );
+  }
+
+  double _numero(dynamic value) {
+    if (value is num) return value.toDouble();
+
+    return double.tryParse(value.toString()) ?? 0.0;
+  }
+
+  double _consumo(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['consumoM3'] ?? recibo['consumo'] ?? recibo['consumoMes'] ?? 0,
+    );
+  }
+
+  double _lecturaAnterior(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['lecturaAnterior'] ??
+          recibo['lectura_anterior'] ??
+          recibo['anterior'] ??
+          0,
+    );
+  }
+
+  double _lecturaActual(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['lecturaActual'] ??
+          recibo['lectura_actual'] ??
+          recibo['actual'] ??
+          0,
+    );
+  }
+
+  double _volumenAgua(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['volumenAgua'] ??
+          recibo['montoAgua'] ??
+          recibo['importeAgua'] ??
+          recibo['subtotalAgua'] ??
+          recibo['total'] ??
+          0,
+    );
+  }
+
+  double _mantenimiento(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['mantenimiento'] ?? recibo['montoMantenimiento'] ?? 0,
+    );
+  }
+
+  double _pagoLecturador(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['pagoLecturador'] ?? recibo['montoLecturador'] ?? 0,
+    );
+  }
+
+  double _otrosCargos(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['otrosCargos'] ?? recibo['otros'] ?? 0,
+    );
+  }
+
+  double _mora(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['mora'] ?? recibo['montoMora'] ?? 0,
+    );
+  }
+
+  double _total(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['total'] ?? recibo['montoTotal'] ?? recibo['importeTotal'] ?? 0,
+    );
+  }
+
+  String _estado(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
+      'PENDIENTE',
+    );
+  }
+
+  String _vencimiento(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['fechaVencimiento'] ?? recibo['vencimiento'],
+      '-',
+    );
+  }
+
+  String _emision(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['fechaEmision'] ?? recibo['emision'],
+      '-',
+    );
+  }
+
+  bool _puedePagar(Map<String, dynamic> recibo) {
+    return _estado(recibo).toUpperCase() == 'PENDIENTE';
+  }
+
+  void _irPagar(BuildContext context, Map<String, dynamic> recibo) {
+    Navigator.pushNamed(
+      context,
+      '/pago-cip',
+      arguments: recibo,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final recibo = _getRecibo(context);
 
-    final String origen = recibo['origen']?.toString() ?? 'cliente';
-    final bool esAdmin = origen == 'admin';
-
-    final String estado = recibo['estado']?.toString() ?? 'Pendiente';
-    final double total = _toDouble(recibo['total'], 22.20);
-    final int consumo = _toInt(recibo['consumo'], 10);
-
     return Scaffold(
       backgroundColor: background,
-      bottomNavigationBar: esAdmin
-          ? null
-          : _ClienteBottomNav(
-              currentIndex: 1,
-              onTap: (index) {
-                if (index == 0) {
-                  Navigator.pushReplacementNamed(context, '/home');
-                }
-
-                if (index == 1) {
-                  Navigator.pushReplacementNamed(context, '/recibos');
-                }
-
-                if (index == 2) {
-                  Navigator.pushReplacementNamed(context, '/perfil');
-                }
-              },
-            ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTopBar(context),
+              _buildHeader(context, recibo),
               const SizedBox(height: 18),
-              _buildReceiptCard(
-                recibo: recibo,
-                estado: estado,
-                total: total,
-                consumo: consumo,
-              ),
-              const SizedBox(height: 18),
-              _buildActionButtons(context, recibo),
+              _buildReciboCard(context, recibo),
             ],
           ),
         ),
@@ -96,20 +245,20 @@ class ReciboDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
+  Widget _buildHeader(BuildContext context, Map<String, dynamic> recibo) {
     return Row(
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 46,
+          height: 46,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: primary.withOpacity(0.08),
-                blurRadius: 14,
-                offset: const Offset(0, 7),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -124,22 +273,22 @@ class ReciboDetailPage extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Detalle de recibo',
+              const Text(
+                'Detalle del recibo',
                 style: TextStyle(
                   color: muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                'Recibo Julio',
-                style: TextStyle(
+                _codigoRecibo(recibo),
+                style: const TextStyle(
                   color: primary,
                   fontSize: 23,
                   fontWeight: FontWeight.w900,
@@ -152,25 +301,9 @@ class ReciboDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildReceiptCard({
-    required Map<String, dynamic> recibo,
-    required String estado,
-    required double total,
-    required int consumo,
-  }) {
-    final String cliente =
-        recibo['cliente']?.toString() ?? 'Carmona Cusquisiban Dany';
-
-    final String codigoSuministro =
-        recibo['suministro']?.toString() ?? 'SK-2034-5';
-
-    final String sector =
-        recibo['sector']?.toString() ??
-            recibo['direccion']?.toString() ??
-            'Huacariz Bambamarca';
-
-    final String numero =
-        recibo['numero']?.toString() ?? 'N° R-2026-0714';
+  Widget _buildReciboCard(BuildContext context, Map<String, dynamic> recibo) {
+    final estado = _estado(recibo);
+    final puedePagar = _puedePagar(recibo);
 
     return Container(
       width: double.infinity,
@@ -180,110 +313,75 @@ class ReciboDetailPage extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: primary.withOpacity(0.08),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
       child: Column(
         children: [
-          _buildReceiptHeader(),
+          _buildTopBlue(recibo, estado),
           Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    _StatusBadge(estado: estado),
-                    const Spacer(),
-                    Text(
-                      numero,
-                      style: const TextStyle(
-                        color: primary,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 18),
-
-                const _SectionTitle(title: 'INFORMACIÓN GENERAL'),
-                const SizedBox(height: 10),
-
-                _InfoLine(label: 'Titular', value: cliente),
-                _InfoLine(label: 'Código de suministro', value: codigoSuministro),
-                _InfoLine(label: 'Sector', value: sector),
-                const _InfoLine(label: 'Celular', value: '987 654 321'),
-                const _InfoLine(label: 'Mes facturado', value: 'Julio 2026'),
-                const _InfoLine(label: 'Emisión', value: '02/07/2026'),
-                const _InfoLine(label: 'Vencimiento', value: '17/07/2026'),
-                const _InfoLine(
-                  label: 'Periodo',
-                  value: '02/06/2026 - 02/07/2026',
-                ),
-
-                const SizedBox(height: 18),
-
-                const _SectionTitle(title: 'LECTURA DEL MEDIDOR'),
-                const SizedBox(height: 12),
-
-                Row(
-                  children: [
-                    const Expanded(
-                      child: _ReadingBox(
-                        label: 'Anterior',
-                        value: '1020',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: _ReadingBox(
-                        label: 'Actual',
-                        value: '1030',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _ReadingBox(
-                        label: 'Consumo',
-                        value: '$consumo m³',
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                const _SectionTitle(title: 'DETALLE DE FACTURACIÓN'),
-                const SizedBox(height: 10),
-
-                const _InfoLine(
-                  label: 'Volumen de agua potable',
-                  value: 'S/ 20.00',
-                ),
-                const _InfoLine(
-                  label: 'Mantenimiento',
-                  value: 'S/ 3.00',
-                ),
-                const _InfoLine(
-                  label: 'Pago al lecturador',
-                  value: 'S/ 2.00',
-                ),
-                const _InfoLine(
-                  label: 'Otros cargos',
-                  value: 'S/ 0.20',
-                ),
-                const _InfoLine(
-                  label: 'Mora',
-                  value: 'S/ 0.00',
-                ),
-
+                _buildClienteInfo(recibo),
                 const SizedBox(height: 14),
-
-                _TotalBox(total: total),
+                _buildPeriodoInfo(recibo),
+                const SizedBox(height: 14),
+                _buildLecturas(recibo),
+                const SizedBox(height: 14),
+                _buildDetalleFacturacion(recibo),
+                const SizedBox(height: 14),
+                _buildTotal(recibo),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'La descarga PDF se conectará luego al generador del backend.',
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.picture_as_pdf_rounded),
+                        label: const Text('PDF'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primary,
+                          backgroundColor: const Color(0xFFF0FAFD),
+                          side: const BorderSide(color: Color(0xFFE2EDF3)),
+                          minimumSize: const Size(0, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (puedePagar) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _irPagar(context, recibo),
+                          icon: const Icon(Icons.payments_rounded),
+                          label: const Text('Pagar'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: secondary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            minimumSize: const Size(0, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -292,15 +390,15 @@ class ReciboDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildReceiptHeader() {
+  Widget _buildTopBlue(Map<String, dynamic> recibo, String estado) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF0D5F9E),
-            Color(0xFF0B78B7),
+            Color(0xFF0F3D57),
+            Color(0xFF1DA1C2),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -310,201 +408,227 @@ class ReciboDetailPage extends StatelessWidget {
           topRight: Radius.circular(28),
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.18),
-              ),
-            ),
-            child: const Center(
-              child: Text(
-                '💧',
-                style: TextStyle(fontSize: 30),
-              ),
+          const Text(
+            'JASS HUACARIZ',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'JASS Huacariz Agua Potable',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Municipalidad de Huacariz · RUC 20481234567',
-                  style: TextStyle(
-                    color: Color(0xFFE7F8FF),
-                    fontSize: 11,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'www.jasshuacariz.com',
-                  style: TextStyle(
-                    color: Color(0xFFE7F8FF),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 8),
+          Text(
+            _periodo(recibo),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.w900,
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _EstadoBadge(estado: estado),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Vence: ${_vencimiento(recibo)}',
+                  style: const TextStyle(
+                    color: Color(0xFFE7F8FF),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons(
-    BuildContext context,
-    Map<String, dynamic> recibo,
-  ) {
-    return Column(
+  Widget _buildClienteInfo(Map<String, dynamic> recibo) {
+    return _SectionCard(
+      title: 'Datos del cliente',
       children: [
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(
-                context,
-                '/pdf-viewer',
-                arguments: recibo,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: secondary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+        _InfoRow(label: 'Titular', value: _titular(recibo)),
+        _InfoRow(label: 'DNI / Código', value: _dni(recibo)),
+        _InfoRow(label: 'Suministro', value: _codigoSuministro(recibo)),
+        _InfoRow(label: 'Dirección', value: _direccion(recibo)),
+        _InfoRow(label: 'Sector', value: _sector(recibo)),
+      ],
+    );
+  }
+
+  Widget _buildPeriodoInfo(Map<String, dynamic> recibo) {
+    return _SectionCard(
+      title: 'Información del periodo',
+      children: [
+        _InfoRow(label: 'Periodo', value: _periodo(recibo)),
+        _InfoRow(label: 'Fecha emisión', value: _emision(recibo)),
+        _InfoRow(label: 'Vencimiento', value: _vencimiento(recibo)),
+      ],
+    );
+  }
+
+  Widget _buildLecturas(Map<String, dynamic> recibo) {
+    return _SectionCard(
+      title: 'Lecturas y consumo',
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _MiniBox(
+                label: 'Anterior',
+                value: _lecturaAnterior(recibo).toStringAsFixed(0),
               ),
             ),
-            child: const Text(
-              'Descargar recibo PDF',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 15,
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MiniBox(
+                label: 'Actual',
+                value: _lecturaActual(recibo).toStringAsFixed(0),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: OutlinedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Recibo compartido de forma visual.'),
-                  backgroundColor: secondary,
-                ),
-              );
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: primary,
-              side: const BorderSide(color: Color(0xFFCFEFF7)),
-              backgroundColor: const Color(0xFFF4FBFE),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MiniBox(
+                label: 'Consumo',
+                value: '${_consumo(recibo).toStringAsFixed(2)} m³',
               ),
             ),
-            child: const Text(
-              'Compartir recibo',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: OutlinedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Impresión simulada correctamente.'),
-                  backgroundColor: Color(0xFF1F8F4D),
-                ),
-              );
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1F8F4D),
-              side: const BorderSide(color: Color(0xFFCFF3DA)),
-              backgroundColor: const Color(0xFFEAF8EF),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Text(
-              'Imprimir',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 15,
-              ),
-            ),
-          ),
+          ],
         ),
       ],
     );
   }
-}
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
+  Widget _buildDetalleFacturacion(Map<String, dynamic> recibo) {
+    return _SectionCard(
+      title: 'Detalle de facturación',
+      children: [
+        _InfoRow(
+          label: 'Volumen de agua potable',
+          value: 'S/ ${_volumenAgua(recibo).toStringAsFixed(2)}',
+        ),
+        _InfoRow(
+          label: 'Mantenimiento',
+          value: 'S/ ${_mantenimiento(recibo).toStringAsFixed(2)}',
+        ),
+        _InfoRow(
+          label: 'Pago al lecturador',
+          value: 'S/ ${_pagoLecturador(recibo).toStringAsFixed(2)}',
+        ),
+        _InfoRow(
+          label: 'Otros cargos',
+          value: 'S/ ${_otrosCargos(recibo).toStringAsFixed(2)}',
+        ),
+        _InfoRow(
+          label: 'Mora',
+          value: 'S/ ${_mora(recibo).toStringAsFixed(2)}',
+        ),
+      ],
+    );
+  }
 
-  const _SectionTitle({
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: Color(0xFF0F3D57),
-        fontSize: 13,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 0.9,
+  Widget _buildTotal(Map<String, dynamic> recibo) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3DF),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFFFD899)),
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Total a pagar',
+              style: TextStyle(
+                color: primary,
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          Text(
+            'S/ ${_total(recibo).toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: primary,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _InfoLine extends StatelessWidget {
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _SectionCard({
+    required this.title,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFF0F3D57);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBFD),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2EDF3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: primary,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoLine({
+  const _InfoRow({
     required this.label,
     required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
+    const Color primary = Color(0xFF0F3D57);
+    const Color muted = Color(0xFF7B8794);
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 11),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE2EDF3),
-            width: 1,
-          ),
+          bottom: BorderSide(color: Color(0xFFE2EDF3)),
         ),
       ),
       child: Row(
@@ -513,7 +637,7 @@ class _InfoLine extends StatelessWidget {
             child: Text(
               label,
               style: const TextStyle(
-                color: Color(0xFF7B8794),
+                color: muted,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),
@@ -525,7 +649,7 @@ class _InfoLine extends StatelessWidget {
               value,
               textAlign: TextAlign.right,
               style: const TextStyle(
-                color: Color(0xFF0F3D57),
+                color: primary,
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
               ),
@@ -537,32 +661,33 @@ class _InfoLine extends StatelessWidget {
   }
 }
 
-class _ReadingBox extends StatelessWidget {
+class _MiniBox extends StatelessWidget {
   final String label;
   final String value;
 
-  const _ReadingBox({
+  const _MiniBox({
     required this.label,
     required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
+    const Color primary = Color(0xFF0F3D57);
+    const Color muted = Color(0xFF7B8794);
+
     return Container(
-      height: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F7FB),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCFEFF7)),
+        border: Border.all(color: const Color(0xFFE2EDF3)),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             label,
             style: const TextStyle(
-              color: Color(0xFF7B8794),
+              color: muted,
               fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
@@ -571,8 +696,8 @@ class _ReadingBox extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              color: Color(0xFF0F3D57),
-              fontSize: 17,
+              color: primary,
+              fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -582,65 +707,24 @@ class _ReadingBox extends StatelessWidget {
   }
 }
 
-class _TotalBox extends StatelessWidget {
-  final double total;
-
-  const _TotalBox({
-    required this.total,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFFFF8),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFCFF3DA)),
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text(
-              'Importe total a pagar',
-              style: TextStyle(
-                color: Color(0xFF7B8794),
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          Text(
-            'S/ ${total.toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: Color(0xFF0F3D57),
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
+class _EstadoBadge extends StatelessWidget {
   final String estado;
 
-  const _StatusBadge({
+  const _EstadoBadge({
     required this.estado,
   });
 
   @override
   Widget build(BuildContext context) {
+    final estadoUpper = estado.toUpperCase();
+
     Color bg;
     Color text;
 
-    if (estado.toLowerCase() == 'pagado') {
+    if (estadoUpper == 'PAGADO') {
       bg = const Color(0xFFEAF8EF);
       text = const Color(0xFF1F8F4D);
-    } else if (estado.toLowerCase() == 'vencido') {
+    } else if (estadoUpper == 'VENCIDO') {
       bg = const Color(0xFFFFECEC);
       text = const Color(0xFFD93025);
     } else {
@@ -655,49 +739,13 @@ class _StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(100),
       ),
       child: Text(
-        estado.toUpperCase(),
+        estadoUpper,
         style: TextStyle(
           color: text,
           fontSize: 11,
           fontWeight: FontWeight.w900,
         ),
       ),
-    );
-  }
-}
-
-class _ClienteBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
-  const _ClienteBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      height: 76,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
-          label: 'Inicio',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long_rounded),
-          label: 'Recibos',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person_rounded),
-          label: 'Perfil',
-        ),
-      ],
     );
   }
 }

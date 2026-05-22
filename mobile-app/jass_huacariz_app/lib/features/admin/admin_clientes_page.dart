@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/services/cliente_service.dart';
 
 class AdminClientesPage extends StatefulWidget {
   const AdminClientesPage({super.key});
@@ -13,158 +14,264 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
   static const Color background = Color(0xFFEFF7FB);
   static const Color muted = Color(0xFF7B8794);
 
-  final TextEditingController buscarController = TextEditingController();
+  final ClienteService service = ClienteService();
 
-  final List<Map<String, dynamic>> clientes = [
-    {
-      'inicial': 'C',
-      'nombre': 'Carmona Cusquisiban Dany',
-      'codigo': 'SK-2034-5',
-      'sector': 'Huacariz Bambamarca',
-      'consumo': '10 m³',
-      'monto': 'S/ 22.20',
-      'estado': 'Pendiente',
-    },
-    {
-      'inicial': 'M',
-      'nombre': 'María Torres Huamán',
-      'codigo': 'SK-2019-12',
-      'sector': 'Sector La Molina',
-      'consumo': '8 m³',
-      'monto': 'S/ 21.20',
-      'estado': 'Pagado',
-    },
-    {
-      'inicial': 'J',
-      'nombre': 'Juan Pérez Silva',
-      'codigo': 'SK-2040-09',
-      'sector': 'Huacariz Centro',
-      'consumo': '19 m³',
-      'monto': 'S/ 82.20',
-      'estado': 'Vencido',
-    },
-  ];
+  List<Map<String, dynamic>> clientes = [];
+  bool cargando = false;
+  String error = '';
+  String busqueda = '';
 
   @override
-  void dispose() {
-    buscarController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    cargar();
   }
 
-  void abrirModalRegistrarCliente() {
+  String _txt(dynamic value, [String fallback = '-']) {
+    if (value == null) return fallback;
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null') return fallback;
+    return text;
+  }
+
+
+  bool _activo(Map<String, dynamic> cliente) {
+    final value = cliente['estado'];
+    if (value is bool) return value;
+    return value.toString().toLowerCase() == 'true';
+  }
+
+  String _nombre(Map<String, dynamic> cliente) {
+    final nombres = _txt(cliente['nombres'], '');
+    final apellidos = _txt(cliente['apellidos'], '');
+    final completo = '$nombres $apellidos'.trim();
+    return completo.isEmpty ? 'Sin nombre' : completo;
+  }
+
+  List<Map<String, dynamic>> get filtrados {
+    final query = busqueda.toLowerCase().trim();
+
+    if (query.isEmpty) return clientes;
+
+    return clientes.where((cliente) {
+      final texto = '''
+        ${_nombre(cliente)}
+        ${cliente['dni']}
+        ${cliente['codigoUsuario']}
+        ${cliente['telefono']}
+        ${cliente['correo']}
+        ${cliente['suministros']}
+      '''
+          .toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
+  }
+
+  Future<void> cargar() async {
+    setState(() {
+      cargando = true;
+      error = '';
+    });
+
+    try {
+      final data = await service.listarClientes();
+
+      if (!mounted) return;
+
+      setState(() {
+        clientes = data;
+        cargando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        error = e.toString().replaceFirst('Exception: ', '');
+        cargando = false;
+      });
+    }
+  }
+
+  void _go(int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+    }
+
+    if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/admin-tarifas');
+    }
+
+    if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/admin-recibos');
+    }
+
+    if (index == 4) {
+      Navigator.pushReplacementNamed(context, '/admin-reportes');
+    }
+  }
+
+  void _abrirFormularioCliente() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+      ),
       builder: (_) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 18,
-            right: 18,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 18,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Registrar cliente',
-                  style: TextStyle(
-                    color: primary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Formulario visual para registrar un cliente y su suministro.',
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _InputField(
-                  label: 'DNI',
-                  hint: 'Ej. 12345678',
-                  icon: Icons.badge_outlined,
-                ),
-                const SizedBox(height: 12),
-                _InputField(
-                  label: 'Nombres y apellidos',
-                  hint: 'Ej. Dany Carmona',
-                  icon: Icons.person_outline,
-                ),
-                const SizedBox(height: 12),
-                _InputField(
-                  label: 'Código de suministro',
-                  hint: 'Ej. SK-2034-5',
-                  icon: Icons.confirmation_number_outlined,
-                ),
-                const SizedBox(height: 12),
-                _InputField(
-                  label: 'Dirección / sector',
-                  hint: 'Ej. Huacariz Bambamarca',
-                  icon: Icons.location_on_outlined,
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
+        return _RegistrarClienteSheet(
+          onGuardar: (payload) async {
+            await service.registrarCliente(payload);
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Cliente registrado de forma visual.'),
-                          backgroundColor: Color(0xFF1F8F4D),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.save_outlined),
-                    label: const Text(
-                      'Guardar cliente',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: secondary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+            if (!mounted) return;
+
+            Navigator.pop(context);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Cliente registrado correctamente.'),
+                backgroundColor: Color(0xFF1F8F4D),
+              ),
+            );
+
+            await cargar();
+          },
         );
       },
     );
   }
 
-  List<Map<String, dynamic>> get clientesFiltrados {
-    final texto = buscarController.text.trim().toLowerCase();
+  void _mostrarDetalle(Map<String, dynamic> cliente) {
+    final suministros =
+        (cliente['suministros'] is List) ? cliente['suministros'] as List : [];
 
-    if (texto.isEmpty) return clientes;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+      ),
+      builder: (_) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.72,
+          minChildSize: 0.45,
+          maxChildSize: 0.92,
+          builder: (_, controller) {
+            return ListView(
+              controller: controller,
+              padding: const EdgeInsets.all(22),
+              children: [
+                Text(
+                  _nombre(cliente),
+                  style: const TextStyle(
+                    color: primary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _DetalleLine(label: 'DNI', value: _txt(cliente['dni'])),
+                _DetalleLine(
+                  label: 'Usuario',
+                  value: _txt(cliente['codigoUsuario']),
+                ),
+                _DetalleLine(
+                  label: 'Teléfono',
+                  value: _txt(cliente['telefono']),
+                ),
+                _DetalleLine(
+                  label: 'Correo',
+                  value: _txt(cliente['correo']),
+                ),
+                const Divider(height: 30),
+                const Text(
+                  'Suministros',
+                  style: TextStyle(
+                    color: primary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (suministros.isEmpty)
+                  const Text(
+                    'Este cliente no tiene suministros registrados.',
+                    style: TextStyle(
+                      color: muted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  )
+                else
+                  ...suministros.map((item) {
+                    final suministro = Map<String, dynamic>.from(item as Map);
 
-    return clientes.where((cliente) {
-      final nombre = cliente['nombre'].toString().toLowerCase();
-      final codigo = cliente['codigo'].toString().toLowerCase();
-      final sector = cliente['sector'].toString().toLowerCase();
+                    final activo = suministro['estado'] == true ||
+                        suministro['estado'].toString().toLowerCase() == 'true';
 
-      return nombre.contains(texto) ||
-          codigo.contains(texto) ||
-          sector.contains(texto);
-    }).toList();
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF4F8FB),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0xFFE2EDF3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.water_drop_rounded,
+                            color: secondary,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _txt(suministro['codigoSuministro']),
+                                  style: const TextStyle(
+                                    color: primary,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _txt(suministro['direccionSuministro']),
+                                  style: const TextStyle(
+                                    color: muted,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  _txt(suministro['nombreSector']),
+                                  style: const TextStyle(
+                                    color: muted,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _EstadoChip(activo: activo),
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -173,38 +280,65 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       backgroundColor: background,
       bottomNavigationBar: _AdminBottomNav(
         currentIndex: 1,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/admin-dashboard');
-          }
-
-          if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/admin-tarifas');
-          }
-
-          if (index == 3) {
-            Navigator.pushReplacementNamed(context, '/admin-recibos');
-          }
-
-          if (index == 4) {
-            Navigator.pushReplacementNamed(context, '/admin-reportes');
-          }
-        },
+        onTap: _go,
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: secondary,
+        foregroundColor: Colors.white,
+        onPressed: _abrirFormularioCliente,
+        child: const Icon(Icons.add_rounded),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 20, 22, 26),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 18),
-              _buildSearchBar(),
-              const SizedBox(height: 14),
-              _buildActionButtons(),
-              const SizedBox(height: 18),
-              _buildClientesList(),
-            ],
+        child: RefreshIndicator(
+          onRefresh: cargar,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 14),
+                _buildSearch(),
+                const SizedBox(height: 16),
+                if (cargando)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                if (error.isNotEmpty && !cargando)
+                  _Error(
+                    error: error,
+                    onRetry: cargar,
+                  ),
+                if (!cargando && error.isEmpty && filtrados.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('No hay clientes para mostrar.'),
+                    ),
+                  ),
+                if (!cargando && error.isEmpty)
+                  ...filtrados.map((cliente) {
+                    final suministros = cliente['suministros'];
+
+                    return _ClienteCard(
+                      nombre: _nombre(cliente),
+                      dni: _txt(cliente['dni']),
+                      codigo: _txt(cliente['codigoUsuario']),
+                      telefono: _txt(cliente['telefono']),
+                      correo: _txt(cliente['correo']),
+                      activo: _activo(cliente),
+                      suministros:
+                          (suministros is List) ? suministros.length : 0,
+                      onDetalle: () => _mostrarDetalle(cliente),
+                    );
+                  }),
+                const SizedBox(height: 80),
+              ],
+            ),
           ),
         ),
       ),
@@ -219,10 +353,9 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Clientes y suministros',
+                'Gestión de usuarios',
                 style: TextStyle(
                   color: muted,
-                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -238,72 +371,10 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
             ],
           ),
         ),
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: primary.withOpacity(0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: IconButton(
-            onPressed: abrirModalRegistrarCliente,
-            icon: const Icon(
-              Icons.add_rounded,
-              color: primary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: buscarController,
-            onChanged: (_) {
-              setState(() {});
-            },
-            decoration: InputDecoration(
-              hintText: 'Buscar por código, cliente o sector',
-              filled: true,
-              fillColor: Colors.white,
-              prefixIcon: const Icon(Icons.search_rounded),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: Color(0xFFE2EDF3)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: Color(0xFFE2EDF3)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: secondary, width: 1.4),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2EDF3)),
-          ),
-          child: const Icon(
-            Icons.grid_view_rounded,
+        IconButton(
+          onPressed: cargar,
+          icon: const Icon(
+            Icons.refresh_rounded,
             color: primary,
           ),
         ),
@@ -311,303 +382,139 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     );
   }
 
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: abrirModalRegistrarCliente,
-            icon: const Icon(Icons.person_add_alt_1_rounded),
-            label: const Text(
-              'Registrar cliente',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: secondary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              minimumSize: const Size(0, 48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Edición masiva disponible luego con backend.'),
-                  backgroundColor: secondary,
-                ),
-              );
-            },
-            icon: const Icon(Icons.edit_note_rounded),
-            label: const Text(
-              'Gestionar',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: primary,
-              side: const BorderSide(color: Color(0xFFE2EDF3)),
-              minimumSize: const Size(0, 48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildClientesList() {
-    final lista = clientesFiltrados;
-
-    if (lista.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: const Column(
-          children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 52,
-              color: secondary,
-            ),
-            SizedBox(height: 12),
-            Text(
-              'No se encontraron clientes',
-              style: TextStyle(
-                color: primary,
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.separated(
-      itemCount: lista.length,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
-      itemBuilder: (context, index) {
-        final cliente = lista[index];
-
-        return _ClienteCard(
-          inicial: cliente['inicial'],
-          nombre: cliente['nombre'],
-          codigo: cliente['codigo'],
-          sector: cliente['sector'],
-          consumo: cliente['consumo'],
-          monto: cliente['monto'],
-          estado: cliente['estado'],
-        );
+  Widget _buildSearch() {
+    return TextField(
+      onChanged: (value) {
+        setState(() {
+          busqueda = value;
+        });
       },
+      decoration: InputDecoration(
+        hintText: 'Buscar por DNI, cliente o suministro...',
+        prefixIcon: const Icon(Icons.search),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide.none,
+        ),
+      ),
     );
   }
 }
 
 class _ClienteCard extends StatelessWidget {
-  final String inicial;
   final String nombre;
+  final String dni;
   final String codigo;
-  final String sector;
-  final String consumo;
-  final String monto;
-  final String estado;
+  final String telefono;
+  final String correo;
+  final bool activo;
+  final int suministros;
+  final VoidCallback onDetalle;
 
   const _ClienteCard({
-    required this.inicial,
     required this.nombre,
+    required this.dni,
     required this.codigo,
-    required this.sector,
-    required this.consumo,
-    required this.monto,
-    required this.estado,
+    required this.telefono,
+    required this.correo,
+    required this.activo,
+    required this.suministros,
+    required this.onDetalle,
   });
 
   @override
   Widget build(BuildContext context) {
     const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
     const Color muted = Color(0xFF7B8794);
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withOpacity(0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFFE2EDF3),
+        ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F7FB),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Center(
-                  child: Text(
-                    inicial,
-                    style: const TextStyle(
-                      color: primary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                    ),
+              CircleAvatar(
+                backgroundColor: const Color(0xFFE8F7FB),
+                child: Text(
+                  nombre.isNotEmpty ? nombre[0].toUpperCase() : 'C',
+                  style: const TextStyle(
+                    color: primary,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      nombre,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: primary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$codigo · $sector',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: muted,
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  nombre.isEmpty ? 'Sin nombre' : nombre,
+                  style: const TextStyle(
+                    color: primary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 17,
+                  ),
                 ),
               ),
-              _EstadoBadge(estado: estado),
+              _EstadoChip(activo: activo),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _InfoBox(
-                  label: 'Consumo del mes',
-                  value: consumo,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _InfoBox(
-                  label: 'Monto total',
-                  value: monto,
-                ),
-              ),
-            ],
+          const SizedBox(height: 12),
+          Text(
+            'DNI: $dni · Usuario: $codigo',
+            style: const TextStyle(
+              color: muted,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    final montoLimpio = monto
-                        .replaceAll('S/', '')
-                        .replaceAll(' ', '')
-                        .replaceAll(',', '.');
-
-                    final total = double.tryParse(montoLimpio) ?? 0.0;
-
-                    final consumoLimpio = consumo
-                        .replaceAll('m³', '')
-                        .replaceAll(' ', '');
-
-                    final consumoNumero = int.tryParse(consumoLimpio) ?? 0;
-
-                    Navigator.pushNamed(
-                      context,
-                      '/recibo-detalle',
-                      arguments: {
-                        'id': 1,
-                        'codigo': 'REC-0001',
-                        'numero': 'N° R-2026-0714',
-                        'cliente': nombre,
-                        'suministro': codigo,
-                        'sector': sector,
-                        'periodo': 'Julio 2026',
-                        'consumo': consumoNumero,
-                        'total': total,
-                        'vencimiento': '17/07/2026',
-                        'estado': estado,
-                        'origen': 'admin',
-                      },
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: primary,
-                    side: const BorderSide(color: Color(0xFFE2EDF3)),
-                    minimumSize: const Size(0, 46),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: const Text(
-                    'Ver detalle',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
+          const SizedBox(height: 3),
+          Text(
+            'Tel: $telefono · $correo',
+            style: const TextStyle(
+              color: muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Suministros: $suministros',
+            style: const TextStyle(
+              color: primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: 150,
+            height: 42,
+            child: OutlinedButton.icon(
+              onPressed: onDetalle,
+              icon: const Icon(Icons.visibility_outlined, size: 18),
+              label: const Text(
+                'Ver detalle',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Editar cliente: $nombre'),
-                        backgroundColor: secondary,
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: secondary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    minimumSize: const Size(0, 46),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: const Text(
-                    'Editar cliente',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primary,
+                side: const BorderSide(
+                  color: Color(0xFF0F3D57),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -615,11 +522,41 @@ class _ClienteCard extends StatelessWidget {
   }
 }
 
-class _InfoBox extends StatelessWidget {
+class _EstadoChip extends StatelessWidget {
+  final bool activo;
+
+  const _EstadoChip({
+    required this.activo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: activo ? const Color(0xFFEAF8EF) : const Color(0xFFFFECEC),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Text(
+        activo ? 'Activo' : 'Inactivo',
+        style: TextStyle(
+          color: activo ? const Color(0xFF1F8F4D) : const Color(0xFFD93025),
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _DetalleLine extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoBox({
+  const _DetalleLine({
     required this.label,
     required this.value,
   });
@@ -629,30 +566,23 @@ class _InfoBox extends StatelessWidget {
     const Color primary = Color(0xFF0F3D57);
     const Color muted = Color(0xFF7B8794);
 
-    return Container(
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 7),
+      child: Row(
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: muted,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: muted,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          const SizedBox(height: 5),
           Text(
             value,
             style: const TextStyle(
               color: primary,
-              fontSize: 15,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -662,71 +592,383 @@ class _InfoBox extends StatelessWidget {
   }
 }
 
-class _EstadoBadge extends StatelessWidget {
-  final String estado;
+class _RegistrarClienteSheet extends StatefulWidget {
+  final Future<void> Function(Map<String, dynamic> payload) onGuardar;
 
-  const _EstadoBadge({
-    required this.estado,
+  const _RegistrarClienteSheet({
+    required this.onGuardar,
   });
 
   @override
-  Widget build(BuildContext context) {
-    Color bg;
-    Color text;
+  State<_RegistrarClienteSheet> createState() => _RegistrarClienteSheetState();
+}
 
-    if (estado == 'Pagado') {
-      bg = const Color(0xFFEAF8EF);
-      text = const Color(0xFF1F8F4D);
-    } else if (estado == 'Vencido') {
-      bg = const Color(0xFFFFECEC);
-      text = const Color(0xFFD93025);
-    } else {
-      bg = const Color(0xFFFFF3DF);
-      text = const Color(0xFFC77700);
+class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
+  static const Color primary = Color(0xFF0F3D57);
+  static const Color secondary = Color(0xFF1DA1C2);
+  static const Color muted = Color(0xFF7B8794);
+
+  final dniController = TextEditingController();
+  final nombresController = TextEditingController();
+  final apellidosController = TextEditingController();
+  final telefonoController = TextEditingController();
+  final correoController = TextEditingController();
+
+  final idSectorController = TextEditingController(text: '1');
+  final direccionController = TextEditingController();
+  final referenciaController = TextEditingController();
+  final aliasController = TextEditingController();
+  final lecturaInicialController = TextEditingController(text: '0');
+
+  final List<Map<String, dynamic>> suministros = [];
+
+  bool guardando = false;
+
+  @override
+  void dispose() {
+    dniController.dispose();
+    nombresController.dispose();
+    apellidosController.dispose();
+    telefonoController.dispose();
+    correoController.dispose();
+    idSectorController.dispose();
+    direccionController.dispose();
+    referenciaController.dispose();
+    aliasController.dispose();
+    lecturaInicialController.dispose();
+    super.dispose();
+  }
+
+  void _mensaje(String mensaje, bool esError) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor:
+            esError ? const Color(0xFFD93025) : const Color(0xFF1F8F4D),
+      ),
+    );
+  }
+
+  void agregarSuministro() {
+    final idSector = int.tryParse(idSectorController.text.trim()) ?? 1;
+    final direccion = direccionController.text.trim();
+    final referencia = referenciaController.text.trim();
+    final alias = aliasController.text.trim();
+    final lectura =
+        double.tryParse(lecturaInicialController.text.trim()) ?? 0;
+
+    if (direccion.isEmpty || alias.isEmpty) {
+      _mensaje('Completa dirección y alias del suministro.', true);
+      return;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(100),
+    setState(() {
+      suministros.add({
+        'idSector': idSector,
+        'direccionSuministro': direccion,
+        'referencia': referencia,
+        'aliasSuministro': alias,
+        'lecturaInicial': lectura,
+      });
+
+      direccionController.clear();
+      referenciaController.clear();
+      aliasController.clear();
+      lecturaInicialController.text = '0';
+    });
+  }
+
+  Future<void> guardar() async {
+    final dni = dniController.text.trim();
+    final nombres = nombresController.text.trim();
+    final apellidos = apellidosController.text.trim();
+    final telefono = telefonoController.text.trim();
+    final correo = correoController.text.trim();
+
+    if (dni.isEmpty || nombres.isEmpty || apellidos.isEmpty) {
+      _mensaje('Completa DNI, nombres y apellidos.', true);
+      return;
+    }
+
+    if (suministros.isEmpty) {
+      _mensaje('Agrega al menos un suministro.', true);
+      return;
+    }
+
+    final payload = {
+      'dni': dni,
+      'nombres': nombres,
+      'apellidos': apellidos,
+      'telefono': telefono,
+      'correo': correo,
+      'codigoUsuario': dni,
+      'password': dni,
+      'rol': 'CLIENTE',
+      'estado': true,
+      'suministros': suministros,
+    };
+
+    setState(() {
+      guardando = true;
+    });
+
+    try {
+      await widget.onGuardar(payload);
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        guardando = false;
+      });
+
+      _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 22,
+        right: 22,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 22,
       ),
-      child: Text(
-        estado,
-        style: TextStyle(
-          color: text,
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Registrar cliente',
+              style: TextStyle(
+                color: primary,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'El usuario y la contraseña inicial serán el DNI.',
+              style: TextStyle(
+                color: muted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 18),
+            _Input(
+              controller: dniController,
+              label: 'DNI / Código usuario',
+              keyboardType: TextInputType.number,
+            ),
+            _Input(
+              controller: nombresController,
+              label: 'Nombres',
+            ),
+            _Input(
+              controller: apellidosController,
+              label: 'Apellidos',
+            ),
+            _Input(
+              controller: telefonoController,
+              label: 'Teléfono',
+              keyboardType: TextInputType.phone,
+            ),
+            _Input(
+              controller: correoController,
+              label: 'Correo',
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 10),
+            const Divider(),
+            const SizedBox(height: 10),
+            const Text(
+              'Suministros',
+              style: TextStyle(
+                color: primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _Input(
+              controller: idSectorController,
+              label: 'ID Sector',
+              keyboardType: TextInputType.number,
+            ),
+            _Input(
+              controller: direccionController,
+              label: 'Dirección del suministro',
+            ),
+            _Input(
+              controller: referenciaController,
+              label: 'Referencia',
+            ),
+            _Input(
+              controller: aliasController,
+              label: 'Alias del suministro',
+            ),
+            _Input(
+              controller: lecturaInicialController,
+              label: 'Lectura inicial',
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: agregarSuministro,
+                icon: const Icon(Icons.add_location_alt_outlined),
+                label: const Text('Agregar suministro'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (suministros.isNotEmpty)
+              ...suministros.asMap().entries.map((entry) {
+                final index = entry.key;
+                final suministro = entry.value;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF7FB),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.water_drop_rounded,
+                        color: secondary,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '${suministro['aliasSuministro']} · ${suministro['direccionSuministro']}',
+                          style: const TextStyle(
+                            color: primary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            suministros.removeAt(index);
+                          });
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Color(0xFFD93025),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: guardando ? null : guardar,
+                icon: guardando
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.save_outlined),
+                label: Text(
+                  guardando ? 'Guardando...' : 'Guardar cliente',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: secondary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _InputField extends StatelessWidget {
+class _Input extends StatelessWidget {
+  final TextEditingController controller;
   final String label;
-  final String hint;
-  final IconData icon;
+  final TextInputType? keyboardType;
 
-  const _InputField({
+  const _Input({
+    required this.controller,
     required this.label,
-    required this.hint,
-    required this.icon,
+    this.keyboardType,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: const Color(0xFFF4F8FB),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: const Color(0xFFF4F8FB),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _Error extends StatelessWidget {
+  final String error;
+  final VoidCallback onRetry;
+
+  const _Error({
+    required this.error,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFECEC),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Text(
+            error,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFFD93025),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Reintentar'),
+          ),
+        ],
       ),
     );
   }
@@ -747,31 +989,25 @@ class _AdminBottomNav extends StatelessWidget {
       selectedIndex: currentIndex,
       onDestinationSelected: onTap,
       height: 76,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       destinations: const [
         NavigationDestination(
           icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
           label: 'Inicio',
         ),
         NavigationDestination(
-          icon: Icon(Icons.groups_outlined),
-          selectedIcon: Icon(Icons.groups_rounded),
+          icon: Icon(Icons.groups_rounded),
           label: 'Clientes',
         ),
         NavigationDestination(
-          icon: Icon(Icons.attach_money_outlined),
-          selectedIcon: Icon(Icons.attach_money_rounded),
+          icon: Icon(Icons.attach_money_rounded),
           label: 'Tarifas',
         ),
         NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long_rounded),
+          icon: Icon(Icons.receipt_long_rounded),
           label: 'Recibos',
         ),
         NavigationDestination(
-          icon: Icon(Icons.bar_chart_outlined),
-          selectedIcon: Icon(Icons.bar_chart_rounded),
+          icon: Icon(Icons.bar_chart_rounded),
           label: 'Reportes',
         ),
       ],

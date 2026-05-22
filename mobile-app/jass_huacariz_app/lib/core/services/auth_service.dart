@@ -7,42 +7,29 @@ class AuthService {
   final SecureStorageService _storage = SecureStorageService();
 
   Future<bool> login({
-    required String usuario,
+    required String codigoUsuario,
     required String password,
   }) async {
     final response = await _apiService.post(
       ApiConfig.login,
       {
-        'usuario': usuario,
+        'codigoUsuario': codigoUsuario,
         'password': password,
       },
       withAuth: false,
     );
 
-    final token = response['token'] ??
-        response['accessToken'] ??
-        response['jwt'] ??
-        '';
+    final token = response['token']?.toString() ?? '';
+    final rol = response['rol']?.toString() ?? '';
+    final usuario = response['codigoUsuario']?.toString() ?? codigoUsuario;
 
-    final role = response['role'] ??
-        response['rol'] ??
-        response['tipoUsuario'] ??
-        response['authority'] ??
-        '';
-
-    final nombre = response['nombre'] ??
-        response['nombres'] ??
-        response['username'] ??
-        response['usuario'] ??
-        usuario;
-
-    if (token.toString().isEmpty) {
+    if (token.isEmpty) {
       throw Exception('El backend no devolvió token.');
     }
 
-    await _storage.saveToken(token.toString());
-    await _storage.saveUserRole(role.toString());
-    await _storage.saveUserName(nombre.toString());
+    await _storage.saveToken(token);
+    await _storage.saveUserRole(rol);
+    await _storage.saveUserName(usuario);
 
     return true;
   }
@@ -51,30 +38,15 @@ class AuthService {
     await _storage.clearSession();
   }
 
-  Future<bool> isLoggedIn() async {
-    return await _storage.hasSession();
-  }
-
-  Future<String?> getUserName() async {
-    return await _storage.getUserName();
-  }
-
-  Future<String?> getUserRole() async {
+  Future<String?> getRol() async {
     return await _storage.getUserRole();
   }
 
-  Future<bool> cambiarPassword({
-    required String actual,
-    required String nueva,
-  }) async {
-    await _apiService.put(
-      ApiConfig.cambiarPassword,
-      {
-        'passwordActual': actual,
-        'passwordNueva': nueva,
-      },
-    );
+  Future<String?> getCodigoUsuario() async {
+    return await _storage.getUserName();
+  }
 
-    return true;
+  Future<bool> estaAutenticado() async {
+    return await _storage.hasSession();
   }
 }
