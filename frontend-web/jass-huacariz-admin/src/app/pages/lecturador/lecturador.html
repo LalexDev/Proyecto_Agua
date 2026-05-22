@@ -2,7 +2,6 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="logo">💧</div>
-
       <div>
         <h3>JASS Huacariz</h3>
         <p>Panel lecturador</p>
@@ -64,7 +63,7 @@
         <div>
           <span class="tag">Búsqueda</span>
           <h2>Identificación del suministro</h2>
-          <p>Usa el código del suministro o la cámara del equipo para escanear el QR.</p>
+          <p>Usa el código del suministro o la cámara del celular para escanear el QR.</p>
         </div>
       </div>
 
@@ -84,24 +83,34 @@
           Limpiar
         </button>
 
-        <button type="button" class="btn-scan" [disabled]="escaneando" (click)="iniciarEscaneo()">
-          {{ escaneando ? 'Escaneando...' : 'Escanear QR' }}
+        <button
+          type="button"
+          class="btn-scan"
+          (click)="iniciarEscaneo()"
+          [disabled]="escaneando"
+        >
+          Escanear QR
         </button>
 
-        <button *ngIf="escaneando" type="button" class="btn-danger" (click)="detenerEscaneo()">
+        <button
+          *ngIf="escaneando"
+          type="button"
+          class="btn-danger"
+          (click)="detenerEscaneo()"
+        >
           Detener cámara
         </button>
       </div>
 
-      <div class="qr-scanner-card" *ngIf="escaneando">
-        <div class="qr-scanner-header">
-          <strong>Escaneando QR del suministro</strong>
-          <span>Apunta la cámara al código QR pegado en el medidor o vivienda.</span>
+      <div class="scanner-card" *ngIf="escaneando">
+        <div class="scanner-frame">
+          <video #video autoplay playsinline muted></video>
+          <div class="scanner-line"></div>
         </div>
 
-        <div class="qr-frame">
-          <div id="qr-reader-lecturador"></div>
-          <div class="scan-line"></div>
+        <div class="scanner-info">
+          <strong>Cámara activa</strong>
+          <span>Enfoca el QR del suministro dentro del recuadro.</span>
         </div>
       </div>
     </section>
@@ -117,18 +126,6 @@
         <span class="badge" [ngClass]="suministro.estado ? 'activo' : 'inactivo'">
           {{ suministro.estado ? 'Activo' : 'Inactivo' }}
         </span>
-      </div>
-
-      <div class="cliente-box">
-        <div class="cliente-avatar">
-          {{ inicialesUsuario() }}
-        </div>
-
-        <div class="cliente-info">
-          <span>Usuario / Cliente del suministro</span>
-          <h3>{{ nombreUsuarioSuministro() }}</h3>
-          <p>DNI: {{ dniUsuarioSuministro() }}</p>
-        </div>
       </div>
 
       <div class="info-grid">
@@ -154,7 +151,7 @@
       </div>
     </section>
 
-    <section class="form-card" id="registro-lectura" *ngIf="suministro">
+    <section class="form-card" *ngIf="suministro">
       <div class="section-title">
         <div>
           <span class="tag">Nueva lectura</span>
@@ -224,13 +221,18 @@
           Cancelar
         </button>
 
-        <button type="button" class="btn-primary" [disabled]="registrando" (click)="registrarLectura()">
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="registrando"
+          (click)="registrarLectura()"
+        >
           {{ registrando ? 'Registrando...' : 'Registrar lectura y generar recibo' }}
         </button>
       </div>
     </section>
 
-    <section class="receipt-card" id="recibo-generado" *ngIf="lecturaGenerada">
+    <section class="receipt-card" *ngIf="lecturaGenerada">
       <div class="receipt-header">
         <div>
           <span class="tag">Recibo generado</span>

@@ -11,6 +11,8 @@ export interface SuministroLecturadorResponse {
   aliasSuministro: string;
   lecturaInicial: number;
   estado: boolean;
+  nombreCliente?: string;
+  dniCliente?: string;
 }
 
 export interface LecturaRequest {
