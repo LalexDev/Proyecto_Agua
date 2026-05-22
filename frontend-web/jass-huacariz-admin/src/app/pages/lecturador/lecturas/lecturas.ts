@@ -13,7 +13,7 @@ import {
 } from '../../../core/services/lecturador';
 
 @Component({
-  selector: 'app-lecturas-lecturador',
+  selector: 'app-lecturas',
   imports: [CommonModule, FormsModule],
   templateUrl: './lecturas.html',
   styleUrl: './lecturas.scss',
@@ -34,6 +34,8 @@ export class LecturasLecturador implements OnDestroy {
   lecturaForm: LecturaRequest = this.crearLecturaVacia();
 
   private qrScanner: Html5Qrcode | null = null;
+  private qrProcesado = false;
+
   readonly qrRegionId = 'qr-reader-lecturador';
 
   constructor(
@@ -46,7 +48,7 @@ export class LecturasLecturador implements OnDestroy {
     this.detenerEscaneo();
   }
 
-  buscarSuministro(): void {
+  buscarSuministro(desdeQr: boolean = false): void {
     this.error = '';
     this.exito = '';
     this.lecturaGenerada = null;
@@ -72,6 +74,7 @@ export class LecturasLecturador implements OnDestroy {
       .subscribe({
         next: (data) => {
           this.suministro = data;
+
           this.lecturaForm = {
             codigoSuministro: data.codigoSuministro,
             anio: new Date().getFullYear(),
@@ -79,8 +82,18 @@ export class LecturasLecturador implements OnDestroy {
             lecturaActual: 0,
             observacion: 'Lectura mensual registrada'
           };
-          this.exito = 'Suministro encontrado correctamente.';
+
+          const nombreCliente = this.nombreUsuarioSuministro(data);
+
+          this.exito = desdeQr
+            ? `QR escaneado correctamente. Usuario encontrado: ${nombreCliente}. Ahora registra la lectura.`
+            : `Suministro encontrado correctamente. Usuario: ${nombreCliente}.`;
+
           this.cdr.detectChanges();
+
+          setTimeout(() => {
+            this.irARegistroLectura();
+          }, 300);
         },
         error: (err) => {
           this.error = err?.error?.error || 'No se encontró el suministro.';
@@ -109,7 +122,7 @@ export class LecturasLecturador implements OnDestroy {
       return;
     }
 
-    if (!this.lecturaForm.lecturaActual || this.lecturaForm.lecturaActual <= 0) {
+    if (!this.lecturaForm.lecturaActual || Number(this.lecturaForm.lecturaActual) <= 0) {
       this.error = 'Ingrese la lectura actual.';
       return;
     }
@@ -141,6 +154,13 @@ export class LecturasLecturador implements OnDestroy {
           this.lecturaGenerada = data;
           this.exito = 'Lectura registrada y recibo generado correctamente.';
           this.cdr.detectChanges();
+
+          setTimeout(() => {
+            document.getElementById('recibo-generado')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }, 300);
         },
         error: (err) => {
           this.error = err?.error?.error || 'No se pudo registrar la lectura.';
@@ -152,6 +172,7 @@ export class LecturasLecturador implements OnDestroy {
   async iniciarEscaneo(): Promise<void> {
     this.error = '';
     this.exito = '';
+    this.qrProcesado = false;
 
     if (this.escaneando) {
       return;
@@ -178,6 +199,7 @@ export class LecturasLecturador implements OnDestroy {
 
         const camaraTrasera = camaras.find((camara) => {
           const label = camara.label.toLowerCase();
+
           return (
             label.includes('back') ||
             label.includes('rear') ||
@@ -201,31 +223,42 @@ export class LecturasLecturador implements OnDestroy {
             }
           },
           async (decodedText: string) => {
+            if (this.qrProcesado) {
+              return;
+            }
+
+            this.qrProcesado = true;
+
             const codigo = this.normalizarCodigoQr(decodedText);
 
             if (!codigo) {
               this.error = 'El QR escaneado no contiene un código válido.';
+              this.qrProcesado = false;
               this.cdr.detectChanges();
               return;
             }
 
             this.codigoBusqueda = codigo;
-            this.exito = 'QR escaneado correctamente.';
+            this.exito = 'QR detectado correctamente. Deteniendo cámara y buscando usuario...';
             this.cdr.detectChanges();
 
             await this.detenerEscaneo();
-            this.buscarSuministro();
+
+            setTimeout(() => {
+              this.buscarSuministro(true);
+            }, 250);
           },
           () => {
-            // Lectura fallida temporal. No se muestra error para no llenar la pantalla.
+            // No mostrar errores temporales del lector para evitar mensajes repetidos.
           }
         );
       } catch {
         this.error = 'No se pudo iniciar la cámara. Verifique permisos del navegador.';
         this.escaneando = false;
+        this.qrScanner = null;
         this.cdr.detectChanges();
       }
-    }, 200);
+    }, 250);
   }
 
   async detenerEscaneo(): Promise<void> {
@@ -238,7 +271,7 @@ export class LecturasLecturador implements OnDestroy {
         await this.qrScanner.clear();
       }
     } catch {
-      // No hacemos nada porque puede fallar si la cámara ya estaba detenida.
+      // Puede fallar si la cámara ya estaba detenida.
     } finally {
       this.qrScanner = null;
       this.escaneando = false;
@@ -254,6 +287,7 @@ export class LecturasLecturador implements OnDestroy {
     this.lecturaGenerada = null;
     this.error = '';
     this.exito = '';
+    this.qrProcesado = false;
     this.lecturaForm = this.crearLecturaVacia();
   }
 
@@ -272,6 +306,77 @@ export class LecturasLecturador implements OnDestroy {
     ];
 
     return meses[mes - 1] ?? 'Mes inválido';
+  }
+
+  nombreUsuarioSuministro(suministro: SuministroLecturadorResponse | null = this.suministro): string {
+    const item: any = suministro || {};
+
+    const nombreDirecto =
+      item.cliente ||
+      item.nombreCliente ||
+      item.clienteNombre ||
+      item.nombreCompletoCliente ||
+      item.nombreCompleto ||
+      item.usuarioNombre ||
+      item.usuario ||
+      '';
+
+    if (nombreDirecto) {
+      return String(nombreDirecto);
+    }
+
+    const nombres =
+      item.nombresCliente ||
+      item.nombres ||
+      item.nombre ||
+      '';
+
+    const apellidos =
+      item.apellidosCliente ||
+      item.apellidos ||
+      item.apellido ||
+      '';
+
+    const completo = `${nombres} ${apellidos}`.trim();
+
+    return completo || 'No disponible';
+  }
+
+  dniUsuarioSuministro(suministro: SuministroLecturadorResponse | null = this.suministro): string {
+    const item: any = suministro || {};
+
+    return String(
+      item.dniCliente ||
+      item.documentoCliente ||
+      item.numeroDocumentoCliente ||
+      item.dni ||
+      item.documento ||
+      item.numeroDocumento ||
+      '-'
+    );
+  }
+
+  inicialesUsuario(): string {
+    const nombre = this.nombreUsuarioSuministro();
+
+    if (nombre === 'No disponible') {
+      return 'U';
+    }
+
+    const partes = nombre.split(' ').filter(Boolean);
+
+    if (partes.length >= 2) {
+      return `${partes[0][0]}${partes[1][0]}`.toUpperCase();
+    }
+
+    return nombre.substring(0, 1).toUpperCase();
+  }
+
+  private irARegistroLectura(): void {
+    document.getElementById('registro-lectura')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
   }
 
   private normalizarCodigoQr(valor: string): string {

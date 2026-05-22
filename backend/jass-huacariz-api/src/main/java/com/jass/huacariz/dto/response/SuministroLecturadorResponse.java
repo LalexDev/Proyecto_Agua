@@ -17,4 +17,7 @@ public class SuministroLecturadorResponse {
     private String aliasSuministro;
     private BigDecimal lecturaInicial;
     private Boolean estado;
+
+    private String nombreCliente;
+    private String dniCliente;
 }

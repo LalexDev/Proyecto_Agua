@@ -1,19 +1,37 @@
 <div class="qr-page">
-  <div class="page-header">
+  <section class="page-header">
     <div>
       <span class="tag">Administración</span>
       <h2>QR de suministro</h2>
-      <p>Genera e imprime un código QR para identificar cada suministro de agua.</p>
+      <p>Genera, descarga e imprime códigos QR para identificar cada suministro de agua.</p>
     </div>
-  </div>
 
-  <div *ngIf="error" class="alert-error">
+    <div class="header-actions">
+      <button type="button" class="btn-secondary" (click)="limpiar()">
+        Limpiar
+      </button>
+
+      <button type="button" class="btn-primary" (click)="generarQr()">
+        Generar QR
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
+  <div *ngIf="exito" class="alert alert-success">
+    {{ exito }}
+  </div>
+
   <section class="qr-card">
-    <div class="form-panel">
-      <h3>Datos del suministro</h3>
+    <article class="form-panel">
+      <div class="panel-title">
+        <span class="tag">Datos del suministro</span>
+        <h3>Información para generar QR</h3>
+        <p>Completa los datos que aparecerán en la ficha imprimible del suministro.</p>
+      </div>
 
       <div class="form-grid">
         <div class="form-group">
@@ -35,6 +53,24 @@
           >
         </div>
 
+        <div class="form-group">
+          <label>Cliente</label>
+          <input
+            type="text"
+            [(ngModel)]="nombreCliente"
+            placeholder="Ejemplo: Dany Carmona"
+          >
+        </div>
+
+        <div class="form-group">
+          <label>DNI</label>
+          <input
+            type="text"
+            [(ngModel)]="dniCliente"
+            placeholder="Ejemplo: 12345678"
+          >
+        </div>
+
         <div class="form-group full">
           <label>Dirección</label>
           <input
@@ -46,6 +82,10 @@
       </div>
 
       <div class="actions">
+        <button type="button" class="btn-secondary" (click)="copiarCodigo()">
+          Copiar código
+        </button>
+
         <button type="button" class="btn-secondary" (click)="limpiar()">
           Limpiar
         </button>
@@ -54,13 +94,13 @@
           Generar QR
         </button>
       </div>
-    </div>
+    </article>
 
-    <div class="preview-panel">
+    <article class="preview-panel">
       <div class="empty-state" *ngIf="!qrDataUrl">
         <div class="icon">💧</div>
         <h3>QR pendiente</h3>
-        <p>Ingresa el código del suministro para generar el QR.</p>
+        <p>Ingresa el código del suministro para generar la ficha QR.</p>
       </div>
 
       <div class="qr-preview" *ngIf="qrDataUrl">
@@ -73,10 +113,37 @@
         <h3>{{ codigoSuministro }}</h3>
         <p>{{ aliasSuministro || 'Suministro de agua' }}</p>
 
-        <button type="button" class="btn-primary" (click)="imprimirQr()">
-          Imprimir / guardar PDF
-        </button>
+        <div class="mini-info">
+          <div>
+            <span>Cliente</span>
+            <strong>{{ nombreCliente || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>DNI</span>
+            <strong>{{ dniCliente || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Dirección</span>
+            <strong>{{ direccionSuministro || '-' }}</strong>
+          </div>
+        </div>
+
+        <div class="preview-actions">
+          <button type="button" class="btn-secondary" (click)="copiarCodigo()">
+            Copiar código
+          </button>
+
+          <button type="button" class="btn-secondary" (click)="descargarQr()">
+            Descargar PNG
+          </button>
+
+          <button type="button" class="btn-primary" (click)="imprimirQr()">
+            Imprimir / guardar PDF
+          </button>
+        </div>
       </div>
-    </div>
+    </article>
   </section>
 </div>
