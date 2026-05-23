@@ -8,38 +8,80 @@ class ReciboService {
     if (response is List) {
       return response.map((item) => Map<String, dynamic>.from(item)).toList();
     }
+
     if (response is Map && response['data'] is List) {
-      return (response['data'] as List).map((item) => Map<String, dynamic>.from(item)).toList();
+      return (response['data'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
+
     if (response is Map && response['content'] is List) {
-      return (response['content'] as List).map((item) => Map<String, dynamic>.from(item)).toList();
+      return (response['content'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
+
     return [];
   }
 
+  Map<String, dynamic> _asMap(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      return response;
+    }
+
+    if (response is Map) {
+      return Map<String, dynamic>.from(response);
+    }
+
+    return {};
+  }
+
+  // =========================
+  // CLIENTE
+  // =========================
+
   Future<List<Map<String, dynamic>>> listarMisRecibos() async {
-    return _asList(await _api.get(ApiConfig.clienteRecibos));
+    final response = await _api.get(ApiConfig.clienteRecibos);
+    return _asList(response);
   }
 
   Future<Map<String, dynamic>?> obtenerMiReciboPorId(int idRecibo) async {
     final recibos = await listarMisRecibos();
+
     for (final recibo in recibos) {
-      final id = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
-      if (id.toString() == idRecibo.toString()) return recibo;
+      final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
+      final id = value is int ? value : int.tryParse(value.toString()) ?? 0;
+
+      if (id == idRecibo) {
+        return recibo;
+      }
     }
+
     return null;
   }
 
+  // =========================
+  // ADMIN
+  // =========================
+
   Future<List<Map<String, dynamic>>> listarRecibosAdmin() async {
-    return _asList(await _api.get(ApiConfig.recibos));
+    final response = await _api.get(ApiConfig.recibos);
+    return _asList(response);
   }
 
   Future<List<Map<String, dynamic>>> listarPendientesAdmin() async {
-    return _asList(await _api.get(ApiConfig.recibosPendientes));
+    final response = await _api.get(ApiConfig.recibosPendientes);
+    return _asList(response);
   }
 
-  Future<List<Map<String, dynamic>>> buscarPorSuministro(String codigoSuministro) async {
-    return _asList(await _api.get(ApiConfig.recibosPorSuministro(codigoSuministro)));
+  Future<List<Map<String, dynamic>>> buscarPorSuministroAdmin(
+    String codigoSuministro,
+  ) async {
+    final response = await _api.get(
+      ApiConfig.recibosPorSuministro(codigoSuministro),
+    );
+
+    return _asList(response);
   }
 
   Future<Map<String, dynamic>> pagarReciboAdmin({
@@ -47,12 +89,14 @@ class ReciboService {
     required String metodoPago,
     required String codigoOperacion,
   }) async {
-    final response = await _api.patch(ApiConfig.pagarReciboAdmin(idRecibo), {
-      'metodoPago': metodoPago,
-      'codigoOperacion': codigoOperacion,
-    });
-    if (response is Map<String, dynamic>) return response;
-    if (response is Map) return Map<String, dynamic>.from(response);
-    return {'mensaje': 'Pago registrado correctamente'};
+    final response = await _api.patch(
+      ApiConfig.pagarReciboAdmin(idRecibo),
+      {
+        'metodoPago': metodoPago,
+        'codigoOperacion': codigoOperacion,
+      },
+    );
+
+    return _asMap(response);
   }
 }

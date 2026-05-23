@@ -4,11 +4,13 @@ import 'features/auth/login_page.dart';
 import 'features/auth/change_password_page.dart';
 
 import 'features/home/home_page.dart';
+import 'features/perfil/perfil_page.dart';
+
 import 'features/recibos/recibos_page.dart';
 import 'features/recibos/recibo_detail_page.dart';
-import 'features/recibos/pdf_viewer_page.dart';
+import 'features/recibos/pdf_viewer_page.dart' as recibo_pdf_viewer;
+
 import 'features/pagos/pago_cip_page.dart';
-import 'features/perfil/perfil_page.dart';
 
 import 'features/admin/admin_dashboard_page.dart';
 import 'features/admin/admin_clientes_page.dart';
@@ -18,12 +20,10 @@ import 'features/admin/admin_reportes_page.dart';
 
 import 'features/lector/lector_home_page.dart';
 import 'features/lector/buscar_suministro_page.dart';
-import 'features/lector/registrar_lectura_page.dart';
-import 'features/lector/historial_lecturas_page.dart';
 import 'features/lector/detalle_suministro_page.dart';
+import 'features/lector/registrar_lectura_page.dart';
 import 'features/lector/comprobante_recibo_page.dart';
-
-import 'shared/theme/app_theme.dart';
+import 'features/lector/historial_lecturas_page.dart';
 
 class JassHuacarizApp extends StatelessWidget {
   const JassHuacarizApp({super.key});
@@ -33,36 +33,54 @@ class JassHuacarizApp extends StatelessWidget {
     return MaterialApp(
       title: 'JASS Huacariz',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'Roboto',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1DA1C2),
+          primary: const Color(0xFF0F3D57),
+          secondary: const Color(0xFF1DA1C2),
+        ),
+      ),
       initialRoute: '/login',
       routes: {
-        // LOGIN
-        '/login': (_) => LoginPage(),
+        // Auth
+        '/login': (_) => const LoginPage(),
+        '/cambiar-password': (_) => const ChangePasswordPage(),
 
-        // ADMINISTRADOR
-        '/admin-dashboard': (_) => AdminDashboardPage(),
-        '/admin-clientes': (_) => AdminClientesPage(),
-        '/admin-tarifas': (_) => AdminTarifasPage(),
-        '/admin-recibos': (_) => AdminRecibosPage(),
-        '/admin-reportes': (_) => AdminReportesPage(),
+        // Cliente
+        '/home': (_) => const HomePage(),
+        '/recibos': (_) => const RecibosPage(),
+        '/recibo-detalle': (_) => const ReciboDetailPage(),
+        '/pago-cip': (_) => const PagoCipPage(),
+        '/perfil': (_) => const PerfilPage(),
+        '/pdf-viewer': (_) => const recibo_pdf_viewer.ReciboPdfViewerPage(),
 
-        // LECTURADOR
-        '/lector-home': (_) => LectorHomePage(),
-        '/buscar-suministro': (_) => BuscarSuministroPage(),
-        '/detalle-suministro': (_) => DetalleSuministroPage(),
-        '/registrar-lectura': (_) => RegistrarLecturaPage(),
-        '/historial-lecturas': (_) => HistorialLecturasPage(),
-        '/comprobante-recibo': (_) => ComprobanteReciboPage(),
+        // Admin
+        '/admin-dashboard': (_) => const AdminDashboardPage(),
+        '/admin-clientes': (_) => const AdminClientesPage(),
+        '/admin-tarifas': (_) => const AdminTarifasPage(),
+        '/admin-recibos': (_) => const AdminRecibosPage(),
+        '/admin-reportes': (_) => const AdminReportesPage(),
 
-        // CLIENTE
-        '/home': (_) => HomePage(),
-        '/recibos': (_) => RecibosPage(),
-        '/recibo-detalle': (_) => ReciboDetailPage(),
-        '/pdf-viewer': (_) => PdfViewerPage(),
-        '/pago-cip': (_) => PagoCipPage(),
-        '/perfil': (_) => PerfilPage(),
-        '/cambiar-password': (_) => ChangePasswordPage(),
+        // Lecturador
+        '/lector-home': (_) => const LectorHomePage(),
+        '/buscar-suministro': (_) => const BuscarSuministroPage(),
+        '/detalle-suministro': (_) => const DetalleSuministroPage(),
+        '/registrar-lectura': (_) => const RegistrarLecturaPage(),
+        '/comprobante-recibo': (_) => const ComprobanteReciboPage(),
+        '/historial-lecturas': (_) => const HistorialLecturasPage(),
       },
     );
+  }
+}
+
+// Compatibilidad si tu main.dart todavía usa MyApp()
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const JassHuacarizApp();
   }
 }

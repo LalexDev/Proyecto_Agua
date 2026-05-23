@@ -44,34 +44,21 @@ class ClienteService {
   }
 
   Future<Map<String, dynamic>> registrarCliente(
-    Map<String, dynamic> data,
-  ) async {
-    final dni = (data['dni'] ?? '').toString().trim();
+  Map<String, dynamic> data,
+) async {
+  final payload = {
+    'dni': (data['dni'] ?? '').toString().trim(),
+    'nombres': (data['nombres'] ?? '').toString().trim(),
+    'apellidos': (data['apellidos'] ?? '').toString().trim(),
+    'telefono': (data['telefono'] ?? '').toString().trim(),
+    'correo': (data['correo'] ?? '').toString().trim(),
+    'estado': data['estado'] ?? true,
+    'suministros': data['suministros'] ?? [],
+  };
 
-    final payload = {
-      ...data,
-      'dni': dni,
-      'nombres': (data['nombres'] ?? '').toString().trim(),
-      'apellidos': (data['apellidos'] ?? '').toString().trim(),
-      'telefono': (data['telefono'] ?? '').toString().trim(),
-      'correo': (data['correo'] ?? '').toString().trim(),
-
-      // Regla del sistema:
-      // usuario = DNI
-      // contraseña inicial = DNI
-      // el backend debe encriptarla
-      'codigoUsuario': (data['codigoUsuario'] ?? dni).toString().trim(),
-      'password': (data['password'] ?? dni).toString().trim(),
-      'rol': data['rol'] ?? 'CLIENTE',
-      'estado': data['estado'] ?? true,
-
-      // Cliente con uno o varios suministros
-      'suministros': data['suministros'] ?? [],
-    };
-
-    final response = await _api.post(ApiConfig.clientes, payload);
-    return _asMap(response);
-  }
+  final response = await _api.post(ApiConfig.clientes, payload);
+  return _asMap(response);
+}
 
   Future<Map<String, dynamic>> obtenerClientePorId(int idCliente) async {
     final response = await _api.get(ApiConfig.clientePorId(idCliente));
@@ -93,7 +80,7 @@ class ClienteService {
     required bool estado,
   }) async {
     final response = await _api.patch(
-      '${ApiConfig.clientePorId(idCliente)}/estado?estado=$estado',
+      ApiConfig.cambiarEstadoCliente(idCliente, estado),
       {},
     );
 
@@ -106,7 +93,11 @@ class ClienteService {
     required bool estado,
   }) async {
     final response = await _api.patch(
-      '${ApiConfig.suministrosPorCliente(idCliente)}/$idSuministro/estado?estado=$estado',
+      ApiConfig.cambiarEstadoSuministro(
+        idCliente: idCliente,
+        idSuministro: idSuministro,
+        estado: estado,
+      ),
       {},
     );
 

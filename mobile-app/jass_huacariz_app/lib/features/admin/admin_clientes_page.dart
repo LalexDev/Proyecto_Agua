@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../core/services/cliente_service.dart';
+import '../../core/services/sector_service.dart';
 
 class AdminClientesPage extends StatefulWidget {
   const AdminClientesPage({super.key});
@@ -14,9 +16,12 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
   static const Color background = Color(0xFFEFF7FB);
   static const Color muted = Color(0xFF7B8794);
 
-  final ClienteService service = ClienteService();
+  final ClienteService clienteService = ClienteService();
+  final SectorService sectorService = SectorService();
 
   List<Map<String, dynamic>> clientes = [];
+  List<Map<String, dynamic>> sectores = [];
+
   bool cargando = false;
   String error = '';
   String busqueda = '';
@@ -24,7 +29,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
   @override
   void initState() {
     super.initState();
-    cargar();
+    cargarDatos();
   }
 
   String _txt(dynamic value, [String fallback = '-']) {
@@ -34,33 +39,39 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     return text;
   }
 
+  int _idCliente(Map<String, dynamic> cliente) {
+    final value = cliente['id'] ?? cliente['idCliente'];
+    if (value is int) return value;
+    return int.tryParse(value.toString()) ?? 0;
+  }
 
-  bool _activo(Map<String, dynamic> cliente) {
+  String _nombreCliente(Map<String, dynamic> cliente) {
+    final nombres = _txt(cliente['nombres'], '');
+    final apellidos = _txt(cliente['apellidos'], '');
+    final nombreCompleto = '$nombres $apellidos'.trim();
+
+    return nombreCompleto.isEmpty ? 'Sin nombre' : nombreCompleto;
+  }
+
+  bool _estadoCliente(Map<String, dynamic> cliente) {
     final value = cliente['estado'];
     if (value is bool) return value;
     return value.toString().toLowerCase() == 'true';
   }
 
-  String _nombre(Map<String, dynamic> cliente) {
-    final nombres = _txt(cliente['nombres'], '');
-    final apellidos = _txt(cliente['apellidos'], '');
-    final completo = '$nombres $apellidos'.trim();
-    return completo.isEmpty ? 'Sin nombre' : completo;
-  }
-
-  List<Map<String, dynamic>> get filtrados {
-    final query = busqueda.toLowerCase().trim();
+  List<Map<String, dynamic>> get clientesFiltrados {
+    final query = busqueda.trim().toLowerCase();
 
     if (query.isEmpty) return clientes;
 
     return clientes.where((cliente) {
       final texto = '''
-        ${_nombre(cliente)}
-        ${cliente['dni']}
-        ${cliente['codigoUsuario']}
-        ${cliente['telefono']}
-        ${cliente['correo']}
-        ${cliente['suministros']}
+      ${_nombreCliente(cliente)}
+      ${cliente['dni']}
+      ${cliente['codigoUsuario']}
+      ${cliente['telefono']}
+      ${cliente['correo']}
+      ${cliente['suministros']}
       '''
           .toLowerCase();
 
@@ -68,19 +79,21 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     }).toList();
   }
 
-  Future<void> cargar() async {
+  Future<void> cargarDatos() async {
     setState(() {
       cargando = true;
       error = '';
     });
 
     try {
-      final data = await service.listarClientes();
+      final clientesData = await clienteService.listarClientes();
+      final sectoresData = await sectorService.listarSectores();
 
       if (!mounted) return;
 
       setState(() {
-        clientes = data;
+        clientes = clientesData;
+        sectores = sectoresData;
         cargando = false;
       });
     } catch (e) {
@@ -93,65 +106,30 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     }
   }
 
-  void _go(int index) {
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+  Future<void> _abrirDetalleCliente(Map<String, dynamic> cliente) async {
+    final idCliente = _idCliente(cliente);
+
+    List<Map<String, dynamic>> suministros = [];
+
+    if (cliente['suministros'] is List) {
+      suministros = (cliente['suministros'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
 
-    if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/admin-tarifas');
+    if (suministros.isEmpty && idCliente > 0) {
+      try {
+        suministros =
+            await clienteService.listarSuministrosPorCliente(idCliente);
+      } catch (_) {}
     }
 
-    if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/admin-recibos');
-    }
-
-    if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/admin-reportes');
-    }
-  }
-
-  void _abrirFormularioCliente() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
-      ),
-      builder: (_) {
-        return _RegistrarClienteSheet(
-          onGuardar: (payload) async {
-            await service.registrarCliente(payload);
-
-            if (!mounted) return;
-
-            Navigator.pop(context);
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Cliente registrado correctamente.'),
-                backgroundColor: Color(0xFF1F8F4D),
-              ),
-            );
-
-            await cargar();
-          },
-        );
-      },
-    );
-  }
-
-  void _mostrarDetalle(Map<String, dynamic> cliente) {
-    final suministros =
-        (cliente['suministros'] is List) ? cliente['suministros'] as List : [];
+    if (!mounted) return;
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(28),
@@ -162,21 +140,21 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
           expand: false,
           initialChildSize: 0.72,
           minChildSize: 0.45,
-          maxChildSize: 0.92,
+          maxChildSize: 0.94,
           builder: (_, controller) {
             return ListView(
               controller: controller,
               padding: const EdgeInsets.all(22),
               children: [
                 Text(
-                  _nombre(cliente),
+                  _nombreCliente(cliente),
                   style: const TextStyle(
                     color: primary,
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 _DetalleLine(label: 'DNI', value: _txt(cliente['dni'])),
                 _DetalleLine(
                   label: 'Usuario',
@@ -190,16 +168,20 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                   label: 'Correo',
                   value: _txt(cliente['correo']),
                 ),
-                const Divider(height: 30),
+                _DetalleLine(
+                  label: 'Estado',
+                  value: _estadoCliente(cliente) ? 'Activo' : 'Inactivo',
+                ),
+                const Divider(height: 32),
                 const Text(
                   'Suministros',
                   style: TextStyle(
                     color: primary,
-                    fontSize: 18,
+                    fontSize: 19,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 if (suministros.isEmpty)
                   const Text(
                     'Este cliente no tiene suministros registrados.',
@@ -209,11 +191,10 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                     ),
                   )
                 else
-                  ...suministros.map((item) {
-                    final suministro = Map<String, dynamic>.from(item as Map);
-
+                  ...suministros.map((suministro) {
                     final activo = suministro['estado'] == true ||
-                        suministro['estado'].toString().toLowerCase() == 'true';
+                        suministro['estado'].toString().toLowerCase() ==
+                            'true';
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -274,6 +255,58 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     );
   }
 
+  void _abrirFormularioCliente() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+      ),
+      builder: (_) {
+        return _RegistrarClienteSheet(
+          sectores: sectores,
+          onGuardar: (payload) async {
+            await clienteService.registrarCliente(payload);
+
+            if (!mounted) return;
+
+            Navigator.pop(context);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Cliente registrado correctamente.'),
+                backgroundColor: Color(0xFF1F8F4D),
+              ),
+            );
+
+            await cargarDatos();
+          },
+        );
+      },
+    );
+  }
+
+  void _go(int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+    }
+
+    if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/admin-tarifas');
+    }
+
+    if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/admin-recibos');
+    }
+
+    if (index == 4) {
+      Navigator.pushReplacementNamed(context, '/admin-reportes');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -290,7 +323,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: cargar,
+          onRefresh: cargarDatos,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(22),
@@ -304,39 +337,39 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                 if (cargando)
                   const Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
+                      padding: EdgeInsets.all(28),
                       child: CircularProgressIndicator(),
                     ),
                   ),
                 if (error.isNotEmpty && !cargando)
                   _Error(
                     error: error,
-                    onRetry: cargar,
+                    onRetry: cargarDatos,
                   ),
-                if (!cargando && error.isEmpty && filtrados.isEmpty)
+                if (!cargando && error.isEmpty && clientesFiltrados.isEmpty)
                   const Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
+                      padding: EdgeInsets.all(28),
                       child: Text('No hay clientes para mostrar.'),
                     ),
                   ),
                 if (!cargando && error.isEmpty)
-                  ...filtrados.map((cliente) {
+                  ...clientesFiltrados.map((cliente) {
                     final suministros = cliente['suministros'];
 
                     return _ClienteCard(
-                      nombre: _nombre(cliente),
+                      nombre: _nombreCliente(cliente),
                       dni: _txt(cliente['dni']),
                       codigo: _txt(cliente['codigoUsuario']),
                       telefono: _txt(cliente['telefono']),
                       correo: _txt(cliente['correo']),
-                      activo: _activo(cliente),
-                      suministros:
-                          (suministros is List) ? suministros.length : 0,
-                      onDetalle: () => _mostrarDetalle(cliente),
+                      activo: _estadoCliente(cliente),
+                      cantidadSuministros:
+                          suministros is List ? suministros.length : 0,
+                      onDetalle: () => _abrirDetalleCliente(cliente),
                     );
                   }),
-                const SizedBox(height: 80),
+                const SizedBox(height: 90),
               ],
             ),
           ),
@@ -372,7 +405,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
           ),
         ),
         IconButton(
-          onPressed: cargar,
+          onPressed: cargarDatos,
           icon: const Icon(
             Icons.refresh_rounded,
             color: primary,
@@ -410,7 +443,7 @@ class _ClienteCard extends StatelessWidget {
   final String telefono;
   final String correo;
   final bool activo;
-  final int suministros;
+  final int cantidadSuministros;
   final VoidCallback onDetalle;
 
   const _ClienteCard({
@@ -420,7 +453,7 @@ class _ClienteCard extends StatelessWidget {
     required this.telefono,
     required this.correo,
     required this.activo,
-    required this.suministros,
+    required this.cantidadSuministros,
     required this.onDetalle,
   });
 
@@ -457,11 +490,11 @@ class _ClienteCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  nombre.isEmpty ? 'Sin nombre' : nombre,
+                  nombre,
                   style: const TextStyle(
                     color: primary,
-                    fontWeight: FontWeight.w900,
                     fontSize: 17,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
@@ -476,7 +509,7 @@ class _ClienteCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             'Tel: $telefono · $correo',
             style: const TextStyle(
@@ -484,9 +517,9 @@ class _ClienteCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           Text(
-            'Suministros: $suministros',
+            'Suministros: $cantidadSuministros',
             style: const TextStyle(
               color: primary,
               fontWeight: FontWeight.w800,
@@ -508,7 +541,7 @@ class _ClienteCard extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: primary,
                 side: const BorderSide(
-                  color: Color(0xFF0F3D57),
+                  color: primary,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -522,80 +555,12 @@ class _ClienteCard extends StatelessWidget {
   }
 }
 
-class _EstadoChip extends StatelessWidget {
-  final bool activo;
-
-  const _EstadoChip({
-    required this.activo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: activo ? const Color(0xFFEAF8EF) : const Color(0xFFFFECEC),
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Text(
-        activo ? 'Activo' : 'Inactivo',
-        style: TextStyle(
-          color: activo ? const Color(0xFF1F8F4D) : const Color(0xFFD93025),
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
-  }
-}
-
-class _DetalleLine extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DetalleLine({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: muted,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: primary,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _RegistrarClienteSheet extends StatefulWidget {
+  final List<Map<String, dynamic>> sectores;
   final Future<void> Function(Map<String, dynamic> payload) onGuardar;
 
   const _RegistrarClienteSheet({
+    required this.sectores,
     required this.onGuardar,
   });
 
@@ -614,15 +579,24 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
   final telefonoController = TextEditingController();
   final correoController = TextEditingController();
 
-  final idSectorController = TextEditingController(text: '1');
   final direccionController = TextEditingController();
   final referenciaController = TextEditingController();
   final aliasController = TextEditingController();
   final lecturaInicialController = TextEditingController(text: '0');
 
+  int? idSectorSeleccionado;
   final List<Map<String, dynamic>> suministros = [];
 
   bool guardando = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.sectores.isNotEmpty) {
+      idSectorSeleccionado = _idSector(widget.sectores.first);
+    }
+  }
 
   @override
   void dispose() {
@@ -631,12 +605,25 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
     apellidosController.dispose();
     telefonoController.dispose();
     correoController.dispose();
-    idSectorController.dispose();
     direccionController.dispose();
     referenciaController.dispose();
     aliasController.dispose();
     lecturaInicialController.dispose();
     super.dispose();
+  }
+
+  int _idSector(Map<String, dynamic> sector) {
+    final value = sector['id'] ?? sector['idSector'];
+    if (value is int) return value;
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  String _nombreSector(Map<String, dynamic> sector) {
+    final value =
+        sector['nombreSector'] ?? sector['nombre'] ?? sector['descripcion'];
+
+    if (value == null) return 'Sector';
+    return value.toString();
   }
 
   void _mensaje(String mensaje, bool esError) {
@@ -650,12 +637,16 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
   }
 
   void agregarSuministro() {
-    final idSector = int.tryParse(idSectorController.text.trim()) ?? 1;
     final direccion = direccionController.text.trim();
     final referencia = referenciaController.text.trim();
     final alias = aliasController.text.trim();
     final lectura =
         double.tryParse(lecturaInicialController.text.trim()) ?? 0;
+
+    if (idSectorSeleccionado == null || idSectorSeleccionado == 0) {
+      _mensaje('Selecciona un sector.', true);
+      return;
+    }
 
     if (direccion.isEmpty || alias.isEmpty) {
       _mensaje('Completa dirección y alias del suministro.', true);
@@ -664,11 +655,12 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
 
     setState(() {
       suministros.add({
-        'idSector': idSector,
+        'idSector': idSectorSeleccionado,
         'direccionSuministro': direccion,
         'referencia': referencia,
         'aliasSuministro': alias,
         'lecturaInicial': lectura,
+        'estado': true,
       });
 
       direccionController.clear();
@@ -678,7 +670,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
     });
   }
 
-  Future<void> guardar() async {
+  Future<void> guardarCliente() async {
     final dni = dniController.text.trim();
     final nombres = nombresController.text.trim();
     final apellidos = apellidosController.text.trim();
@@ -701,9 +693,6 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
       'apellidos': apellidos,
       'telefono': telefono,
       'correo': correo,
-      'codigoUsuario': dni,
-      'password': dni,
-      'rol': 'CLIENTE',
       'estado': true,
       'suministros': suministros,
     };
@@ -743,13 +732,13 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
               'Registrar cliente',
               style: TextStyle(
                 color: primary,
-                fontSize: 22,
+                fontSize: 23,
                 fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 6),
             const Text(
-              'El usuario y la contraseña inicial serán el DNI.',
+              'Registra los datos del cliente y uno o más suministros.',
               style: TextStyle(
                 color: muted,
                 fontWeight: FontWeight.w700,
@@ -758,7 +747,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
             const SizedBox(height: 18),
             _Input(
               controller: dniController,
-              label: 'DNI / Código usuario',
+              label: 'DNI',
               keyboardType: TextInputType.number,
             ),
             _Input(
@@ -779,22 +768,26 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
               label: 'Correo',
               keyboardType: TextInputType.emailAddress,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             const Divider(),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             const Text(
               'Suministros',
               style: TextStyle(
                 color: primary,
-                fontSize: 18,
+                fontSize: 19,
                 fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 12),
-            _Input(
-              controller: idSectorController,
-              label: 'ID Sector',
-              keyboardType: TextInputType.number,
+            _SectorDropdown(
+              sectores: widget.sectores,
+              value: idSectorSeleccionado,
+              onChanged: (value) {
+                setState(() {
+                  idSectorSeleccionado = value;
+                });
+              },
             ),
             _Input(
               controller: direccionController,
@@ -870,7 +863,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: guardando ? null : guardar,
+                onPressed: guardando ? null : guardarCliente,
                 icon: guardando
                     ? const SizedBox(
                         width: 18,
@@ -904,6 +897,80 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
   }
 }
 
+class _SectorDropdown extends StatelessWidget {
+  final List<Map<String, dynamic>> sectores;
+  final int? value;
+  final ValueChanged<int?> onChanged;
+
+  const _SectorDropdown({
+    required this.sectores,
+    required this.value,
+    required this.onChanged,
+  });
+
+  int _idSector(Map<String, dynamic> sector) {
+    final value = sector['id'] ?? sector['idSector'];
+    if (value is int) return value;
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  String _nombreSector(Map<String, dynamic> sector) {
+    final value =
+        sector['nombreSector'] ?? sector['nombre'] ?? sector['descripcion'];
+
+    if (value == null) return 'Sector';
+    return value.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (sectores.isEmpty) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3DF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFFFFD899),
+          ),
+        ),
+        child: const Text(
+          'No hay sectores cargados. Verifica el endpoint /sectores.',
+          style: TextStyle(
+            color: Color(0xFFC77700),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<int>(
+        value: value,
+        decoration: InputDecoration(
+          labelText: 'Sector',
+          filled: true,
+          fillColor: const Color(0xFFF4F8FB),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        items: sectores.map((sector) {
+          return DropdownMenuItem<int>(
+            value: _idSector(sector),
+            child: Text(_nombreSector(sector)),
+          );
+        }).toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
 class _Input extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -931,6 +998,76 @@ class _Input extends StatelessWidget {
             borderSide: BorderSide.none,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _EstadoChip extends StatelessWidget {
+  final bool activo;
+
+  const _EstadoChip({
+    required this.activo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: activo ? const Color(0xFFEAF8EF) : const Color(0xFFFFECEC),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Text(
+        activo ? 'Activo' : 'Inactivo',
+        style: TextStyle(
+          color: activo ? const Color(0xFF1F8F4D) : const Color(0xFFD93025),
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _DetalleLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetalleLine({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFF0F3D57);
+    const Color muted = Color(0xFF7B8794);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: muted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: primary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }

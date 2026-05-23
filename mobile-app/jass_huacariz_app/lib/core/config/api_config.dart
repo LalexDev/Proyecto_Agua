@@ -1,11 +1,11 @@
 class ApiConfig {
-  // Emulador Android hacia backend local
+  // Android Emulator hacia backend local
   static const String baseUrl = 'http://10.0.2.2:8080/api';
 
-  // Auth
+  // AUTH
   static const String login = '/auth/login';
 
-  // Portal cliente
+  // CLIENTE PORTAL
   static const String clientePerfil = '/cliente/me';
   static const String clienteSuministros = '/cliente/me/suministros';
   static const String clienteRecibos = '/cliente/me/recibos';
@@ -15,7 +15,7 @@ class ApiConfig {
     return '/cliente/me/recibos/$idRecibo/pagar';
   }
 
-  // Admin clientes
+  // ADMIN CLIENTES
   static const String clientes = '/clientes';
 
   static String clientePorId(int idCliente) {
@@ -26,7 +26,19 @@ class ApiConfig {
     return '/clientes/$idCliente/suministros';
   }
 
-  // Recibos admin
+  static String cambiarEstadoCliente(int idCliente, bool estado) {
+    return '/clientes/$idCliente/estado?estado=$estado';
+  }
+
+  static String cambiarEstadoSuministro({
+    required int idCliente,
+    required int idSuministro,
+    required bool estado,
+  }) {
+    return '/clientes/$idCliente/suministros/$idSuministro/estado?estado=$estado';
+  }
+
+  // ADMIN RECIBOS
   static const String recibos = '/recibos';
   static const String recibosPendientes = '/recibos/pendientes';
 
@@ -38,22 +50,34 @@ class ApiConfig {
     return '/recibos/$idRecibo/pagar';
   }
 
-  // Pagos
+  // PAGOS
   static const String pagos = '/pagos';
 
   static String pagosPorSuministro(String codigoSuministro) {
     return '/pagos/suministro/$codigoSuministro';
   }
 
-  // Tarifas y sectores
+  // TARIFAS
   static const String tarifas = '/tarifas';
+
+  static String tarifaPorId(int idTarifa) {
+    return '/tarifas/$idTarifa';
+  }
+
+  static String cambiarEstadoTarifa(int idTarifa, bool estado) {
+    return '/tarifas/$idTarifa/estado?estado=$estado';
+  }
+
+  // SECTORES
   static const String sectores = '/sectores';
 
-  // Lecturador
+  // LECTURADOR
   static String buscarSuministroLecturador(String codigoSuministro) {
     return '/lecturador/suministros/$codigoSuministro';
   }
 
   static const String registrarLectura = '/lecturas';
+
+  // ADMIN HISTORIAL LECTURAS
   static const String historialLecturasAdmin = '/admin/lecturas/historial';
 }

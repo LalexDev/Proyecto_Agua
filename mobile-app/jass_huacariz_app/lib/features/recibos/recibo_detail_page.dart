@@ -340,12 +340,10 @@ class ReciboDetailPage extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'La descarga PDF se conectará luego al generador del backend.',
-                              ),
-                            ),
+                          Navigator.pushNamed(
+                            context,
+                            '/pdf-viewer',
+                            arguments: recibo,
                           );
                         },
                         icon: const Icon(Icons.picture_as_pdf_rounded),

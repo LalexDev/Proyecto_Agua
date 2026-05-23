@@ -1,4 +1,175 @@
-import 'package:flutter/material.dart';
+import 'dart:typed_data';
 
-class PdfViewerPage extends StatelessWidget{const PdfViewerPage({super.key}); static const Color primary=Color(0xFF0F3D57), secondary=Color(0xFF1DA1C2), background=Color(0xFFEFF7FB), muted=Color(0xFF7B8794); String _txt(dynamic v,[String f='-']){if(v==null)return f;final s=v.toString().trim();return s.isEmpty||s=='null'?f:s;} double _num(dynamic v)=>v is num?v.toDouble():double.tryParse('$v')??0; Map<String,dynamic> _args(BuildContext c){final a=ModalRoute.of(c)?.settings.arguments;return a is Map<String,dynamic>?a:{};} String _periodo(Map<String,dynamic> r){const m=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']; final mes=int.tryParse('${r['mes']??1}')??1; return '${m[(mes-1).clamp(0,11)]} ${r['anio']??''}'.trim();} @override Widget build(BuildContext context){final r=_args(context);return Scaffold(backgroundColor:background,appBar:AppBar(title:const Text('Recibo'),backgroundColor:background),body:SingleChildScrollView(padding:const EdgeInsets.all(18),child:Container(width:double.infinity,padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:Colors.white,border:Border.all(color:secondary,width:2),borderRadius:BorderRadius.circular(14)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('JASS HUACARIZ',style:TextStyle(color:primary,fontSize:24,fontWeight:FontWeight.w900)),const Text('Servicio de Agua Potable'),const Divider(height:28),_Row('Recibo',_txt(r['codigoRecibo'])),_Row('Suministro',_txt(r['codigoSuministro'])),_Row('Dirección',_txt(r['direccionSuministro'])),_Row('Periodo',_periodo(r)),_Row('Consumo','${_num(r['consumoM3']).toStringAsFixed(2)} m³'),_Row('Subtotal agua','S/ ${_num(r['subtotalAgua']).toStringAsFixed(2)}'),_Row('Mantenimiento','S/ ${_num(r['cargoMantenimiento']).toStringAsFixed(2)}'),_Row('Pago lector','S/ ${_num(r['cargoLector']).toStringAsFixed(2)}'),_Row('Mora','S/ ${_num(r['mora']).toStringAsFixed(2)}'),const Divider(height:28),Row(children:[const Expanded(child:Text('TOTAL A PAGAR',style:TextStyle(color:primary,fontWeight:FontWeight.w900,fontSize:18))),Text('S/ ${_num(r['total']).toStringAsFixed(2)}',style:const TextStyle(color:primary,fontWeight:FontWeight.w900,fontSize:26))]),const SizedBox(height:18),Container(height:54,decoration:BoxDecoration(border:Border.all(color:primary)),child:const Center(child:Text('Código de barras / QR del recibo',style:TextStyle(fontWeight:FontWeight.w800))))]))));}}
-class _Row extends StatelessWidget{final String l,v;const _Row(this.l,this.v);@override Widget build(BuildContext c)=>Padding(padding:const EdgeInsets.symmetric(vertical:7),child:Row(children:[Expanded(child:Text(l,style:const TextStyle(color:Color(0xFF7B8794),fontWeight:FontWeight.w800))),Flexible(child:Text(v,textAlign:TextAlign.right,style:const TextStyle(color:Color(0xFF0F3D57),fontWeight:FontWeight.w900)))]));}
+import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
+
+import '../../core/services/recibo_pdf_service.dart';
+
+class ReciboPdfViewerPage extends StatefulWidget {
+  const ReciboPdfViewerPage({super.key});
+
+  @override
+  State<ReciboPdfViewerPage> createState() => _ReciboPdfViewerPageState();
+}
+
+class _ReciboPdfViewerPageState extends State<ReciboPdfViewerPage> {
+  static const Color primary = Color(0xFF0F3D57);
+  static const Color secondary = Color(0xFF1DA1C2);
+
+  Map<String, dynamic> recibo = {};
+  Uint8List? pdfBytes;
+
+  bool cargando = true;
+  bool generado = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (generado) return;
+    generado = true;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    if (args is Map<String, dynamic>) {
+      recibo = args;
+    } else if (args is Map) {
+      recibo = Map<String, dynamic>.from(args);
+    } else {
+      recibo = {};
+    }
+
+    _generarPdf();
+  }
+
+  String _codigoRecibo() {
+    final value =
+        recibo['codigoRecibo'] ?? recibo['numeroRecibo'] ?? recibo['codigo'];
+
+    final text = value?.toString().trim() ?? 'recibo';
+
+    if (text.isEmpty) return 'recibo';
+
+    return text.replaceAll('/', '-').replaceAll(' ', '_');
+  }
+
+  Future<void> _generarPdf() async {
+    try {
+      final bytes = await ReciboPdfService.generar(recibo);
+
+      if (!mounted) return;
+
+      setState(() {
+        pdfBytes = bytes;
+        cargando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        cargando = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al generar PDF: $e'),
+          backgroundColor: const Color(0xFFD93025),
+        ),
+      );
+    }
+  }
+
+  Future<void> _compartirPdf() async {
+    if (pdfBytes == null) return;
+
+    await Printing.sharePdf(
+      bytes: pdfBytes!,
+      filename: '${_codigoRecibo()}.pdf',
+    );
+  }
+
+  Future<void> _imprimirPdf() async {
+    if (pdfBytes == null) return;
+
+    await Printing.layoutPdf(
+      name: '${_codigoRecibo()}.pdf',
+      onLayout: (_) async => pdfBytes!,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFEFF7FB),
+      appBar: AppBar(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        title: const Text('Recibo PDF'),
+        actions: [
+          IconButton(
+            onPressed: cargando ? null : _imprimirPdf,
+            icon: const Icon(Icons.print_rounded),
+            tooltip: 'Imprimir',
+          ),
+          IconButton(
+            onPressed: cargando ? null : _compartirPdf,
+            icon: const Icon(Icons.share_rounded),
+            tooltip: 'Compartir / Guardar',
+          ),
+        ],
+      ),
+      body: cargando
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : pdfBytes == null
+              ? const Center(
+                  child: Text('No se pudo generar el PDF.'),
+                )
+              : Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      color: Colors.white,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _compartirPdf,
+                              icon: const Icon(Icons.download_rounded),
+                              label: const Text('Descargar / Compartir'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: secondary,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _imprimirPdf,
+                              icon: const Icon(Icons.print_rounded),
+                              label: const Text('Imprimir'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: PdfPreview(
+                        canChangeOrientation: false,
+                        canChangePageFormat: false,
+                        canDebug: false,
+                        pdfFileName: '${_codigoRecibo()}.pdf',
+                        build: (_) async => pdfBytes!,
+                      ),
+                    ),
+                  ],
+                ),
+    );
+  }
+}

@@ -6,43 +6,94 @@ class TarifaService {
 
   List<Map<String, dynamic>> _asList(dynamic response) {
     if (response is List) {
-      return response.map((item) => Map<String, dynamic>.from(item)).toList();
+      return response
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
+
     if (response is Map && response['data'] is List) {
-      return (response['data'] as List).map((item) => Map<String, dynamic>.from(item)).toList();
+      return (response['data'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
+
     if (response is Map && response['content'] is List) {
-      return (response['content'] as List).map((item) => Map<String, dynamic>.from(item)).toList();
+      return (response['content'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
+
     return [];
   }
 
+  Map<String, dynamic> _asMap(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      return response;
+    }
+
+    if (response is Map) {
+      return Map<String, dynamic>.from(response);
+    }
+
+    return {};
+  }
+
   Future<List<Map<String, dynamic>>> listarTarifas() async {
-    return _asList(await _api.get(ApiConfig.tarifas));
+    final response = await _api.get(ApiConfig.tarifas);
+    return _asList(response);
   }
 
-  Future<Map<String, dynamic>> registrarTarifa(Map<String, dynamic> data) async {
-    final response = await _api.post(ApiConfig.tarifas, data);
-    if (response is Map<String, dynamic>) return response;
-    if (response is Map) return Map<String, dynamic>.from(response);
-    return {};
+  Future<Map<String, dynamic>> registrarTarifa(
+    Map<String, dynamic> data,
+  ) async {
+    final payload = {
+      'nombreTarifa': (data['nombreTarifa'] ?? '').toString().trim(),
+      'consumoDesde': data['consumoDesde'],
+      'consumoHasta': data['consumoHasta'],
+      'precioM3': data['precioM3'],
+      'estado': data['estado'] ?? true,
+    };
+
+    final response = await _api.post(ApiConfig.tarifas, payload);
+    return _asMap(response);
   }
 
-  Future<Map<String, dynamic>> actualizarTarifa(int id, Map<String, dynamic> data) async {
-    final response = await _api.put('${ApiConfig.tarifas}/$id', data);
-    if (response is Map<String, dynamic>) return response;
-    if (response is Map) return Map<String, dynamic>.from(response);
-    return {};
+  Future<Map<String, dynamic>> actualizarTarifa({
+    required int idTarifa,
+    required Map<String, dynamic> data,
+  }) async {
+    final payload = {
+      'nombreTarifa': (data['nombreTarifa'] ?? '').toString().trim(),
+      'consumoDesde': data['consumoDesde'],
+      'consumoHasta': data['consumoHasta'],
+      'precioM3': data['precioM3'],
+      'estado': data['estado'] ?? true,
+    };
+
+    try {
+      final response = await _api.put(
+        ApiConfig.tarifaPorId(idTarifa),
+        payload,
+      );
+      return _asMap(response);
+    } catch (_) {
+      final response = await _api.patch(
+        ApiConfig.tarifaPorId(idTarifa),
+        payload,
+      );
+      return _asMap(response);
+    }
   }
 
-  Future<Map<String, dynamic>> cambiarEstadoTarifa({required int id, required bool estado}) async {
-    final response = await _api.patch('${ApiConfig.tarifas}/$id/estado?estado=$estado', {});
-    if (response is Map<String, dynamic>) return response;
-    if (response is Map) return Map<String, dynamic>.from(response);
-    return {};
-  }
+  Future<Map<String, dynamic>> cambiarEstadoTarifa({
+    required int idTarifa,
+    required bool estado,
+  }) async {
+    final response = await _api.patch(
+      ApiConfig.cambiarEstadoTarifa(idTarifa, estado),
+      {},
+    );
 
-  Future<void> eliminarTarifa(int id) async {
-    await _api.delete('${ApiConfig.tarifas}/$id');
+    return _asMap(response);
   }
 }

@@ -6,15 +6,51 @@ class PagoService {
 
   List<Map<String, dynamic>> _asList(dynamic response) {
     if (response is List) {
-      return response.map((item) => Map<String, dynamic>.from(item)).toList();
+      return response
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
+
     if (response is Map && response['data'] is List) {
-      return (response['data'] as List).map((item) => Map<String, dynamic>.from(item)).toList();
+      return (response['data'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
+
     if (response is Map && response['content'] is List) {
-      return (response['content'] as List).map((item) => Map<String, dynamic>.from(item)).toList();
+      return (response['content'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
     }
+
     return [];
+  }
+
+  Map<String, dynamic> _asMap(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      return response;
+    }
+
+    if (response is Map) {
+      return Map<String, dynamic>.from(response);
+    }
+
+    return {};
+  }
+
+  Future<List<Map<String, dynamic>>> listarPagos() async {
+    final response = await _api.get(ApiConfig.pagos);
+    return _asList(response);
+  }
+
+  Future<List<Map<String, dynamic>>> buscarPagosPorSuministro(
+    String codigoSuministro,
+  ) async {
+    final response = await _api.get(
+      ApiConfig.pagosPorSuministro(codigoSuministro),
+    );
+
+    return _asList(response);
   }
 
   Future<Map<String, dynamic>> pagarMiRecibo({
@@ -22,20 +58,30 @@ class PagoService {
     required String metodoPago,
     required String codigoOperacion,
   }) async {
-    final response = await _api.patch(ApiConfig.pagarReciboCliente(idRecibo), {
-      'metodoPago': metodoPago,
-      'codigoOperacion': codigoOperacion,
-    });
-    if (response is Map<String, dynamic>) return response;
-    if (response is Map) return Map<String, dynamic>.from(response);
-    return {'mensaje': 'Pago registrado correctamente'};
+    final response = await _api.patch(
+      ApiConfig.pagarReciboCliente(idRecibo),
+      {
+        'metodoPago': metodoPago,
+        'codigoOperacion': codigoOperacion,
+      },
+    );
+
+    return _asMap(response);
   }
 
-  Future<List<Map<String, dynamic>>> listarPagos() async {
-    return _asList(await _api.get(ApiConfig.pagos));
-  }
+  Future<Map<String, dynamic>> pagarReciboAdmin({
+    required int idRecibo,
+    required String metodoPago,
+    required String codigoOperacion,
+  }) async {
+    final response = await _api.patch(
+      ApiConfig.pagarReciboAdmin(idRecibo),
+      {
+        'metodoPago': metodoPago,
+        'codigoOperacion': codigoOperacion,
+      },
+    );
 
-  Future<List<Map<String, dynamic>>> buscarPorSuministro(String codigoSuministro) async {
-    return _asList(await _api.get(ApiConfig.pagosPorSuministro(codigoSuministro)));
+    return _asMap(response);
   }
 }
