@@ -8,37 +8,39 @@ class LectorHomePage extends StatelessWidget {
   static const Color background = Color(0xFFEFF7FB);
   static const Color muted = Color(0xFF7B8794);
 
+  void _irBuscar(BuildContext context) {
+    Navigator.pushNamed(context, '/buscar-suministro');
+  }
+
+  void _irHistorial(BuildContext context) {
+    Navigator.pushNamed(context, '/historial-lecturas');
+  }
+
+  void _cerrarSesion(BuildContext context) {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
-      bottomNavigationBar: _LectorBottomNav(
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 1) {
-            Navigator.pushNamed(context, '/buscar-suministro');
-          }
-
-          if (index == 2) {
-            Navigator.pushNamed(context, '/registrar-lectura');
-          }
-
-          if (index == 3) {
-            Navigator.pushNamed(context, '/historial-lecturas');
-          }
-        },
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
+          padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTopBar(context),
-              const SizedBox(height: 20),
-              _buildHeroCard(),
+              _buildHeader(context),
+              const SizedBox(height: 22),
+              _buildMainCard(context),
               const SizedBox(height: 18),
-              _buildActionGrid(context),
+              _buildAccessGrid(context),
+              const SizedBox(height: 22),
+              _buildInfoCard(),
             ],
           ),
         ),
@@ -46,7 +48,7 @@ class LectorHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBar(BuildContext context) {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
         const Expanded(
@@ -54,19 +56,19 @@ class LectorHomePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Panel principal del lecturador',
+                'Bienvenido',
                 style: TextStyle(
                   color: muted,
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               SizedBox(height: 4),
               Text(
-                'Bienvenido, Lecturador',
+                'Panel lecturador',
                 style: TextStyle(
                   color: primary,
-                  fontSize: 22,
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -79,26 +81,12 @@ class LectorHomePage extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: primary.withOpacity(0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
           child: IconButton(
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
-            },
+            onPressed: () => _cerrarSesion(context),
             icon: const Icon(
               Icons.logout_rounded,
               color: primary,
-              size: 22,
             ),
           ),
         ),
@@ -106,128 +94,155 @@ class LectorHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroCard() {
+  Widget _buildMainCard(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            Color(0xFF0F7EA3),
-            Color(0xFF10B5CC),
+            Color(0xFF0F3D57),
+            Color(0xFF1DA1C2),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: secondary.withOpacity(0.22),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned(
-            right: -4,
-            top: 10,
+          const CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.white24,
             child: Icon(
-              Icons.grid_view_rounded,
-              size: 82,
-              color: Colors.white.withOpacity(0.12),
+              Icons.speed_rounded,
+              color: Colors.white,
+              size: 34,
             ),
           ),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'ID Lecturador: LEC001',
+          const SizedBox(height: 18),
+          const Text(
+            'Registro de lecturas',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Busca el suministro, registra la lectura actual y genera el recibo correspondiente.',
+            style: TextStyle(
+              color: Color(0xFFE7F8FF),
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: () => _irBuscar(context),
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              label: const Text(
+                'Buscar suministro',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Trabajo en campo',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              SizedBox(height: 10),
-              Text(
-                'Fecha actual: 02/07/2026. Escanea el QR, ingresa la lectura actual y genera el recibo.',
-                style: TextStyle(
-                  color: Color(0xFFE7F8FF),
-                  fontSize: 14,
-                  height: 1.55,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: primary,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionGrid(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.22,
+  Widget _buildAccessGrid(BuildContext context) {
+    return Row(
       children: [
-        _ActionCard(
-          icon: Icons.qr_code_2_rounded,
-          title: 'Escanear QR',
-          subtitle: 'Identificar suministro',
-          onTap: () {
-            Navigator.pushNamed(context, '/buscar-suministro');
-          },
+        Expanded(
+          child: _AccessCard(
+            icon: Icons.search_rounded,
+            title: 'Buscar',
+            subtitle: 'Suministro',
+            onTap: () => _irBuscar(context),
+          ),
         ),
-        _ActionCard(
-          icon: Icons.water_drop_rounded,
-          title: 'Registrar lectura',
-          subtitle: 'Ingreso de lectura actual',
-          onTap: () {
-            Navigator.pushNamed(context, '/registrar-lectura');
-          },
-        ),
-        _ActionCard(
-          icon: Icons.receipt_long_rounded,
-          title: 'Generar recibo',
-          subtitle: 'Comprobante calculado',
-          onTap: () {
-            Navigator.pushNamed(context, '/registrar-lectura');
-          },
-        ),
-        _ActionCard(
-          icon: Icons.history_rounded,
-          title: 'Historial reciente',
-          subtitle: 'Últimas lecturas',
-          onTap: () {
-            Navigator.pushNamed(context, '/historial-lecturas');
-          },
+        const SizedBox(width: 12),
+        Expanded(
+          child: _AccessCard(
+            icon: Icons.history_rounded,
+            title: 'Historial',
+            subtitle: 'Lecturas',
+            onTap: () => _irHistorial(context),
+          ),
         ),
       ],
     );
   }
+
+  Widget _buildInfoCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFE2EDF3),
+        ),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Flujo recomendado',
+            style: TextStyle(
+              color: primary,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 12),
+          _StepLine(
+            number: '1',
+            text: 'Ingresa o escanea el código del suministro.',
+          ),
+          _StepLine(
+            number: '2',
+            text: 'Verifica los datos del cliente y la lectura anterior.',
+          ),
+          _StepLine(
+            number: '3',
+            text: 'Registra la lectura actual del medidor.',
+          ),
+          _StepLine(
+            number: '4',
+            text: 'Confirma el comprobante generado por el sistema.',
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _ActionCard extends StatelessWidget {
+class _AccessCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
-  const _ActionCard({
+  const _AccessCard({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -240,104 +255,100 @@ class _ActionCard extends StatelessWidget {
     const Color secondary = Color(0xFF1DA1C2);
     const Color muted = Color(0xFF7B8794);
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: const Color(0xFFE2EDF3),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFFE2EDF3),
+            ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: primary.withOpacity(0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F7FB),
-                borderRadius: BorderRadius.circular(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                backgroundColor: const Color(0xFFE8F7FB),
+                child: Icon(
+                  icon,
+                  color: secondary,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: secondary,
-                size: 28,
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: primary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-            ),
-            const Spacer(),
-            Text(
-              title,
-              style: const TextStyle(
-                color: primary,
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: muted,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: const TextStyle(
-                color: muted,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _LectorBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
+class _StepLine extends StatelessWidget {
+  final String number;
+  final String text;
 
-  const _LectorBottomNav({
-    required this.currentIndex,
-    required this.onTap,
+  const _StepLine({
+    required this.number,
+    required this.text,
   });
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      height: 76,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
-          label: 'Inicio',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.qr_code_2_outlined),
-          selectedIcon: Icon(Icons.qr_code_2_rounded),
-          label: 'QR',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.water_drop_outlined),
-          selectedIcon: Icon(Icons.water_drop_rounded),
-          label: 'Lectura',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.history_outlined),
-          selectedIcon: Icon(Icons.history_rounded),
-          label: 'Historial',
-        ),
-      ],
+    const Color primary = Color(0xFF0F3D57);
+    const Color secondary = Color(0xFF1DA1C2);
+    const Color muted = Color(0xFF7B8794);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 13,
+            backgroundColor: secondary,
+            child: Text(
+              number,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: muted,
+                fontWeight: FontWeight.w700,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

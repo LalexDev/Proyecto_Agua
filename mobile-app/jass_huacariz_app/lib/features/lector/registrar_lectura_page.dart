@@ -24,6 +24,9 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
   bool cargadoArgs = false;
   bool guardando = false;
 
+  int anioSeleccionado = DateTime.now().year;
+  int mesSeleccionado = DateTime.now().month;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -38,6 +41,9 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
     } else if (args is Map) {
       suministro = Map<String, dynamic>.from(args);
     }
+
+    anioSeleccionado = DateTime.now().year;
+    mesSeleccionado = DateTime.now().month;
   }
 
   @override
@@ -59,9 +65,29 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
     return double.tryParse(value.toString()) ?? 0.0;
   }
 
-  int _anioActual() => DateTime.now().year;
+  int _anioActual() => anioSeleccionado;
 
-  int _mesActual() => DateTime.now().month;
+  int _mesActual() => mesSeleccionado;
+
+  String _nombreMes(int mes) {
+    const meses = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+
+    final index = (mes - 1).clamp(0, 11);
+    return meses[index];
+  }
 
   String _codigoSuministro() {
     return _txt(
@@ -148,6 +174,8 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       final response = await lecturadorService.registrarLectura(
         codigoSuministro: codigo,
         lecturaActual: lecturaActual,
+        anio: _anioActual(),
+        mes: _mesActual(),
         observacion: observacionController.text.trim(),
       );
 
@@ -219,6 +247,8 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
               _buildHeader(),
               const SizedBox(height: 20),
               _buildSuministroCard(),
+              const SizedBox(height: 18),
+              _buildPeriodoSelector(),
               const SizedBox(height: 18),
               _buildLecturaForm(
                 lecturaAnterior: lecturaAnterior,
@@ -316,6 +346,109 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
           _WhiteInfo(label: 'Titular', value: _titular()),
           _WhiteInfo(label: 'Dirección', value: _direccion()),
           _WhiteInfo(label: 'Sector', value: _sector()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodoSelector() {
+    final anioActual = DateTime.now().year;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: const Color(0xFFE2EDF3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Periodo de lectura',
+            style: TextStyle(
+              color: primary,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: mesSeleccionado,
+                  decoration: InputDecoration(
+                    labelText: 'Mes',
+                    filled: true,
+                    fillColor: const Color(0xFFF4F8FB),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  items: List.generate(12, (index) {
+                    final mes = index + 1;
+
+                    return DropdownMenuItem<int>(
+                      value: mes,
+                      child: Text(_nombreMes(mes)),
+                    );
+                  }),
+                  onChanged: (value) {
+                    if (value == null) return;
+
+                    setState(() {
+                      mesSeleccionado = value;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: anioSeleccionado,
+                  decoration: InputDecoration(
+                    labelText: 'Año',
+                    filled: true,
+                    fillColor: const Color(0xFFF4F8FB),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  items: [
+                    anioActual - 1,
+                    anioActual,
+                    anioActual + 1,
+                  ].map((anio) {
+                    return DropdownMenuItem<int>(
+                      value: anio,
+                      child: Text('$anio'),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+
+                    setState(() {
+                      anioSeleccionado = value;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Periodo seleccionado: ${_nombreMes(mesSeleccionado)} $anioSeleccionado',
+            style: const TextStyle(
+              color: muted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );

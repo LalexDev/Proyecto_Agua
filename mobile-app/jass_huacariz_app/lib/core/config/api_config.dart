@@ -76,7 +76,7 @@ class ApiConfig {
     return '/lecturador/suministros/$codigoSuministro';
   }
 
-  static const String registrarLectura = '/lecturas';
+  static const String registrarLectura = '/lecturador/lecturas';
 
   // ADMIN HISTORIAL LECTURAS
   static const String historialLecturasAdmin = '/admin/lecturas/historial';

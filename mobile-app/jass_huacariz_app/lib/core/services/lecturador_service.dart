@@ -50,14 +50,12 @@ class LecturadorService {
     return _asMap(response);
   }
 
-  // Alias por si alguna pantalla antigua llama este nombre
   Future<Map<String, dynamic>> buscarPorCodigo(
     String codigoSuministro,
   ) async {
     return buscarSuministro(codigoSuministro);
   }
 
-  // Alias por si alguna pantalla antigua llama este nombre
   Future<Map<String, dynamic>> buscarSuministroPorCodigo(
     String codigoSuministro,
   ) async {
@@ -67,11 +65,15 @@ class LecturadorService {
   Future<Map<String, dynamic>> registrarLectura({
     required String codigoSuministro,
     required double lecturaActual,
+    required int anio,
+    required int mes,
     String? observacion,
   }) async {
     final payload = {
       'codigoSuministro': codigoSuministro.trim(),
       'lecturaActual': lecturaActual,
+      'anio': anio,
+      'mes': mes,
       'observacion': observacion?.trim() ?? '',
     };
 
@@ -86,9 +88,13 @@ class LecturadorService {
   Future<Map<String, dynamic>> registrarLecturaPayload(
     Map<String, dynamic> data,
   ) async {
+    final fechaActual = DateTime.now();
+
     final payload = {
       'codigoSuministro': (data['codigoSuministro'] ?? '').toString().trim(),
       'lecturaActual': data['lecturaActual'],
+      'anio': data['anio'] ?? fechaActual.year,
+      'mes': data['mes'] ?? fechaActual.month,
       'observacion': (data['observacion'] ?? '').toString().trim(),
     };
 
