@@ -1,7 +1,7 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import {
@@ -10,12 +10,13 @@ import {
   ReciboClienteResponse
 } from '../../../core/services/cliente-portal';
 
+import { imprimirReciboJass } from '../../../core/utils/recibo-print';
+
 interface MetodoPagoCliente {
-  valor: string;
+  codigo: string;
   nombre: string;
-  icono: string;
   descripcion: string;
-  placeholder: string;
+  icono: string;
 }
 
 @Component({
@@ -25,68 +26,71 @@ interface MetodoPagoCliente {
   styleUrl: './pagar-recibo.scss',
 })
 export class PagarRecibo implements OnInit {
+  idRecibo = 0;
+
   recibo: ReciboClienteResponse | null = null;
+  recibos: ReciboClienteResponse[] = [];
 
   cargando = false;
-  pagando = false;
-
+  procesando = false;
   error = '';
   exito = '';
 
-  mostrarConfirmacion = false;
+  metodosPago: MetodoPagoCliente[] = [
+    {
+      codigo: 'YAPE',
+      nombre: 'Yape',
+      descripcion: 'Paga desde tu aplicación Yape y registra el número de operación.',
+      icono: 'Y'
+    },
+    {
+      codigo: 'PLIN',
+      nombre: 'Plin',
+      descripcion: 'Paga desde tu aplicación bancaria con Plin.',
+      icono: 'P'
+    },
+    {
+      codigo: 'TRANSFERENCIA',
+      nombre: 'Transferencia bancaria',
+      descripcion: 'Realiza una transferencia y registra el código de operación.',
+      icono: 'T'
+    },
+    {
+      codigo: 'BANCA_MOVIL',
+      nombre: 'Banca móvil',
+      descripcion: 'Pago realizado desde la app o web de tu banco.',
+      icono: 'B'
+    },
+    {
+      codigo: 'AGENTE_AUTORIZADO',
+      nombre: 'Agente autorizado',
+      descripcion: 'Pago realizado por canal autorizado no presencial.',
+      icono: 'A'
+    }
+  ];
 
   pago: PagoRequest = {
     metodoPago: 'YAPE',
     codigoOperacion: ''
   };
 
-  metodosPago: MetodoPagoCliente[] = [
-    {
-      valor: 'YAPE',
-      nombre: 'Yape',
-      icono: '📱',
-      descripcion: 'Pago móvil con número de operación.',
-      placeholder: 'Ejemplo: YAPE-123456'
-    },
-    {
-      valor: 'PLIN',
-      nombre: 'Plin',
-      icono: '💜',
-      descripcion: 'Pago móvil con constancia o número de operación.',
-      placeholder: 'Ejemplo: PLIN-987654'
-    },
-    {
-      valor: 'TRANSFERENCIA',
-      nombre: 'Transferencia',
-      icono: '🏦',
-      descripcion: 'Transferencia bancaria o interbancaria.',
-      placeholder: 'Ejemplo: OP-2026-001'
-    },
-    {
-      valor: 'DEPOSITO',
-      nombre: 'Depósito bancario',
-      icono: '💳',
-      descripcion: 'Depósito en agente, banco o plataforma autorizada.',
-      placeholder: 'Ejemplo: DEP-000245'
-    }
-  ];
-
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
+    private location: Location,
     private clientePortal: ClientePortal,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.cargarRecibo();
+    this.route.paramMap.subscribe((params) => {
+      this.idRecibo = Number(params.get('id') || 0);
+      this.cargarRecibo();
+    });
   }
 
   cargarRecibo(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-
-    if (!id) {
-      this.error = 'No se encontró el identificador del recibo.';
+    if (!this.idRecibo) {
+      this.error = 'No se recibió el ID del recibo.';
       return;
     }
 
@@ -94,7 +98,7 @@ export class PagarRecibo implements OnInit {
     this.error = '';
     this.exito = '';
 
-    this.clientePortal.listarMisRecibos()
+    this.clientePortal.obtenerReciboPorId(this.idRecibo)
       .pipe(
         finalize(() => {
           this.cargando = false;
@@ -103,135 +107,116 @@ export class PagarRecibo implements OnInit {
       )
       .subscribe({
         next: (data) => {
-          const recibos = data || [];
-          this.recibo = recibos.find((item) => Number(item.id) === id) || null;
-
-          if (!this.recibo) {
-            this.error = 'No se encontró el recibo solicitado.';
-          }
-
+          this.recibo = data;
+          this.cargarHistorialParaImpresion();
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar la información del recibo.';
+          this.error = 'No se pudo cargar el recibo seleccionado.';
           this.recibo = null;
           this.cdr.detectChanges();
         }
       });
   }
 
-  volver(): void {
-    this.router.navigate(['/cliente/mis-recibos']);
+  cargarHistorialParaImpresion(): void {
+    this.clientePortal.listarMisRecibos().subscribe({
+      next: (data) => {
+        this.recibos = data || [];
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.recibos = [];
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  irDetalle(): void {
-    if (!this.recibo) {
-      this.volver();
-      return;
-    }
-
-    this.router.navigate(['/cliente/detalle-recibo', this.recibo.id]);
-  }
-
-  seleccionarMetodo(metodo: MetodoPagoCliente): void {
-    if (this.estaPagado()) {
-      return;
-    }
-
-    this.pago.metodoPago = metodo.valor;
-    this.pago.codigoOperacion = '';
-    this.error = '';
-  }
-
-  metodoSeleccionado(): MetodoPagoCliente {
-    return this.metodosPago.find((metodo) => metodo.valor === this.pago.metodoPago) || this.metodosPago[0];
-  }
-
-  abrirConfirmacion(): void {
+  seleccionarMetodo(codigo: string): void {
+    this.pago.metodoPago = codigo;
     this.error = '';
     this.exito = '';
+  }
 
+  metodoSeleccionado(): MetodoPagoCliente | null {
+    return this.metodosPago.find((item) => item.codigo === this.pago.metodoPago) || null;
+  }
+
+  confirmarPago(): void {
     if (!this.recibo) {
       this.error = 'No hay recibo seleccionado.';
       return;
     }
 
-    if (this.estaPagado()) {
+    if (!this.puedePagar()) {
       this.error = 'Este recibo ya se encuentra pagado.';
       return;
     }
 
-    if (!this.pago.metodoPago.trim()) {
+    if (!this.pago.metodoPago || !this.pago.metodoPago.trim()) {
       this.error = 'Seleccione un método de pago.';
       return;
     }
 
     if (!this.pago.codigoOperacion || !this.pago.codigoOperacion.trim()) {
-      this.error = 'Ingrese el código de operación del pago.';
+      this.error = 'Ingrese el código o número de operación.';
       return;
     }
 
-    this.mostrarConfirmacion = true;
-  }
-
-  cerrarConfirmacion(): void {
-    this.mostrarConfirmacion = false;
-  }
-
-  confirmarPago(): void {
-    if (!this.recibo) {
+    if (this.pago.codigoOperacion.trim().length < 4) {
+      this.error = 'El código de operación debe tener al menos 4 caracteres.';
       return;
     }
+
+    this.procesando = true;
+    this.error = '';
+    this.exito = '';
 
     const payload: PagoRequest = {
       metodoPago: this.pago.metodoPago.trim(),
-      codigoOperacion: this.pago.codigoOperacion.trim().toUpperCase()
+      codigoOperacion: this.pago.codigoOperacion.trim()
     };
-
-    this.pagando = true;
-    this.error = '';
-    this.exito = '';
 
     this.clientePortal.pagarMiRecibo(this.recibo.id, payload)
       .pipe(
         finalize(() => {
-          this.pagando = false;
+          this.procesando = false;
           this.cdr.detectChanges();
         })
       )
       .subscribe({
-        next: () => {
-          this.exito = 'Pago registrado correctamente.';
-          this.mostrarConfirmacion = false;
-
-          if (this.recibo) {
-            this.recibo.estadoRecibo = 'PAGADO';
-          }
-
-          setTimeout(() => {
-            this.router.navigate(['/cliente/mis-recibos']);
-          }, 900);
-
-          this.cdr.detectChanges();
+        next: (response) => {
+          this.exito = `Pago registrado correctamente. Recibo: ${response.codigoRecibo}`;
+          this.pago.codigoOperacion = '';
+          this.cargarRecibo();
         },
-        error: (err: any) => {
-          this.error = err?.error?.error || err?.error?.message || 'No se pudo registrar el pago.';
-          this.mostrarConfirmacion = false;
+        error: (err) => {
+          this.error = err?.error?.error ||
+            err?.error?.mensaje ||
+            'No se pudo registrar el pago. Verifica el código de operación.';
           this.cdr.detectChanges();
         }
       });
   }
 
-  estaPagado(): boolean {
-    return String(this.recibo?.estadoRecibo || '').toUpperCase() === 'PAGADO';
+  volver(): void {
+    this.location.back();
   }
 
-  periodo(): string {
+  imprimirRecibo(): void {
     if (!this.recibo) {
-      return '-';
+      return;
     }
 
-    return `${this.nombreMes(Number(this.recibo.mes))} ${this.recibo.anio}`;
+    imprimirReciboJass(this.recibo, this.recibos);
+  }
+
+  puedePagar(): boolean {
+    if (!this.recibo) {
+      return false;
+    }
+
+    return String(this.recibo.estadoRecibo || '').toUpperCase() !== 'PAGADO';
   }
 
   totalCargos(): number {
@@ -245,7 +230,7 @@ export class PagarRecibo implements OnInit {
       Number(this.recibo.mora || 0);
   }
 
-  estadoClase(estado: string): string {
+  estadoClase(estado?: string): string {
     const valor = String(estado || '').toLowerCase();
 
     if (valor === 'pagado') {
@@ -259,6 +244,14 @@ export class PagarRecibo implements OnInit {
     return 'pendiente';
   }
 
+  periodo(recibo?: ReciboClienteResponse | null): string {
+    if (!recibo) {
+      return '-';
+    }
+
+    return `${this.nombreMes(Number(recibo.mes))} ${recibo.anio}`;
+  }
+
   nombreMes(mes: number): string {
     const meses = [
       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -266,5 +259,13 @@ export class PagarRecibo implements OnInit {
     ];
 
     return meses[mes - 1] || 'Mes inválido';
+  }
+
+  fechaCorta(fecha?: string): string {
+    if (!fecha) {
+      return '-';
+    }
+
+    return String(fecha).split('T')[0] || fecha;
   }
 }

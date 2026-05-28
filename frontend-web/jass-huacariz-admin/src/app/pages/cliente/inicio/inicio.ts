@@ -53,21 +53,69 @@ export class Inicio implements OnInit {
           this.perfil = perfil;
           this.suministros = suministros || [];
           this.recibos = recibos || [];
+
+          this.actualizarStorageUsuario();
+
           this.cdr.detectChanges();
         },
         error: () => {
           this.error = 'No se pudo cargar la información del cliente.';
+          this.perfil = null;
+          this.suministros = [];
+          this.recibos = [];
           this.cdr.detectChanges();
         }
       });
   }
 
-  nombreCliente(): string {
+  actualizarStorageUsuario(): void {
     if (!this.perfil) {
-      return 'Cliente';
+      return;
     }
 
-    return `${this.perfil.nombres || ''} ${this.perfil.apellidos || ''}`.trim();
+    const nombre = `${this.perfil.nombres || ''} ${this.perfil.apellidos || ''}`.trim();
+
+    if (nombre) {
+      localStorage.setItem('nombreUsuario', nombre);
+    }
+
+    if (this.codigoUsuario()) {
+      localStorage.setItem('codigoUsuario', this.codigoUsuario());
+    }
+  }
+
+  nombreCliente(): string {
+    if (!this.perfil) {
+      return localStorage.getItem('nombreUsuario') || 'Cliente';
+    }
+
+    const nombre = `${this.perfil.nombres || ''} ${this.perfil.apellidos || ''}`.trim();
+    return nombre || localStorage.getItem('nombreUsuario') || 'Cliente';
+  }
+
+  primerNombre(): string {
+    return this.nombreCliente().split(' ')[0] || 'Cliente';
+  }
+
+  codigoUsuario(): string {
+    const item: any = this.perfil || {};
+    return item.codigoUsuario || item.usuario || localStorage.getItem('codigoUsuario') || '-';
+  }
+
+  dniCliente(): string {
+    const item: any = this.perfil || {};
+    return item.dni || item.documento || item.numeroDocumento || '-';
+  }
+
+  iniciales(): string {
+    const nombre = this.nombreCliente();
+    const partes = nombre.split(' ').filter(Boolean);
+
+    if (partes.length >= 2) {
+      return `${partes[0][0]}${partes[1][0]}`.toUpperCase();
+    }
+
+    return nombre.substring(0, 1).toUpperCase();
   }
 
   recibosPendientes(): number {
@@ -110,6 +158,14 @@ export class Inicio implements OnInit {
     }, 0);
   }
 
+  consumoPromedio(): number {
+    if (!this.recibos.length) {
+      return 0;
+    }
+
+    return this.consumoTotal() / this.recibos.length;
+  }
+
   suministroPrincipal(): SuministroClienteResponse | null {
     return this.suministros.length ? this.suministros[0] : null;
   }
@@ -126,6 +182,79 @@ export class Inicio implements OnInit {
     return [...this.recibos]
       .sort((a, b) => Number(b.id) - Number(a.id))
       .slice(0, 5);
+  }
+
+  recibosParaGrafico(): ReciboClienteResponse[] {
+    return [...this.recibos]
+      .sort((a, b) => Number(a.id) - Number(b.id))
+      .slice(-6);
+  }
+
+  consumoMaximo(): number {
+    if (!this.recibosParaGrafico().length) {
+      return 0;
+    }
+
+    return Math.max(...this.recibosParaGrafico().map((recibo) => Number(recibo.consumoM3 || 0)));
+  }
+
+  anchoConsumo(recibo: ReciboClienteResponse): string {
+    const maximo = this.consumoMaximo();
+
+    if (maximo <= 0) {
+      return '8%';
+    }
+
+    const porcentaje = (Number(recibo.consumoM3 || 0) / maximo) * 100;
+    return `${Math.max(porcentaje, 8)}%`;
+  }
+
+  suministrosActivos(): number {
+    return this.suministros.filter((suministro: any) => {
+      const estadoInstalacion = String(suministro.estadoInstalacion || '').toUpperCase();
+
+      return suministro.estado !== false &&
+        estadoInstalacion !== 'SUSPENDIDO' &&
+        estadoInstalacion !== 'PENDIENTE_INSTALACION';
+    }).length;
+  }
+
+  estadoSuministro(suministro: SuministroClienteResponse): string {
+    const item: any = suministro;
+    const estadoInstalacion = String(item.estadoInstalacion || '').toUpperCase();
+
+    if (item.estado === false || String(item.estado || '').toUpperCase() === 'SUSPENDIDO') {
+      return 'Suspendido';
+    }
+
+    if (estadoInstalacion === 'PENDIENTE_INSTALACION') {
+      return 'Pendiente';
+    }
+
+    if (estadoInstalacion === 'SUSPENDIDO') {
+      return 'Suspendido';
+    }
+
+    return 'Activo';
+  }
+
+  estadoSuministroClase(suministro: SuministroClienteResponse): string {
+    const estado = this.estadoSuministro(suministro).toLowerCase();
+
+    if (estado === 'activo') {
+      return 'pagado';
+    }
+
+    if (estado === 'suspendido') {
+      return 'vencido';
+    }
+
+    return 'pendiente';
+  }
+
+  suministroValor(suministro: SuministroClienteResponse, campo: string): string {
+    const item: any = suministro || {};
+    return item[campo] || '-';
   }
 
   porcentajePagados(): number {

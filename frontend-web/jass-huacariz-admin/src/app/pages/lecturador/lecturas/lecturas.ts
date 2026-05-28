@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -12,7 +12,7 @@ import {
   SuministroLecturadorResponse
 } from '../../../core/services/lecturador';
 
-type ModoOperacion = 'LECTURA' | 'CONSUMO_CERO' | 'MANTENIMIENTO' | null;
+type ModoOperacion = 'LECTURA' | 'MANTENIMIENTO' | null;
 
 @Component({
   selector: 'app-lecturas',
@@ -20,7 +20,7 @@ type ModoOperacion = 'LECTURA' | 'CONSUMO_CERO' | 'MANTENIMIENTO' | null;
   templateUrl: './lecturas.html',
   styleUrl: './lecturas.scss',
 })
-export class LecturasLecturador implements OnDestroy {
+export class LecturasLecturador implements OnInit, OnDestroy {
   codigoBusqueda = '';
 
   suministro: SuministroLecturadorResponse | null = null;
@@ -34,6 +34,7 @@ export class LecturasLecturador implements OnDestroy {
   error = '';
   exito = '';
 
+  isDarkMode = false;
   modoOperacion: ModoOperacion = null;
 
   lecturaForm: LecturaRequest = this.crearLecturaVacia();
@@ -50,8 +51,29 @@ export class LecturasLecturador implements OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  ngOnInit(): void {
+    this.cargarTema();
+  }
+
   ngOnDestroy(): void {
     this.detenerEscaneo();
+  }
+
+  cargarTema(): void {
+    const temaGuardado = localStorage.getItem('jass-theme');
+    this.isDarkMode = temaGuardado === 'dark';
+
+    document.body.setAttribute('data-theme', this.isDarkMode ? 'dark' : 'light');
+    document.body.classList.toggle('jass-dark-theme', this.isDarkMode);
+  }
+
+  cambiarTema(): void {
+    this.isDarkMode = !this.isDarkMode;
+
+    localStorage.setItem('jass-theme', this.isDarkMode ? 'dark' : 'light');
+
+    document.body.setAttribute('data-theme', this.isDarkMode ? 'dark' : 'light');
+    document.body.classList.toggle('jass-dark-theme', this.isDarkMode);
   }
 
   buscarSuministro(desdeQr: boolean = false): void {
@@ -94,9 +116,7 @@ export class LecturasLecturador implements OnDestroy {
             codigoSuministro: data.codigoSuministro,
             anio: new Date().getFullYear(),
             mes: new Date().getMonth() + 1,
-            observacion: this.esInstalado()
-              ? 'Recibo generado por consumo cero.'
-              : 'Recibo generado por mantenimiento. Suministro pendiente de instalación.'
+            observacion: 'Recibo generado por mantenimiento. Suministro pendiente de instalación.'
           };
 
           if (this.puedeRegistrarLectura()) {
@@ -108,8 +128,8 @@ export class LecturasLecturador implements OnDestroy {
           const nombreCliente = this.nombreUsuarioSuministro(data);
 
           this.exito = desdeQr
-            ? `QR escaneado correctamente. Usuario encontrado: ${nombreCliente}.`
-            : `Suministro encontrado correctamente. Usuario: ${nombreCliente}.`;
+            ? `QR escaneado correctamente. Cliente encontrado: ${nombreCliente}.`
+            : `Suministro encontrado correctamente. Cliente: ${nombreCliente}.`;
 
           this.cdr.detectChanges();
 
@@ -121,36 +141,10 @@ export class LecturasLecturador implements OnDestroy {
           }, 250);
         },
         error: (err) => {
-          this.error = err?.error?.error || 'No se encontró el suministro.';
+          this.error = err?.error?.error || err?.error?.mensaje || 'No se encontró el suministro.';
           this.cdr.detectChanges();
         }
       });
-  }
-
-  seleccionarModo(modo: ModoOperacion): void {
-    this.error = '';
-    this.exito = '';
-    this.lecturaGenerada = null;
-
-    if (modo === 'LECTURA' && !this.puedeRegistrarLectura()) {
-      this.error = this.mensajeEstadoVisible();
-      return;
-    }
-
-    if ((modo === 'CONSUMO_CERO' || modo === 'MANTENIMIENTO') && !this.puedeGenerarMantenimiento()) {
-      this.error = this.mensajeEstadoVisible();
-      return;
-    }
-
-    this.modoOperacion = modo;
-
-    if (modo === 'CONSUMO_CERO') {
-      this.mantenimientoForm.observacion = 'Recibo generado por consumo cero.';
-    }
-
-    if (modo === 'MANTENIMIENTO') {
-      this.mantenimientoForm.observacion = 'Recibo generado por mantenimiento. Suministro pendiente de instalación.';
-    }
   }
 
   registrarLectura(): void {
@@ -164,7 +158,7 @@ export class LecturasLecturador implements OnDestroy {
     }
 
     if (!this.puedeRegistrarLectura()) {
-      this.error = this.mensajeEstadoVisible() || 'Este suministro no permite registrar lectura normal.';
+      this.error = this.mensajeEstadoVisible() || 'Este suministro no permite registrar lectura.';
       return;
     }
 
@@ -188,7 +182,7 @@ export class LecturasLecturador implements OnDestroy {
       return;
     }
 
-    if (Number(this.lecturaForm.lecturaActual) < Number(this.suministro.lecturaInicial)) {
+    if (Number(this.lecturaForm.lecturaActual) < this.lecturaAnterior()) {
       this.error = 'La lectura actual no puede ser menor a la lectura anterior.';
       return;
     }
@@ -218,7 +212,7 @@ export class LecturasLecturador implements OnDestroy {
           this.irAReciboGenerado();
         },
         error: (err) => {
-          this.error = err?.error?.error || 'No se pudo registrar la lectura.';
+          this.error = err?.error?.error || err?.error?.mensaje || 'No se pudo registrar la lectura.';
           this.cdr.detectChanges();
         }
       });
@@ -256,9 +250,7 @@ export class LecturasLecturador implements OnDestroy {
       anio: Number(this.mantenimientoForm.anio),
       mes: Number(this.mantenimientoForm.mes),
       observacion: this.mantenimientoForm.observacion?.trim()
-        || (this.esInstalado()
-          ? 'Recibo generado por consumo cero.'
-          : 'Recibo generado por mantenimiento. Suministro pendiente de instalación.')
+        || 'Recibo generado por mantenimiento. Suministro pendiente de instalación.'
     };
 
     this.lecturadorService.registrarMantenimiento(payload)
@@ -271,18 +263,27 @@ export class LecturasLecturador implements OnDestroy {
       .subscribe({
         next: (data) => {
           this.lecturaGenerada = data;
-          this.exito = this.esInstalado()
-            ? 'Recibo por consumo cero generado correctamente.'
-            : 'Recibo por mantenimiento generado correctamente.';
-
+          this.exito = 'Recibo por mantenimiento generado correctamente.';
           this.cdr.detectChanges();
           this.irAReciboGenerado();
         },
         error: (err) => {
-          this.error = err?.error?.error || 'No se pudo generar el recibo.';
+          this.error = err?.error?.error || err?.error?.mensaje || 'No se pudo generar el recibo por mantenimiento.';
           this.cdr.detectChanges();
         }
       });
+  }
+
+  marcarConsumoCero(): void {
+    if (!this.suministro) {
+      return;
+    }
+
+    this.lecturaForm.lecturaActual = this.lecturaAnterior();
+    this.lecturaForm.observacion = 'Consumo cero registrado. Lectura igual a la anterior.';
+
+    this.exito = 'Consumo cero preparado. Ahora puedes registrar la lectura y generar el recibo.';
+    this.error = '';
   }
 
   async iniciarEscaneo(): Promise<void> {
@@ -415,49 +416,61 @@ export class LecturasLecturador implements OnDestroy {
   }
 
   puedeRegistrarLectura(): boolean {
-    return Boolean(this.suministro?.estado) && this.esInstalado();
+    return Boolean(this.suministro?.estado) && this.estadoOperativo() === 'INSTALADO';
   }
 
   puedeGenerarMantenimiento(): boolean {
-    return Boolean(this.suministro?.estado) && (this.esInstalado() || this.esPendienteInstalacion());
+    return Boolean(this.suministro?.estado) && this.estadoOperativo() === 'PENDIENTE';
+  }
+
+  estadoOperativo(): 'INSTALADO' | 'PENDIENTE' | 'INACTIVO' {
+    if (!this.suministro) {
+      return 'PENDIENTE';
+    }
+
+    if (this.suministro.estado === false) {
+      return 'INACTIVO';
+    }
+
+    const estado = this.normalizarTexto(this.suministro.estadoInstalacion);
+
+    if (estado.includes('INSTALADO') && !estado.includes('PENDIENTE')) {
+      return 'INSTALADO';
+    }
+
+    return 'PENDIENTE';
   }
 
   esInstalado(): boolean {
-    return String(this.suministro?.estadoInstalacion || '').toUpperCase() === 'INSTALADO';
+    return this.estadoOperativo() === 'INSTALADO';
   }
 
   esPendienteInstalacion(): boolean {
-    const estado = String(this.suministro?.estadoInstalacion || '').toUpperCase();
-
-    return estado === 'PENDIENTE_INSTALACION' || estado === '';
+    return this.estadoOperativo() === 'PENDIENTE';
   }
 
   estadoInstalacionTexto(estado?: string): string {
-    const valor = String(estado || '').toUpperCase();
+    const operativo = this.estadoOperativo();
 
-    if (valor === 'INSTALADO') {
+    if (operativo === 'INSTALADO') {
       return 'Instalado';
     }
 
-    if (valor === 'PENDIENTE_INSTALACION') {
-      return 'Pendiente de instalación';
-    }
-
-    if (valor === 'SUSPENDIDO') {
-      return 'Suspendido';
+    if (operativo === 'INACTIVO') {
+      return 'Inactivo';
     }
 
     return 'Pendiente de instalación';
   }
 
   estadoInstalacionClase(estado?: string): string {
-    const valor = String(estado || '').toUpperCase();
+    const operativo = this.estadoOperativo();
 
-    if (valor === 'INSTALADO') {
+    if (operativo === 'INSTALADO') {
       return 'instalado';
     }
 
-    if (valor === 'SUSPENDIDO') {
+    if (operativo === 'INACTIVO') {
       return 'suspendido';
     }
 
@@ -469,19 +482,44 @@ export class LecturasLecturador implements OnDestroy {
       return '';
     }
 
-    if (!this.suministro.estado) {
-      return 'El suministro se encuentra inactivo. No se puede registrar lectura ni generar recibo.';
+    if (this.suministro.estado === false) {
+      return 'El suministro está inactivo. No se permite registrar lectura ni generar recibo. Comunicar al administrador.';
     }
 
-    if (this.esPendienteInstalacion()) {
-      return 'Este suministro aún no está instalado. Solo corresponde generar recibo básico por mantenimiento.';
+    if (this.estadoOperativo() === 'PENDIENTE') {
+      return 'Este suministro aún no está instalado. Puede generar recibo por mantenimiento hasta que administración lo marque como instalado.';
     }
 
-    if (this.esInstalado()) {
-      return 'Suministro instalado. Puede registrar lectura normal. Si no hubo consumo, use la opción Consumo cero.';
+    return 'Suministro instalado y activo. Puede registrar la lectura actual del medidor.';
+  }
+
+  lecturaAnterior(): number {
+    return Number(this.suministro?.lecturaInicial || 0);
+  }
+
+  lecturaActual(): number {
+    return Number(this.lecturaForm.lecturaActual || 0);
+  }
+
+  consumoEstimado(): number {
+    const consumo = this.lecturaActual() - this.lecturaAnterior();
+    return consumo > 0 ? consumo : 0;
+  }
+
+  estadoConsumoClase(): string {
+    if (!this.suministro) {
+      return 'neutral';
     }
 
-    return this.suministro.mensajeEstado || 'Suministro pendiente de revisión.';
+    if (this.lecturaActual() < this.lecturaAnterior()) {
+      return 'error';
+    }
+
+    if (this.consumoEstimado() === 0) {
+      return 'warning';
+    }
+
+    return 'success';
   }
 
   nombreMes(mes: number): string {
@@ -557,6 +595,16 @@ export class LecturasLecturador implements OnDestroy {
     return nombre.substring(0, 1).toUpperCase();
   }
 
+  nombreLecturador(): string {
+    return localStorage.getItem('nombreUsuario') ||
+      localStorage.getItem('codigoUsuario') ||
+      'Lecturador';
+  }
+
+  inicialLecturador(): string {
+    return this.nombreLecturador().substring(0, 1).toUpperCase();
+  }
+
   private irAReciboGenerado(): void {
     setTimeout(() => {
       document.getElementById('recibo-generado')?.scrollIntoView({
@@ -588,6 +636,16 @@ export class LecturasLecturador implements OnDestroy {
     }
   }
 
+  private normalizarTexto(value: any): string {
+    return String(value ?? '')
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/_/g, ' ')
+      .replace(/-/g, ' ');
+  }
+
   private crearLecturaVacia(): LecturaRequest {
     return {
       codigoSuministro: '',
@@ -603,7 +661,7 @@ export class LecturasLecturador implements OnDestroy {
       codigoSuministro: '',
       anio: new Date().getFullYear(),
       mes: new Date().getMonth() + 1,
-      observacion: 'Recibo generado por mantenimiento.'
+      observacion: 'Recibo generado por mantenimiento. Suministro pendiente de instalación.'
     };
   }
 }

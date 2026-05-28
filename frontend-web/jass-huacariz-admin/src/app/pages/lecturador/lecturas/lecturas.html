@@ -11,13 +11,13 @@
 
     <nav class="menu">
       <button type="button" class="active">
-        <span>📍</span>
+        <span>▣</span>
         Registrar lectura
       </button>
     </nav>
 
     <button class="logout" type="button" (click)="cerrarSesion()">
-      <span>⏻</span>
+      <span>↳</span>
       Cerrar sesión
     </button>
   </aside>
@@ -25,14 +25,26 @@
   <main class="content">
     <header class="topbar">
       <div>
-        <span class="page-kicker">Lecturador / Registro</span>
+        <span class="page-kicker">LECTURADOR / REGISTRO</span>
         <h1>Registro de lecturas</h1>
-        <p>Busca un suministro, registra la lectura del medidor o genera recibo cuando no corresponde lectura normal.</p>
+        <p>Busca o escanea un suministro y registra la lectura o el recibo de mantenimiento según corresponda.</p>
       </div>
 
-      <div class="role-card">
-        <span>Rol activo</span>
-        <strong>Lecturador</strong>
+      <div class="topbar-actions">
+        <button type="button" class="theme-toggle" (click)="cambiarTema()">
+          {{ isDarkMode ? '☀️' : '🌙' }}
+        </button>
+
+        <div class="role-card">
+          <div>
+            <span>Lecturador</span>
+            <strong>{{ nombreLecturador() }}</strong>
+          </div>
+
+          <div class="avatar">
+            {{ inicialLecturador() }}
+          </div>
+        </div>
       </div>
     </header>
 
@@ -46,12 +58,23 @@
 
     <section class="hero-card">
       <div class="hero-info">
-        <span class="tag light">Escaneo o ingreso manual</span>
-        <h2>Buscar suministro</h2>
+        <span class="tag light">Lectura de medidores</span>
+        <h2>Busca el suministro para iniciar</h2>
         <p>
-          Escanea el QR o ingresa el código. El sistema te indicará automáticamente si debes registrar lectura,
-          generar recibo por consumo cero o solo mantenimiento.
+          Si el suministro está instalado, registra la lectura del medidor.
+          Si aún no está instalado, puedes generar el recibo por mantenimiento.
+          Si está inactivo, el sistema bloqueará la operación.
         </p>
+
+        <div class="hero-actions">
+          <button type="button" class="btn-white" (click)="iniciarEscaneo()" [disabled]="escaneando">
+            {{ escaneando ? 'Escaneando...' : 'Escanear QR' }}
+          </button>
+
+          <button type="button" class="btn-soft" (click)="limpiar()">
+            Nueva búsqueda
+          </button>
+        </div>
       </div>
 
       <div class="hero-icon">
@@ -62,9 +85,9 @@
     <section class="search-card">
       <div class="search-header">
         <div>
-          <span class="tag">Búsqueda</span>
-          <h2>Identificación del suministro</h2>
-          <p>Usa el código del suministro o la cámara para escanear el QR pegado en el medidor o vivienda.</p>
+          <span class="tag">Paso 1</span>
+          <h2>Buscar suministro</h2>
+          <p>Ingresa el código del suministro o escanea el QR instalado en la vivienda.</p>
         </div>
       </div>
 
@@ -89,7 +112,7 @@
         </button>
 
         <button *ngIf="escaneando" type="button" class="btn-danger" (click)="detenerEscaneo()">
-          Detener cámara
+          Detener
         </button>
       </div>
 
@@ -109,7 +132,7 @@
     <section class="suministro-card" *ngIf="suministro">
       <div class="section-title">
         <div>
-          <span class="tag">Suministro encontrado</span>
+          <span class="tag">Paso 2</span>
           <h2>{{ suministro.aliasSuministro || 'Suministro encontrado' }}</h2>
           <p>{{ suministro.codigoSuministro }}</p>
         </div>
@@ -131,7 +154,7 @@
         </div>
 
         <div class="cliente-info">
-          <span>Usuario / Cliente del suministro</span>
+          <span>Cliente del suministro</span>
           <h3>{{ nombreUsuarioSuministro() }}</h3>
           <p>DNI: {{ dniUsuarioSuministro() }}</p>
         </div>
@@ -159,69 +182,35 @@
         </div>
 
         <div class="info-box">
-          <span>Lectura anterior / inicial</span>
-          <strong>{{ suministro.lecturaInicial | number:'1.2-3' }} m³</strong>
+          <span>Lectura anterior</span>
+          <strong>{{ lecturaAnterior() | number:'1.2-3' }} m³</strong>
         </div>
       </div>
     </section>
 
-    <section class="operation-card" id="panel-operacion" *ngIf="suministro">
+    <section class="operation-card" id="panel-operacion" *ngIf="suministro && puedeRegistrarLectura()">
       <div class="section-title">
         <div>
-          <span class="tag">Operación</span>
-          <h2>¿Qué deseas registrar?</h2>
-          <p>Selecciona una opción según el estado del suministro. Los montos los calcula el sistema automáticamente.</p>
+          <span class="tag">Paso 3</span>
+          <h2>Registrar lectura del medidor</h2>
+          <p>Ingresa la lectura actual. El sistema calculará el consumo y generará el recibo automáticamente.</p>
         </div>
       </div>
 
-      <div class="operation-options" *ngIf="puedeRegistrarLectura()">
-        <button
-          type="button"
-          class="operation-option"
-          [ngClass]="{ selected: modoOperacion === 'LECTURA' }"
-          (click)="seleccionarModo('LECTURA')"
-        >
-          <span class="operation-icon">📈</span>
-          <strong>Registrar lectura del medidor</strong>
-          <small>Usar cuando el medidor tiene una lectura actual.</small>
-        </button>
-
-        <button
-          type="button"
-          class="operation-option warning"
-          [ngClass]="{ selected: modoOperacion === 'CONSUMO_CERO' }"
-          (click)="seleccionarModo('CONSUMO_CERO')"
-        >
-          <span class="operation-icon">🧾</span>
-          <strong>Sin consumo / consumo cero</strong>
-          <small>Usar cuando el suministro está instalado, pero no hubo consumo.</small>
-        </button>
-      </div>
-
-      <div class="operation-options" *ngIf="!puedeRegistrarLectura() && puedeGenerarMantenimiento()">
-        <button
-          type="button"
-          class="operation-option warning selected"
-          (click)="seleccionarModo('MANTENIMIENTO')"
-        >
-          <span class="operation-icon">🛠️</span>
-          <strong>Generar recibo básico por mantenimiento</strong>
-          <small>Usar cuando el suministro aún no está instalado.</small>
-        </button>
-      </div>
-
-      <div class="auto-charge-note">
-        <strong>Cargos automáticos</strong>
-        <span>El lecturador no ingresa montos. Mantenimiento, cargo lector y otros cargos son definidos por administración.</span>
-      </div>
-    </section>
-
-    <section class="form-card" *ngIf="suministro && modoOperacion === 'LECTURA'">
-      <div class="section-title">
+      <div class="reading-summary">
         <div>
-          <span class="tag">Nueva lectura</span>
-          <h2>Registro del medidor</h2>
-          <p>Ingresa la lectura actual para calcular el consumo y generar el recibo.</p>
+          <span>Lectura anterior</span>
+          <strong>{{ lecturaAnterior() | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div>
+          <span>Lectura actual</span>
+          <strong>{{ lecturaActual() | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div [ngClass]="estadoConsumoClase()">
+          <span>Consumo estimado</span>
+          <strong>{{ consumoEstimado() | number:'1.2-3' }} m³</strong>
         </div>
       </div>
 
@@ -264,20 +253,8 @@
           <input
             type="text"
             [(ngModel)]="lecturaForm.observacion"
-            placeholder="Opcional: medidor visible, casa cerrada, lectura normal..."
+            placeholder="Opcional: lectura normal, medidor visible, casa cerrada..."
           >
-        </div>
-      </div>
-
-      <div class="reading-help">
-        <div>
-          <strong>Validación automática</strong>
-          <span>La lectura actual no debe ser menor a la lectura anterior.</span>
-        </div>
-
-        <div>
-          <strong>Recibo automático</strong>
-          <span>El sistema calculará consumo, tarifa, cargos y total.</span>
         </div>
       </div>
 
@@ -286,41 +263,46 @@
           Cancelar
         </button>
 
+        <button type="button" class="btn-warning" (click)="marcarConsumoCero()">
+          Marcar consumo cero
+        </button>
+
         <button type="button" class="btn-primary" [disabled]="registrando" (click)="registrarLectura()">
           {{ registrando ? 'Registrando...' : 'Registrar lectura y generar recibo' }}
         </button>
       </div>
     </section>
 
-    <section class="form-card maintenance-card" *ngIf="suministro && (modoOperacion === 'CONSUMO_CERO' || modoOperacion === 'MANTENIMIENTO')">
+    <section class="operation-card" id="panel-operacion" *ngIf="suministro && puedeGenerarMantenimiento()">
       <div class="section-title">
         <div>
-          <span class="tag warning">
-            {{ modoOperacion === 'CONSUMO_CERO' ? 'Consumo cero' : 'Mantenimiento' }}
-          </span>
-
-          <h2>
-            {{ modoOperacion === 'CONSUMO_CERO' ? 'Generar recibo por consumo cero' : 'Generar recibo básico por mantenimiento' }}
-          </h2>
-
-          <p *ngIf="modoOperacion === 'CONSUMO_CERO'">
-            Este suministro está instalado, pero no hubo consumo. Se generará un recibo con consumo 0 m³.
-          </p>
-
-          <p *ngIf="modoOperacion === 'MANTENIMIENTO'">
-            Este suministro aún no está instalado. No se permite lectura normal; solo se genera mantenimiento.
+          <span class="tag">Mantenimiento</span>
+          <h2>Generar recibo por mantenimiento</h2>
+          <p>
+            Este suministro aún no está instalado. No se registra lectura de medidor,
+            pero sí corresponde generar el recibo por mantenimiento.
           </p>
         </div>
       </div>
 
-      <div class="maintenance-notice">
-        <strong>Montos definidos por administración</strong>
-        <span>
-          No ingreses importes. El sistema aplicará automáticamente los cargos configurados por el administrador.
-        </span>
+      <div class="reading-summary">
+        <div>
+          <span>Tipo de recibo</span>
+          <strong>Mantenimiento</strong>
+        </div>
+
+        <div>
+          <span>Consumo</span>
+          <strong>0.000 m³</strong>
+        </div>
+
+        <div class="warning">
+          <span>Estado</span>
+          <strong>Pendiente de instalación</strong>
+        </div>
       </div>
 
-      <div class="form-grid maintenance-grid">
+      <div class="form-grid">
         <div class="form-group">
           <label>Año</label>
           <input type="number" [(ngModel)]="mantenimientoForm.anio">
@@ -349,8 +331,25 @@
           <input
             type="text"
             [(ngModel)]="mantenimientoForm.observacion"
-            placeholder="Ejemplo: consumo cero o suministro pendiente de instalación"
+            placeholder="Recibo generado por mantenimiento..."
           >
+        </div>
+      </div>
+
+      <div class="help-grid">
+        <div>
+          <strong>No instalado</strong>
+          <span>No se registra lectura actual del medidor.</span>
+        </div>
+
+        <div>
+          <strong>Pago por mantenimiento</strong>
+          <span>El monto lo calcula el sistema según configuración del administrador.</span>
+        </div>
+
+        <div>
+          <strong>Sin cargos manuales</strong>
+          <span>El lecturador no modifica tarifas ni importes.</span>
         </div>
       </div>
 
@@ -361,21 +360,27 @@
 
         <button
           type="button"
-          class="btn-warning"
+          class="btn-primary"
           [disabled]="generandoMantenimiento"
           (click)="registrarMantenimiento()"
         >
-          {{ generandoMantenimiento ? 'Generando...' : 'Generar recibo' }}
+          {{ generandoMantenimiento ? 'Generando...' : 'Generar recibo por mantenimiento' }}
         </button>
       </div>
     </section>
 
     <section class="blocked-card" *ngIf="suministro && !puedeRegistrarLectura() && !puedeGenerarMantenimiento()">
-      <div class="blocked-icon">🚫</div>
+      <div class="blocked-icon">!</div>
+
       <div>
-        <span class="tag danger">Operación bloqueada</span>
-        <h2>No se puede registrar lectura ni generar recibo</h2>
+        <span class="tag danger">Operación no permitida</span>
+        <h2>No se puede registrar operación</h2>
         <p>{{ mensajeEstadoVisible() }}</p>
+
+        <div class="blocked-note">
+          <strong>Acción recomendada</strong>
+          <span>Comunicar al administrador para revisar el estado del suministro.</span>
+        </div>
       </div>
     </section>
 

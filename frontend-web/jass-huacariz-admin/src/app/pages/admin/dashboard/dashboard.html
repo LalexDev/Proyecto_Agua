@@ -1,5 +1,5 @@
-<div class="dashboard-premium">
-  <section class="dashboard-top">
+<div class="dashboard-modern">
+  <section class="dashboard-top-card">
     <div class="top-left">
       <span class="page-kicker">Dashboard / Home</span>
       <h2>Panel administrativo</h2>
@@ -7,8 +7,21 @@
     </div>
 
     <div class="top-search">
-      <span class="search-icon">⌕</span>
-      <input type="text" placeholder="Buscar cliente, recibo o suministro..." disabled>
+      <span class="search-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="m21 21-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z"></path>
+        </svg>
+      </span>
+
+      <input
+        type="text"
+        [(ngModel)]="busqueda"
+        placeholder="Buscar cliente, DNI, recibo o suministro..."
+      >
+
+      <button type="button" class="clear-search" *ngIf="tieneBusqueda()" (click)="limpiarBusqueda()">
+        ✕
+      </button>
     </div>
 
     <div class="top-actions">
@@ -24,8 +37,8 @@
         ⎙
       </button>
 
-      <button type="button" class="logout-button" (click)="cerrarSesion()">
-        Cerrar sesión
+      <button type="button" class="create-button" routerLink="/admin/recibos">
+        + Ver recibos
       </button>
     </div>
   </section>
@@ -38,40 +51,85 @@
     Cargando información del dashboard...
   </div>
 
+  <section class="search-results" *ngIf="tieneBusqueda()">
+    <article class="result-card">
+      <div class="panel-title compact">
+        <div>
+          <span>Búsqueda</span>
+          <h3>Resultados encontrados</h3>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-block">
+          <h4>Clientes</h4>
+
+          <div class="result-item" *ngFor="let cliente of clientesFiltrados()">
+            <div class="result-icon">👤</div>
+            <div>
+              <strong>{{ cliente.nombres }} {{ cliente.apellidos }}</strong>
+              <small>DNI: {{ cliente.dni }} · {{ cliente.correo || 'Sin correo' }}</small>
+            </div>
+          </div>
+
+          <div class="empty-box small" *ngIf="clientesFiltrados().length === 0">
+            No se encontraron clientes.
+          </div>
+        </div>
+
+        <div class="result-block">
+          <h4>Recibos / suministros</h4>
+
+          <div class="result-item" *ngFor="let recibo of recibosFiltrados()">
+            <div class="result-icon receipt">🧾</div>
+            <div>
+              <strong>{{ recibo.codigoRecibo }}</strong>
+              <small>{{ recibo.codigoSuministro }} · {{ periodo(recibo) }} · S/ {{ recibo.total | number:'1.2-2' }}</small>
+            </div>
+          </div>
+
+          <div class="empty-box small" *ngIf="recibosFiltrados().length === 0">
+            No se encontraron recibos.
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
   <section class="summary-layout">
-    <article class="mini-stat featured">
-      <div class="circle-ring">
-        <span>{{ totalClientes() }}</span>
+    <article class="metric-card featured">
+      <div class="metric-icon">
+        <svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 21a8 8 0 0 1 16 0"></path></svg>
       </div>
 
       <div>
-        <small>Total clientes</small>
-        <strong>Clientes activos</strong>
-        <p>Usuarios registrados en el servicio.</p>
+        <span>Clientes activos</span>
+        <strong>{{ clientesActivos() }}</strong>
+        <small>{{ totalClientes() }} usuarios registrados</small>
       </div>
     </article>
 
-    <article class="mini-stat">
-      <div class="circle-ring">
-        <span>{{ totalSuministros() }}</span>
+    <article class="metric-card">
+      <div class="metric-icon blue">
+        <svg viewBox="0 0 24 24"><path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path></svg>
       </div>
 
       <div>
-        <small>Suministros</small>
-        <strong>Conexiones</strong>
-        <p>Puntos de agua registrados.</p>
+        <span>Conexiones</span>
+        <strong>{{ totalSuministros() }}</strong>
+        <small>Puntos de agua registrados</small>
       </div>
     </article>
 
-    <article class="mini-stat">
-      <div class="circle-ring warning">
-        <span>{{ recibosPendientes() }}</span>
+    <article class="metric-card">
+      <div class="metric-icon orange">
+        <svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3Zm3 5h4m-4 4h5m-5 4h3"></path></svg>
       </div>
 
       <div>
-        <small>Pendientes</small>
-        <strong>Por cobrar</strong>
-        <p>{{ porcentajePendientes() | number:'1.1-1' }}% de recibos.</p>
+        <span>Por cobrar</span>
+        <strong>{{ recibosPendientes() }}</strong>
+        <small>{{ porcentajePendientes() | number:'1.1-1' }}% de recibos</small>
       </div>
     </article>
 
@@ -80,16 +138,17 @@
         <div>
           <span>Recaudación</span>
           <strong>S/ {{ totalPagado() | number:'1.2-2' }}</strong>
+          <small>{{ porcentajeRecaudado() | number:'1.0-0' }}% del total emitido</small>
         </div>
 
-        <div class="income-icon">💧</div>
+        <div class="income-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path></svg>
+        </div>
       </div>
 
       <div class="income-line">
         <div [style.width.%]="porcentajeRecaudado()"></div>
       </div>
-
-      <p>{{ porcentajeRecaudado() | number:'1.0-0' }}% del total emitido cobrado</p>
     </article>
 
     <article class="progress-card">
@@ -141,18 +200,13 @@
         <button type="button" (click)="cargarDashboard()">Actualizar</button>
       </div>
 
-      <div class="fake-chart">
-        <div class="chart-lines">
-          <span style="height: 36%"></span>
-          <span style="height: 58%"></span>
-          <span style="height: 44%"></span>
-          <span style="height: 72%"></span>
-          <span style="height: 50%"></span>
-          <span style="height: 66%"></span>
-          <span style="height: 40%"></span>
-          <span style="height: 78%"></span>
-          <span style="height: 62%"></span>
-          <span style="height: 48%"></span>
+      <div class="real-chart">
+        <div class="chart-area">
+          <div class="chart-column" *ngFor="let item of consumoPorMes()">
+            <div class="bar-value">{{ item.consumo | number:'1.0-1' }}</div>
+            <span [style.height.%]="item.height"></span>
+            <small>{{ item.nombre }}</small>
+          </div>
         </div>
 
         <div class="chart-data">
@@ -172,8 +226,8 @@
     <article class="receipt-card">
       <div class="panel-title">
         <div>
-          <span>Actividad reciente</span>
-          <h3>Últimos recibos generados</h3>
+          <span>{{ tieneBusqueda() ? 'Resultados' : 'Actividad reciente' }}</span>
+          <h3>{{ tieneBusqueda() ? 'Recibos encontrados' : 'Últimos recibos generados' }}</h3>
         </div>
 
         <a routerLink="/admin/recibos">Ver todos</a>
@@ -192,7 +246,7 @@
           </thead>
 
           <tbody>
-            <tr *ngFor="let recibo of ultimosRecibos()">
+            <tr *ngFor="let recibo of recibosFiltrados()">
               <td>
                 <strong>{{ $any(recibo).codigoRecibo }}</strong>
               </td>
@@ -212,9 +266,9 @@
               </td>
             </tr>
 
-            <tr *ngIf="ultimosRecibos().length === 0">
+            <tr *ngIf="recibosFiltrados().length === 0">
               <td colspan="5" class="empty-row">
-                No hay recibos registrados.
+                No hay recibos para mostrar.
               </td>
             </tr>
           </tbody>
@@ -244,7 +298,7 @@
         </a>
 
         <a routerLink="/admin/pagos" class="quick-tile">
-          <span>💰</span>
+          <span>💳</span>
           <strong>Pagos</strong>
           <small>Registrar pago</small>
         </a>
@@ -333,7 +387,7 @@
 
           <div>
             <strong>{{ $any(pago).codigoRecibo || $any(pago).reciboCodigo || 'Recibo' }}</strong>
-            <small>{{ $any(pago).metodoPago || $any(pago).metodo || 'PagoEfectivo' }}</small>
+            <small>{{ $any(pago).metodoPago || $any(pago).metodo || 'Pago registrado' }}</small>
           </div>
 
           <span>S/ {{ $any(pago).monto | number:'1.2-2' }}</span>

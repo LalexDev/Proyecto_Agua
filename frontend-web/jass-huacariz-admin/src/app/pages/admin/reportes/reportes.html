@@ -1,12 +1,12 @@
 <div class="reportes-page">
-  <div class="page-header">
-    <div>
-      <span class="tag">Administración</span>
+  <section class="page-header">
+    <div class="page-header__content">
+      <span class="page-kicker">REPORTES / GERENCIA</span>
       <h2>Reportes generales</h2>
-      <p>Resumen operativo del sistema de agua potable JASS Huacariz.</p>
+      <p>Resumen operativo, financiero y de consumo del sistema de agua potable JASS Huacariz.</p>
     </div>
 
-    <div class="header-actions">
+    <div class="page-header__actions">
       <button type="button" class="btn-secondary" (click)="exportarExcel()">
         Exportar Excel
       </button>
@@ -15,200 +15,374 @@
         Imprimir PDF
       </button>
 
-      <button type="button" class="btn-primary" (click)="cargarReportes()">
-        Actualizar reportes
+      <button type="button" class="btn-primary" (click)="cargarReportes()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar reportes' }}
       </button>
     </div>
-  </div>
+  </section>
 
-  <div *ngIf="error" class="alert-error">
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
-  <div *ngIf="cargando" class="alert-info">
+  <div *ngIf="cargando" class="alert alert-info">
     Cargando reportes...
   </div>
 
   <section class="stats-grid">
-    <div class="stat-card">
-      <div class="icon">👥</div>
-      <div>
-        <span>Total clientes</span>
-        <strong>{{ totalClientes() }}</strong>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="icon">🏠</div>
-      <div>
-        <span>Total suministros</span>
-        <strong>{{ totalSuministros() }}</strong>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="icon">🧾</div>
-      <div>
-        <span>Total recibos</span>
+    <article class="stat-card featured">
+      <div class="stat-card__icon">📊</div>
+      <div class="stat-card__content">
+        <span>Recibos generados</span>
         <strong>{{ totalRecibos() }}</strong>
+        <small>Documentos emitidos</small>
       </div>
-    </div>
+    </article>
 
-    <div class="stat-card">
-      <div class="icon">💰</div>
-      <div>
+    <article class="stat-card">
+      <div class="stat-card__icon money">💰</div>
+      <div class="stat-card__content">
         <span>Total recaudado</span>
-        <strong>S/ {{ totalRecaudado() | number:'1.2-2' }}</strong>
+        <strong class="money-text">S/ {{ totalRecaudado() | number:'1.2-2' }}</strong>
+        <small>Pagos registrados</small>
       </div>
-    </div>
+    </article>
 
-    <div class="stat-card">
-      <div class="icon">⏳</div>
-      <div>
-        <span>Recibos pendientes</span>
-        <strong>{{ recibosPendientes() }}</strong>
-        <small>{{ porcentajePendientes() | number:'1.1-1' }}%</small>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="icon">✅</div>
-      <div>
-        <span>Recibos pagados</span>
-        <strong>{{ recibosPagados() }}</strong>
-        <small>{{ porcentajePagados() | number:'1.1-1' }}%</small>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="icon">💧</div>
-      <div>
+    <article class="stat-card">
+      <div class="stat-card__icon water">💧</div>
+      <div class="stat-card__content">
         <span>Consumo total</span>
-        <strong>{{ consumoTotal() | number:'1.2-3' }} m³</strong>
+        <strong class="money-text">{{ consumoTotal() | number:'1.2-3' }} m³</strong>
+        <small>Consumo facturado</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon user">👥</div>
+      <div class="stat-card__content">
+        <span>Clientes activos</span>
+        <strong>{{ clientesActivos() }}</strong>
+        <small>De {{ totalClientes() }} clientes</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="summary-panel">
+    <div class="summary-info">
+      <span class="tag">Estado financiero</span>
+      <h3>Recaudación del sistema</h3>
+      <p>
+        Controla el total emitido, total recaudado y saldo pendiente para mejorar la gestión de cobranza.
+      </p>
+
+      <div class="progress-zone">
+        <div class="progress-item">
+          <div>
+            <span>Total recaudado</span>
+            <strong>S/ {{ totalRecaudado() | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="progress-track">
+            <div class="progress-fill paid" [style.width.%]="porcentajeRecaudado()"></div>
+          </div>
+        </div>
+
+        <div class="progress-item">
+          <div>
+            <span>Saldo pendiente</span>
+            <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="progress-track">
+            <div class="progress-fill pending" [style.width.%]="porcentajeSaldoPendiente()"></div>
+          </div>
+        </div>
+
+        <div class="progress-item">
+          <div>
+            <span>Consumo promedio</span>
+            <strong>{{ consumoPromedio() | number:'1.2-3' }} m³</strong>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill water"
+              [style.width.%]="consumoTotal() > 0 ? (consumoPromedio() / consumoTotal()) * 100 : 0"
+            ></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="stat-card">
-      <div class="icon">📊</div>
-      <div>
-        <span>Consumo promedio</span>
-        <strong>{{ consumoPromedio() | number:'1.2-2' }} m³</strong>
+    <div class="donut-zone">
+      <div class="donut-chart" [style.background]="graficoRecaudacion()">
+        <div class="donut-center">
+          <strong>{{ porcentajeRecaudado() | number:'1.0-0' }}%</strong>
+          <span>cobrado</span>
+        </div>
+      </div>
+
+      <div class="summary-items">
+        <div>
+          <span>Total emitido</span>
+          <strong>S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
+          <small>Importe de recibos</small>
+        </div>
+
+        <div>
+          <span>Saldo pendiente</span>
+          <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
+          <small>Por recaudar</small>
+        </div>
       </div>
     </div>
   </section>
 
+  <section class="dashboard-grid">
+    <article class="chart-card">
+      <div class="chart-header">
+        <div>
+          <span class="page-kicker small">COBRANZA</span>
+          <h3>Estado de recibos</h3>
+          <p>Distribución de recibos pagados, pendientes y vencidos.</p>
+        </div>
+      </div>
+
+      <div class="chart-content">
+        <div class="donut-chart small" [style.background]="graficoEstados()">
+          <div class="donut-center small">
+            <strong>{{ totalRecibos() }}</strong>
+            <span>recibos</span>
+          </div>
+        </div>
+
+        <div class="legend-list">
+          <div class="legend-item">
+            <span class="dot pagado-dot"></span>
+            <div>
+              <strong>Pagados</strong>
+              <small>{{ recibosPagados() }} · {{ porcentajePagados() | number:'1.0-1' }}%</small>
+            </div>
+          </div>
+
+          <div class="legend-item">
+            <span class="dot pendiente-dot"></span>
+            <div>
+              <strong>Pendientes</strong>
+              <small>{{ recibosPendientes() }} · {{ porcentajePendientes() | number:'1.0-1' }}%</small>
+            </div>
+          </div>
+
+          <div class="legend-item">
+            <span class="dot vencido-dot"></span>
+            <div>
+              <strong>Vencidos</strong>
+              <small>{{ recibosVencidos() }} · {{ porcentajeVencidos() | number:'1.0-1' }}%</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <div class="chart-header">
+        <div>
+          <span class="page-kicker small">PAGOS</span>
+          <h3>Métodos de pago</h3>
+          <p>Resumen por método de pago registrado.</p>
+        </div>
+      </div>
+
+      <div class="method-list">
+        <div class="method-row" *ngFor="let item of resumenMetodosPago(); let i = index">
+          <span class="dot" [style.background]="colorMetodo(i)"></span>
+
+          <div>
+            <strong>{{ item.metodo }}</strong>
+            <small>{{ item.cantidad }} pago(s) · {{ item.porcentaje | number:'1.0-1' }}%</small>
+          </div>
+
+          <strong>S/ {{ item.monto | number:'1.2-2' }}</strong>
+        </div>
+
+        <div *ngIf="resumenMetodosPago().length === 0" class="empty-box">
+          No hay pagos registrados.
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="stats-grid secondary">
+    <article class="stat-card small">
+      <div class="stat-card__icon home">🏠</div>
+      <div class="stat-card__content">
+        <span>Suministros</span>
+        <strong>{{ totalSuministros() }}</strong>
+        <small>{{ suministrosInstalados() }} instalados</small>
+      </div>
+    </article>
+
+    <article class="stat-card small">
+      <div class="stat-card__icon pending">⏳</div>
+      <div class="stat-card__content">
+        <span>Recibos pendientes</span>
+        <strong>{{ recibosPendientes() }}</strong>
+        <small>{{ porcentajePendientes() | number:'1.0-1' }}%</small>
+      </div>
+    </article>
+
+    <article class="stat-card small">
+      <div class="stat-card__icon success">✅</div>
+      <div class="stat-card__content">
+        <span>Recibos pagados</span>
+        <strong>{{ recibosPagados() }}</strong>
+        <small>{{ porcentajePagados() | number:'1.0-1' }}%</small>
+      </div>
+    </article>
+
+    <article class="stat-card small">
+      <div class="stat-card__icon config">⚙️</div>
+      <div class="stat-card__content">
+        <span>Tarifas activas</span>
+        <strong>{{ tarifasActivas() }}</strong>
+        <small>Promedio S/ {{ tarifaPromedio() | number:'1.2-2' }}</small>
+      </div>
+    </article>
+  </section>
+
   <section class="content-grid">
-    <div class="table-card wide">
-      <div class="table-title">
-        <h3>Últimos recibos</h3>
+    <article class="table-card wide">
+      <div class="table-card__header">
+        <div>
+          <span class="page-kicker small">ACTIVIDAD</span>
+          <h3>Últimos recibos</h3>
+        </div>
+
         <span>{{ ultimosRecibos().length }} registro(s)</span>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Recibo</th>
-            <th>Suministro</th>
-            <th>Periodo</th>
-            <th>Total</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Recibo</th>
+              <th>Suministro</th>
+              <th>Periodo</th>
+              <th>Consumo</th>
+              <th>Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr *ngFor="let recibo of ultimosRecibos()">
-            <td>{{ $any(recibo).codigoRecibo }}</td>
-            <td>{{ $any(recibo).codigoSuministro }}</td>
-            <td>{{ periodo(recibo) }}</td>
-            <td>S/ {{ $any(recibo).total | number:'1.2-2' }}</td>
-            <td>
-              <span class="badge" [ngClass]="estadoClase($any(recibo).estadoRecibo)">
-                {{ $any(recibo).estadoRecibo }}
-              </span>
-            </td>
-          </tr>
+          <tbody>
+            <tr *ngFor="let recibo of ultimosRecibos()">
+              <td>
+                <strong>{{ recibo.codigoRecibo }}</strong>
+              </td>
 
-          <tr *ngIf="ultimosRecibos().length === 0">
-            <td colspan="5" class="empty-row">
-              No hay recibos registrados.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+              <td>{{ recibo.codigoSuministro || '-' }}</td>
 
-    <div class="table-card">
-      <div class="table-title">
-        <h3>Últimos pagos</h3>
+              <td>{{ periodo(recibo) }}</td>
+
+              <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
+
+              <td>
+                <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
+              </td>
+
+              <td>
+                <span class="status-badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
+                  {{ recibo.estadoRecibo || 'PENDIENTE' }}
+                </span>
+              </td>
+            </tr>
+
+            <tr *ngIf="ultimosRecibos().length === 0">
+              <td colspan="6" class="empty-state">
+                No hay recibos registrados.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="table-card">
+      <div class="table-card__header">
+        <div>
+          <span class="page-kicker small">MOVIMIENTOS</span>
+          <h3>Últimos pagos</h3>
+        </div>
+
         <span>{{ ultimosPagos().length }} registro(s)</span>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Recibo</th>
-            <th>Método</th>
-            <th>Monto</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
+      <div class="payment-list">
+        <div class="payment-row" *ngFor="let pago of ultimosPagos()">
+          <div class="pay-icon">S/</div>
 
-        <tbody>
-          <tr *ngFor="let pago of ultimosPagos()">
-            <td>{{ $any(pago).codigoRecibo || $any(pago).reciboCodigo || '-' }}</td>
-            <td>{{ $any(pago).metodoPago || $any(pago).metodo || '-' }}</td>
-            <td>S/ {{ $any(pago).monto | number:'1.2-2' }}</td>
-            <td>{{ $any(pago).fechaPago || $any(pago).fechaRegistro || $any(pago).fecha || '-' }}</td>
-          </tr>
+          <div>
+            <strong>{{ pago.codigoRecibo || '-' }}</strong>
+            <small>{{ pago.metodoPago || '-' }} · {{ fechaPagoTexto(pago) }}</small>
+          </div>
 
-          <tr *ngIf="ultimosPagos().length === 0">
-            <td colspan="4" class="empty-row">
-              No hay pagos registrados.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+          <span>S/ {{ pago.monto | number:'1.2-2' }}</span>
+        </div>
 
-    <div class="table-card">
-      <div class="table-title">
-        <h3>Clientes con más suministros</h3>
+        <div *ngIf="ultimosPagos().length === 0" class="empty-box">
+          No hay pagos registrados.
+        </div>
+      </div>
+    </article>
+
+    <article class="table-card">
+      <div class="table-card__header">
+        <div>
+          <span class="page-kicker small">CLIENTES</span>
+          <h3>Más suministros</h3>
+        </div>
+
         <span>{{ clientesConMasSuministros().length }} cliente(s)</span>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>DNI</th>
-            <th>Cliente</th>
-            <th>Suministros</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
+      <div class="table-responsive mini">
+        <table>
+          <thead>
+            <tr>
+              <th>DNI</th>
+              <th>Cliente</th>
+              <th>Suministros</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr *ngFor="let cliente of clientesConMasSuministros()">
-            <td>{{ $any(cliente).dni }}</td>
-            <td>{{ nombreCompleto(cliente) }}</td>
-            <td>{{ $any(cliente).suministros?.length || 0 }}</td>
-            <td>
-              <span class="badge" [ngClass]="$any(cliente).estado === false ? 'pendiente' : 'pagado'">
-                {{ $any(cliente).estado === false ? 'Inactivo' : 'Activo' }}
-              </span>
-            </td>
-          </tr>
+          <tbody>
+            <tr *ngFor="let cliente of clientesConMasSuministros()">
+              <td>{{ cliente.dni }}</td>
+              <td>{{ nombreCompleto(cliente) }}</td>
+              <td>
+                <strong>{{ cliente.suministros.length || 0 }}</strong>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="cliente.estado === false ? 'vencido' : 'pagado'">
+                  {{ cliente.estado === false ? 'Inactivo' : 'Activo' }}
+                </span>
+              </td>
+            </tr>
 
-          <tr *ngIf="clientesConMasSuministros().length === 0">
-            <td colspan="4" class="empty-row">
-              No hay clientes registrados.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            <tr *ngIf="clientesConMasSuministros().length === 0">
+              <td colspan="4" class="empty-state">
+                No hay clientes registrados.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
 
-    <div class="summary-card">
-      <h3>Resumen económico</h3>
+    <article class="summary-card">
+      <span class="tag">Resumen económico</span>
+      <h3>Indicadores finales</h3>
 
       <div class="summary-row">
         <span>Total emitido</span>
@@ -234,6 +408,6 @@
         <span>Precio promedio m³</span>
         <strong>S/ {{ tarifaPromedio() | number:'1.2-2' }}</strong>
       </div>
-    </div>
+    </article>
   </section>
 </div>

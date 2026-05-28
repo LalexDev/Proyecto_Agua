@@ -97,7 +97,7 @@ public class ClientePortalService {
                 .recibo(recibo)
                 .metodoPago(request.getMetodoPago())
                 .codigoOperacion(request.getCodigoOperacion())
-                .monto(recibo.getTotal())
+                .monto(valorSeguro(recibo.getTotal()))
                 .estadoPago("PAGADO")
                 .fechaPago(LocalDateTime.now())
                 .build();
@@ -172,14 +172,31 @@ public class ClientePortalService {
         return SuministroResponse.builder()
                 .id(suministro.getId())
                 .codigoSuministro(suministro.getCodigoSuministro())
-                .idSector(suministro.getSector().getId())
-                .nombreSector(suministro.getSector().getNombre())
+                .idSector(suministro.getSector() != null ? suministro.getSector().getId() : null)
+                .nombreSector(suministro.getSector() != null ? suministro.getSector().getNombre() : "-")
                 .direccionSuministro(suministro.getDireccionSuministro())
                 .referencia(suministro.getReferencia())
                 .aliasSuministro(suministro.getAliasSuministro())
-                .lecturaInicial(suministro.getLecturaInicial())
+                .lecturaInicial(valorSeguro(suministro.getLecturaInicial()))
                 .estado(suministro.getEstado())
+                .estadoInstalacion(obtenerEstadoInstalacionSeguro(suministro))
                 .build();
+    }
+
+    private String obtenerEstadoInstalacionSeguro(Suministro suministro) {
+        if (suministro == null) {
+            return "PENDIENTE_INSTALACION";
+        }
+
+        if (suministro.getEstadoInstalacion() != null && !suministro.getEstadoInstalacion().isBlank()) {
+            return suministro.getEstadoInstalacion();
+        }
+
+        if (Boolean.FALSE.equals(suministro.getEstado())) {
+            return "SUSPENDIDO";
+        }
+
+        return "PENDIENTE_INSTALACION";
     }
 
     private ReciboResponse convertirReciboAResponse(Recibo recibo) {

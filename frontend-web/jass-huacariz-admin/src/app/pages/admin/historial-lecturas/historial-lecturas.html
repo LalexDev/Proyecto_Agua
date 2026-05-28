@@ -1,9 +1,9 @@
 <div class="historial-page">
   <section class="page-header">
     <div class="page-header__content">
-      <span class="tag">Administración</span>
+      <span class="page-kicker">LECTURAS / HISTORIAL</span>
       <h2>Historial de lecturas</h2>
-      <p>Consulta las lecturas registradas, consumos generados y recibos asociados.</p>
+      <p>Consulta lecturas registradas, consumos generados, recibos asociados y estados de cobranza.</p>
     </div>
 
     <div class="page-header__actions">
@@ -15,8 +15,8 @@
         Imprimir PDF
       </button>
 
-      <button type="button" class="btn-primary" (click)="cargarHistorial()">
-        Actualizar
+      <button type="button" class="btn-primary" (click)="cargarHistorial()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
       </button>
     </div>
   </section>
@@ -30,50 +30,165 @@
   </div>
 
   <section class="stats-grid">
-    <article class="stat-card">
+    <article class="stat-card featured">
       <div class="stat-card__icon">📚</div>
       <div class="stat-card__content">
-        <span class="stat-card__label">Lecturas</span>
-        <strong class="stat-card__value">{{ lecturasFiltradas.length }}</strong>
-        <small class="stat-card__meta">Registros encontrados</small>
+        <span>Lecturas</span>
+        <strong>{{ totalLecturas() }}</strong>
+        <small>Registros encontrados</small>
       </div>
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon">💧</div>
+      <div class="stat-card__icon water">💧</div>
       <div class="stat-card__content">
-        <span class="stat-card__label">Consumo total</span>
-        <strong class="stat-card__value">{{ totalConsumo() | number:'1.2-3' }} m³</strong>
-        <small class="stat-card__meta">Según filtros aplicados</small>
+        <span>Consumo total</span>
+        <strong class="money-text">{{ totalConsumo() | number:'1.2-3' }} m³</strong>
+        <small>Según filtros aplicados</small>
       </div>
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon">💰</div>
+      <div class="stat-card__icon money">💰</div>
       <div class="stat-card__content">
-        <span class="stat-card__label">Total emitido</span>
-        <strong class="stat-card__value">S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
-        <small class="stat-card__meta">Importe de recibos</small>
+        <span>Total emitido</span>
+        <strong class="money-text">S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
+        <small>Importe de recibos</small>
       </div>
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon">🧾</div>
+      <div class="stat-card__icon receipt">🧾</div>
       <div class="stat-card__content">
-        <span class="stat-card__label">Pendientes / Pagados</span>
-        <strong class="stat-card__value">{{ totalPendientes() }} / {{ totalPagados() }}</strong>
-        <small class="stat-card__meta">Estado de recibos</small>
+        <span>Pendientes / Pagados</span>
+        <strong>{{ totalPendientes() }} / {{ totalPagados() }}</strong>
+        <small>Estado de recibos</small>
       </div>
     </article>
   </section>
 
+  <section class="summary-panel">
+    <div class="summary-info">
+      <span class="tag">Indicadores de lectura</span>
+      <h3>Consumo y cobranza por periodo</h3>
+      <p>
+        Analiza el comportamiento de consumo, recibos pagados, pendientes y vencidos según los filtros seleccionados.
+      </p>
+
+      <div class="progress-zone">
+        <div class="progress-item">
+          <div>
+            <span>Consumo promedio</span>
+            <strong>{{ consumoPromedio() | number:'1.2-3' }} m³</strong>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill water"
+              [style.width.%]="totalConsumo() > 0 ? (consumoPromedio() / totalConsumo()) * 100 : 0"
+            ></div>
+          </div>
+        </div>
+
+        <div class="progress-item">
+          <div>
+            <span>Recibos pagados</span>
+            <strong>{{ totalPagados() }} / {{ totalConRecibo() }}</strong>
+          </div>
+
+          <div class="progress-track">
+            <div class="progress-fill paid" [style.width.%]="porcentajePagados()"></div>
+          </div>
+        </div>
+
+        <div class="progress-item">
+          <div>
+            <span>Recibos pendientes</span>
+            <strong>{{ totalPendientes() }} / {{ totalConRecibo() }}</strong>
+          </div>
+
+          <div class="progress-track">
+            <div class="progress-fill pending" [style.width.%]="porcentajePendientes()"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="donut-zone">
+      <div class="donut-chart" [style.background]="graficoEstados()">
+        <div class="donut-center">
+          <strong>{{ totalConRecibo() }}</strong>
+          <span>recibos</span>
+        </div>
+      </div>
+
+      <div class="legend-list">
+        <div class="legend-item">
+          <span class="dot pagado-dot"></span>
+          <div>
+            <strong>Pagados</strong>
+            <small>{{ porcentajePagados() | number:'1.0-1' }}%</small>
+          </div>
+        </div>
+
+        <div class="legend-item">
+          <span class="dot pendiente-dot"></span>
+          <div>
+            <strong>Pendientes</strong>
+            <small>{{ porcentajePendientes() | number:'1.0-1' }}%</small>
+          </div>
+        </div>
+
+        <div class="legend-item">
+          <span class="dot vencido-dot"></span>
+          <div>
+            <strong>Vencidos</strong>
+            <small>{{ porcentajeVencidos() | number:'1.0-1' }}%</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chart-card">
+    <div class="chart-header">
+      <div>
+        <span class="page-kicker small">CONSUMO</span>
+        <h3>Mayores consumos registrados</h3>
+        <p>Top de suministros con mayor consumo según los filtros aplicados.</p>
+      </div>
+    </div>
+
+    <div class="bars-list">
+      <div class="bar-item" *ngFor="let item of topConsumos()">
+        <div class="bar-info">
+          <strong>{{ item.codigoSuministro }}</strong>
+          <span>{{ nombreCliente(item) }} · {{ nombreMes(item.mes) }} {{ item.anio }}</span>
+        </div>
+
+        <div class="bar-track">
+          <div class="bar-fill" [style.width]="anchoConsumo(item)"></div>
+        </div>
+
+        <strong class="bar-price">{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
+      </div>
+
+      <div class="empty-chart" *ngIf="topConsumos().length === 0 && !cargando">
+        No hay consumos para graficar.
+      </div>
+    </div>
+  </section>
+
   <section class="filter-card">
-    <input
-      type="text"
-      placeholder="Buscar por suministro, cliente, DNI, sector o recibo..."
-      [(ngModel)]="busqueda"
-      (input)="aplicarFiltros()"
-    >
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        type="text"
+        placeholder="Buscar por suministro, cliente, DNI, sector, estado o recibo..."
+        [(ngModel)]="busqueda"
+        (input)="aplicarFiltros()"
+      >
+    </div>
 
     <select [(ngModel)]="filtroMes" (change)="aplicarFiltros()">
       <option [ngValue]="''">Todos los meses</option>
@@ -105,7 +220,11 @@
 
   <section class="table-card">
     <div class="table-card__header">
-      <h3>Lecturas registradas</h3>
+      <div>
+        <span class="page-kicker small">REGISTROS</span>
+        <h3>Lecturas registradas</h3>
+      </div>
+
       <span>{{ lecturasFiltradas.length }} resultado(s)</span>
     </div>
 
@@ -135,8 +254,8 @@
             </td>
 
             <td>
-              <strong>{{ item.cliente }}</strong>
-              <small>DNI: {{ item.dniCliente }}</small>
+              <strong>{{ nombreCliente(item) }}</strong>
+              <small>DNI: {{ item.dniCliente || '-' }}</small>
             </td>
 
             <td>{{ nombreMes(item.mes) }} {{ item.anio }}</td>
@@ -154,7 +273,7 @@
             </td>
 
             <td>
-              <strong>S/ {{ (item.totalRecibo || 0) | number:'1.2-2' }}</strong>
+              <strong>S/ {{ totalItem(item) | number:'1.2-2' }}</strong>
             </td>
 
             <td>
@@ -178,7 +297,7 @@
 
           <tr *ngIf="lecturasFiltradas.length === 0 && !cargando">
             <td colspan="10" class="empty-state">
-              No hay lecturas registradas.
+              No hay lecturas registradas con los filtros seleccionados.
             </td>
           </tr>
         </tbody>
@@ -200,20 +319,32 @@
         </button>
       </div>
 
-      <div class="payment-summary">
+      <div class="detail-hero">
         <div>
           <span>Suministro</span>
           <strong>{{ lecturaSeleccionada.codigoSuministro }}</strong>
+          <small>{{ lecturaSeleccionada.aliasSuministro || lecturaSeleccionada.direccionSuministro || '-' }}</small>
         </div>
 
+        <span class="status-badge" [ngClass]="estadoClase(lecturaSeleccionada.estadoRecibo)">
+          {{ lecturaSeleccionada.estadoRecibo || 'PENDIENTE' }}
+        </span>
+      </div>
+
+      <div class="payment-summary">
         <div>
           <span>Cliente</span>
-          <strong>{{ lecturaSeleccionada.cliente }}</strong>
+          <strong>{{ nombreCliente(lecturaSeleccionada) }}</strong>
         </div>
 
         <div>
           <span>DNI</span>
-          <strong>{{ lecturaSeleccionada.dniCliente }}</strong>
+          <strong>{{ lecturaSeleccionada.dniCliente || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Sector</span>
+          <strong>{{ lecturaSeleccionada.sector || '-' }}</strong>
         </div>
       </div>
 
@@ -236,18 +367,18 @@
 
       <div class="payment-summary">
         <div>
-          <span>Sector</span>
-          <strong>{{ lecturaSeleccionada.sector || '-' }}</strong>
-        </div>
-
-        <div>
-          <span>Estado recibo</span>
-          <strong>{{ lecturaSeleccionada.estadoRecibo || 'PENDIENTE' }}</strong>
+          <span>Código recibo</span>
+          <strong>{{ lecturaSeleccionada.codigoRecibo || '-' }}</strong>
         </div>
 
         <div>
           <span>Total recibo</span>
-          <strong>S/ {{ lecturaSeleccionada.totalRecibo | number:'1.2-2' }}</strong>
+          <strong>S/ {{ totalItem(lecturaSeleccionada) | number:'1.2-2' }}</strong>
+        </div>
+
+        <div>
+          <span>Fecha registro</span>
+          <strong>{{ lecturaSeleccionada.fechaRegistro || '-' }}</strong>
         </div>
       </div>
 

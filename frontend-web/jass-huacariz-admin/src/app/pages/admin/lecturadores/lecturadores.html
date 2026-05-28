@@ -1,7 +1,7 @@
 <div class="lecturadores-page">
   <section class="page-header">
-    <div>
-      <span class="tag">Administración</span>
+    <div class="page-header__content">
+      <span class="page-kicker">LECTURADORES / PERSONAL</span>
       <h2>Lecturadores</h2>
       <p>Gestiona el personal encargado de escanear QR y registrar lecturas de consumo.</p>
     </div>
@@ -25,10 +25,14 @@
     {{ exito }}
   </div>
 
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando lecturadores...
+  </div>
+
   <section class="stats-grid">
-    <article class="stat-card">
+    <article class="stat-card featured">
       <div class="stat-icon">📲</div>
-      <div>
+      <div class="stat-content">
         <span>Total lecturadores</span>
         <strong>{{ totalLecturadores() }}</strong>
         <small>Registrados en el sistema</small>
@@ -36,8 +40,8 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">✅</div>
-      <div>
+      <div class="stat-icon success">✅</div>
+      <div class="stat-content">
         <span>Activos</span>
         <strong>{{ lecturadoresActivos() }}</strong>
         <small>Pueden iniciar sesión</small>
@@ -45,8 +49,8 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">🚫</div>
-      <div>
+      <div class="stat-icon danger">🚫</div>
+      <div class="stat-content">
         <span>Inactivos</span>
         <strong>{{ lecturadoresInactivos() }}</strong>
         <small>Acceso bloqueado</small>
@@ -54,8 +58,8 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">📍</div>
-      <div>
+      <div class="stat-icon location">📍</div>
+      <div class="stat-content">
         <span>Sectores asignados</span>
         <strong>{{ sectoresAsignados() }}</strong>
         <small>Zonas de trabajo</small>
@@ -63,13 +67,71 @@
     </article>
   </section>
 
+  <section class="summary-panel">
+    <div class="summary-info">
+      <span class="tag">Estado operativo</span>
+      <h3>Control del personal de lectura</h3>
+      <p>
+        Desde este módulo el administrador puede registrar, editar, activar, inactivar o eliminar lecturadores
+        encargados de realizar la toma de lectura mediante QR.
+      </p>
+
+      <div class="progress-zone">
+        <div class="progress-item">
+          <div>
+            <span>Lecturadores activos</span>
+            <strong>{{ lecturadoresActivos() }} / {{ totalLecturadores() }}</strong>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill active"
+              [style.width.%]="totalLecturadores() > 0 ? (lecturadoresActivos() / totalLecturadores()) * 100 : 0"
+            ></div>
+          </div>
+        </div>
+
+        <div class="progress-item">
+          <div>
+            <span>Lecturadores inactivos</span>
+            <strong>{{ lecturadoresInactivos() }} / {{ totalLecturadores() }}</strong>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill inactive"
+              [style.width.%]="totalLecturadores() > 0 ? (lecturadoresInactivos() / totalLecturadores()) * 100 : 0"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-items">
+      <div>
+        <span>Personal habilitado</span>
+        <strong>{{ lecturadoresActivos() }}</strong>
+        <small>Puede ingresar al sistema</small>
+      </div>
+
+      <div>
+        <span>Zonas registradas</span>
+        <strong>{{ sectoresAsignados() }}</strong>
+        <small>Sectores con asignación</small>
+      </div>
+    </div>
+  </section>
+
   <section class="filter-card">
-    <input
-      type="text"
-      placeholder="Buscar por DNI, nombre, usuario, correo, teléfono o sector..."
-      [(ngModel)]="busqueda"
-      (input)="aplicarFiltros()"
-    >
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        type="text"
+        placeholder="Buscar por DNI, nombre, usuario, correo, teléfono o sector..."
+        [(ngModel)]="busqueda"
+        (input)="aplicarFiltros()"
+      >
+    </div>
 
     <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
       <option value="TODOS">Todos</option>
@@ -82,13 +144,13 @@
     </button>
   </section>
 
-  <div *ngIf="cargando" class="alert alert-info">
-    Cargando lecturadores...
-  </div>
-
   <section class="table-card">
     <div class="table-title">
-      <h3>Lecturadores registrados</h3>
+      <div>
+        <span class="page-kicker small">REGISTROS</span>
+        <h3>Lecturadores registrados</h3>
+      </div>
+
       <span>{{ lecturadoresFiltrados.length }} resultado(s)</span>
     </div>
 
@@ -113,21 +175,33 @@
             </td>
 
             <td>
-              <strong>{{ nombreCompleto(item) }}</strong>
-              <small>Rol: {{ item.rol || 'LECTURADOR' }}</small>
+              <div class="person-cell">
+                <div class="person-avatar">
+                  {{ nombreCompleto(item).substring(0, 1).toUpperCase() }}
+                </div>
+
+                <div>
+                  <strong>{{ nombreCompleto(item) }}</strong>
+                  <small>Rol: {{ item.rol || 'LECTURADOR' }}</small>
+                </div>
+              </div>
             </td>
 
             <td>
-              <strong>{{ item.codigoUsuario }}</strong>
+              <span class="user-code">{{ item.codigoUsuario }}</span>
             </td>
 
             <td>
-              <span>{{ item.telefono || '-' }}</span>
-              <small>{{ item.correo || '-' }}</small>
+              <div class="contact-cell">
+                <span>{{ item.telefono || '-' }}</span>
+                <small>{{ item.correo || '-' }}</small>
+              </div>
             </td>
 
             <td>
-              {{ item.sectorAsignado || 'Sin sector asignado' }}
+              <span class="sector-chip">
+                {{ item.sectorAsignado || 'Sin sector asignado' }}
+              </span>
             </td>
 
             <td>

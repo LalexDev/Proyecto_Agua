@@ -11,51 +11,58 @@
 
     <nav class="menu">
       <a routerLink="/cliente/inicio" routerLinkActive="active">
-        <span>🏠</span>
+        <span>⌂</span>
         Inicio
       </a>
 
       <a routerLink="/cliente/mis-suministros" routerLinkActive="active">
-        <span>🏘️</span>
+        <span>▣</span>
         Mis suministros
       </a>
 
       <a routerLink="/cliente/mis-recibos" routerLinkActive="active">
-        <span>🧾</span>
+        <span>▤</span>
         Mis recibos
       </a>
 
       <a routerLink="/cliente/perfil" routerLinkActive="active">
-        <span>👤</span>
+        <span>◉</span>
         Perfil
       </a>
 
       <a routerLink="/cliente/contrasena" routerLinkActive="active">
-        <span>🔐</span>
+        <span>⌘</span>
         Contraseña
       </a>
     </nav>
 
     <button type="button" class="logout" (click)="cerrarSesion()">
-      ⏻ Cerrar sesión
+      <span>↳</span>
+      Cerrar sesión
     </button>
   </aside>
 
   <main class="cliente-main">
     <header class="topbar">
-      <div>
+      <div class="topbar-title">
         <h2>Sistema de Gestión de Agua</h2>
         <p>Consulta tus suministros, recibos, pagos y datos personales.</p>
       </div>
 
-      <div class="user-box">
-        <div class="user-text">
-          <strong>{{ nombreUsuario }}</strong>
-          <span>{{ codigoUsuario }}</span>
-        </div>
+      <div class="topbar-actions">
+        <button type="button" class="theme-toggle" (click)="cambiarTema()">
+          {{ isDarkMode ? '☀️' : '🌙' }}
+        </button>
 
-        <div class="avatar">
-          {{ inicial() }}
+        <div class="user-card">
+          <div class="user-text">
+            <strong>{{ nombreVisible() }}</strong>
+            <span>{{ codigoVisible() }}</span>
+          </div>
+
+          <div class="avatar">
+            {{ iniciales() }}
+          </div>
         </div>
       </div>
     </header>

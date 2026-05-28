@@ -147,10 +147,22 @@ export class HistorialLecturas implements OnInit {
     return meses[mes - 1] || 'Mes inválido';
   }
 
+  totalLecturas(): number {
+    return this.lecturasFiltradas.length;
+  }
+
   totalConsumo(): number {
     return this.lecturasFiltradas.reduce((total: number, item: any) => {
       return total + Number(item.consumoM3 || 0);
     }, 0);
+  }
+
+  consumoPromedio(): number {
+    if (!this.lecturasFiltradas.length) {
+      return 0;
+    }
+
+    return this.totalConsumo() / this.lecturasFiltradas.length;
   }
 
   totalEmitido(): number {
@@ -171,6 +183,88 @@ export class HistorialLecturas implements OnInit {
     }).length;
   }
 
+  totalVencidos(): number {
+    return this.lecturasFiltradas.filter((item: any) => {
+      return String(item.estadoRecibo || '').toUpperCase() === 'VENCIDO';
+    }).length;
+  }
+
+  totalConRecibo(): number {
+    return this.lecturasFiltradas.filter((item: any) => !!item.codigoRecibo).length;
+  }
+
+  porcentajePagados(): number {
+    if (!this.totalConRecibo()) {
+      return 0;
+    }
+
+    return (this.totalPagados() / this.totalConRecibo()) * 100;
+  }
+
+  porcentajePendientes(): number {
+    if (!this.totalConRecibo()) {
+      return 0;
+    }
+
+    return (this.totalPendientes() / this.totalConRecibo()) * 100;
+  }
+
+  porcentajeVencidos(): number {
+    if (!this.totalConRecibo()) {
+      return 0;
+    }
+
+    return (this.totalVencidos() / this.totalConRecibo()) * 100;
+  }
+
+  graficoEstados(): string {
+    if (!this.totalConRecibo()) {
+      return 'conic-gradient(#e2e8f0 0% 100%)';
+    }
+
+    const pagados = this.porcentajePagados();
+    const pendientes = this.porcentajePendientes();
+    const vencidos = this.porcentajeVencidos();
+
+    const finPagados = pagados;
+    const finPendientes = pagados + pendientes;
+    const finVencidos = pagados + pendientes + vencidos;
+
+    return `
+      conic-gradient(
+        #16a34a 0% ${finPagados}%,
+        #f59e0b ${finPagados}% ${finPendientes}%,
+        #dc2626 ${finPendientes}% ${finVencidos}%,
+        #e2e8f0 ${finVencidos}% 100%
+      )
+    `;
+  }
+
+  topConsumos(): any[] {
+    return [...this.lecturasFiltradas]
+      .sort((a: any, b: any) => Number(b.consumoM3 || 0) - Number(a.consumoM3 || 0))
+      .slice(0, 5);
+  }
+
+  consumoMaximo(): number {
+    if (!this.lecturasFiltradas.length) {
+      return 0;
+    }
+
+    return Math.max(...this.lecturasFiltradas.map((item: any) => Number(item.consumoM3 || 0)));
+  }
+
+  anchoConsumo(item: any): string {
+    const maximo = this.consumoMaximo();
+
+    if (maximo <= 0) {
+      return '0%';
+    }
+
+    const porcentaje = (Number(item.consumoM3 || 0) / maximo) * 100;
+    return `${Math.max(porcentaje, 8)}%`;
+  }
+
   estadoClase(estado: string): string {
     const valor = String(estado || '').toLowerCase();
 
@@ -183,6 +277,14 @@ export class HistorialLecturas implements OnInit {
     }
 
     return 'pendiente';
+  }
+
+  nombreCliente(item: any): string {
+    return item?.nombreCliente || item?.cliente || 'No disponible';
+  }
+
+  totalItem(item: any): number {
+    return Number(item?.totalRecibo || item?.total || 0);
   }
 
   exportarExcel(): void {

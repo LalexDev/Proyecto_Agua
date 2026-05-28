@@ -1,10 +1,9 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { catchError, finalize, forkJoin, of } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 
 import {
-  ClientePerfilResponse,
   ClientePortal,
   ReciboClienteResponse,
   SuministroClienteResponse
@@ -21,33 +20,39 @@ import { imprimirReciboJass } from '../../../core/utils/recibo-print';
 export class DetalleSuministro implements OnInit {
   codigoSuministro = '';
 
-  perfil: ClientePerfilResponse | null = null;
   suministro: SuministroClienteResponse | null = null;
-  suministros: SuministroClienteResponse[] = [];
   recibos: ReciboClienteResponse[] = [];
+  recibosSuministro: ReciboClienteResponse[] = [];
 
   cargando = false;
   error = '';
 
   constructor(
     private route: ActivatedRoute,
+    private location: Location,
     private clientePortal: ClientePortal,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.codigoSuministro = String(this.route.snapshot.paramMap.get('codigo') || '').trim();
-    this.cargarDatos();
+    this.route.paramMap.subscribe((params) => {
+      this.codigoSuministro = params.get('codigo') || '';
+      this.cargarDetalle();
+    });
   }
 
-  cargarDatos(): void {
+  cargarDetalle(): void {
+    if (!this.codigoSuministro) {
+      this.error = 'No se recibió el código del suministro.';
+      return;
+    }
+
     this.cargando = true;
     this.error = '';
 
     forkJoin({
-      perfil: this.clientePortal.obtenerMiPerfil().pipe(catchError(() => of(null))),
       suministros: this.clientePortal.listarMisSuministros(),
-      recibos: this.clientePortal.listarMisRecibos().pipe(catchError(() => of([])))
+      recibos: this.clientePortal.listarMisRecibos()
     })
       .pipe(
         finalize(() => {
@@ -56,19 +61,23 @@ export class DetalleSuministro implements OnInit {
         })
       )
       .subscribe({
-        next: ({ perfil, suministros, recibos }) => {
-          this.perfil = perfil;
-          this.suministros = suministros || [];
-          this.recibos = (recibos || []).filter((recibo: any) => {
-            return String(recibo.codigoSuministro || '').toUpperCase() === this.codigoSuministro.toUpperCase();
-          });
+        next: ({ suministros, recibos }) => {
+          const codigo = this.codigoSuministro.toUpperCase();
 
-          this.suministro = this.suministros.find((item: any) => {
-            return String(item.codigoSuministro || '').toUpperCase() === this.codigoSuministro.toUpperCase();
+          this.suministro = (suministros || []).find((item) => {
+            return String(item.codigoSuministro || '').toUpperCase() === codigo;
           }) || null;
 
+          this.recibos = recibos || [];
+
+          this.recibosSuministro = this.recibos
+            .filter((recibo) => {
+              return String(recibo.codigoSuministro || '').toUpperCase() === codigo;
+            })
+            .sort((a, b) => Number(b.id) - Number(a.id));
+
           if (!this.suministro) {
-            this.error = 'No se encontró el suministro seleccionado.';
+            this.error = 'No se encontró el suministro solicitado.';
           }
 
           this.cdr.detectChanges();
@@ -76,101 +85,255 @@ export class DetalleSuministro implements OnInit {
         error: () => {
           this.error = 'No se pudo cargar el detalle del suministro.';
           this.suministro = null;
-          this.recibos = [];
+          this.recibosSuministro = [];
           this.cdr.detectChanges();
         }
       });
   }
 
-  imprimirRecibo(recibo: ReciboClienteResponse): void {
-    const reciboCompleto: any = {
-      ...recibo,
-      nombreCliente: recibo.nombreCliente || this.nombreCliente(),
-      dniCliente: recibo.dniCliente || this.dniCliente(),
-      direccionSuministro: recibo.direccionSuministro || this.valor('direccionSuministro'),
-      aliasSuministro: recibo.aliasSuministro || this.valor('aliasSuministro'),
-      sector: recibo.sector || this.valor('nombreSector'),
-      codigoBarras: recibo.codigoBarras || `${recibo.codigoRecibo || ''}-${recibo.codigoSuministro || ''}`
-    };
-
-    imprimirReciboJass(reciboCompleto, this.recibos);
+  volver(): void {
+    this.location.back();
   }
 
-  nombreCliente(): string {
-    const item: any = this.perfil || {};
-    return `${item.nombres || ''} ${item.apellidos || ''}`.trim() || 'Cliente';
-  }
-
-  dniCliente(): string {
-    const item: any = this.perfil || {};
-    return item.dni || '-';
-  }
-
-  valor(campo: string): string {
+  alias(): string {
     const item: any = this.suministro || {};
-    return item[campo] || '-';
+    return item.aliasSuministro || 'Suministro de agua';
+  }
+
+  direccion(): string {
+    const item: any = this.suministro || {};
+    return item.direccionSuministro || item.direccion || '-';
+  }
+
+  sector(): string {
+    const item: any = this.suministro || {};
+    return item.nombreSector || item.sector || '-';
+  }
+
+  referencia(): string {
+    const item: any = this.suministro || {};
+    return item.referencia || '-';
+  }
+
+  lecturaInicial(): number {
+    const item: any = this.suministro || {};
+    return Number(item.lecturaInicial || 0);
+  }
+
+  private normalizarTexto(value: any): string {
+    return String(value ?? '')
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/_/g, ' ')
+      .replace(/-/g, ' ');
+  }
+
+  private textoEstadoSuministro(): string {
+    const item: any = this.suministro || {};
+
+    return [
+      item.estado,
+      item.estadoSuministro,
+      item.estadoInstalacion,
+      item.estadoConexion,
+      item.mensajeEstado,
+      item.descripcionEstado,
+      item.estadoServicio,
+      item.situacion
+    ]
+      .map((value) => this.normalizarTexto(value))
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  estadoSuministro(): 'ACTIVO' | 'PENDIENTE' | 'SUSPENDIDO' {
+    const item: any = this.suministro || {};
+    const texto = this.textoEstadoSuministro();
+
+    const esPendiente =
+      texto.includes('PENDIENTE') ||
+      texto.includes('POR INSTALAR') ||
+      texto.includes('NO INSTALADO') ||
+      texto.includes('SIN INSTALAR') ||
+      texto.includes('INSTALACION PENDIENTE');
+
+    const esSuspendido =
+      texto.includes('SUSPENDIDO') ||
+      texto.includes('SUSPENDIDA') ||
+      texto.includes('SUSPEND') ||
+      texto.includes('CORTE') ||
+      texto.includes('CORTADO') ||
+      texto.includes('INACTIVO') ||
+      texto.includes('BAJA');
+
+    if (esPendiente) {
+      return 'PENDIENTE';
+    }
+
+    if (esSuspendido) {
+      return 'SUSPENDIDO';
+    }
+
+    if (item.estado === false) {
+      return 'SUSPENDIDO';
+    }
+
+    return 'ACTIVO';
   }
 
   estadoTexto(): string {
-    const item: any = this.suministro || {};
+    const texto = this.textoEstadoSuministro();
+    const estado = this.estadoSuministro();
 
-    if (item.estado === false || String(item.estado || '').toUpperCase() === 'SUSPENDIDO') {
+    if (estado === 'ACTIVO') {
+      return 'Activo';
+    }
+
+    if (estado === 'SUSPENDIDO') {
       return 'Suspendido';
     }
 
-    const instalacion = String(item.estadoInstalacion || '').toUpperCase();
-
-    if (instalacion === 'PENDIENTE_INSTALACION') {
-      return 'Pendiente de instalación';
+    if (texto.includes('SUSPEND')) {
+      return 'Pendiente / suspendido';
     }
 
-    return 'Instalado';
+    return 'Pendiente';
   }
 
   estadoClase(): string {
-    const texto = this.estadoTexto().toLowerCase();
+    const estado = this.estadoSuministro();
 
-    if (texto.includes('pendiente')) {
-      return 'pendiente';
+    if (estado === 'ACTIVO') {
+      return 'pagado';
     }
 
-    if (texto.includes('suspendido')) {
-      return 'suspendido';
+    if (estado === 'SUSPENDIDO') {
+      return 'vencido';
     }
 
-    return 'instalado';
+    return 'pendiente';
   }
 
   recibosPendientes(): number {
-    return this.recibos.filter((recibo: any) => {
-      return String(recibo.estadoRecibo || '').toUpperCase() === 'PENDIENTE';
+    return this.recibosSuministro.filter((recibo) => {
+      return String(recibo.estadoRecibo || '').toUpperCase() !== 'PAGADO';
     }).length;
   }
 
   recibosPagados(): number {
-    return this.recibos.filter((recibo: any) => {
+    return this.recibosSuministro.filter((recibo) => {
       return String(recibo.estadoRecibo || '').toUpperCase() === 'PAGADO';
     }).length;
   }
 
-  totalPendiente(): number {
-    return this.recibos
-      .filter((recibo: any) => String(recibo.estadoRecibo || '').toUpperCase() !== 'PAGADO')
-      .reduce((total, recibo: any) => total + Number(recibo.total || 0), 0);
+  recibosVencidos(): number {
+    return this.recibosSuministro.filter((recibo) => {
+      return String(recibo.estadoRecibo || '').toUpperCase() === 'VENCIDO';
+    }).length;
   }
 
-  ultimoConsumo(): number {
-    if (!this.recibos.length) {
+  deudaTotal(): number {
+    return this.recibosSuministro
+      .filter((recibo) => String(recibo.estadoRecibo || '').toUpperCase() !== 'PAGADO')
+      .reduce((total, recibo) => total + Number(recibo.total || 0), 0);
+  }
+
+  totalPagado(): number {
+    return this.recibosSuministro
+      .filter((recibo) => String(recibo.estadoRecibo || '').toUpperCase() === 'PAGADO')
+      .reduce((total, recibo) => total + Number(recibo.total || 0), 0);
+  }
+
+  consumoTotal(): number {
+    return this.recibosSuministro.reduce((total, recibo) => {
+      return total + Number(recibo.consumoM3 || 0);
+    }, 0);
+  }
+
+  consumoPromedio(): number {
+    if (!this.recibosSuministro.length) {
       return 0;
     }
 
-    const ordenados = [...this.recibos].sort((a: any, b: any) => {
-      const periodoA = Number(a.anio || 0) * 100 + Number(a.mes || 0);
-      const periodoB = Number(b.anio || 0) * 100 + Number(b.mes || 0);
-      return periodoB - periodoA;
-    });
+    return this.consumoTotal() / this.recibosSuministro.length;
+  }
 
-    return Number(ordenados[0].consumoM3 || 0);
+  ultimoRecibo(): ReciboClienteResponse | null {
+    return this.recibosSuministro.length ? this.recibosSuministro[0] : null;
+  }
+
+  recibosParaGrafico(): ReciboClienteResponse[] {
+    return [...this.recibosSuministro]
+      .sort((a, b) => Number(a.id) - Number(b.id))
+      .slice(-6);
+  }
+
+  consumoMaximo(): number {
+    if (!this.recibosParaGrafico().length) {
+      return 0;
+    }
+
+    return Math.max(...this.recibosParaGrafico().map((recibo) => Number(recibo.consumoM3 || 0)));
+  }
+
+  anchoConsumo(recibo: ReciboClienteResponse): string {
+    const maximo = this.consumoMaximo();
+
+    if (maximo <= 0) {
+      return '8%';
+    }
+
+    const porcentaje = (Number(recibo.consumoM3 || 0) / maximo) * 100;
+    return `${Math.max(porcentaje, 8)}%`;
+  }
+
+  porcentajePagados(): number {
+    if (!this.recibosSuministro.length) {
+      return 0;
+    }
+
+    return (this.recibosPagados() / this.recibosSuministro.length) * 100;
+  }
+
+  porcentajePendientes(): number {
+    if (!this.recibosSuministro.length) {
+      return 0;
+    }
+
+    return (this.recibosPendientes() / this.recibosSuministro.length) * 100;
+  }
+
+  porcentajeVencidos(): number {
+    if (!this.recibosSuministro.length) {
+      return 0;
+    }
+
+    return (this.recibosVencidos() / this.recibosSuministro.length) * 100;
+  }
+
+  graficoEstados(): string {
+    if (!this.recibosSuministro.length) {
+      return 'conic-gradient(#e2e8f0 0% 100%)';
+    }
+
+    const pagados = this.porcentajePagados();
+    const pendientes = this.porcentajePendientes();
+    const vencidos = this.porcentajeVencidos();
+
+    const finPagados = pagados;
+    const finPendientes = pagados + pendientes;
+    const finVencidos = pagados + pendientes + vencidos;
+
+    return `
+      conic-gradient(
+        #16a34a 0% ${finPagados}%,
+        #f59e0b ${finPagados}% ${finPendientes}%,
+        #dc2626 ${finPendientes}% ${finVencidos}%,
+        #e2e8f0 ${finVencidos}% 100%
+      )
+    `;
   }
 
   estadoReciboClase(estado: string): string {
@@ -185,6 +348,14 @@ export class DetalleSuministro implements OnInit {
     }
 
     return 'pendiente';
+  }
+
+  puedePagar(recibo: ReciboClienteResponse): boolean {
+    return String(recibo.estadoRecibo || '').toUpperCase() !== 'PAGADO';
+  }
+
+  imprimirRecibo(recibo: ReciboClienteResponse): void {
+    imprimirReciboJass(recibo, this.recibosSuministro);
   }
 
   periodo(recibo: ReciboClienteResponse): string {

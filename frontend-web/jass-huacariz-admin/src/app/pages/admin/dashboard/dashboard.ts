@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { forkJoin, finalize } from 'rxjs';
 import * as XLSX from 'xlsx-js-style';
@@ -8,9 +9,16 @@ import { Cliente, ClienteResponse } from '../../../core/services/cliente';
 import { Recibo, ReciboResponse } from '../../../core/services/recibo';
 import { Pago, PagoResponse } from '../../../core/services/pago';
 
+interface ConsumoMensualDashboard {
+  mes: number;
+  nombre: string;
+  consumo: number;
+  height: number;
+}
+
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -21,6 +29,7 @@ export class Dashboard implements OnInit {
 
   cargando = false;
   error = '';
+  busqueda = '';
 
   constructor(
     private clienteService: Cliente,
@@ -66,11 +75,26 @@ export class Dashboard implements OnInit {
   cerrarSesion(): void {
     localStorage.clear();
     sessionStorage.clear();
+    document.body.classList.remove('jass-dark-theme');
     this.router.navigate(['/login']);
+  }
+
+  limpiarBusqueda(): void {
+    this.busqueda = '';
+  }
+
+  tieneBusqueda(): boolean {
+    return this.busqueda.trim().length > 0;
   }
 
   totalClientes(): number {
     return this.clientes.length;
+  }
+
+  clientesActivos(): number {
+    return this.clientes.filter((cliente: any) => {
+      return cliente.estado === true || String(cliente.estado || '').toUpperCase() === 'ACTIVO';
+    }).length;
   }
 
   totalSuministros(): number {
@@ -165,7 +189,7 @@ export class Dashboard implements OnInit {
   }
 
   donutCobranza(): string {
-    return `conic-gradient(#1ba3c7 ${this.porcentajeRecaudado()}%, #143f50 0)`;
+    return `conic-gradient(#14b8a6 0 ${this.porcentajeRecaudado()}%, var(--jass-chart-rest) ${this.porcentajeRecaudado()}% 100%)`;
   }
 
   ultimosRecibos(): ReciboResponse[] {
@@ -174,10 +198,90 @@ export class Dashboard implements OnInit {
       .slice(0, 5);
   }
 
+  recibosFiltrados(): ReciboResponse[] {
+    const texto = this.busqueda.trim().toLowerCase();
+
+    const base = this.tieneBusqueda()
+      ? this.recibos
+      : this.ultimosRecibos();
+
+    return base
+      .filter((recibo: any) => {
+        if (!texto) {
+          return true;
+        }
+
+        return String(recibo.codigoRecibo || '').toLowerCase().includes(texto) ||
+          String(recibo.codigoSuministro || '').toLowerCase().includes(texto) ||
+          String(recibo.direccionSuministro || '').toLowerCase().includes(texto) ||
+          String(recibo.nombreCliente || '').toLowerCase().includes(texto) ||
+          String(recibo.dniCliente || '').toLowerCase().includes(texto) ||
+          String(recibo.estadoRecibo || '').toLowerCase().includes(texto) ||
+          this.periodo(recibo).toLowerCase().includes(texto);
+      })
+      .sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))
+      .slice(0, this.tieneBusqueda() ? 10 : 5);
+  }
+
+  clientesFiltrados(): ClienteResponse[] {
+    const texto = this.busqueda.trim().toLowerCase();
+
+    if (!texto) {
+      return [];
+    }
+
+    return this.clientes
+      .filter((cliente: any) => {
+        const suministros = (cliente.suministros || [])
+          .map((s: any) => `${s.codigoSuministro || ''} ${s.direccionSuministro || ''} ${s.aliasSuministro || ''}`)
+          .join(' ')
+          .toLowerCase();
+
+        return String(cliente.dni || '').toLowerCase().includes(texto) ||
+          String(cliente.nombres || '').toLowerCase().includes(texto) ||
+          String(cliente.apellidos || '').toLowerCase().includes(texto) ||
+          String(cliente.correo || '').toLowerCase().includes(texto) ||
+          String(cliente.telefono || '').toLowerCase().includes(texto) ||
+          suministros.includes(texto);
+      })
+      .slice(0, 6);
+  }
+
   ultimosPagos(): PagoResponse[] {
     return [...this.pagos]
       .sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))
       .slice(0, 4);
+  }
+
+  consumoPorMes(): ConsumoMensualDashboard[] {
+    const anioActual = new Date().getFullYear();
+
+    const meses = [
+      'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+      'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+    ];
+
+    const consumos = Array.from({ length: 12 }, (_, index) => {
+      const mes = index + 1;
+
+      const consumo = this.recibos
+        .filter((recibo: any) => Number(recibo.anio) === anioActual && Number(recibo.mes) === mes)
+        .reduce((total, recibo: any) => total + Number(recibo.consumoM3 || 0), 0);
+
+      return {
+        mes,
+        nombre: meses[index],
+        consumo,
+        height: 8
+      };
+    });
+
+    const maximo = Math.max(...consumos.map((item) => item.consumo), 1);
+
+    return consumos.map((item) => ({
+      ...item,
+      height: item.consumo <= 0 ? 8 : Math.max(14, (item.consumo / maximo) * 100)
+    }));
   }
 
   estadoClase(estado: string): string {
@@ -197,6 +301,10 @@ export class Dashboard implements OnInit {
   periodo(recibo: ReciboResponse): string {
     const r: any = recibo;
     return `${this.nombreMes(Number(r.mes))} ${r.anio}`;
+  }
+
+  irARecibos(): void {
+    this.router.navigate(['/admin/recibos']);
   }
 
   exportarExcel(): void {
@@ -451,7 +559,7 @@ export class Dashboard implements OnInit {
     ventana.document.close();
   }
 
-  private nombreMes(mes: number): string {
+  nombreMes(mes: number): string {
     const meses = [
       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'

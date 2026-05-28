@@ -1,20 +1,33 @@
 <div class="cliente-inicio">
   <section class="hero-card">
-    <div>
-      <span class="tag">Portal cliente</span>
-      <h2>Bienvenido, {{ perfil?.nombres || 'Cliente' }}</h2>
-      <p>
-        Consulta tus suministros, recibos pendientes, pagos realizados y consumo registrado
-        en el servicio de agua potable JASS Huacariz.
-      </p>
+    <div class="hero-content">
+      <span class="tag light">Portal cliente</span>
+
+      <div class="welcome-row">
+        <div>
+          <h2>Bienvenido, {{ primerNombre() }}</h2>
+          <p>
+            Consulta tus suministros, recibos pendientes, pagos realizados y consumo registrado
+            en el servicio de agua potable JASS Huacariz.
+          </p>
+        </div>
+
+        <div class="hero-avatar">
+          {{ iniciales() }}
+        </div>
+      </div>
 
       <div class="hero-actions">
-        <a routerLink="/cliente/mis-recibos" class="btn-primary">
+        <a routerLink="/cliente/mis-suministros" class="btn-primary">
+          Ver mis suministros
+        </a>
+
+        <a routerLink="/cliente/mis-recibos" class="btn-white">
           Ver mis recibos
         </a>
 
-        <a routerLink="/cliente/perfil" class="btn-secondary">
-          Ver perfil
+        <a routerLink="/cliente/perfil" class="btn-soft">
+          Mi perfil
         </a>
       </div>
     </div>
@@ -33,17 +46,17 @@
   </div>
 
   <section class="stats-grid">
-    <article class="stat-card">
-      <div class="stat-icon">🏠</div>
+    <article class="stat-card featured">
+      <div class="stat-icon">▣</div>
       <div>
         <span>Mis suministros</span>
         <strong>{{ suministros.length }}</strong>
-        <small>Conexiones asignadas</small>
+        <small>{{ suministrosActivos() }} activo(s)</small>
       </div>
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">⏳</div>
+      <div class="stat-icon pending">⌛</div>
       <div>
         <span>Recibos pendientes</span>
         <strong>{{ recibosPendientes() }}</strong>
@@ -52,22 +65,56 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">✅</div>
+      <div class="stat-icon success">✓</div>
       <div>
         <span>Recibos pagados</span>
         <strong>{{ recibosPagados() }}</strong>
-        <small>Cancelados</small>
+        <small>S/ {{ totalPagado() | number:'1.2-2' }} pagado</small>
       </div>
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">💰</div>
+      <div class="stat-icon money">S/</div>
       <div>
         <span>Deuda pendiente</span>
         <strong>S/ {{ deudaTotal() | number:'1.2-2' }}</strong>
         <small>Monto por pagar</small>
       </div>
     </article>
+  </section>
+
+  <section class="quick-grid">
+    <a routerLink="/cliente/mis-suministros" class="quick-card">
+      <span class="quick-icon">▣</span>
+      <div>
+        <strong>Mis suministros</strong>
+        <small>Ver conexiones, estado y detalle de cada punto de agua.</small>
+      </div>
+    </a>
+
+    <a routerLink="/cliente/mis-recibos" class="quick-card">
+      <span class="quick-icon">▤</span>
+      <div>
+        <strong>Mis recibos</strong>
+        <small>Consultar, imprimir y revisar recibos emitidos.</small>
+      </div>
+    </a>
+
+    <a routerLink="/cliente/perfil" class="quick-card">
+      <span class="quick-icon">◉</span>
+      <div>
+        <strong>Perfil</strong>
+        <small>Revisar tus datos personales y credencial de acceso.</small>
+      </div>
+    </a>
+
+    <a routerLink="/cliente/contrasena" class="quick-card">
+      <span class="quick-icon">⌘</span>
+      <div>
+        <strong>Contraseña</strong>
+        <small>Cambiar tu contraseña de acceso al portal.</small>
+      </div>
+    </a>
   </section>
 
   <section class="dashboard-grid">
@@ -97,7 +144,7 @@
             <span class="dot pagado-dot"></span>
             <div>
               <strong>Pagados</strong>
-              <small>{{ recibosPagados() }} recibo(s)</small>
+              <small>{{ recibosPagados() }} recibo(s) · {{ porcentajePagados() | number:'1.0-1' }}%</small>
             </div>
           </div>
 
@@ -105,7 +152,7 @@
             <span class="dot pendiente-dot"></span>
             <div>
               <strong>Pendientes</strong>
-              <small>{{ recibosPendientes() }} recibo(s)</small>
+              <small>{{ recibosPendientes() }} recibo(s) · {{ porcentajePendientes() | number:'1.0-1' }}%</small>
             </div>
           </div>
 
@@ -113,7 +160,7 @@
             <span class="dot vencido-dot"></span>
             <div>
               <strong>Vencidos</strong>
-              <small>{{ recibosVencidos() }} recibo(s)</small>
+              <small>{{ recibosVencidos() }} recibo(s) · {{ porcentajeVencidos() | number:'1.0-1' }}%</small>
             </div>
           </div>
         </div>
@@ -151,19 +198,23 @@
   <section class="content-grid">
     <article class="panel-card">
       <div class="section-title">
-        <h3>Mis suministros</h3>
-        <span>{{ suministros.length }} registro(s)</span>
-      </div>
-
-      <div class="suministro-card" *ngFor="let suministro of suministros">
         <div>
-          <h4>{{ suministro.aliasSuministro || 'Suministro' }}</h4>
-          <p>{{ suministro.direccionSuministro }}</p>
-          <small>{{ suministro.nombreSector }} · {{ suministro.codigoSuministro }}</small>
+          <span class="tag">Conexiones</span>
+          <h3>Mis suministros</h3>
         </div>
 
-        <span class="badge" [ngClass]="suministro.estado ? 'pagado' : 'pendiente'">
-          {{ suministro.estado ? 'Activo' : 'Suspendido' }}
+        <a routerLink="/cliente/mis-suministros">Ver todos</a>
+      </div>
+
+      <div class="suministro-card" *ngFor="let suministro of suministros.slice(0, 3)">
+        <div>
+          <h4>{{ suministro.aliasSuministro || 'Suministro' }}</h4>
+          <p>{{ suministro.direccionSuministro || suministro.direccion || '-' }}</p>
+          <small>{{ suministro.nombreSector || suministro.sector || '-' }} · {{ suministro.codigoSuministro }}</small>
+        </div>
+
+        <span class="badge" [ngClass]="estadoSuministroClase(suministro)">
+          {{ estadoSuministro(suministro) }}
         </span>
       </div>
 
@@ -174,48 +225,88 @@
 
     <article class="panel-card">
       <div class="section-title">
-        <h3>Últimos recibos</h3>
-        <a routerLink="/cliente/mis-recibos">Ver todos</a>
+        <div>
+          <span class="tag">Consumo</span>
+          <h3>Últimos consumos</h3>
+        </div>
+
+        <span>{{ consumoTotal() | number:'1.2-3' }} m³ total</span>
       </div>
 
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Recibo</th>
-              <th>Periodo</th>
-              <th>Total</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
+      <div class="bars-list">
+        <div class="bar-item" *ngFor="let recibo of recibosParaGrafico()">
+          <div class="bar-info">
+            <strong>{{ periodo(recibo) }}</strong>
+            <span>{{ recibo.codigoSuministro || '-' }}</span>
+          </div>
 
-          <tbody>
-            <tr *ngFor="let recibo of ultimosRecibos()">
-              <td>
-                <strong>{{ recibo.codigoRecibo }}</strong>
-              </td>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width]="anchoConsumo(recibo)"></div>
+          </div>
 
-              <td>{{ periodo(recibo) }}</td>
+          <strong class="bar-value">{{ recibo.consumoM3 | number:'1.2-3' }} m³</strong>
+        </div>
 
-              <td>
-                <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
-              </td>
-
-              <td>
-                <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
-                  {{ recibo.estadoRecibo }}
-                </span>
-              </td>
-            </tr>
-
-            <tr *ngIf="ultimosRecibos().length === 0 && !cargando">
-              <td colspan="4" class="empty-row">
-                No tienes recibos registrados.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div *ngIf="recibosParaGrafico().length === 0 && !cargando" class="empty-row">
+          No hay consumo registrado.
+        </div>
       </div>
     </article>
+  </section>
+
+  <section class="panel-card">
+    <div class="section-title">
+      <div>
+        <span class="tag">Actividad reciente</span>
+        <h3>Últimos recibos</h3>
+      </div>
+
+      <a routerLink="/cliente/mis-recibos">Ver todos</a>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Recibo</th>
+            <th>Suministro</th>
+            <th>Periodo</th>
+            <th>Consumo</th>
+            <th>Total</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let recibo of ultimosRecibos()">
+            <td>
+              <strong>{{ recibo.codigoRecibo }}</strong>
+            </td>
+
+            <td>{{ recibo.codigoSuministro || '-' }}</td>
+
+            <td>{{ periodo(recibo) }}</td>
+
+            <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
+
+            <td>
+              <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
+            </td>
+
+            <td>
+              <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
+                {{ recibo.estadoRecibo || 'PENDIENTE' }}
+              </span>
+            </td>
+          </tr>
+
+          <tr *ngIf="ultimosRecibos().length === 0 && !cargando">
+            <td colspan="6" class="empty-row">
+              No tienes recibos registrados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 </div>

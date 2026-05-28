@@ -1,10 +1,12 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
-import { Auth } from '../../../core/services/auth';
-import { ClientePortal } from '../../../core/services/cliente-portal';
+import {
+  CambiarPasswordRequest,
+  ClientePortal
+} from '../../../core/services/cliente-portal';
 
 @Component({
   selector: 'app-contrasena',
@@ -13,7 +15,7 @@ import { ClientePortal } from '../../../core/services/cliente-portal';
   styleUrl: './contrasena.scss',
 })
 export class Contrasena {
-  guardando = false;
+  cargando = false;
   error = '';
   exito = '';
 
@@ -21,178 +23,116 @@ export class Contrasena {
   mostrarNueva = false;
   mostrarConfirmar = false;
 
-  form = {
-    contrasenaActual: '',
-    nuevaContrasena: '',
-    confirmarContrasena: ''
+  form: CambiarPasswordRequest = {
+    passwordActual: '',
+    nuevaPassword: '',
+    confirmarPassword: ''
   };
 
   constructor(
     private clientePortal: ClientePortal,
-    private auth: Auth,
+    private location: Location,
     private cdr: ChangeDetectorRef
   ) {}
 
-  cambiarContrasena(): void {
+  volver(): void {
+    this.location.back();
+  }
+
+  cambiarPassword(): void {
     this.error = '';
     this.exito = '';
 
-    if (!this.validarFormulario()) {
+    if (!this.form.passwordActual.trim()) {
+      this.error = 'Ingrese su contraseña actual.';
       return;
     }
 
-    const payload = {
-      contrasenaActual: this.form.contrasenaActual.trim(),
-      nuevaContrasena: this.form.nuevaContrasena.trim(),
-      confirmarContrasena: this.form.confirmarContrasena.trim(),
-      passwordActual: this.form.contrasenaActual.trim(),
-      passwordNueva: this.form.nuevaContrasena.trim(),
-      passwordConfirmacion: this.form.confirmarContrasena.trim(),
-      currentPassword: this.form.contrasenaActual.trim(),
-      newPassword: this.form.nuevaContrasena.trim(),
-      confirmPassword: this.form.confirmarContrasena.trim()
+    if (!this.form.nuevaPassword.trim()) {
+      this.error = 'Ingrese la nueva contraseña.';
+      return;
+    }
+
+    if (this.form.nuevaPassword.length < 6) {
+      this.error = 'La nueva contraseña debe tener como mínimo 6 caracteres.';
+      return;
+    }
+
+    if (!this.form.confirmarPassword.trim()) {
+      this.error = 'Confirme la nueva contraseña.';
+      return;
+    }
+
+    if (this.form.nuevaPassword !== this.form.confirmarPassword) {
+      this.error = 'La nueva contraseña y la confirmación no coinciden.';
+      return;
+    }
+
+    if (this.form.passwordActual === this.form.nuevaPassword) {
+      this.error = 'La nueva contraseña debe ser diferente a la actual.';
+      return;
+    }
+
+    this.cargando = true;
+
+    const payload: CambiarPasswordRequest = {
+      passwordActual: this.form.passwordActual.trim(),
+      nuevaPassword: this.form.nuevaPassword.trim(),
+      confirmarPassword: this.form.confirmarPassword.trim()
     };
 
-    const servicios: any[] = [
-      this.clientePortal as any,
-      this.auth as any
-    ];
-
-    let peticion: any = null;
-
-    for (const servicio of servicios) {
-      if (!servicio) {
-        continue;
-      }
-
-      if (typeof servicio.cambiarContrasena === 'function') {
-        peticion = servicio.cambiarContrasena(payload);
-        break;
-      }
-
-      if (typeof servicio.cambiarPassword === 'function') {
-        peticion = servicio.cambiarPassword(payload);
-        break;
-      }
-
-      if (typeof servicio.actualizarContrasena === 'function') {
-        peticion = servicio.actualizarContrasena(payload);
-        break;
-      }
-
-      if (typeof servicio.actualizarPassword === 'function') {
-        peticion = servicio.actualizarPassword(payload);
-        break;
-      }
-
-      if (typeof servicio.cambiarMiContrasena === 'function') {
-        peticion = servicio.cambiarMiContrasena(payload);
-        break;
-      }
-
-      if (typeof servicio.changePassword === 'function') {
-        peticion = servicio.changePassword(payload);
-        break;
-      }
-    }
-
-    if (!peticion) {
-      this.error = 'No se encontró el método para cambiar contraseña en el frontend. Revisa cliente-portal.ts o auth.ts.';
-      return;
-    }
-
-    this.guardando = true;
-
-    peticion
+    this.clientePortal.cambiarMiPassword(payload)
       .pipe(
         finalize(() => {
-          this.guardando = false;
+          this.cargando = false;
           this.cdr.detectChanges();
         })
       )
       .subscribe({
-        next: () => {
-          this.exito = 'Contraseña actualizada correctamente.';
+        next: (response) => {
+          this.exito = response?.mensaje || 'Contraseña actualizada correctamente.';
           this.limpiarFormulario();
           this.cdr.detectChanges();
         },
-        error: (err: any) => {
-          this.error = err?.error?.error ||
-            err?.error?.message ||
-            'No se pudo actualizar la contraseña. Verifica tu contraseña actual.';
+        error: (err) => {
+          this.error =
+            err?.error?.mensaje ||
+            err?.error?.error ||
+            'No se pudo cambiar la contraseña. Verifique su contraseña actual.';
           this.cdr.detectChanges();
         }
       });
   }
 
-  validarFormulario(): boolean {
-    if (!this.form.contrasenaActual.trim()) {
-      this.error = 'Ingresa tu contraseña actual.';
-      return false;
-    }
-
-    if (!this.form.nuevaContrasena.trim()) {
-      this.error = 'Ingresa tu nueva contraseña.';
-      return false;
-    }
-
-    if (this.form.nuevaContrasena.trim().length < 6) {
-      this.error = 'La nueva contraseña debe tener como mínimo 6 caracteres.';
-      return false;
-    }
-
-    if (this.form.nuevaContrasena.trim() !== this.form.confirmarContrasena.trim()) {
-      this.error = 'La confirmación no coincide con la nueva contraseña.';
-      return false;
-    }
-
-    if (this.form.contrasenaActual.trim() === this.form.nuevaContrasena.trim()) {
-      this.error = 'La nueva contraseña debe ser diferente a la contraseña actual.';
-      return false;
-    }
-
-    return true;
-  }
-
   limpiarFormulario(): void {
     this.form = {
-      contrasenaActual: '',
-      nuevaContrasena: '',
-      confirmarContrasena: ''
+      passwordActual: '',
+      nuevaPassword: '',
+      confirmarPassword: ''
     };
+
+    this.mostrarActual = false;
+    this.mostrarNueva = false;
+    this.mostrarConfirmar = false;
   }
 
-  seguridadContrasena(): number {
-    const value = this.form.nuevaContrasena || '';
+  seguridadPassword(): number {
+    const value = this.form.nuevaPassword || '';
     let score = 0;
 
-    if (value.length >= 6) {
-      score += 25;
-    }
-
-    if (value.length >= 10) {
-      score += 25;
-    }
-
-    if (/[A-Z]/.test(value)) {
-      score += 15;
-    }
-
-    if (/[0-9]/.test(value)) {
-      score += 15;
-    }
-
-    if (/[^A-Za-z0-9]/.test(value)) {
-      score += 20;
-    }
+    if (value.length >= 6) score += 25;
+    if (value.length >= 10) score += 20;
+    if (/[A-Z]/.test(value)) score += 15;
+    if (/[0-9]/.test(value)) score += 15;
+    if (/[^A-Za-z0-9]/.test(value)) score += 25;
 
     return Math.min(score, 100);
   }
 
   textoSeguridad(): string {
-    const score = this.seguridadContrasena();
+    const score = this.seguridadPassword();
 
-    if (!this.form.nuevaContrasena) {
+    if (!this.form.nuevaPassword) {
       return 'Sin evaluar';
     }
 
@@ -208,9 +148,9 @@ export class Contrasena {
   }
 
   claseSeguridad(): string {
-    const score = this.seguridadContrasena();
+    const score = this.seguridadPassword();
 
-    if (!this.form.nuevaContrasena) {
+    if (!this.form.nuevaPassword) {
       return 'neutral';
     }
 
@@ -223,5 +163,26 @@ export class Contrasena {
     }
 
     return 'fuerte';
+  }
+
+  usuarioActual(): string {
+    return localStorage.getItem('nombreUsuario') ||
+      localStorage.getItem('codigoUsuario') ||
+      'Cliente JASS';
+  }
+
+  codigoUsuario(): string {
+    return localStorage.getItem('codigoUsuario') || 'Usuario cliente';
+  }
+
+  iniciales(): string {
+    const nombre = this.usuarioActual();
+    const partes = nombre.split(' ').filter(Boolean);
+
+    if (partes.length >= 2) {
+      return `${partes[0][0]}${partes[1][0]}`.toUpperCase();
+    }
+
+    return nombre.substring(0, 1).toUpperCase();
   }
 }

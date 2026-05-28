@@ -1,12 +1,12 @@
 <div class="mis-recibos-page">
   <section class="page-header">
-    <div>
-      <span class="tag">Portal cliente</span>
+    <div class="page-header__content">
+      <span class="page-kicker">PORTAL CLIENTE / RECIBOS</span>
       <h2>Mis recibos</h2>
-      <p>Consulta, filtra, descarga e imprime tus recibos del servicio de agua potable.</p>
+      <p>Consulta, filtra, descarga, imprime y paga tus recibos del servicio de agua potable.</p>
     </div>
 
-    <div class="header-actions">
+    <div class="page-header__actions">
       <button type="button" class="btn-secondary" (click)="exportarExcel()">
         Exportar Excel
       </button>
@@ -25,13 +25,34 @@
     {{ error }}
   </div>
 
-  <div *ngIf="cargando" class="alert alert-info">
-    Cargando recibos...
+  <div *ngIf="exito" class="alert alert-success">
+    {{ exito }}
   </div>
 
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando tus recibos...
+  </div>
+
+  <section class="hero-card">
+    <div class="hero-content">
+      <span class="tag light">Estado de cuenta</span>
+      <h3>S/ {{ totalPendiente() | number:'1.2-2' }}</h3>
+      <p>
+        Monto pendiente por cancelar. Revisa tus recibos, imprime el documento de cobranza
+        o continúa con el pago digital cuando esté disponible.
+      </p>
+    </div>
+
+    <div class="hero-kpi">
+      <span>Recibos registrados</span>
+      <strong>{{ totalRecibos() }}</strong>
+      <small>{{ recibosPendientes() }} pendiente(s) · {{ recibosPagados() }} pagado(s)</small>
+    </div>
+  </section>
+
   <section class="stats-grid">
-    <article class="stat-card">
-      <div class="stat-icon">🧾</div>
+    <article class="stat-card featured">
+      <div class="stat-icon">▤</div>
       <div>
         <span>Total recibos</span>
         <strong>{{ totalRecibos() }}</strong>
@@ -40,7 +61,7 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">⏳</div>
+      <div class="stat-icon pending">⌛</div>
       <div>
         <span>Pendientes</span>
         <strong>{{ recibosPendientes() }}</strong>
@@ -49,16 +70,16 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">✅</div>
+      <div class="stat-icon success">✓</div>
       <div>
         <span>Pagados</span>
         <strong>{{ recibosPagados() }}</strong>
-        <small>Cancelados</small>
+        <small>S/ {{ totalPagado() | number:'1.2-2' }}</small>
       </div>
     </article>
 
     <article class="stat-card">
-      <div class="stat-icon">💰</div>
+      <div class="stat-icon money">S/</div>
       <div>
         <span>Deuda pendiente</span>
         <strong>S/ {{ totalPendiente() | number:'1.2-2' }}</strong>
@@ -68,12 +89,12 @@
   </section>
 
   <section class="dashboard-grid">
-    <article class="chart-card">
+    <article class="panel-card">
       <div class="panel-header">
         <div>
           <span class="tag">Indicadores</span>
           <h3>Estado de mis recibos</h3>
-          <p>Resumen visual de recibos pagados, pendientes y vencidos.</p>
+          <p>Distribución de recibos pagados, pendientes y vencidos.</p>
         </div>
       </div>
 
@@ -90,7 +111,7 @@
             <span class="dot pagado-dot"></span>
             <div>
               <strong>Pagados</strong>
-              <small>{{ recibosPagados() }} recibo(s) - {{ porcentajePagados() | number:'1.0-1' }}%</small>
+              <small>{{ recibosPagados() }} recibo(s) · {{ porcentajePagados() | number:'1.0-1' }}%</small>
             </div>
           </div>
 
@@ -98,7 +119,7 @@
             <span class="dot pendiente-dot"></span>
             <div>
               <strong>Pendientes</strong>
-              <small>{{ recibosPendientes() }} recibo(s) - {{ porcentajePendientes() | number:'1.0-1' }}%</small>
+              <small>{{ recibosPendientes() }} recibo(s) · {{ porcentajePendientes() | number:'1.0-1' }}%</small>
             </div>
           </div>
 
@@ -106,16 +127,20 @@
             <span class="dot vencido-dot"></span>
             <div>
               <strong>Vencidos</strong>
-              <small>{{ recibosVencidos() }} recibo(s) - {{ porcentajeVencidos() | number:'1.0-1' }}%</small>
+              <small>{{ recibosVencidos() }} recibo(s) · {{ porcentajeVencidos() | number:'1.0-1' }}%</small>
             </div>
           </div>
         </div>
       </div>
     </article>
 
-    <article class="pending-card">
-      <span class="tag">Recibo pendiente</span>
-      <h3>Pago reciente</h3>
+    <article class="panel-card">
+      <div class="panel-header compact">
+        <div>
+          <span class="tag">Recibo pendiente</span>
+          <h3>Pago reciente</h3>
+        </div>
+      </div>
 
       <ng-container *ngIf="reciboPendienteMasReciente() as recibo; else sinRecibosPendientes">
         <div class="pending-box">
@@ -123,9 +148,15 @@
           <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
           <small>{{ periodo(recibo) }} · {{ recibo.codigoSuministro }}</small>
 
-          <a class="btn-primary full" [routerLink]="['/cliente/pagar-recibo', recibo.id]">
-            Pagar ahora
-          </a>
+          <div class="pending-actions">
+            <a class="btn-secondary" [routerLink]="['/cliente/detalle-recibo', recibo.id]">
+              Ver detalle
+            </a>
+
+            <a class="btn-primary" [routerLink]="['/cliente/pagar-recibo', recibo.id]">
+              Pagar ahora
+            </a>
+          </div>
         </div>
       </ng-container>
 
@@ -137,16 +168,81 @@
     </article>
   </section>
 
-  <section class="filters-row">
-    <input
-      type="text"
-      placeholder="Buscar por recibo, suministro, dirección, periodo, estado o monto..."
-      [(ngModel)]="busqueda"
-      (input)="aplicarFiltros()"
-    >
+  <section class="content-grid">
+    <article class="panel-card">
+      <div class="section-title">
+        <div>
+          <span class="tag">Consumo</span>
+          <h3>Últimos consumos</h3>
+        </div>
+
+        <span>{{ consumoPromedio() | number:'1.2-3' }} m³ promedio</span>
+      </div>
+
+      <div class="bars-list">
+        <div class="bar-item" *ngFor="let recibo of recibosParaGrafico()">
+          <div class="bar-info">
+            <strong>{{ periodo(recibo) }}</strong>
+            <span>{{ recibo.codigoSuministro || '-' }}</span>
+          </div>
+
+          <div class="bar-track">
+            <div class="bar-fill" [style.width]="anchoConsumo(recibo)"></div>
+          </div>
+
+          <strong class="bar-value">{{ recibo.consumoM3 | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div *ngIf="recibosParaGrafico().length === 0 && !cargando" class="empty-row">
+          No hay consumos registrados.
+        </div>
+      </div>
+    </article>
+
+    <article class="panel-card">
+      <div class="section-title">
+        <div>
+          <span class="tag">Últimos recibos</span>
+          <h3>Actividad reciente</h3>
+        </div>
+
+        <span>{{ ultimosRecibos().length }} registro(s)</span>
+      </div>
+
+      <div class="recent-list">
+        <div class="recent-item" *ngFor="let recibo of ultimosRecibos()">
+          <div>
+            <strong>{{ recibo.codigoRecibo }}</strong>
+            <small>{{ periodo(recibo) }} · {{ recibo.codigoSuministro }}</small>
+          </div>
+
+          <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
+            {{ recibo.estadoRecibo || 'PENDIENTE' }}
+          </span>
+
+          <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
+        </div>
+
+        <div *ngIf="ultimosRecibos().length === 0 && !cargando" class="empty-row">
+          No hay recibos registrados.
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="filter-card">
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        type="text"
+        placeholder="Buscar por recibo, suministro, dirección, periodo, estado o monto..."
+        [(ngModel)]="busqueda"
+        (input)="aplicarFiltros()"
+      >
+    </div>
 
     <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
-      <option value="TODOS">Todos</option>
+      <option value="TODOS">Todos los estados</option>
       <option value="PENDIENTE">Pendientes</option>
       <option value="PAGADO">Pagados</option>
       <option value="VENCIDO">Vencidos</option>
@@ -157,9 +253,13 @@
     </button>
   </section>
 
-  <section class="table-card">
-    <div class="table-title">
-      <h3>Listado de recibos</h3>
+  <section class="panel-card">
+    <div class="section-title">
+      <div>
+        <span class="tag">Listado</span>
+        <h3>Mis recibos registrados</h3>
+      </div>
+
       <span>{{ recibosFiltrados.length }} resultado(s)</span>
     </div>
 
@@ -172,6 +272,8 @@
             <th>Dirección</th>
             <th>Periodo</th>
             <th>Consumo</th>
+            <th>Subtotal</th>
+            <th>Cargos</th>
             <th>Total</th>
             <th>Vencimiento</th>
             <th>Estado</th>
@@ -185,13 +287,17 @@
               <strong>{{ recibo.codigoRecibo }}</strong>
             </td>
 
-            <td>{{ recibo.codigoSuministro }}</td>
+            <td>{{ recibo.codigoSuministro || '-' }}</td>
 
-            <td>{{ recibo.direccionSuministro }}</td>
+            <td>{{ recibo.direccionSuministro || '-' }}</td>
 
             <td>{{ periodo(recibo) }}</td>
 
             <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
+
+            <td>S/ {{ recibo.subtotalAgua | number:'1.2-2' }}</td>
+
+            <td>S/ {{ totalCargos(recibo) | number:'1.2-2' }}</td>
 
             <td>
               <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
@@ -208,7 +314,7 @@
             <td>
               <div class="actions-cell">
                 <a class="table-action" [routerLink]="['/cliente/detalle-recibo', recibo.id]">
-                  Ver detalle
+                  Ver
                 </a>
 
                 <a
@@ -227,7 +333,7 @@
           </tr>
 
           <tr *ngIf="recibosFiltrados.length === 0 && !cargando">
-            <td colspan="9" class="empty-row">
+            <td colspan="11" class="empty-row">
               No tienes recibos para mostrar.
             </td>
           </tr>

@@ -8,6 +8,13 @@ import { Recibo, ReciboResponse } from '../../../core/services/recibo';
 import { Pago, PagoResponse } from '../../../core/services/pago';
 import { Tarifa, TarifaResponse } from '../../../core/services/tarifa';
 
+interface ResumenMetodoPago {
+  metodo: string;
+  cantidad: number;
+  monto: number;
+  porcentaje: number;
+}
+
 @Component({
   selector: 'app-reportes',
   imports: [CommonModule],
@@ -70,11 +77,35 @@ export class Reportes implements OnInit {
     return this.clientes.length;
   }
 
+  clientesActivos(): number {
+    return this.clientes.filter((cliente: any) => cliente.estado !== false).length;
+  }
+
+  clientesInactivos(): number {
+    return this.clientes.filter((cliente: any) => cliente.estado === false).length;
+  }
+
   totalSuministros(): number {
-    return this.clientes.reduce(
-      (total, cliente: any) => total + (cliente.suministros?.length ?? 0),
-      0
-    );
+    return this.clientes.reduce((total: number, cliente: any) => {
+      return total + (cliente.suministros?.length || 0);
+    }, 0);
+  }
+
+  suministrosInstalados(): number {
+    return this.clientes.reduce((total: number, cliente: any) => {
+      const instalados = (cliente.suministros || []).filter((suministro: any) => {
+        const estadoInstalacion = String(suministro.estadoInstalacion || '').toUpperCase();
+
+        return suministro.estado !== false &&
+          (estadoInstalacion === 'INSTALADO' || estadoInstalacion === '');
+      }).length;
+
+      return total + instalados;
+    }, 0);
+  }
+
+  suministrosPendientes(): number {
+    return Math.max(this.totalSuministros() - this.suministrosInstalados(), 0);
   }
 
   totalRecibos(): number {
@@ -82,47 +113,47 @@ export class Reportes implements OnInit {
   }
 
   recibosPendientes(): number {
-    return this.recibos.filter((r: any) => {
-      return String(r.estadoRecibo || '').toUpperCase() === 'PENDIENTE';
+    return this.recibos.filter((recibo: any) => {
+      return String(recibo.estadoRecibo || '').toUpperCase() === 'PENDIENTE';
     }).length;
   }
 
   recibosPagados(): number {
-    return this.recibos.filter((r: any) => {
-      return String(r.estadoRecibo || '').toUpperCase() === 'PAGADO';
+    return this.recibos.filter((recibo: any) => {
+      return String(recibo.estadoRecibo || '').toUpperCase() === 'PAGADO';
     }).length;
   }
 
   recibosVencidos(): number {
-    return this.recibos.filter((r: any) => {
-      return String(r.estadoRecibo || '').toUpperCase() === 'VENCIDO';
+    return this.recibos.filter((recibo: any) => {
+      return String(recibo.estadoRecibo || '').toUpperCase() === 'VENCIDO';
     }).length;
   }
 
   totalRecaudado(): number {
-    return this.pagos.reduce((total, pago: any) => {
+    return this.pagos.reduce((total: number, pago: any) => {
       return total + Number(pago.monto || 0);
     }, 0);
   }
 
   totalEmitido(): number {
-    return this.recibos.reduce((total, recibo: any) => {
+    return this.recibos.reduce((total: number, recibo: any) => {
       return total + Number(recibo.total || 0);
     }, 0);
   }
 
   saldoPendiente(): number {
-    return this.totalEmitido() - this.totalRecaudado();
+    return Math.max(this.totalEmitido() - this.totalRecaudado(), 0);
   }
 
   consumoTotal(): number {
-    return this.recibos.reduce((total, recibo: any) => {
+    return this.recibos.reduce((total: number, recibo: any) => {
       return total + Number(recibo.consumoM3 || 0);
     }, 0);
   }
 
   consumoPromedio(): number {
-    if (this.recibos.length === 0) {
+    if (!this.recibos.length) {
       return 0;
     }
 
@@ -130,31 +161,59 @@ export class Reportes implements OnInit {
   }
 
   porcentajePagados(): number {
-    if (this.recibos.length === 0) {
+    if (!this.totalRecibos()) {
       return 0;
     }
 
-    return (this.recibosPagados() / this.recibos.length) * 100;
+    return (this.recibosPagados() / this.totalRecibos()) * 100;
   }
 
   porcentajePendientes(): number {
-    if (this.recibos.length === 0) {
+    if (!this.totalRecibos()) {
       return 0;
     }
 
-    return (this.recibosPendientes() / this.recibos.length) * 100;
+    return (this.recibosPendientes() / this.totalRecibos()) * 100;
+  }
+
+  porcentajeVencidos(): number {
+    if (!this.totalRecibos()) {
+      return 0;
+    }
+
+    return (this.recibosVencidos() / this.totalRecibos()) * 100;
+  }
+
+  porcentajeRecaudado(): number {
+    if (!this.totalEmitido()) {
+      return 0;
+    }
+
+    return Math.min((this.totalRecaudado() / this.totalEmitido()) * 100, 100);
+  }
+
+  porcentajeSaldoPendiente(): number {
+    if (!this.totalEmitido()) {
+      return 0;
+    }
+
+    return Math.min((this.saldoPendiente() / this.totalEmitido()) * 100, 100);
   }
 
   tarifaPromedio(): number {
-    if (this.tarifas.length === 0) {
+    if (!this.tarifas.length) {
       return 0;
     }
 
-    const suma = this.tarifas.reduce((total, tarifa: any) => {
+    const suma = this.tarifas.reduce((total: number, tarifa: any) => {
       return total + Number(tarifa.precioM3 || 0);
     }, 0);
 
     return suma / this.tarifas.length;
+  }
+
+  tarifasActivas(): number {
+    return this.tarifas.filter((tarifa: any) => tarifa.estado !== false).length;
   }
 
   ultimosPagos(): PagoResponse[] {
@@ -166,15 +225,81 @@ export class Reportes implements OnInit {
   ultimosRecibos(): ReciboResponse[] {
     return [...this.recibos]
       .sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))
-      .slice(0, 5);
+      .slice(0, 6);
   }
 
   clientesConMasSuministros(): ClienteResponse[] {
     return [...this.clientes]
       .sort((a: any, b: any) => {
-        return (b.suministros?.length ?? 0) - (a.suministros?.length ?? 0);
+        return (b.suministros?.length || 0) - (a.suministros?.length || 0);
       })
       .slice(0, 5);
+  }
+
+  resumenMetodosPago(): ResumenMetodoPago[] {
+    const mapa = new Map<string, { cantidad: number; monto: number }>();
+
+    for (const pago of this.pagos as any[]) {
+      const metodo = String(pago.metodoPago || pago.metodo || 'No especificado');
+      const actual = mapa.get(metodo) || { cantidad: 0, monto: 0 };
+
+      actual.cantidad += 1;
+      actual.monto += Number(pago.monto || 0);
+
+      mapa.set(metodo, actual);
+    }
+
+    return Array.from(mapa.entries())
+      .map(([metodo, data]) => ({
+        metodo,
+        cantidad: data.cantidad,
+        monto: data.monto,
+        porcentaje: this.pagos.length ? (data.cantidad / this.pagos.length) * 100 : 0
+      }))
+      .sort((a, b) => b.monto - a.monto);
+  }
+
+  graficoEstados(): string {
+    if (!this.totalRecibos()) {
+      return 'conic-gradient(#e2e8f0 0% 100%)';
+    }
+
+    const pagados = this.porcentajePagados();
+    const pendientes = this.porcentajePendientes();
+    const vencidos = this.porcentajeVencidos();
+
+    const finPagados = pagados;
+    const finPendientes = pagados + pendientes;
+    const finVencidos = pagados + pendientes + vencidos;
+
+    return `
+      conic-gradient(
+        #16a34a 0% ${finPagados}%,
+        #f59e0b ${finPagados}% ${finPendientes}%,
+        #dc2626 ${finPendientes}% ${finVencidos}%,
+        #e2e8f0 ${finVencidos}% 100%
+      )
+    `;
+  }
+
+  graficoRecaudacion(): string {
+    const recaudado = this.porcentajeRecaudado();
+
+    if (!this.totalEmitido()) {
+      return 'conic-gradient(#e2e8f0 0% 100%)';
+    }
+
+    return `
+      conic-gradient(
+        #11a6c8 0% ${recaudado}%,
+        #e2e8f0 ${recaudado}% 100%
+      )
+    `;
+  }
+
+  colorMetodo(index: number): string {
+    const colores = ['#11a6c8', '#16a34a', '#f59e0b', '#7c3aed', '#dc2626', '#0f766e'];
+    return colores[index % colores.length];
   }
 
   nombreCompleto(cliente: ClienteResponse): string {
@@ -185,11 +310,11 @@ export class Reportes implements OnInit {
   estadoClase(estado: string): string {
     const valor = String(estado || '').toLowerCase();
 
-    if (valor === 'pagado') {
+    if (valor === 'pagado' || valor === 'activo') {
       return 'pagado';
     }
 
-    if (valor === 'vencido') {
+    if (valor === 'vencido' || valor === 'inactivo') {
       return 'vencido';
     }
 
@@ -198,155 +323,65 @@ export class Reportes implements OnInit {
 
   periodo(recibo: ReciboResponse): string {
     const r: any = recibo;
-    return `${this.nombreMes(r.mes)} ${r.anio}`;
+    return `${this.nombreMes(Number(r.mes))} ${r.anio}`;
+  }
+
+  fechaPagoTexto(pago: PagoResponse): string {
+    const item: any = pago;
+    return item.fechaPago || item.fechaRegistro || item.fecha || '-';
+  }
+
+  nombreMes(mes: number): string {
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+
+    return meses[mes - 1] || 'Mes inválido';
   }
 
   exportarExcel(): void {
-    const filas: any[][] = [];
+    const fechaArchivo = new Date().toISOString().slice(0, 10);
 
-    const filaTitulo = filas.length;
-    filas.push(['JASS Huacariz']);
-
-    const filaSubtitulo = filas.length;
-    filas.push(['Reporte general del sistema de agua potable']);
-
-    const filaFecha = filas.length;
-    filas.push([`Fecha de emisión: ${new Date().toLocaleString('es-PE')}`]);
-
-    filas.push([]);
-
-    const filaResumenTitulo = filas.length;
-    filas.push(['RESUMEN GENERAL']);
-
-    const filaResumenCabecera = filas.length;
-    filas.push(['Indicador', 'Valor', '', 'Indicador', 'Valor']);
-
-    filas.push(['Total clientes', this.totalClientes(), '', 'Total suministros', this.totalSuministros()]);
-    filas.push(['Total recibos', this.totalRecibos(), '', 'Total recaudado', `S/ ${this.totalRecaudado().toFixed(2)}`]);
-    filas.push(['Recibos pendientes', this.recibosPendientes(), '', 'Recibos pagados', this.recibosPagados()]);
-    filas.push(['Consumo total', `${this.consumoTotal().toFixed(3)} m³`, '', 'Consumo promedio', `${this.consumoPromedio().toFixed(3)} m³`]);
-    filas.push(['Total emitido', `S/ ${this.totalEmitido().toFixed(2)}`, '', 'Saldo pendiente', `S/ ${this.saldoPendiente().toFixed(2)}`]);
-    filas.push(['Tarifas registradas', this.tarifas.length, '', 'Precio promedio m³', `S/ ${this.tarifaPromedio().toFixed(2)}`]);
-
-    filas.push([]);
-
-    const filaRecibosTitulo = filas.length;
-    filas.push(['ÚLTIMOS RECIBOS']);
-
-    const filaRecibosCabecera = filas.length;
-    filas.push(['Recibo', 'Suministro', 'Periodo', 'Consumo', 'Total', 'Estado']);
-
-    this.ultimosRecibos().forEach((recibo: any) => {
-      filas.push([
-        recibo.codigoRecibo || '-',
-        recibo.codigoSuministro || '-',
-        `${this.nombreMes(recibo.mes)} ${recibo.anio}`,
-        `${Number(recibo.consumoM3 || 0).toFixed(3)} m³`,
-        `S/ ${Number(recibo.total || 0).toFixed(2)}`,
-        recibo.estadoRecibo || '-'
-      ]);
-    });
-
-    filas.push([]);
-
-    const filaPagosTitulo = filas.length;
-    filas.push(['ÚLTIMOS PAGOS']);
-
-    const filaPagosCabecera = filas.length;
-    filas.push(['Recibo', 'Método', 'Monto', 'Fecha']);
-
-    this.ultimosPagos().forEach((pago: any) => {
-      filas.push([
-        pago.codigoRecibo || pago.reciboCodigo || '-',
-        pago.metodoPago || pago.metodo || '-',
-        `S/ ${Number(pago.monto || 0).toFixed(2)}`,
-        pago.fechaPago || pago.fechaRegistro || pago.fecha || '-'
-      ]);
-    });
-
-    filas.push([]);
-
-    const filaClientesTitulo = filas.length;
-    filas.push(['CLIENTES CON MÁS SUMINISTROS']);
-
-    const filaClientesCabecera = filas.length;
-    filas.push(['DNI', 'Cliente', 'Suministros', 'Estado']);
-
-    this.clientesConMasSuministros().forEach((cliente: any) => {
-      filas.push([
-        cliente.dni || '-',
-        this.nombreCompleto(cliente),
-        cliente.suministros?.length || 0,
-        cliente.estado === false ? 'Inactivo' : 'Activo'
-      ]);
-    });
-
-    const worksheet: any = XLSX.utils.aoa_to_sheet(filas);
-
-    worksheet['!cols'] = [
-      { wch: 28 },
-      { wch: 28 },
-      { wch: 18 },
-      { wch: 24 },
-      { wch: 22 },
-      { wch: 18 }
+    const resumen = [
+      ['JASS HUACARIZ - REPORTE GENERAL'],
+      [`Fecha de emisión: ${new Date().toLocaleString('es-PE')}`],
+      [],
+      ['RESUMEN PRINCIPAL'],
+      ['Indicador', 'Valor', '', 'Indicador', 'Valor'],
+      ['Total clientes', this.totalClientes(), '', 'Total suministros', this.totalSuministros()],
+      ['Clientes activos', this.clientesActivos(), '', 'Suministros instalados', this.suministrosInstalados()],
+      ['Total recibos', this.totalRecibos(), '', 'Recibos pendientes', this.recibosPendientes()],
+      ['Recibos pagados', this.recibosPagados(), '', 'Recibos vencidos', this.recibosVencidos()],
+      ['Total emitido', Number(this.totalEmitido().toFixed(2)), '', 'Total recaudado', Number(this.totalRecaudado().toFixed(2))],
+      ['Saldo pendiente', Number(this.saldoPendiente().toFixed(2)), '', 'Consumo total m³', Number(this.consumoTotal().toFixed(3))],
+      ['Tarifas activas', this.tarifasActivas(), '', 'Precio promedio m³', Number(this.tarifaPromedio().toFixed(2))]
     ];
-
-    worksheet['!merges'] = [
-      { s: { r: filaTitulo, c: 0 }, e: { r: filaTitulo, c: 5 } },
-      { s: { r: filaSubtitulo, c: 0 }, e: { r: filaSubtitulo, c: 5 } },
-      { s: { r: filaFecha, c: 0 }, e: { r: filaFecha, c: 5 } },
-      { s: { r: filaResumenTitulo, c: 0 }, e: { r: filaResumenTitulo, c: 5 } },
-      { s: { r: filaRecibosTitulo, c: 0 }, e: { r: filaRecibosTitulo, c: 5 } },
-      { s: { r: filaPagosTitulo, c: 0 }, e: { r: filaPagosTitulo, c: 5 } },
-      { s: { r: filaClientesTitulo, c: 0 }, e: { r: filaClientesTitulo, c: 5 } }
-    ];
-
-    worksheet['!rows'] = [
-      { hpt: 30 },
-      { hpt: 22 },
-      { hpt: 20 }
-    ];
-
-    this.estilizarReporteExcel(
-      worksheet,
-      filaTitulo,
-      filaSubtitulo,
-      filaFecha,
-      filaResumenTitulo,
-      filaResumenCabecera,
-      filaRecibosTitulo,
-      filaRecibosCabecera,
-      filaPagosTitulo,
-      filaPagosCabecera,
-      filaClientesTitulo,
-      filaClientesCabecera
-    );
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte general');
 
     const detalleRecibos = this.recibos.map((recibo: any) => ({
       'Código recibo': recibo.codigoRecibo || '',
-      'Código suministro': recibo.codigoSuministro || '',
-      'Periodo': `${this.nombreMes(recibo.mes)} ${recibo.anio}`,
+      'Suministro': recibo.codigoSuministro || '',
+      'Dirección': recibo.direccionSuministro || '',
+      'Periodo': `${this.nombreMes(Number(recibo.mes))} ${recibo.anio}`,
       'Consumo m³': Number(recibo.consumoM3 || 0),
       'Subtotal agua': Number(recibo.subtotalAgua || 0),
-      'Cargo mantenimiento': Number(recibo.cargoMantenimiento || 0),
+      'Mantenimiento': Number(recibo.cargoMantenimiento || 0),
       'Cargo lector': Number(recibo.cargoLector || 0),
+      'Otros cargos': Number(recibo.cargoOtros || 0),
       'Mora': Number(recibo.mora || 0),
       'Total': Number(recibo.total || 0),
       'Estado': recibo.estadoRecibo || '',
-      'Fecha emisión': recibo.fechaEmision || '',
-      'Fecha vencimiento': recibo.fechaVencimiento || ''
+      'Emisión': recibo.fechaEmision || '',
+      'Vencimiento': recibo.fechaVencimiento || ''
     }));
 
     const detallePagos = this.pagos.map((pago: any) => ({
       'Código recibo': pago.codigoRecibo || pago.reciboCodigo || '',
       'Método': pago.metodoPago || pago.metodo || '',
+      'Código operación': pago.codigoOperacion || pago.operacion || '',
       'Monto': Number(pago.monto || 0),
-      'Fecha': pago.fechaPago || pago.fechaRegistro || pago.fecha || '',
-      'Operación': pago.codigoOperacion || pago.operacion || ''
+      'Estado': pago.estadoPago || '',
+      'Fecha pago': pago.fechaPago || pago.fechaRegistro || pago.fecha || ''
     }));
 
     const detalleClientes = this.clientes.map((cliente: any) => ({
@@ -359,11 +394,22 @@ export class Reportes implements OnInit {
       'Estado': cliente.estado === false ? 'Inactivo' : 'Activo'
     }));
 
-    XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detalleRecibos), 'Detalle recibos');
-    XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detallePagos), 'Detalle pagos');
-    XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detalleClientes), 'Detalle clientes');
+    const detalleTarifas = this.tarifas.map((tarifa: any) => ({
+      'Nombre': tarifa.nombreTarifa || tarifa.nombre || '',
+      'Desde m³': Number(tarifa.consumoDesde || 0),
+      'Hasta m³': tarifa.consumoHasta ?? 'A más',
+      'Precio m³': Number(tarifa.precioM3 || 0),
+      'Estado': tarifa.estado === false ? 'Inactiva' : 'Activa'
+    }));
 
-    const fechaArchivo = new Date().toISOString().slice(0, 10);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, this.crearHojaResumen(resumen), 'Resumen');
+    XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detalleRecibos), 'Recibos');
+    XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detallePagos), 'Pagos');
+    XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detalleClientes), 'Clientes');
+    XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detalleTarifas), 'Tarifas');
+
     XLSX.writeFile(workbook, `reporte_general_jass_huacariz_${fechaArchivo}.xlsx`);
   }
 
@@ -372,7 +418,7 @@ export class Reportes implements OnInit {
       <tr>
         <td>${this.textoSeguro(recibo.codigoRecibo || '-')}</td>
         <td>${this.textoSeguro(recibo.codigoSuministro || '-')}</td>
-        <td>${this.nombreMes(recibo.mes)} ${recibo.anio}</td>
+        <td>${this.periodo(recibo)}</td>
         <td>${Number(recibo.consumoM3 || 0).toFixed(3)} m³</td>
         <td>S/ ${Number(recibo.total || 0).toFixed(2)}</td>
         <td>${this.textoSeguro(recibo.estadoRecibo || '-')}</td>
@@ -404,20 +450,20 @@ export class Reportes implements OnInit {
       return;
     }
 
-    const html = `
+    ventana.document.open();
+    ventana.document.write(`
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="UTF-8">
         <title>Reporte general - JASS Huacariz</title>
-
         <style>
           * { box-sizing: border-box; }
 
           body {
             margin: 0;
             padding: 28px;
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             color: #0f2f3d;
             background: #ffffff;
           }
@@ -556,9 +602,7 @@ export class Reportes implements OnInit {
             </div>
           </div>
 
-          <div>
-            <strong>Administración</strong>
-          </div>
+          <strong>Administración</strong>
         </div>
 
         <div class="summary">
@@ -625,11 +669,40 @@ export class Reportes implements OnInit {
         </div>
       </body>
       </html>
-    `;
-
-    ventana.document.open();
-    ventana.document.write(html);
+    `);
     ventana.document.close();
+  }
+
+  private crearHojaResumen(filas: any[][]): any {
+    const worksheet: any = XLSX.utils.aoa_to_sheet(filas);
+
+    worksheet['!cols'] = [
+      { wch: 28 },
+      { wch: 22 },
+      { wch: 8 },
+      { wch: 28 },
+      { wch: 22 }
+    ];
+
+    worksheet['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 4 } },
+      { s: { r: 4, c: 0 }, e: { r: 4, c: 4 } }
+    ];
+
+    const ref = worksheet['!ref'] || 'A1:E1';
+    const range = XLSX.utils.decode_range(ref);
+    const styles = this.estilosExcel();
+
+    this.aplicarEstiloRango(worksheet, 0, 0, range.e.r, range.e.c, styles.celda);
+    this.aplicarEstiloRango(worksheet, 0, 0, 0, 4, styles.titulo);
+    this.aplicarEstiloRango(worksheet, 1, 0, 1, 4, styles.subtitulo);
+    this.aplicarEstiloRango(worksheet, 2, 0, 2, 4, styles.fecha);
+    this.aplicarEstiloRango(worksheet, 4, 0, 4, 4, styles.seccion);
+    this.aplicarEstiloRango(worksheet, 5, 0, 5, 4, styles.cabecera);
+
+    return worksheet;
   }
 
   private crearHojaDetalle(data: any[]): any {
@@ -637,71 +710,15 @@ export class Reportes implements OnInit {
     const worksheet: any = XLSX.utils.json_to_sheet(datos);
     const ref = worksheet['!ref'] || 'A1:A1';
     const range = XLSX.utils.decode_range(ref);
+    const styles = this.estilosExcel();
 
     worksheet['!cols'] = Array.from({ length: range.e.c + 1 }, () => ({ wch: 24 }));
     worksheet['!autofilter'] = { ref };
 
-    const estilos = this.estilosExcel();
-
-    this.aplicarEstiloRango(
-      worksheet,
-      0,
-      0,
-      0,
-      range.e.c,
-      estilos.cabeceraTabla
-    );
-
-    if (range.e.r >= 1) {
-      this.aplicarEstiloRango(
-        worksheet,
-        1,
-        0,
-        range.e.r,
-        range.e.c,
-        estilos.celda
-      );
-    }
+    this.aplicarEstiloRango(worksheet, 0, 0, range.e.r, range.e.c, styles.celda);
+    this.aplicarEstiloRango(worksheet, 0, 0, 0, range.e.c, styles.cabecera);
 
     return worksheet;
-  }
-
-  private estilizarReporteExcel(
-    worksheet: any,
-    filaTitulo: number,
-    filaSubtitulo: number,
-    filaFecha: number,
-    filaResumenTitulo: number,
-    filaResumenCabecera: number,
-    filaRecibosTitulo: number,
-    filaRecibosCabecera: number,
-    filaPagosTitulo: number,
-    filaPagosCabecera: number,
-    filaClientesTitulo: number,
-    filaClientesCabecera: number
-  ): void {
-    const estilos = this.estilosExcel();
-    const ref = worksheet['!ref'] || 'A1:A1';
-    const range = XLSX.utils.decode_range(ref);
-
-    this.aplicarEstiloRango(worksheet, 0, 0, range.e.r, range.e.c, estilos.celda);
-
-    this.aplicarEstiloRango(worksheet, filaTitulo, 0, filaTitulo, 5, estilos.titulo);
-    this.aplicarEstiloRango(worksheet, filaSubtitulo, 0, filaSubtitulo, 5, estilos.subtitulo);
-    this.aplicarEstiloRango(worksheet, filaFecha, 0, filaFecha, 5, estilos.fecha);
-
-    this.aplicarEstiloRango(worksheet, filaResumenTitulo, 0, filaResumenTitulo, 5, estilos.seccion);
-    this.aplicarEstiloRango(worksheet, filaResumenCabecera, 0, filaResumenCabecera, 4, estilos.cabeceraTabla);
-    this.aplicarEstiloRango(worksheet, filaResumenCabecera + 1, 0, filaResumenCabecera + 6, 4, estilos.resumen);
-
-    this.aplicarEstiloRango(worksheet, filaRecibosTitulo, 0, filaRecibosTitulo, 5, estilos.seccion);
-    this.aplicarEstiloRango(worksheet, filaRecibosCabecera, 0, filaRecibosCabecera, 5, estilos.cabeceraTabla);
-
-    this.aplicarEstiloRango(worksheet, filaPagosTitulo, 0, filaPagosTitulo, 5, estilos.seccion);
-    this.aplicarEstiloRango(worksheet, filaPagosCabecera, 0, filaPagosCabecera, 3, estilos.cabeceraTabla);
-
-    this.aplicarEstiloRango(worksheet, filaClientesTitulo, 0, filaClientesTitulo, 5, estilos.seccion);
-    this.aplicarEstiloRango(worksheet, filaClientesCabecera, 0, filaClientesCabecera, 3, estilos.cabeceraTabla);
   }
 
   private aplicarEstiloRango(
@@ -726,7 +743,7 @@ export class Reportes implements OnInit {
   }
 
   private estilosExcel(): any {
-    const borde = {
+    const border = {
       top: { style: 'thin', color: { rgb: 'D9EAF0' } },
       bottom: { style: 'thin', color: { rgb: 'D9EAF0' } },
       left: { style: 'thin', color: { rgb: 'D9EAF0' } },
@@ -735,55 +752,39 @@ export class Reportes implements OnInit {
 
     return {
       titulo: {
-        font: { bold: true, sz: 20, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '0B3A4A' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: borde
+        font: { bold: true, sz: 18, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '07384A' } },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        border
       },
       subtitulo: {
-        font: { bold: true, sz: 13, color: { rgb: '0F2F3D' } },
+        font: { bold: true, sz: 12, color: { rgb: '0F2F3D' } },
         fill: { fgColor: { rgb: 'E8F7FB' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: borde
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        border
       },
       fecha: {
         font: { italic: true, sz: 11, color: { rgb: '64748B' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: borde
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        border
       },
       seccion: {
         font: { bold: true, sz: 13, color: { rgb: 'FFFFFF' } },
         fill: { fgColor: { rgb: '1BA3C7' } },
-        alignment: { horizontal: 'left', vertical: 'center' },
-        border: borde
+        alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+        border
       },
-      cabeceraTabla: {
-        font: { bold: true, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '0F766E' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: borde
-      },
-      resumen: {
-        font: { color: { rgb: '0F2F3D' } },
-        fill: { fgColor: { rgb: 'F8FCFD' } },
-        alignment: { vertical: 'center' },
-        border: borde
+      cabecera: {
+        font: { bold: true, color: { rgb: '0F2F3D' } },
+        fill: { fgColor: { rgb: 'E8F7FB' } },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+        border
       },
       celda: {
-        font: { color: { rgb: '0F2F3D' } },
-        alignment: { vertical: 'center' },
-        border: borde
+        alignment: { vertical: 'center', wrapText: true },
+        border
       }
     };
-  }
-
-  private nombreMes(mes: number): string {
-    const meses = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ];
-
-    return meses[mes - 1] ?? 'Mes inválido';
   }
 
   private textoSeguro(value: unknown): string {

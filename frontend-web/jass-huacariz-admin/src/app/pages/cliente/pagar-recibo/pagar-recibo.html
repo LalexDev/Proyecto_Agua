@@ -1,18 +1,22 @@
-<div class="pagar-page">
+<div class="pagar-recibo-page">
   <section class="page-header">
-    <div class="page-header-content">
-      <span class="tag">Portal cliente</span>
+    <div class="page-header__content">
+      <span class="page-kicker">PORTAL CLIENTE / PAGO</span>
       <h2>Pagar recibo</h2>
-      <p>Registra el pago digital de tu recibo pendiente. El pago en efectivo solo lo registra administración.</p>
+      <p>Registra el pago de tu recibo mediante canales digitales autorizados.</p>
     </div>
 
-    <div class="header-actions">
-      <button type="button" class="btn-secondary action-click" (click)="volver()">
-        ← Volver
+    <div class="page-header__actions">
+      <button type="button" class="btn-secondary" (click)="volver()">
+        Regresar
       </button>
 
-      <button type="button" class="btn-secondary action-click" (click)="irDetalle()" [disabled]="!recibo">
-        🧾 Ver detalle
+      <button type="button" class="btn-secondary" (click)="imprimirRecibo()" [disabled]="!recibo">
+        Imprimir recibo
+      </button>
+
+      <button type="button" class="btn-primary" (click)="cargarRecibo()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
       </button>
     </div>
   </section>
@@ -29,154 +33,190 @@
     Cargando recibo...
   </div>
 
-  <ng-container *ngIf="recibo">
-    <section class="payment-layout">
-      <article class="receipt-summary">
-        <div class="summary-header">
-          <span class="tag light">Recibo seleccionado</span>
-          <h3>{{ recibo.codigoRecibo }}</h3>
-          <p>{{ periodo() }} · {{ recibo.codigoSuministro }}</p>
+  <ng-container *ngIf="recibo as item">
+    <section class="hero-card">
+      <div class="hero-content">
+        <span class="tag light">Pago de agua potable</span>
+        <h3>{{ item.codigoRecibo }}</h3>
+        <p>{{ periodo(item) }} · {{ item.codigoSuministro }}</p>
+
+        <div class="hero-meta">
+          <span>{{ item.direccionSuministro || '-' }}</span>
+          <span>Vence: {{ item.fechaVencimiento || '-' }}</span>
+          <span>{{ item.estadoRecibo || 'PENDIENTE' }}</span>
         </div>
+      </div>
 
-        <div class="amount-panel">
-          <span>Total a pagar</span>
-          <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
-          <small>Vencimiento: {{ recibo.fechaVencimiento || '-' }}</small>
-        </div>
+      <div class="hero-kpi">
+        <span>Total a pagar</span>
+        <strong>S/ {{ item.total | number:'1.2-2' }}</strong>
+        <small>{{ puedePagar() ? 'Pendiente de pago' : 'Recibo cancelado' }}</small>
+      </div>
+    </section>
 
-        <div class="summary-grid">
-          <div>
-            <span>Estado</span>
-            <strong>
-              <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
-                {{ recibo.estadoRecibo || 'PENDIENTE' }}
-              </span>
-            </strong>
-          </div>
-
-          <div>
-            <span>Consumo</span>
-            <strong>{{ recibo.consumoM3 | number:'1.2-3' }} m³</strong>
-          </div>
-
-          <div>
-            <span>Subtotal agua</span>
-            <strong>S/ {{ recibo.subtotalAgua | number:'1.2-2' }}</strong>
-          </div>
-
-          <div>
-            <span>Cargos</span>
-            <strong>S/ {{ totalCargos() | number:'1.2-2' }}</strong>
-          </div>
+    <section class="stats-grid">
+      <article class="stat-card featured">
+        <div class="stat-icon">▤</div>
+        <div>
+          <span>Recibo</span>
+          <strong>{{ item.codigoRecibo }}</strong>
+          <small>{{ periodo(item) }}</small>
         </div>
       </article>
 
-      <article class="payment-card">
-        <div class="card-title">
-          <span class="tag">Registro de pago</span>
-          <h3>Selecciona tu método</h3>
-          <p>Elige cómo realizaste el pago y registra el código de operación.</p>
+      <article class="stat-card">
+        <div class="stat-icon water">💧</div>
+        <div>
+          <span>Consumo</span>
+          <strong>{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
+          <small>Consumo facturado</small>
         </div>
+      </article>
 
-        <div class="paid-message" *ngIf="estaPagado()">
-          ✅ Este recibo ya se encuentra pagado. No es necesario registrar otro pago.
+      <article class="stat-card">
+        <div class="stat-icon money">S/</div>
+        <div>
+          <span>Cargos adicionales</span>
+          <strong>S/ {{ totalCargos() | number:'1.2-2' }}</strong>
+          <small>Mantenimiento, lector, otros y mora</small>
         </div>
+      </article>
 
-        <div class="method-grid">
-          <button
-            type="button"
-            class="method-card"
-            *ngFor="let metodo of metodosPago"
-            [class.selected]="pago.metodoPago === metodo.valor"
-            [disabled]="estaPagado()"
-            (click)="seleccionarMetodo(metodo)"
-          >
-            <span class="method-icon">{{ metodo.icono }}</span>
-            <strong>{{ metodo.nombre }}</strong>
-            <small>{{ metodo.descripcion }}</small>
-          </button>
+      <article class="stat-card">
+        <div class="stat-icon success">✓</div>
+        <div>
+          <span>Estado</span>
+          <strong>
+            <span class="badge" [ngClass]="estadoClase(item.estadoRecibo)">
+              {{ item.estadoRecibo || 'PENDIENTE' }}
+            </span>
+          </strong>
+          <small>Estado actual</small>
         </div>
+      </article>
+    </section>
 
-        <div class="operation-box">
-          <label>
-            Código de operación
-            <input
-              type="text"
-              [(ngModel)]="pago.codigoOperacion"
-              [disabled]="estaPagado()"
-              [placeholder]="metodoSeleccionado().placeholder"
-            >
-          </label>
-
-          <div class="payment-note">
-            <strong>Importante:</strong>
-            El cliente no registra pagos en efectivo. Si el usuario paga presencialmente, ese pago debe ser marcado por el administrador.
+    <section class="payment-grid">
+      <article class="panel-card">
+        <div class="section-title">
+          <div>
+            <span class="tag">Método de pago</span>
+            <h3>Selecciona cómo pagaste</h3>
           </div>
         </div>
 
-        <div class="actions">
-          <button type="button" class="btn-secondary action-click" (click)="volver()">
-            Cancelar
-          </button>
+        <div *ngIf="!puedePagar()" class="already-paid">
+          <div class="paid-icon">✓</div>
+          <h3>Este recibo ya fue pagado</h3>
+          <p>No es necesario registrar un nuevo pago para este recibo.</p>
+        </div>
 
-          <button
-            type="button"
-            class="btn-primary action-click"
-            (click)="abrirConfirmacion()"
-            [disabled]="estaPagado() || pagando"
-          >
-            {{ pagando ? 'Registrando...' : 'Confirmar pago' }}
+        <ng-container *ngIf="puedePagar()">
+          <div class="method-grid">
+            <button
+              type="button"
+              class="method-card"
+              *ngFor="let metodo of metodosPago"
+              [class.active]="pago.metodoPago === metodo.codigo"
+              (click)="seleccionarMetodo(metodo.codigo)"
+            >
+              <span>{{ metodo.icono }}</span>
+
+              <div>
+                <strong>{{ metodo.nombre }}</strong>
+                <small>{{ metodo.descripcion }}</small>
+              </div>
+            </button>
+          </div>
+
+          <div class="form-card">
+            <label>
+              Código / número de operación
+              <input
+                type="text"
+                [(ngModel)]="pago.codigoOperacion"
+                placeholder="Ejemplo: 984512, OP-123456, TRX-0001"
+              >
+            </label>
+
+            <div class="selected-method" *ngIf="metodoSeleccionado() as metodo">
+              <span>{{ metodo.icono }}</span>
+              <div>
+                <strong>{{ metodo.nombre }}</strong>
+                <small>{{ metodo.descripcion }}</small>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn-primary full"
+              (click)="confirmarPago()"
+              [disabled]="procesando"
+            >
+              {{ procesando ? 'Registrando pago...' : 'Confirmar pago' }}
+            </button>
+          </div>
+        </ng-container>
+      </article>
+
+      <article class="panel-card">
+        <div class="section-title">
+          <div>
+            <span class="tag">Resumen</span>
+            <h3>Detalle del recibo</h3>
+          </div>
+        </div>
+
+        <div class="charges-list">
+          <div>
+            <span>Consumo de agua</span>
+            <strong>S/ {{ item.subtotalAgua | number:'1.2-2' }}</strong>
+          </div>
+
+          <div>
+            <span>Mantenimiento</span>
+            <strong>S/ {{ item.cargoMantenimiento | number:'1.2-2' }}</strong>
+          </div>
+
+          <div>
+            <span>Cargo lector</span>
+            <strong>S/ {{ item.cargoLector | number:'1.2-2' }}</strong>
+          </div>
+
+          <div>
+            <span>Otros cargos</span>
+            <strong>S/ {{ item.cargoOtros || 0 | number:'1.2-2' }}</strong>
+          </div>
+
+          <div>
+            <span>Mora</span>
+            <strong>S/ {{ item.mora | number:'1.2-2' }}</strong>
+          </div>
+
+          <div class="total-row">
+            <span>Total a pagar</span>
+            <strong>S/ {{ item.total | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="notice-box">
+          <strong>Importante</strong>
+          <p>
+            El pago en efectivo se registra únicamente en la municipalidad de Huacariz.
+            Como cliente, registra aquí pagos realizados por canales digitales o autorizados.
+          </p>
+        </div>
+
+        <div class="summary-actions">
+          <a class="btn-secondary" [routerLink]="['/cliente/detalle-recibo', item.id]">
+            Ver detalle completo
+          </a>
+
+          <button type="button" class="btn-secondary" (click)="imprimirRecibo()">
+            Imprimir recibo
           </button>
         </div>
       </article>
     </section>
   </ng-container>
-
-  <div class="modal-backdrop" *ngIf="mostrarConfirmacion && recibo">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div>
-          <span class="tag">Confirmación</span>
-          <h3>Confirmar pago</h3>
-          <p>Verifica la información antes de registrar el pago.</p>
-        </div>
-
-        <button type="button" class="close-btn" (click)="cerrarConfirmacion()">
-          ✕
-        </button>
-      </div>
-
-      <div class="confirm-box">
-        <div>
-          <span>Recibo</span>
-          <strong>{{ recibo.codigoRecibo }}</strong>
-        </div>
-
-        <div>
-          <span>Monto</span>
-          <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
-        </div>
-
-        <div>
-          <span>Método</span>
-          <strong>{{ metodoSeleccionado().nombre }}</strong>
-        </div>
-
-        <div>
-          <span>Operación</span>
-          <strong>{{ pago.codigoOperacion || 'Sin código' }}</strong>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" class="btn-secondary action-click" (click)="cerrarConfirmacion()">
-          Cancelar
-        </button>
-
-        <button type="button" class="btn-primary action-click" (click)="confirmarPago()" [disabled]="pagando">
-          {{ pagando ? 'Procesando...' : 'Registrar pago' }}
-        </button>
-      </div>
-    </div>
-  </div>
 </div>

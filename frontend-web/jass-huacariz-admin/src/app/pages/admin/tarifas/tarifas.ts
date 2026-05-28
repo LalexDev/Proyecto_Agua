@@ -148,6 +148,7 @@ export class Tarifas implements OnInit {
       .subscribe({
         next: (data) => {
           this.configuracion = data;
+
           this.configuracionForm = {
             cargoLector: Number(data.cargoLector || 0),
             cargoMantenimiento: Number(data.cargoMantenimiento || 0),

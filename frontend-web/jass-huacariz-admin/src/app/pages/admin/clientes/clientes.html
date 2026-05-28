@@ -1,7 +1,7 @@
 <div class="clientes-page">
   <section class="page-header">
     <div class="page-header__content">
-      <span class="tag">Administración</span>
+      <span class="page-kicker">CLIENTES / SUMINISTROS</span>
       <h2>Clientes y suministros</h2>
       <p>Gestiona usuarios, conexiones de agua, instalación de suministros y accesos al sistema.</p>
     </div>
@@ -38,7 +38,7 @@
   </div>
 
   <section class="stats-grid">
-    <article class="stat-card">
+    <article class="stat-card featured">
       <div class="stat-card__icon">👥</div>
       <div class="stat-card__content">
         <span>Total clientes</span>
@@ -48,7 +48,7 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon">✅</div>
+      <div class="stat-card__icon success">✅</div>
       <div class="stat-card__content">
         <span>Clientes activos</span>
         <strong>{{ clientesActivos() }}</strong>
@@ -57,7 +57,7 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon">💧</div>
+      <div class="stat-card__icon water">💧</div>
       <div class="stat-card__content">
         <span>Suministros</span>
         <strong>{{ totalSuministros() }}</strong>
@@ -66,7 +66,7 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon">🏠</div>
+      <div class="stat-card__icon home">🏠</div>
       <div class="stat-card__content">
         <span>Instalados</span>
         <strong>{{ suministrosInstalados() }}</strong>
@@ -76,35 +76,70 @@
   </section>
 
   <section class="summary-panel">
-    <div>
+    <div class="summary-info">
       <span class="tag">Estado general</span>
       <h3>Control de clientes y conexiones</h3>
       <p>
         Desde este módulo el administrador puede editar clientes, agregar puntos de agua,
         actualizar suministros, generar QR, suspender conexiones y exportar reportes.
       </p>
+
+      <div class="progress-zone">
+        <div class="progress-item">
+          <div>
+            <span>Clientes activos</span>
+            <strong>{{ clientesActivos() }} / {{ totalClientes() }}</strong>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill active"
+              [style.width.%]="totalClientes() > 0 ? (clientesActivos() / totalClientes()) * 100 : 0"
+            ></div>
+          </div>
+        </div>
+
+        <div class="progress-item">
+          <div>
+            <span>Suministros instalados</span>
+            <strong>{{ suministrosInstalados() }} / {{ totalSuministros() }}</strong>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill water"
+              [style.width.%]="totalSuministros() > 0 ? (suministrosInstalados() / totalSuministros()) * 100 : 0"
+            ></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="summary-items">
       <div>
         <span>Clientes inactivos</span>
         <strong>{{ clientesInactivos() }}</strong>
+        <small>Usuarios bloqueados</small>
       </div>
 
       <div>
         <span>Suministros pendientes</span>
         <strong>{{ suministrosPendientes() }}</strong>
+        <small>No instalados o suspendidos</small>
       </div>
     </div>
   </section>
 
   <section class="filters-row">
-    <input
-      type="text"
-      placeholder="Buscar por DNI, cliente, correo, usuario, suministro, dirección, sector o estado..."
-      [(ngModel)]="busqueda"
-      (input)="aplicarFiltros()"
-    >
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        type="text"
+        placeholder="Buscar por DNI, cliente, correo, usuario, suministro, dirección, sector o estado..."
+        [(ngModel)]="busqueda"
+        (input)="aplicarFiltros()"
+      >
+    </div>
 
     <select [(ngModel)]="filtroEstadoCliente" (change)="aplicarFiltros()">
       <option value="TODOS">Todos los clientes</option>
@@ -126,7 +161,11 @@
 
   <section class="table-card">
     <div class="table-card__header">
-      <h3>Clientes registrados</h3>
+      <div>
+        <span class="page-kicker small">REGISTROS</span>
+        <h3>Clientes registrados</h3>
+      </div>
+
       <span>{{ clientesFiltrados.length }} resultado(s)</span>
     </div>
 
