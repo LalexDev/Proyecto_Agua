@@ -49,6 +49,10 @@ public class Recibo {
     @Column(name = "cargo_lector", nullable = false, precision = 10, scale = 2)
     private BigDecimal cargoLector;
 
+    @Builder.Default
+    @Column(name = "cargo_otros", nullable = false, precision = 10, scale = 2)
+    private BigDecimal cargoOtros = BigDecimal.ZERO;
+
     @Column(name = "mora", nullable = false, precision = 10, scale = 2)
     private BigDecimal mora;
 

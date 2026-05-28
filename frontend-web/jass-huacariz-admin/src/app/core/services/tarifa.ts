@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export interface TarifaResponse {
-  id: number;
+export interface TarifaRequest {
   nombreTarifa: string;
   consumoDesde: number;
   consumoHasta: number | null;
@@ -11,12 +10,32 @@ export interface TarifaResponse {
   estado: boolean;
 }
 
-export interface TarifaRequest {
+export interface TarifaResponse {
+  id: number;
   nombreTarifa: string;
+  nombre?: string;
   consumoDesde: number;
   consumoHasta: number | null;
   precioM3: number;
   estado: boolean;
+}
+
+export interface ConfiguracionCobranzaRequest {
+  cargoLector: number;
+  cargoMantenimiento: number;
+  cargoOtros: number;
+  diasVencimiento: number;
+  moraBase: number;
+}
+
+export interface ConfiguracionCobranzaResponse {
+  id: number;
+  cargoLector: number;
+  cargoMantenimiento: number;
+  cargoOtros: number;
+  diasVencimiento: number;
+  moraBase: number;
+  fechaActualizacion: string;
 }
 
 @Injectable({
@@ -29,6 +48,10 @@ export class Tarifa {
 
   listarTarifas(): Observable<TarifaResponse[]> {
     return this.http.get<TarifaResponse[]>(this.apiUrl);
+  }
+
+  obtenerTarifaPorId(id: number): Observable<TarifaResponse> {
+    return this.http.get<TarifaResponse>(`${this.apiUrl}/${id}`);
   }
 
   registrarTarifa(data: TarifaRequest): Observable<TarifaResponse> {
@@ -45,5 +68,18 @@ export class Tarifa {
 
   eliminarTarifa(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  obtenerConfiguracionCobranza(): Observable<ConfiguracionCobranzaResponse> {
+    return this.http.get<ConfiguracionCobranzaResponse>(`${this.apiUrl}/configuracion-cobranza`);
+  }
+
+  guardarConfiguracionCobranza(
+    data: ConfiguracionCobranzaRequest
+  ): Observable<ConfiguracionCobranzaResponse> {
+    return this.http.put<ConfiguracionCobranzaResponse>(
+      `${this.apiUrl}/configuracion-cobranza`,
+      data
+    );
   }
 }

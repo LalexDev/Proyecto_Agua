@@ -1,72 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-
-import {
-  ClientePerfilResponse,
-  ClientePortal
-} from '../../core/services/cliente-portal';
-
-import { Auth } from '../../core/services/auth';
+import { Component } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-cliente-layout',
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterModule],
   templateUrl: './cliente-layout.html',
-  styleUrl: './cliente-layout.scss'
+  styleUrl: './cliente-layout.scss',
 })
-export class ClienteLayout implements OnInit {
-  perfil: ClientePerfilResponse | null = null;
-  cargandoPerfil = false;
+export class ClienteLayout {
+  nombreUsuario = localStorage.getItem('nombreUsuario') || localStorage.getItem('codigoUsuario') || 'Cliente';
+  codigoUsuario = localStorage.getItem('codigoUsuario') || '';
 
-  constructor(
-    private clientePortal: ClientePortal,
-    private auth: Auth,
-    private router: Router,
-    private cdr: ChangeDetectorRef
-  ) {}
+  constructor(private router: Router) {}
 
-  ngOnInit(): void {
-    this.cargarPerfil();
-  }
-
-  cargarPerfil(): void {
-    this.cargandoPerfil = true;
-
-    this.clientePortal.obtenerMiPerfil()
-      .subscribe({
-        next: (data) => {
-          this.perfil = data;
-          this.cargandoPerfil = false;
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.perfil = null;
-          this.cargandoPerfil = false;
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  nombreCliente(): string {
-    if (!this.perfil) {
-      return 'Cliente';
-    }
-
-    return `${this.perfil.nombres || ''} ${this.perfil.apellidos || ''}`.trim();
-  }
-
-  inicialCliente(): string {
-    const nombre = this.perfil?.nombres || 'C';
-    return nombre.charAt(0).toUpperCase();
-  }
-
-  codigoUsuario(): string {
-    return this.perfil?.codigoUsuario || localStorage.getItem('codigoUsuario') || 'CLIENTE';
+  inicial(): string {
+    return this.nombreUsuario.substring(0, 1).toUpperCase();
   }
 
   cerrarSesion(): void {
-    this.auth.logout();
+    localStorage.clear();
     this.router.navigate(['/login']);
   }
 }

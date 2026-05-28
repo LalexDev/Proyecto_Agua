@@ -1,6 +1,9 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
+export type EstadoInstalacionSuministro = 'INSTALADO' | 'PENDIENTE_INSTALACION';
 
 export interface SuministroResponse {
   id: number;
@@ -12,6 +15,7 @@ export interface SuministroResponse {
   aliasSuministro: string;
   lecturaInicial: number;
   estado: boolean;
+  estadoInstalacion?: string;
 }
 
 export interface ClienteResponse {
@@ -88,12 +92,35 @@ export class Cliente {
     return this.http.post<ClienteResponse>(this.apiUrl, data);
   }
 
+  actualizarCliente(id: number, data: ClienteRequest): Observable<ClienteResponse> {
+    return this.http.put<ClienteResponse>(`${this.apiUrl}/${id}`, data);
+  }
+
   obtenerClientePorId(id: number): Observable<ClienteResponse> {
     return this.http.get<ClienteResponse>(`${this.apiUrl}/${id}`);
   }
 
   listarSuministrosPorCliente(id: number): Observable<SuministroResponse[]> {
     return this.http.get<SuministroResponse[]>(`${this.apiUrl}/${id}/suministros`);
+  }
+
+  agregarSuministro(clienteId: number, data: SuministroRequest): Observable<SuministroResponse> {
+    return this.http.post<SuministroResponse>(`${this.apiUrl}/${clienteId}/suministros`, data);
+  }
+
+  actualizarSuministro(
+    clienteId: number,
+    suministroId: number,
+    data: SuministroRequest
+  ): Observable<SuministroResponse> {
+    return this.http.put<SuministroResponse>(
+      `${this.apiUrl}/${clienteId}/suministros/${suministroId}`,
+      data
+    );
+  }
+
+  eliminarSuministro(clienteId: number, suministroId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${clienteId}/suministros/${suministroId}`);
   }
 
   cambiarEstadoCliente(id: number, estado: boolean): Observable<ClienteResponse> {
@@ -107,6 +134,17 @@ export class Cliente {
   ): Observable<SuministroResponse> {
     return this.http.patch<SuministroResponse>(
       `${this.apiUrl}/${clienteId}/suministros/${suministroId}/estado?estado=${estado}`,
+      {}
+    );
+  }
+
+  cambiarEstadoInstalacionSuministro(
+    clienteId: number,
+    suministroId: number,
+    estadoInstalacion: EstadoInstalacionSuministro
+  ): Observable<SuministroResponse> {
+    return this.http.patch<SuministroResponse>(
+      `${this.apiUrl}/${clienteId}/suministros/${suministroId}/estado-instalacion?estadoInstalacion=${estadoInstalacion}`,
       {}
     );
   }

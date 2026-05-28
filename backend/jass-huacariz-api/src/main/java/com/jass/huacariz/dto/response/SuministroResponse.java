@@ -1,13 +1,11 @@
 package com.jass.huacariz.dto.response;
 
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import java.math.BigDecimal;
 
-@Getter
-@Setter
+@Data
 @Builder
 public class SuministroResponse {
 
@@ -20,4 +18,5 @@ public class SuministroResponse {
     private String aliasSuministro;
     private BigDecimal lecturaInicial;
     private Boolean estado;
+    private String estadoInstalacion;
 }

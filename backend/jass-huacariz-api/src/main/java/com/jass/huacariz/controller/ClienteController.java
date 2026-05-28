@@ -1,6 +1,7 @@
 package com.jass.huacariz.controller;
 
 import com.jass.huacariz.dto.request.ClienteRequest;
+import com.jass.huacariz.dto.request.SuministroRequest;
 import com.jass.huacariz.dto.response.ClienteResponse;
 import com.jass.huacariz.dto.response.SuministroResponse;
 import com.jass.huacariz.service.ClienteService;
@@ -21,8 +22,7 @@ public class ClienteController {
 
     @PostMapping
     public ResponseEntity<ClienteResponse> registrarCliente(@Valid @RequestBody ClienteRequest request) {
-        ClienteResponse response = clienteService.registrarCliente(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(clienteService.registrarCliente(request));
     }
 
     @GetMapping
@@ -40,9 +40,43 @@ public class ClienteController {
         return ResponseEntity.ok(clienteService.obtenerClientePorDni(dni));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ClienteResponse> actualizarCliente(
+            @PathVariable Integer id,
+            @RequestBody ClienteRequest request
+    ) {
+        return ResponseEntity.ok(clienteService.actualizarCliente(id, request));
+    }
+
     @GetMapping("/{id}/suministros")
     public ResponseEntity<List<SuministroResponse>> listarSuministrosPorCliente(@PathVariable Integer id) {
         return ResponseEntity.ok(clienteService.listarSuministrosPorCliente(id));
+    }
+
+    @PostMapping("/{clienteId}/suministros")
+    public ResponseEntity<SuministroResponse> agregarSuministro(
+            @PathVariable Integer clienteId,
+            @Valid @RequestBody SuministroRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(clienteService.agregarSuministro(clienteId, request));
+    }
+
+    @PutMapping("/{clienteId}/suministros/{suministroId}")
+    public ResponseEntity<SuministroResponse> actualizarSuministro(
+            @PathVariable Integer clienteId,
+            @PathVariable Integer suministroId,
+            @Valid @RequestBody SuministroRequest request
+    ) {
+        return ResponseEntity.ok(clienteService.actualizarSuministro(clienteId, suministroId, request));
+    }
+
+    @DeleteMapping("/{clienteId}/suministros/{suministroId}")
+    public ResponseEntity<Void> eliminarSuministro(
+            @PathVariable Integer clienteId,
+            @PathVariable Integer suministroId
+    ) {
+        clienteService.eliminarSuministro(clienteId, suministroId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/estado")
@@ -60,5 +94,20 @@ public class ClienteController {
             @RequestParam Boolean estado
     ) {
         return ResponseEntity.ok(clienteService.cambiarEstadoSuministro(clienteId, suministroId, estado));
+    }
+
+    @PatchMapping("/{clienteId}/suministros/{suministroId}/estado-instalacion")
+    public ResponseEntity<SuministroResponse> cambiarEstadoInstalacionSuministro(
+            @PathVariable Integer clienteId,
+            @PathVariable Integer suministroId,
+            @RequestParam String estadoInstalacion
+    ) {
+        return ResponseEntity.ok(
+                clienteService.cambiarEstadoInstalacionSuministro(
+                        clienteId,
+                        suministroId,
+                        estadoInstalacion
+                )
+        );
     }
 }

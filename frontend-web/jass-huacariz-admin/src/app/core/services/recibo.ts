@@ -5,19 +5,31 @@ import { Observable } from 'rxjs';
 export interface ReciboResponse {
   id: number;
   codigoRecibo: string;
+
   codigoSuministro?: string;
   direccionSuministro?: string;
+  aliasSuministro?: string;
+  sector?: string;
+
+  nombreCliente?: string;
+  dniCliente?: string;
+
   anio: number;
   mes: number;
+
   consumoM3: number;
   subtotalAgua: number;
   cargoMantenimiento: number;
   cargoLector: number;
+  cargoOtros: number;
   mora: number;
   total: number;
+
   estadoRecibo: string;
   fechaEmision: string;
   fechaVencimiento: string;
+
+  codigoBarras?: string;
 }
 
 export interface PagoRequest {

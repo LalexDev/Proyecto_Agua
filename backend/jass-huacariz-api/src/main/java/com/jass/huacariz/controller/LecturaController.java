@@ -1,6 +1,7 @@
 package com.jass.huacariz.controller;
 
 import com.jass.huacariz.dto.request.LecturaRequest;
+import com.jass.huacariz.dto.request.MantenimientoRequest;
 import com.jass.huacariz.dto.response.LecturaResponse;
 import com.jass.huacariz.service.LecturaService;
 import jakarta.validation.Valid;
@@ -19,8 +20,21 @@ public class LecturaController {
     private final LecturaService lecturaService;
 
     @PostMapping
-    public ResponseEntity<LecturaResponse> registrarLectura(@Valid @RequestBody LecturaRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(lecturaService.registrarLectura(request));
+    public ResponseEntity<LecturaResponse> registrarLectura(
+            @Valid @RequestBody LecturaRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(lecturaService.registrarLectura(request));
+    }
+
+    @PostMapping("/mantenimiento")
+    public ResponseEntity<LecturaResponse> registrarMantenimiento(
+            @RequestBody MantenimientoRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(lecturaService.registrarMantenimiento(request));
     }
 
     @GetMapping
@@ -29,7 +43,9 @@ public class LecturaController {
     }
 
     @GetMapping("/suministro/{suministroId}")
-    public ResponseEntity<List<LecturaResponse>> listarLecturasPorSuministro(@PathVariable Integer suministroId) {
+    public ResponseEntity<List<LecturaResponse>> listarLecturasPorSuministro(
+            @PathVariable Integer suministroId
+    ) {
         return ResponseEntity.ok(lecturaService.listarLecturasPorSuministro(suministroId));
     }
 }

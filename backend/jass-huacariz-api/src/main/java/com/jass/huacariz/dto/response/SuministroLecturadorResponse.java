@@ -18,6 +18,11 @@ public class SuministroLecturadorResponse {
     private BigDecimal lecturaInicial;
     private Boolean estado;
 
+    private String estadoInstalacion;
+    private Boolean permiteRegistrarLectura;
+    private Boolean permiteGenerarMantenimiento;
+    private String mensajeEstado;
+
     private String nombreCliente;
     private String dniCliente;
 }

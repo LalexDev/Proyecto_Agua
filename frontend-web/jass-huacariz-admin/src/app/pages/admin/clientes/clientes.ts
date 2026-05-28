@@ -13,14 +13,14 @@ import {
   SuministroResponse
 } from '../../../core/services/cliente';
 
-type TipoAccion = 'CLIENTE' | 'SUMINISTRO';
+type TipoAccion = 'CLIENTE' | 'SUMINISTRO' | 'ELIMINAR_SUMINISTRO';
 type TipoUsuarioFormulario = 'CLIENTE' | 'LECTURADOR';
 
 interface AccionPendiente {
   tipo: TipoAccion;
   cliente: ClienteResponse;
   suministro?: SuministroResponse;
-  estadoNuevo: boolean;
+  estadoNuevo?: boolean;
   titulo: string;
   mensaje: string;
   textoBoton: string;
@@ -49,14 +49,25 @@ export class Clientes implements OnInit {
 
   mostrarFormulario = false;
   mostrarDetalle = false;
+  mostrarEditarCliente = false;
+  mostrarEditarSuministro = false;
+  mostrarAgregarSuministro = false;
 
   clienteDetalle: ClienteResponse | null = null;
+  clienteEditando: ClienteResponse | null = null;
+  clienteSuministroEditando: ClienteResponse | null = null;
+  suministroEditando: SuministroResponse | null = null;
+
   accionPendiente: AccionPendiente | null = null;
 
   tipoUsuarioFormulario: TipoUsuarioFormulario = 'CLIENTE';
 
   nuevoCliente: ClienteRequest = this.crearClienteVacio();
   nuevoLecturador: LecturadorRequest = this.crearLecturadorVacio();
+
+  formEditarCliente: ClienteRequest = this.crearClienteVacio();
+  formEditarSuministro: SuministroRequest = this.crearSuministroVacio();
+  formNuevoSuministro: SuministroRequest = this.crearSuministroVacio();
 
   constructor(
     private clienteService: Cliente,
@@ -102,6 +113,8 @@ export class Clientes implements OnInit {
     const texto = this.busqueda.trim().toLowerCase();
 
     this.clientesFiltrados = this.clientes.filter((cliente) => {
+      const suministros = cliente.suministros || [];
+
       const coincideTexto =
         !texto ||
         String(cliente.dni || '').toLowerCase().includes(texto) ||
@@ -110,13 +123,13 @@ export class Clientes implements OnInit {
         String(cliente.correo || '').toLowerCase().includes(texto) ||
         String(cliente.codigoUsuario || '').toLowerCase().includes(texto) ||
         this.estadoClienteTexto(cliente.estado).toLowerCase().includes(texto) ||
-        (cliente.suministros || []).some((suministro) => {
+        suministros.some((suministro) => {
           return (
             String(suministro.codigoSuministro || '').toLowerCase().includes(texto) ||
             String(suministro.aliasSuministro || '').toLowerCase().includes(texto) ||
             String(suministro.direccionSuministro || '').toLowerCase().includes(texto) ||
             String(suministro.nombreSector || '').toLowerCase().includes(texto) ||
-            this.estadoSuministroTexto(suministro.estado).toLowerCase().includes(texto)
+            this.estadoSuministroTexto(suministro).toLowerCase().includes(texto)
           );
         });
 
@@ -125,12 +138,11 @@ export class Clientes implements OnInit {
         (this.filtroEstadoCliente === 'ACTIVO' && cliente.estado) ||
         (this.filtroEstadoCliente === 'INACTIVO' && !cliente.estado);
 
-      const suministros = cliente.suministros || [];
-
       const coincideEstadoSuministro =
         this.filtroEstadoSuministro === 'TODOS' ||
-        (this.filtroEstadoSuministro === 'INSTALADO' && suministros.some(s => s.estado)) ||
-        (this.filtroEstadoSuministro === 'PENDIENTE' && suministros.some(s => !s.estado));
+        (this.filtroEstadoSuministro === 'INSTALADO' && suministros.some(s => this.esSuministroInstalado(s))) ||
+        (this.filtroEstadoSuministro === 'PENDIENTE' && suministros.some(s => this.esSuministroPendiente(s))) ||
+        (this.filtroEstadoSuministro === 'BLOQUEADO' && suministros.some(s => !s.estado));
 
       return coincideTexto && coincideEstadoCliente && coincideEstadoSuministro;
     });
@@ -216,7 +228,7 @@ export class Clientes implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.exito = 'Cliente registrado correctamente.';
+          this.exito = 'Cliente registrado correctamente. Sus suministros iniciaron como pendientes de instalación.';
           this.mostrarFormulario = false;
           this.nuevoCliente = this.crearClienteVacio();
           this.cargarClientes();
@@ -268,7 +280,7 @@ export class Clientes implements OnInit {
           this.error =
             err?.error?.error ||
             err?.error?.message ||
-            'No se pudo registrar el lecturador. Falta verificar el endpoint del backend: /api/usuarios/lecturadores.';
+            'No se pudo registrar el lecturador. Verifica el endpoint /api/usuarios/lecturadores.';
           this.cdr.detectChanges();
         }
       });
@@ -299,6 +311,240 @@ export class Clientes implements OnInit {
     this.mostrarDetalle = false;
   }
 
+  abrirEditarCliente(cliente: ClienteResponse): void {
+    this.clienteEditando = cliente;
+
+    this.formEditarCliente = {
+      dni: cliente.dni || '',
+      nombres: cliente.nombres || '',
+      apellidos: cliente.apellidos || '',
+      telefono: cliente.telefono || '',
+      correo: cliente.correo || '',
+      estado: cliente.estado,
+      suministros: (cliente.suministros || []).map((suministro) => ({
+        idSector: Number(suministro.idSector || 1),
+        direccionSuministro: suministro.direccionSuministro || '',
+        referencia: suministro.referencia || '',
+        aliasSuministro: suministro.aliasSuministro || '',
+        lecturaInicial: Number(suministro.lecturaInicial || 0)
+      }))
+    };
+
+    this.mostrarEditarCliente = true;
+    this.error = '';
+    this.exito = '';
+  }
+
+  cerrarEditarCliente(): void {
+    this.mostrarEditarCliente = false;
+    this.clienteEditando = null;
+    this.formEditarCliente = this.crearClienteVacio();
+  }
+
+  guardarEdicionCliente(): void {
+    this.error = '';
+    this.exito = '';
+
+    if (!this.clienteEditando) {
+      this.error = 'No se seleccionó ningún cliente para editar.';
+      return;
+    }
+
+    if (!this.formEditarCliente.dni || this.formEditarCliente.dni.trim().length !== 8) {
+      this.error = 'Ingrese un DNI válido de 8 dígitos.';
+      return;
+    }
+
+    if (!this.formEditarCliente.nombres.trim()) {
+      this.error = 'Ingrese los nombres del cliente.';
+      return;
+    }
+
+    if (!this.formEditarCliente.apellidos.trim()) {
+      this.error = 'Ingrese los apellidos del cliente.';
+      return;
+    }
+
+    this.guardando = true;
+
+    const payload: ClienteRequest = {
+      dni: this.formEditarCliente.dni.trim(),
+      nombres: this.formEditarCliente.nombres.trim(),
+      apellidos: this.formEditarCliente.apellidos.trim(),
+      telefono: this.formEditarCliente.telefono?.trim() || '',
+      correo: this.formEditarCliente.correo?.trim() || '',
+      estado: this.formEditarCliente.estado,
+      suministros: (this.clienteEditando.suministros || []).map((suministro) => ({
+        idSector: Number(suministro.idSector || 1),
+        direccionSuministro: suministro.direccionSuministro || '',
+        referencia: suministro.referencia || '',
+        aliasSuministro: suministro.aliasSuministro || '',
+        lecturaInicial: Number(suministro.lecturaInicial || 0)
+      }))
+    };
+
+    this.clienteService.actualizarCliente(this.clienteEditando.id, payload)
+      .pipe(
+        finalize(() => {
+          this.guardando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.exito = 'Datos del cliente actualizados correctamente.';
+          this.cerrarEditarCliente();
+          this.cerrarDetalle();
+          this.cargarClientes();
+        },
+        error: (err) => {
+          this.error = err?.error?.error || 'No se pudo actualizar el cliente.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  abrirAgregarSuministro(cliente: ClienteResponse): void {
+    this.clienteSuministroEditando = cliente;
+    this.formNuevoSuministro = this.crearSuministroVacio();
+    this.mostrarAgregarSuministro = true;
+    this.error = '';
+    this.exito = '';
+  }
+
+  cerrarAgregarSuministro(): void {
+    this.mostrarAgregarSuministro = false;
+    this.clienteSuministroEditando = null;
+    this.formNuevoSuministro = this.crearSuministroVacio();
+  }
+
+  guardarNuevoSuministro(): void {
+    this.error = '';
+    this.exito = '';
+
+    if (!this.clienteSuministroEditando) {
+      this.error = 'No se seleccionó ningún cliente.';
+      return;
+    }
+
+    if (!this.validarSuministro(this.formNuevoSuministro)) {
+      return;
+    }
+
+    this.guardando = true;
+
+    const payload: SuministroRequest = {
+      idSector: Number(this.formNuevoSuministro.idSector),
+      direccionSuministro: this.formNuevoSuministro.direccionSuministro.trim(),
+      referencia: this.formNuevoSuministro.referencia?.trim() || '',
+      aliasSuministro: this.formNuevoSuministro.aliasSuministro.trim(),
+      lecturaInicial: Number(this.formNuevoSuministro.lecturaInicial || 0)
+    };
+
+    this.clienteService.agregarSuministro(this.clienteSuministroEditando.id, payload)
+      .pipe(
+        finalize(() => {
+          this.guardando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.exito = 'Nuevo suministro agregado correctamente. Inició como pendiente/suspendido.';
+          this.cerrarAgregarSuministro();
+          this.cerrarDetalle();
+          this.cargarClientes();
+        },
+        error: (err) => {
+          this.error = err?.error?.error || 'No se pudo agregar el suministro.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  abrirEditarSuministro(cliente: ClienteResponse, suministro: SuministroResponse): void {
+    this.clienteSuministroEditando = cliente;
+    this.suministroEditando = suministro;
+
+    this.formEditarSuministro = {
+      idSector: Number(suministro.idSector || 1),
+      direccionSuministro: suministro.direccionSuministro || '',
+      referencia: suministro.referencia || '',
+      aliasSuministro: suministro.aliasSuministro || '',
+      lecturaInicial: Number(suministro.lecturaInicial || 0)
+    };
+
+    this.mostrarEditarSuministro = true;
+    this.error = '';
+    this.exito = '';
+  }
+
+  cerrarEditarSuministro(): void {
+    this.mostrarEditarSuministro = false;
+    this.clienteSuministroEditando = null;
+    this.suministroEditando = null;
+    this.formEditarSuministro = this.crearSuministroVacio();
+  }
+
+  guardarEdicionSuministro(): void {
+    this.error = '';
+    this.exito = '';
+
+    if (!this.clienteSuministroEditando || !this.suministroEditando) {
+      this.error = 'No se seleccionó ningún suministro.';
+      return;
+    }
+
+    if (!this.validarSuministro(this.formEditarSuministro)) {
+      return;
+    }
+
+    this.guardando = true;
+
+    const payload: SuministroRequest = {
+      idSector: Number(this.formEditarSuministro.idSector),
+      direccionSuministro: this.formEditarSuministro.direccionSuministro.trim(),
+      referencia: this.formEditarSuministro.referencia?.trim() || '',
+      aliasSuministro: this.formEditarSuministro.aliasSuministro.trim(),
+      lecturaInicial: Number(this.formEditarSuministro.lecturaInicial || 0)
+    };
+
+    this.clienteService.actualizarSuministro(
+      this.clienteSuministroEditando.id,
+      this.suministroEditando.id,
+      payload
+    )
+      .pipe(
+        finalize(() => {
+          this.guardando = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.exito = 'Suministro actualizado correctamente.';
+          this.cerrarEditarSuministro();
+          this.cerrarDetalle();
+          this.cargarClientes();
+        },
+        error: (err) => {
+          this.error = err?.error?.error || 'No se pudo actualizar el suministro.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  abrirEliminarSuministro(cliente: ClienteResponse, suministro: SuministroResponse): void {
+    this.accionPendiente = {
+      tipo: 'ELIMINAR_SUMINISTRO',
+      cliente,
+      suministro,
+      titulo: 'Eliminar suministro',
+      mensaje: `¿Deseas eliminar el suministro ${suministro.codigoSuministro}? Solo se eliminará si no tiene lecturas ni recibos registrados. Si ya tiene historial, el sistema solicitará suspenderlo.`,
+      textoBoton: 'Eliminar suministro'
+    };
+  }
+
   abrirCambiarEstadoCliente(cliente: ClienteResponse): void {
     const estadoNuevo = !cliente.estado;
 
@@ -308,8 +554,8 @@ export class Clientes implements OnInit {
       estadoNuevo,
       titulo: estadoNuevo ? 'Activar cliente' : 'Desactivar cliente',
       mensaje: estadoNuevo
-        ? `¿Deseas activar a ${this.nombreCompleto(cliente)}? También se habilitará su usuario de acceso.`
-        : `¿Deseas desactivar a ${this.nombreCompleto(cliente)}? También se deshabilitará su usuario de acceso.`,
+        ? `¿Deseas activar a ${this.nombreCompleto(cliente)}? Se habilitará su usuario y sus suministros conservarán su estado de instalación.`
+        : `¿Deseas desactivar a ${this.nombreCompleto(cliente)}? Se bloqueará su usuario y TODOS sus suministros.`,
       textoBoton: estadoNuevo ? 'Activar cliente' : 'Desactivar cliente'
     };
   }
@@ -326,8 +572,8 @@ export class Clientes implements OnInit {
       estadoNuevo,
       titulo: estadoNuevo ? 'Marcar suministro instalado' : 'Suspender suministro',
       mensaje: estadoNuevo
-        ? `¿Confirmas que el suministro ${suministro.codigoSuministro} ya fue instalado y quedará activo?`
-        : `¿Deseas suspender el suministro ${suministro.codigoSuministro}? No se recomienda generar lecturas mientras esté suspendido.`,
+        ? `¿Confirmas que el suministro ${suministro.codigoSuministro} ya fue instalado? El lecturador podrá registrar consumo.`
+        : `¿Deseas suspender el suministro ${suministro.codigoSuministro}? El lecturador ya no registrará consumo, solo podrá generar mantenimiento.`,
       textoBoton: estadoNuevo ? 'Marcar instalado' : 'Suspender'
     };
   }
@@ -348,7 +594,7 @@ export class Clientes implements OnInit {
     const accion = this.accionPendiente;
 
     if (accion.tipo === 'CLIENTE') {
-      this.clienteService.cambiarEstadoCliente(accion.cliente.id, accion.estadoNuevo)
+      this.clienteService.cambiarEstadoCliente(accion.cliente.id, Boolean(accion.estadoNuevo))
         .pipe(
           finalize(() => {
             this.procesandoAccion = false;
@@ -359,7 +605,7 @@ export class Clientes implements OnInit {
           next: () => {
             this.exito = accion.estadoNuevo
               ? 'Cliente activado correctamente.'
-              : 'Cliente desactivado correctamente.';
+              : 'Cliente desactivado correctamente. También se bloquearon sus suministros.';
 
             this.accionPendiente = null;
             this.cerrarDetalle();
@@ -378,7 +624,7 @@ export class Clientes implements OnInit {
       this.clienteService.cambiarEstadoSuministro(
         accion.cliente.id,
         accion.suministro.id,
-        accion.estadoNuevo
+        Boolean(accion.estadoNuevo)
       )
         .pipe(
           finalize(() => {
@@ -390,7 +636,7 @@ export class Clientes implements OnInit {
           next: () => {
             this.exito = accion.estadoNuevo
               ? 'Suministro marcado como instalado correctamente.'
-              : 'Suministro suspendido correctamente.';
+              : 'Suministro suspendido correctamente. Ahora solo permitirá mantenimiento.';
 
             this.accionPendiente = null;
             this.cerrarDetalle();
@@ -398,6 +644,31 @@ export class Clientes implements OnInit {
           },
           error: (err) => {
             this.error = err?.error?.error || 'No se pudo cambiar el estado del suministro.';
+            this.cdr.detectChanges();
+          }
+        });
+
+      return;
+    }
+
+    if (accion.tipo === 'ELIMINAR_SUMINISTRO' && accion.suministro) {
+      this.clienteService.eliminarSuministro(accion.cliente.id, accion.suministro.id)
+        .pipe(
+          finalize(() => {
+            this.procesandoAccion = false;
+            this.cdr.detectChanges();
+          })
+        )
+        .subscribe({
+          next: () => {
+            this.exito = 'Suministro eliminado correctamente.';
+            this.accionPendiente = null;
+            this.cerrarDetalle();
+            this.cargarClientes();
+          },
+          error: (err) => {
+            this.error = err?.error?.error || 'No se pudo eliminar el suministro. Si tiene historial, debe suspenderlo.';
+            this.accionPendiente = null;
             this.cdr.detectChanges();
           }
         });
@@ -457,7 +728,7 @@ export class Clientes implements OnInit {
             <td>${this.textoSeguro(suministro.codigoSuministro)}</td>
             <td>${this.textoSeguro(suministro.aliasSuministro)}</td>
             <td>${this.textoSeguro(suministro.direccionSuministro)}</td>
-            <td>${this.estadoSuministroTexto(suministro.estado)}</td>
+            <td>${this.estadoSuministroTexto(suministro)}</td>
           </tr>
         `;
       });
@@ -543,7 +814,7 @@ export class Clientes implements OnInit {
             <td>${this.textoSeguro(suministro.codigoSuministro)}</td>
             <td>${this.textoSeguro(suministro.aliasSuministro)}</td>
             <td>${this.textoSeguro(suministro.direccionSuministro)}</td>
-            <td>${this.estadoSuministroTexto(suministro.estado)}</td>
+            <td>${this.estadoSuministroTexto(suministro)}</td>
           </tr>
         `;
       });
@@ -692,13 +963,13 @@ export class Clientes implements OnInit {
 
   suministrosInstalados(): number {
     return this.clientes.reduce((total, cliente) => {
-      return total + (cliente.suministros || []).filter(s => s.estado).length;
+      return total + (cliente.suministros || []).filter(s => this.esSuministroInstalado(s)).length;
     }, 0);
   }
 
   suministrosPendientes(): number {
     return this.clientes.reduce((total, cliente) => {
-      return total + (cliente.suministros || []).filter(s => !s.estado).length;
+      return total + (cliente.suministros || []).filter(s => this.esSuministroPendiente(s)).length;
     }, 0);
   }
 
@@ -718,12 +989,34 @@ export class Clientes implements OnInit {
     return estado ? 'activo' : 'inactivo';
   }
 
-  estadoSuministroTexto(estado: boolean): string {
-    return estado ? 'Instalado' : 'Pendiente / suspendido';
+  estadoSuministroTexto(suministro: SuministroResponse): string {
+    if (!suministro.estado) {
+      return 'Bloqueado por cliente';
+    }
+
+    return this.esSuministroInstalado(suministro)
+      ? 'Instalado'
+      : 'Pendiente / suspendido';
   }
 
-  estadoSuministroClase(estado: boolean): string {
-    return estado ? 'instalado' : 'pendiente';
+  estadoSuministroClase(suministro: SuministroResponse): string {
+    if (!suministro.estado) {
+      return 'inactivo';
+    }
+
+    return this.esSuministroInstalado(suministro)
+      ? 'instalado'
+      : 'pendiente';
+  }
+
+  esSuministroInstalado(suministro: SuministroResponse): boolean {
+    return Boolean(suministro.estado)
+      && String(suministro.estadoInstalacion || '').toUpperCase() === 'INSTALADO';
+  }
+
+  esSuministroPendiente(suministro: SuministroResponse): boolean {
+    return Boolean(suministro.estado)
+      && String(suministro.estadoInstalacion || '').toUpperCase() !== 'INSTALADO';
   }
 
   private buscarClientePorSuministro(suministroId: number): ClienteResponse | null {
@@ -760,25 +1053,33 @@ export class Clientes implements OnInit {
     }
 
     for (const suministro of this.nuevoCliente.suministros) {
-      if (!suministro.idSector || Number(suministro.idSector) <= 0) {
-        this.error = 'Ingrese el ID del sector en cada suministro.';
+      if (!this.validarSuministro(suministro)) {
         return false;
       }
+    }
 
-      if (!suministro.direccionSuministro.trim()) {
-        this.error = 'Ingrese la dirección del suministro.';
-        return false;
-      }
+    return true;
+  }
 
-      if (!suministro.aliasSuministro.trim()) {
-        this.error = 'Ingrese el alias del suministro.';
-        return false;
-      }
+  private validarSuministro(suministro: SuministroRequest): boolean {
+    if (!suministro.idSector || Number(suministro.idSector) <= 0) {
+      this.error = 'Ingrese el ID del sector del suministro.';
+      return false;
+    }
 
-      if (Number(suministro.lecturaInicial) < 0) {
-        this.error = 'La lectura inicial no puede ser negativa.';
-        return false;
-      }
+    if (!suministro.direccionSuministro || !suministro.direccionSuministro.trim()) {
+      this.error = 'Ingrese la dirección del suministro.';
+      return false;
+    }
+
+    if (!suministro.aliasSuministro || !suministro.aliasSuministro.trim()) {
+      this.error = 'Ingrese el alias del suministro.';
+      return false;
+    }
+
+    if (Number(suministro.lecturaInicial) < 0) {
+      this.error = 'La lectura inicial no puede ser negativa.';
+      return false;
     }
 
     return true;

@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -95,22 +97,81 @@ public class ReciboService {
     }
 
     private ReciboResponse convertirAResponse(Recibo recibo) {
-  	 return ReciboResponse.builder()
-            	.id(recibo.getId())
-           	.codigoRecibo(recibo.getCodigoRecibo())
-                .codigoSuministro(recibo.getSuministro().getCodigoSuministro())
-            	.direccionSuministro(recibo.getSuministro().getDireccionSuministro())
-           	.anio(recibo.getAnio())
-           	.mes(recibo.getMes())
-          	.consumoM3(recibo.getConsumoM3())
-          	.subtotalAgua(recibo.getSubtotalAgua())
-          	.cargoMantenimiento(recibo.getCargoMantenimiento())
-         	.cargoLector(recibo.getCargoLector())
-    	        .mora(recibo.getMora())
-    	        .total(recibo.getTotal())
-    	        .estadoRecibo(recibo.getEstadoRecibo())
-    	        .fechaEmision(recibo.getFechaEmision())
-    	        .fechaVencimiento(recibo.getFechaVencimiento())
-    	        .build();
-     }
+        Suministro suministro = recibo.getSuministro();
+
+        return ReciboResponse.builder()
+                .id(recibo.getId())
+                .codigoRecibo(recibo.getCodigoRecibo())
+                .codigoSuministro(suministro.getCodigoSuministro())
+                .direccionSuministro(suministro.getDireccionSuministro())
+                .aliasSuministro(suministro.getAliasSuministro())
+                .sector(obtenerSector(suministro))
+                .nombreCliente(obtenerNombreCliente(suministro))
+                .dniCliente(obtenerDniCliente(suministro))
+                .anio(recibo.getAnio())
+                .mes(recibo.getMes())
+                .consumoM3(recibo.getConsumoM3())
+                .subtotalAgua(valorSeguro(recibo.getSubtotalAgua()))
+                .cargoMantenimiento(valorSeguro(recibo.getCargoMantenimiento()))
+                .cargoLector(valorSeguro(recibo.getCargoLector()))
+                .cargoOtros(valorSeguro(recibo.getCargoOtros()))
+                .mora(valorSeguro(recibo.getMora()))
+                .total(valorSeguro(recibo.getTotal()))
+                .estadoRecibo(recibo.getEstadoRecibo())
+                .fechaEmision(recibo.getFechaEmision())
+                .fechaVencimiento(recibo.getFechaVencimiento())
+                .codigoBarras(generarCodigoBarras(recibo))
+                .build();
+    }
+
+    private String obtenerNombreCliente(Suministro suministro) {
+        if (suministro == null || suministro.getCliente() == null) {
+            return "No disponible";
+        }
+
+        String nombres = suministro.getCliente().getNombres() != null
+                ? suministro.getCliente().getNombres()
+                : "";
+
+        String apellidos = suministro.getCliente().getApellidos() != null
+                ? suministro.getCliente().getApellidos()
+                : "";
+
+        String completo = (nombres + " " + apellidos).trim();
+
+        return completo.isEmpty() ? "No disponible" : completo;
+    }
+
+    private String obtenerDniCliente(Suministro suministro) {
+        if (suministro == null || suministro.getCliente() == null) {
+            return "-";
+        }
+
+        return suministro.getCliente().getDni() != null
+                ? suministro.getCliente().getDni()
+                : "-";
+    }
+
+    private String obtenerSector(Suministro suministro) {
+        if (suministro == null || suministro.getSector() == null) {
+            return "-";
+        }
+
+        return suministro.getSector().getNombre() != null
+                ? suministro.getSector().getNombre()
+                : "-";
+    }
+
+    private BigDecimal valorSeguro(BigDecimal valor) {
+        return valor == null
+                ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
+                : valor.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private String generarCodigoBarras(Recibo recibo) {
+        String codigoRecibo = recibo.getCodigoRecibo() == null ? "" : recibo.getCodigoRecibo();
+        String codigoSuministro = recibo.getSuministro() == null ? "" : recibo.getSuministro().getCodigoSuministro();
+
+        return codigoRecibo + "-" + codigoSuministro;
+    }
 }

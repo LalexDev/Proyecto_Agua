@@ -1,54 +1,72 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 export interface ClientePerfilResponse {
-  idCliente: number;
-  codigoUsuario: string;
-  dni: string;
-  nombres: string;
-  apellidos: string;
-  telefono: string;
-  correo: string;
-  estado: boolean;
+  id?: number;
+  idCliente?: number;
+  dni?: string;
+  nombres?: string;
+  apellidos?: string;
+  telefono?: string;
+  correo?: string;
+  codigoUsuario?: string;
+  usuario?: string;
+  estado?: boolean;
 }
 
 export interface SuministroClienteResponse {
-  id: number;
+  id?: number;
   codigoSuministro: string;
-  idSector: number;
-  nombreSector: string;
-  direccionSuministro: string;
-  referencia: string;
-  aliasSuministro: string;
-  lecturaInicial: number;
-  estado: boolean;
+  idSector?: number;
+  nombreSector?: string;
+  sector?: string;
+  direccionSuministro?: string;
+  direccion?: string;
+  referencia?: string;
+  aliasSuministro?: string;
+  lecturaInicial?: number;
+  estado?: boolean | string;
+  estadoSuministro?: string;
+  estadoInstalacion?: string;
 }
 
 export interface ReciboClienteResponse {
   id: number;
   codigoRecibo: string;
-  codigoSuministro: string;
-  direccionSuministro: string;
+
+  codigoSuministro?: string;
+  direccionSuministro?: string;
+  aliasSuministro?: string;
+  sector?: string;
+
+  nombreCliente?: string;
+  dniCliente?: string;
+
   anio: number;
   mes: number;
+
   consumoM3: number;
   subtotalAgua: number;
   cargoMantenimiento: number;
   cargoLector: number;
+  cargoOtros: number;
   mora: number;
   total: number;
+
   estadoRecibo: string;
   fechaEmision: string;
   fechaVencimiento: string;
+
+  codigoBarras?: string;
 }
 
-export interface PagoClienteRequest {
+export interface PagoRequest {
   metodoPago: string;
   codigoOperacion: string;
 }
 
-export interface PagoClienteResponse {
+export interface PagoResponse {
   id: number;
   idRecibo: number;
   codigoRecibo: string;
@@ -63,10 +81,6 @@ export interface CambiarPasswordRequest {
   passwordActual: string;
   nuevaPassword: string;
   confirmarPassword: string;
-}
-
-export interface CambiarPasswordResponse {
-  mensaje: string;
 }
 
 @Injectable({
@@ -89,11 +103,31 @@ export class ClientePortal {
     return this.http.get<ReciboClienteResponse[]>(`${this.apiUrl}/me/recibos`);
   }
 
-  pagarMiRecibo(idRecibo: number, data: PagoClienteRequest): Observable<PagoClienteResponse> {
-    return this.http.patch<PagoClienteResponse>(`${this.apiUrl}/me/recibos/${idRecibo}/pagar`, data);
+  obtenerReciboPorId(id: number): Observable<ReciboClienteResponse> {
+    return this.listarMisRecibos().pipe(
+      map((recibos) => {
+        const recibo = recibos.find((item) => Number(item.id) === Number(id));
+
+        if (!recibo) {
+          throw new Error('No se encontró el recibo solicitado.');
+        }
+
+        return recibo;
+      })
+    );
   }
 
-  cambiarMiPassword(data: CambiarPasswordRequest): Observable<CambiarPasswordResponse> {
-    return this.http.patch<CambiarPasswordResponse>(`${this.apiUrl}/me/password`, data);
+  pagarMiRecibo(idRecibo: number, data: PagoRequest): Observable<PagoResponse> {
+    return this.http.patch<PagoResponse>(
+      `${this.apiUrl}/me/recibos/${idRecibo}/pagar`,
+      data
+    );
+  }
+
+  cambiarMiPassword(data: CambiarPasswordRequest): Observable<{ mensaje: string }> {
+    return this.http.patch<{ mensaje: string }>(
+      `${this.apiUrl}/me/password`,
+      data
+    );
   }
 }

@@ -1,0 +1,194 @@
+<div class="detalle-page">
+  <section class="page-header">
+    <div>
+      <span class="tag">Detalle del suministro</span>
+      <h2>{{ codigoSuministro }}</h2>
+      <p>Consulta la información completa de tu conexión, recibos emitidos y estado de pagos.</p>
+    </div>
+
+    <div class="actions">
+      <a routerLink="/cliente/mis-suministros" class="btn-secondary">
+        ← Regresar
+      </a>
+
+      <button type="button" class="btn-primary" (click)="cargarDatos()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando detalle del suministro...
+  </div>
+
+  <ng-container *ngIf="suministro">
+    <section class="hero-card">
+      <div class="hero-icon">🏠</div>
+
+      <div>
+        <span class="tag light">{{ estadoTexto() }}</span>
+        <h3>{{ valor('aliasSuministro') }}</h3>
+        <p>{{ valor('direccionSuministro') }}</p>
+      </div>
+
+      <span class="badge" [ngClass]="estadoClase()">
+        {{ estadoTexto() }}
+      </span>
+    </section>
+
+    <section class="summary-grid">
+      <article class="summary-card">
+        <span>Total recibos</span>
+        <strong>{{ recibos.length }}</strong>
+        <small>Emitidos para este suministro</small>
+      </article>
+
+      <article class="summary-card">
+        <span>Pendientes</span>
+        <strong>{{ recibosPendientes() }}</strong>
+        <small>Recibos por pagar</small>
+      </article>
+
+      <article class="summary-card">
+        <span>Pagados</span>
+        <strong>{{ recibosPagados() }}</strong>
+        <small>Recibos cancelados</small>
+      </article>
+
+      <article class="summary-card">
+        <span>Último consumo</span>
+        <strong>{{ ultimoConsumo() | number:'1.3-3' }} m³</strong>
+        <small>Según último recibo</small>
+      </article>
+    </section>
+
+    <section class="content-grid">
+      <article class="panel-card">
+        <div class="panel-title">
+          <span class="tag">Información</span>
+          <h3>Datos del suministro</h3>
+        </div>
+
+        <div class="info-list">
+          <div>
+            <span>Código</span>
+            <strong>{{ valor('codigoSuministro') }}</strong>
+          </div>
+
+          <div>
+            <span>Alias</span>
+            <strong>{{ valor('aliasSuministro') }}</strong>
+          </div>
+
+          <div>
+            <span>Dirección</span>
+            <strong>{{ valor('direccionSuministro') }}</strong>
+          </div>
+
+          <div>
+            <span>Referencia</span>
+            <strong>{{ valor('referencia') }}</strong>
+          </div>
+
+          <div>
+            <span>Sector</span>
+            <strong>{{ valor('nombreSector') }}</strong>
+          </div>
+
+          <div>
+            <span>Estado</span>
+            <strong>{{ estadoTexto() }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel-card">
+        <div class="panel-title">
+          <span class="tag">Cobranza</span>
+          <h3>Resumen de pagos</h3>
+        </div>
+
+        <div class="payment-box">
+          <span>Total pendiente</span>
+          <strong>S/ {{ totalPendiente() | number:'1.2-2' }}</strong>
+          <p>Corresponde a recibos pendientes o vencidos asociados a este suministro.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="table-card">
+      <div class="table-header">
+        <div>
+          <span class="tag">Recibos</span>
+          <h3>Recibos del suministro</h3>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Código recibo</th>
+              <th>Periodo</th>
+              <th>Consumo</th>
+              <th>Total</th>
+              <th>Vencimiento</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let recibo of recibos">
+              <td>
+                <strong>{{ recibo.codigoRecibo }}</strong>
+              </td>
+
+              <td>{{ periodo(recibo) }}</td>
+
+              <td>{{ recibo.consumoM3 | number:'1.3-3' }} m³</td>
+
+              <td>
+                <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
+              </td>
+
+              <td>{{ recibo.fechaVencimiento }}</td>
+
+              <td>
+                <span class="status" [ngClass]="estadoReciboClase(recibo.estadoRecibo)">
+                  {{ recibo.estadoRecibo }}
+                </span>
+              </td>
+
+              <td>
+                <div class="table-actions">
+                  <button type="button" class="btn-mini" (click)="imprimirRecibo(recibo)">
+                    Imprimir recibo
+                  </button>
+
+                  <a
+                    *ngIf="estadoReciboClase(recibo.estadoRecibo) !== 'pagado'"
+                    class="btn-mini pay"
+                    [routerLink]="['/cliente/pagar-recibo', recibo.id]"
+                  >
+                    Pagar
+                  </a>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="recibos.length === 0">
+              <td colspan="7" class="empty-row">
+                Este suministro aún no tiene recibos registrados.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>

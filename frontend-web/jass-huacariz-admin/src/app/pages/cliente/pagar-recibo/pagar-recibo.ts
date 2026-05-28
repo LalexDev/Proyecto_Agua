@@ -6,12 +6,16 @@ import { finalize } from 'rxjs';
 
 import {
   ClientePortal,
+  PagoRequest,
   ReciboClienteResponse
 } from '../../../core/services/cliente-portal';
 
-interface PagoClienteRequest {
-  metodoPago: string;
-  codigoOperacion: string;
+interface MetodoPagoCliente {
+  valor: string;
+  nombre: string;
+  icono: string;
+  descripcion: string;
+  placeholder: string;
 }
 
 @Component({
@@ -31,17 +35,40 @@ export class PagarRecibo implements OnInit {
 
   mostrarConfirmacion = false;
 
-  pago: PagoClienteRequest = {
-    metodoPago: 'PagoEfectivo',
+  pago: PagoRequest = {
+    metodoPago: 'YAPE',
     codigoOperacion: ''
   };
 
-  metodosPago = [
-    'PagoEfectivo',
-    'Transferencia',
-    'Yape',
-    'Plin',
-    'Efectivo'
+  metodosPago: MetodoPagoCliente[] = [
+    {
+      valor: 'YAPE',
+      nombre: 'Yape',
+      icono: '📱',
+      descripcion: 'Pago móvil con número de operación.',
+      placeholder: 'Ejemplo: YAPE-123456'
+    },
+    {
+      valor: 'PLIN',
+      nombre: 'Plin',
+      icono: '💜',
+      descripcion: 'Pago móvil con constancia o número de operación.',
+      placeholder: 'Ejemplo: PLIN-987654'
+    },
+    {
+      valor: 'TRANSFERENCIA',
+      nombre: 'Transferencia',
+      icono: '🏦',
+      descripcion: 'Transferencia bancaria o interbancaria.',
+      placeholder: 'Ejemplo: OP-2026-001'
+    },
+    {
+      valor: 'DEPOSITO',
+      nombre: 'Depósito bancario',
+      icono: '💳',
+      descripcion: 'Depósito en agente, banco o plataforma autorizada.',
+      placeholder: 'Ejemplo: DEP-000245'
+    }
   ];
 
   constructor(
@@ -106,6 +133,20 @@ export class PagarRecibo implements OnInit {
     this.router.navigate(['/cliente/detalle-recibo', this.recibo.id]);
   }
 
+  seleccionarMetodo(metodo: MetodoPagoCliente): void {
+    if (this.estaPagado()) {
+      return;
+    }
+
+    this.pago.metodoPago = metodo.valor;
+    this.pago.codigoOperacion = '';
+    this.error = '';
+  }
+
+  metodoSeleccionado(): MetodoPagoCliente {
+    return this.metodosPago.find((metodo) => metodo.valor === this.pago.metodoPago) || this.metodosPago[0];
+  }
+
   abrirConfirmacion(): void {
     this.error = '';
     this.exito = '';
@@ -125,6 +166,11 @@ export class PagarRecibo implements OnInit {
       return;
     }
 
+    if (!this.pago.codigoOperacion || !this.pago.codigoOperacion.trim()) {
+      this.error = 'Ingrese el código de operación del pago.';
+      return;
+    }
+
     this.mostrarConfirmacion = true;
   }
 
@@ -137,38 +183,16 @@ export class PagarRecibo implements OnInit {
       return;
     }
 
-    const payload: PagoClienteRequest = {
+    const payload: PagoRequest = {
       metodoPago: this.pago.metodoPago.trim(),
-      codigoOperacion: this.pago.codigoOperacion.trim()
+      codigoOperacion: this.pago.codigoOperacion.trim().toUpperCase()
     };
-
-    const servicio: any = this.clientePortal;
-
-    let peticion: any = null;
-
-    if (typeof servicio.pagarRecibo === 'function') {
-      peticion = servicio.pagarRecibo(this.recibo.id, payload);
-    } else if (typeof servicio.pagarMiRecibo === 'function') {
-      peticion = servicio.pagarMiRecibo(this.recibo.id, payload);
-    } else if (typeof servicio.pagarReciboCliente === 'function') {
-      peticion = servicio.pagarReciboCliente(this.recibo.id, payload);
-    } else if (typeof servicio.registrarPagoRecibo === 'function') {
-      peticion = servicio.registrarPagoRecibo(this.recibo.id, payload);
-    } else if (typeof servicio.registrarPago === 'function') {
-      peticion = servicio.registrarPago(this.recibo.id, payload);
-    }
-
-    if (!peticion) {
-      this.error = 'No se encontró el método de pago en cliente-portal.ts.';
-      this.mostrarConfirmacion = false;
-      return;
-    }
 
     this.pagando = true;
     this.error = '';
     this.exito = '';
 
-    peticion
+    this.clientePortal.pagarMiRecibo(this.recibo.id, payload)
       .pipe(
         finalize(() => {
           this.pagando = false;
@@ -217,6 +241,7 @@ export class PagarRecibo implements OnInit {
 
     return Number(this.recibo.cargoMantenimiento || 0) +
       Number(this.recibo.cargoLector || 0) +
+      Number(this.recibo.cargoOtros || 0) +
       Number(this.recibo.mora || 0);
   }
 

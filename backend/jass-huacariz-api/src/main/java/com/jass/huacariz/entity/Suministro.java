@@ -45,6 +45,9 @@ public class Suministro {
     @Column(name = "estado", nullable = false)
     private Boolean estado = true;
 
+    @Column(name = "estado_instalacion", nullable = false, length = 30)
+    private String estadoInstalacion = "PENDIENTE_INSTALACION";
+
     @Column(name = "fecha_registro", nullable = false)
     private LocalDateTime fechaRegistro;
 }

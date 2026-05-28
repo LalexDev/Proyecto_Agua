@@ -178,7 +178,7 @@
             <th>Total</th>
             <th>Vencimiento</th>
             <th>Estado</th>
-            <th>Acción</th>
+            <th>Acciones</th>
           </tr>
         </thead>
 
@@ -209,14 +209,24 @@
             </td>
 
             <td>
-              <button
-                type="button"
-                class="table-action"
-                (click)="abrirPago(recibo)"
-                [disabled]="pagando || recibo.estadoRecibo === 'PAGADO'"
-              >
-                {{ recibo.estadoRecibo === 'PAGADO' ? 'Pagado' : 'Pagar' }}
-              </button>
+              <div class="actions-cell">
+                <button type="button" class="table-action" (click)="abrirDetalleRecibo(recibo)">
+                  Ver detalle
+                </button>
+
+                <button type="button" class="table-action" (click)="imprimirRecibo(recibo)">
+                  Imprimir
+                </button>
+
+                <button
+                  type="button"
+                  class="table-action"
+                  (click)="abrirPago(recibo)"
+                  [disabled]="pagando || recibo.estadoRecibo === 'PAGADO'"
+                >
+                  {{ recibo.estadoRecibo === 'PAGADO' ? 'Pagado' : 'Pagar' }}
+                </button>
+              </div>
             </td>
           </tr>
 
@@ -229,6 +239,109 @@
       </table>
     </div>
   </section>
+
+  <div class="modal-backdrop" *ngIf="reciboDetalle">
+    <div class="payment-modal">
+      <div class="payment-modal__header">
+        <div>
+          <span class="tag">Detalle del recibo</span>
+          <h3>{{ reciboDetalle.codigoRecibo }}</h3>
+          <p>{{ periodo(reciboDetalle) }} | Estado: {{ reciboDetalle.estadoRecibo || 'PENDIENTE' }}</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarDetalleRecibo()">
+          ✕
+        </button>
+      </div>
+
+      <div class="payment-summary">
+        <div>
+          <span>Suministro</span>
+          <strong>{{ reciboDetalle.codigoSuministro || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Dirección</span>
+          <strong>{{ reciboDetalle.direccionSuministro || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Vencimiento</span>
+          <strong>{{ reciboDetalle.fechaVencimiento || '-' }}</strong>
+        </div>
+      </div>
+
+      <div class="payment-summary">
+        <div>
+          <span>Consumo</span>
+          <strong>{{ reciboDetalle.consumoM3 | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div>
+          <span>Fecha emisión</span>
+          <strong>{{ reciboDetalle.fechaEmision || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Total</span>
+          <strong>S/ {{ reciboDetalle.total | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <div class="payment-summary">
+        <div>
+          <span>Consumo de agua</span>
+          <strong>S/ {{ reciboDetalle.subtotalAgua | number:'1.2-2' }}</strong>
+        </div>
+
+        <div>
+          <span>Mantenimiento</span>
+          <strong>S/ {{ reciboDetalle.cargoMantenimiento | number:'1.2-2' }}</strong>
+        </div>
+
+        <div>
+          <span>Cargo lector</span>
+          <strong>S/ {{ reciboDetalle.cargoLector | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <div class="payment-summary">
+        <div>
+          <span>Mora</span>
+          <strong>S/ {{ reciboDetalle.mora | number:'1.2-2' }}</strong>
+        </div>
+
+        <div>
+          <span>Estado</span>
+          <strong>{{ reciboDetalle.estadoRecibo || 'PENDIENTE' }}</strong>
+        </div>
+
+        <div>
+          <span>Código recibo</span>
+          <strong>{{ reciboDetalle.codigoRecibo }}</strong>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarDetalleRecibo()">
+          Cerrar
+        </button>
+
+        <button type="button" class="btn-secondary" (click)="imprimirRecibo(reciboDetalle)">
+          Imprimir recibo
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          *ngIf="reciboDetalle.estadoRecibo !== 'PAGADO'"
+          (click)="cerrarDetalleRecibo(); abrirPago(reciboDetalle)"
+        >
+          Registrar pago
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-backdrop" *ngIf="reciboSeleccionado">
     <div class="payment-modal">

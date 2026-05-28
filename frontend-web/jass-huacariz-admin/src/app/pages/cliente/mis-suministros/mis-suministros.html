@@ -1,0 +1,108 @@
+<div class="suministros-page">
+  <section class="page-header">
+    <div>
+      <span class="tag">Portal cliente</span>
+      <h2>Mis suministros</h2>
+      <p>Consulta tus conexiones de agua, estado de instalación, recibos pendientes y último consumo.</p>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="cargarDatos()" [disabled]="cargando">
+      {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+    </button>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando tus suministros...
+  </div>
+
+  <section class="hero-card">
+    <div class="hero-icon">💧</div>
+
+    <div>
+      <span class="tag light">Cliente JASS Huacariz</span>
+      <h3>{{ nombreCliente() }}</h3>
+      <p>Tienes {{ suministros.length }} suministro(s) registrado(s) en el sistema.</p>
+    </div>
+  </section>
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <span>Total suministros</span>
+      <strong>{{ suministros.length }}</strong>
+      <small>Conexiones asociadas</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Recibos pendientes</span>
+      <strong>
+        {{ recibos.length ? (recibos | json).split('PENDIENTE').length - 1 : 0 }}
+      </strong>
+      <small>Por revisar o pagar</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Total pendiente</span>
+      <strong>S/ {{ recibosPendientesTotal() | number:'1.2-2' }}</strong>
+      <small>Recibos no pagados</small>
+    </article>
+  </section>
+
+  <section class="cards-grid">
+    <article class="suministro-card" *ngFor="let suministro of suministros">
+      <div class="card-top">
+        <div>
+          <span class="code">{{ suministro.codigoSuministro }}</span>
+          <h3>{{ valor(suministro, 'aliasSuministro') }}</h3>
+          <p>{{ valor(suministro, 'direccionSuministro') }}</p>
+        </div>
+
+        <span class="badge" [ngClass]="estadoClase(suministro)">
+          {{ estadoTexto(suministro) }}
+        </span>
+      </div>
+
+      <div class="info-grid">
+        <div>
+          <span>Sector</span>
+          <strong>{{ valor(suministro, 'nombreSector') }}</strong>
+        </div>
+
+        <div>
+          <span>Referencia</span>
+          <strong>{{ valor(suministro, 'referencia') }}</strong>
+        </div>
+
+        <div>
+          <span>Último consumo</span>
+          <strong>{{ ultimoConsumo(suministro) | number:'1.3-3' }} m³</strong>
+        </div>
+
+        <div>
+          <span>Pendientes</span>
+          <strong>{{ recibosPendientes(suministro) }}</strong>
+        </div>
+      </div>
+
+      <div class="card-bottom">
+        <div>
+          <span>Total pendiente</span>
+          <strong>S/ {{ totalPendiente(suministro) | number:'1.2-2' }}</strong>
+        </div>
+
+        <a class="btn-primary" [routerLink]="['/cliente/detalle-suministro', suministro.codigoSuministro]">
+          Ver detalle
+        </a>
+      </div>
+    </article>
+
+    <div *ngIf="!cargando && suministros.length === 0" class="empty-state">
+      <div>🏠</div>
+      <h3>No tienes suministros registrados</h3>
+      <p>Comunícate con la administración de JASS Huacariz.</p>
+    </div>
+  </section>
+</div>

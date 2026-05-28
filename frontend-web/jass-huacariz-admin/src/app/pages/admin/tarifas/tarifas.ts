@@ -3,7 +3,13 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
-import { Tarifa, TarifaRequest, TarifaResponse } from '../../../core/services/tarifa';
+import {
+  ConfiguracionCobranzaRequest,
+  ConfiguracionCobranzaResponse,
+  Tarifa,
+  TarifaRequest,
+  TarifaResponse
+} from '../../../core/services/tarifa';
 
 type TipoAccionTarifa = 'ESTADO' | 'ELIMINAR';
 
@@ -25,8 +31,13 @@ interface AccionTarifa {
 export class Tarifas implements OnInit {
   tarifas: TarifaResponse[] = [];
 
+  configuracion: ConfiguracionCobranzaResponse | null = null;
+  configuracionForm: ConfiguracionCobranzaRequest = this.crearConfiguracionVacia();
+
   cargando = false;
+  cargandoConfiguracion = false;
   guardando = false;
+  guardandoConfiguracion = false;
   procesando = false;
 
   error = '';
@@ -47,6 +58,7 @@ export class Tarifas implements OnInit {
 
   ngOnInit(): void {
     this.cargarTarifas();
+    this.cargarConfiguracionCobranza();
   }
 
   cargarTarifas(): void {
@@ -62,16 +74,93 @@ export class Tarifas implements OnInit {
         })
       )
       .subscribe({
-       next: (data) => {
-  	this.tarifas = (data || []).sort((a, b) => {
-    		return Number(a.consumoDesde || 0) - Number(b.consumoDesde || 0);
- 	 });
+        next: (data) => {
+          this.tarifas = (data || []).sort((a, b) => {
+            return Number(a.consumoDesde || 0) - Number(b.consumoDesde || 0);
+          });
 
- 	 this.cdr.detectChanges();
-	},
+          this.cdr.detectChanges();
+        },
         error: () => {
           this.error = 'No se pudieron cargar las tarifas. Verifica el backend y tu sesión ADMIN.';
           this.tarifas = [];
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  cargarConfiguracionCobranza(): void {
+    this.cargandoConfiguracion = true;
+
+    this.tarifaService.obtenerConfiguracionCobranza()
+      .pipe(
+        finalize(() => {
+          this.cargandoConfiguracion = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.configuracion = data;
+
+          this.configuracionForm = {
+            cargoLector: Number(data.cargoLector || 0),
+            cargoMantenimiento: Number(data.cargoMantenimiento || 0),
+            cargoOtros: Number(data.cargoOtros || 0),
+            diasVencimiento: Number(data.diasVencimiento || 15),
+            moraBase: Number(data.moraBase || 0)
+          };
+
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.configuracionForm = this.crearConfiguracionVacia();
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  guardarConfiguracionCobranza(): void {
+    this.error = '';
+    this.exito = '';
+
+    if (!this.validarConfiguracion()) {
+      return;
+    }
+
+    this.guardandoConfiguracion = true;
+
+    const payload: ConfiguracionCobranzaRequest = {
+      cargoLector: Number(this.configuracionForm.cargoLector || 0),
+      cargoMantenimiento: Number(this.configuracionForm.cargoMantenimiento || 0),
+      cargoOtros: Number(this.configuracionForm.cargoOtros || 0),
+      diasVencimiento: Number(this.configuracionForm.diasVencimiento || 15),
+      moraBase: Number(this.configuracionForm.moraBase || 0)
+    };
+
+    this.tarifaService.guardarConfiguracionCobranza(payload)
+      .pipe(
+        finalize(() => {
+          this.guardandoConfiguracion = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.configuracion = data;
+          this.configuracionForm = {
+            cargoLector: Number(data.cargoLector || 0),
+            cargoMantenimiento: Number(data.cargoMantenimiento || 0),
+            cargoOtros: Number(data.cargoOtros || 0),
+            diasVencimiento: Number(data.diasVencimiento || 15),
+            moraBase: Number(data.moraBase || 0)
+          };
+
+          this.exito = 'Configuración de cobranza actualizada correctamente.';
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.error = err?.error?.error || 'No se pudo guardar la configuración de cobranza.';
           this.cdr.detectChanges();
         }
       });
@@ -314,6 +403,13 @@ export class Tarifas implements OnInit {
     return `${tarifa.consumoHasta} m³`;
   }
 
+  totalCargosConfigurados(): number {
+    return Number(this.configuracionForm.cargoLector || 0)
+      + Number(this.configuracionForm.cargoMantenimiento || 0)
+      + Number(this.configuracionForm.cargoOtros || 0)
+      + Number(this.configuracionForm.moraBase || 0);
+  }
+
   private validarFormulario(): boolean {
     if (!this.tarifaForm.nombreTarifa || !this.tarifaForm.nombreTarifa.trim()) {
       this.error = 'Ingrese el nombre de la tarifa.';
@@ -343,6 +439,35 @@ export class Tarifas implements OnInit {
     return true;
   }
 
+  private validarConfiguracion(): boolean {
+    if (Number(this.configuracionForm.cargoLector) < 0) {
+      this.error = 'El cargo del lector no puede ser negativo.';
+      return false;
+    }
+
+    if (Number(this.configuracionForm.cargoMantenimiento) < 0) {
+      this.error = 'El cargo de mantenimiento no puede ser negativo.';
+      return false;
+    }
+
+    if (Number(this.configuracionForm.cargoOtros) < 0) {
+      this.error = 'Otros cargos no puede ser negativo.';
+      return false;
+    }
+
+    if (Number(this.configuracionForm.diasVencimiento) <= 0) {
+      this.error = 'Los días de vencimiento deben ser mayor a cero.';
+      return false;
+    }
+
+    if (Number(this.configuracionForm.moraBase) < 0) {
+      this.error = 'La mora base no puede ser negativa.';
+      return false;
+    }
+
+    return true;
+  }
+
   private crearTarifaVacia(): TarifaRequest {
     return {
       nombreTarifa: '',
@@ -350,6 +475,16 @@ export class Tarifas implements OnInit {
       consumoHasta: null,
       precioM3: 0,
       estado: true
+    };
+  }
+
+  private crearConfiguracionVacia(): ConfiguracionCobranzaRequest {
+    return {
+      cargoLector: 1.00,
+      cargoMantenimiento: 3.00,
+      cargoOtros: 0.20,
+      diasVencimiento: 15,
+      moraBase: 0.00
     };
   }
 }

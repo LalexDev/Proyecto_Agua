@@ -1,6 +1,8 @@
 package com.jass.huacariz.controller;
 
+import com.jass.huacariz.dto.request.ConfiguracionCobranzaRequest;
 import com.jass.huacariz.dto.request.TarifaRequest;
+import com.jass.huacariz.dto.response.ConfiguracionCobranzaResponse;
 import com.jass.huacariz.dto.response.TarifaResponse;
 import com.jass.huacariz.service.TarifaService;
 import jakarta.validation.Valid;
@@ -51,5 +53,17 @@ public class TarifaController {
     public ResponseEntity<Void> eliminarTarifa(@PathVariable Integer id) {
         tarifaService.eliminarTarifa(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/configuracion-cobranza")
+    public ResponseEntity<ConfiguracionCobranzaResponse> obtenerConfiguracionCobranza() {
+        return ResponseEntity.ok(tarifaService.obtenerConfiguracionCobranza());
+    }
+
+    @PutMapping("/configuracion-cobranza")
+    public ResponseEntity<ConfiguracionCobranzaResponse> guardarConfiguracionCobranza(
+            @Valid @RequestBody ConfiguracionCobranzaRequest request
+    ) {
+        return ResponseEntity.ok(tarifaService.guardarConfiguracionCobranza(request));
     }
 }

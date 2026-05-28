@@ -7,10 +7,12 @@ import { Html5Qrcode } from 'html5-qrcode';
 
 import {
   LecturaRequest,
-  LecturaResponse,
   Lecturador,
+  MantenimientoRequest,
   SuministroLecturadorResponse
 } from '../../../core/services/lecturador';
+
+type ModoOperacion = 'LECTURA' | 'CONSUMO_CERO' | 'MANTENIMIENTO' | null;
 
 @Component({
   selector: 'app-lecturas',
@@ -22,16 +24,20 @@ export class LecturasLecturador implements OnDestroy {
   codigoBusqueda = '';
 
   suministro: SuministroLecturadorResponse | null = null;
-  lecturaGenerada: LecturaResponse | null = null;
+  lecturaGenerada: any = null;
 
   cargando = false;
   registrando = false;
+  generandoMantenimiento = false;
   escaneando = false;
 
   error = '';
   exito = '';
 
+  modoOperacion: ModoOperacion = null;
+
   lecturaForm: LecturaRequest = this.crearLecturaVacia();
+  mantenimientoForm: MantenimientoRequest = this.crearMantenimientoVacio();
 
   private qrScanner: Html5Qrcode | null = null;
   private qrProcesado = false;
@@ -53,6 +59,7 @@ export class LecturasLecturador implements OnDestroy {
     this.exito = '';
     this.lecturaGenerada = null;
     this.suministro = null;
+    this.modoOperacion = null;
 
     const codigo = this.codigoBusqueda.trim().toUpperCase();
 
@@ -79,27 +86,71 @@ export class LecturasLecturador implements OnDestroy {
             codigoSuministro: data.codigoSuministro,
             anio: new Date().getFullYear(),
             mes: new Date().getMonth() + 1,
-            lecturaActual: 0,
+            lecturaActual: Number(data.lecturaInicial || 0),
             observacion: 'Lectura mensual registrada'
           };
+
+          this.mantenimientoForm = {
+            codigoSuministro: data.codigoSuministro,
+            anio: new Date().getFullYear(),
+            mes: new Date().getMonth() + 1,
+            observacion: this.esInstalado()
+              ? 'Recibo generado por consumo cero.'
+              : 'Recibo generado por mantenimiento. Suministro pendiente de instalación.'
+          };
+
+          if (this.puedeRegistrarLectura()) {
+            this.modoOperacion = 'LECTURA';
+          } else if (this.puedeGenerarMantenimiento()) {
+            this.modoOperacion = 'MANTENIMIENTO';
+          }
 
           const nombreCliente = this.nombreUsuarioSuministro(data);
 
           this.exito = desdeQr
-            ? `QR escaneado correctamente. Usuario encontrado: ${nombreCliente}. Ahora registra la lectura.`
+            ? `QR escaneado correctamente. Usuario encontrado: ${nombreCliente}.`
             : `Suministro encontrado correctamente. Usuario: ${nombreCliente}.`;
 
           this.cdr.detectChanges();
 
           setTimeout(() => {
-            this.irARegistroLectura();
-          }, 300);
+            document.getElementById('panel-operacion')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }, 250);
         },
         error: (err) => {
           this.error = err?.error?.error || 'No se encontró el suministro.';
           this.cdr.detectChanges();
         }
       });
+  }
+
+  seleccionarModo(modo: ModoOperacion): void {
+    this.error = '';
+    this.exito = '';
+    this.lecturaGenerada = null;
+
+    if (modo === 'LECTURA' && !this.puedeRegistrarLectura()) {
+      this.error = this.mensajeEstadoVisible();
+      return;
+    }
+
+    if ((modo === 'CONSUMO_CERO' || modo === 'MANTENIMIENTO') && !this.puedeGenerarMantenimiento()) {
+      this.error = this.mensajeEstadoVisible();
+      return;
+    }
+
+    this.modoOperacion = modo;
+
+    if (modo === 'CONSUMO_CERO') {
+      this.mantenimientoForm.observacion = 'Recibo generado por consumo cero.';
+    }
+
+    if (modo === 'MANTENIMIENTO') {
+      this.mantenimientoForm.observacion = 'Recibo generado por mantenimiento. Suministro pendiente de instalación.';
+    }
   }
 
   registrarLectura(): void {
@@ -109,6 +160,11 @@ export class LecturasLecturador implements OnDestroy {
 
     if (!this.suministro) {
       this.error = 'Primero busque un suministro.';
+      return;
+    }
+
+    if (!this.puedeRegistrarLectura()) {
+      this.error = this.mensajeEstadoVisible() || 'Este suministro no permite registrar lectura normal.';
       return;
     }
 
@@ -122,13 +178,18 @@ export class LecturasLecturador implements OnDestroy {
       return;
     }
 
-    if (!this.lecturaForm.lecturaActual || Number(this.lecturaForm.lecturaActual) <= 0) {
+    if (this.lecturaForm.lecturaActual === null || this.lecturaForm.lecturaActual === undefined) {
       this.error = 'Ingrese la lectura actual.';
       return;
     }
 
+    if (Number(this.lecturaForm.lecturaActual) < 0) {
+      this.error = 'La lectura actual no puede ser negativa.';
+      return;
+    }
+
     if (Number(this.lecturaForm.lecturaActual) < Number(this.suministro.lecturaInicial)) {
-      this.error = 'La lectura actual no puede ser menor a la lectura inicial/anterior.';
+      this.error = 'La lectura actual no puede ser menor a la lectura anterior.';
       return;
     }
 
@@ -154,16 +215,71 @@ export class LecturasLecturador implements OnDestroy {
           this.lecturaGenerada = data;
           this.exito = 'Lectura registrada y recibo generado correctamente.';
           this.cdr.detectChanges();
-
-          setTimeout(() => {
-            document.getElementById('recibo-generado')?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
-            });
-          }, 300);
+          this.irAReciboGenerado();
         },
         error: (err) => {
           this.error = err?.error?.error || 'No se pudo registrar la lectura.';
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  registrarMantenimiento(): void {
+    this.error = '';
+    this.exito = '';
+    this.lecturaGenerada = null;
+
+    if (!this.suministro) {
+      this.error = 'Primero busque un suministro.';
+      return;
+    }
+
+    if (!this.puedeGenerarMantenimiento()) {
+      this.error = this.mensajeEstadoVisible() || 'Este suministro no permite generar mantenimiento.';
+      return;
+    }
+
+    if (!this.mantenimientoForm.anio || this.mantenimientoForm.anio < 2024) {
+      this.error = 'Ingrese un año válido.';
+      return;
+    }
+
+    if (!this.mantenimientoForm.mes || this.mantenimientoForm.mes < 1 || this.mantenimientoForm.mes > 12) {
+      this.error = 'Ingrese un mes válido entre 1 y 12.';
+      return;
+    }
+
+    this.generandoMantenimiento = true;
+
+    const payload: MantenimientoRequest = {
+      codigoSuministro: this.suministro.codigoSuministro,
+      anio: Number(this.mantenimientoForm.anio),
+      mes: Number(this.mantenimientoForm.mes),
+      observacion: this.mantenimientoForm.observacion?.trim()
+        || (this.esInstalado()
+          ? 'Recibo generado por consumo cero.'
+          : 'Recibo generado por mantenimiento. Suministro pendiente de instalación.')
+    };
+
+    this.lecturadorService.registrarMantenimiento(payload)
+      .pipe(
+        finalize(() => {
+          this.generandoMantenimiento = false;
+          this.cdr.detectChanges();
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.lecturaGenerada = data;
+          this.exito = this.esInstalado()
+            ? 'Recibo por consumo cero generado correctamente.'
+            : 'Recibo por mantenimiento generado correctamente.';
+
+          this.cdr.detectChanges();
+          this.irAReciboGenerado();
+        },
+        error: (err) => {
+          this.error = err?.error?.error || 'No se pudo generar el recibo.';
           this.cdr.detectChanges();
         }
       });
@@ -239,7 +355,7 @@ export class LecturasLecturador implements OnDestroy {
             }
 
             this.codigoBusqueda = codigo;
-            this.exito = 'QR detectado correctamente. Deteniendo cámara y buscando usuario...';
+            this.exito = 'QR detectado correctamente. Deteniendo cámara y buscando suministro...';
             this.cdr.detectChanges();
 
             await this.detenerEscaneo();
@@ -248,9 +364,7 @@ export class LecturasLecturador implements OnDestroy {
               this.buscarSuministro(true);
             }, 250);
           },
-          () => {
-            // No mostrar errores temporales del lector para evitar mensajes repetidos.
-          }
+          () => {}
         );
       } catch {
         this.error = 'No se pudo iniciar la cámara. Verifique permisos del navegador.';
@@ -271,7 +385,6 @@ export class LecturasLecturador implements OnDestroy {
         await this.qrScanner.clear();
       }
     } catch {
-      // Puede fallar si la cámara ya estaba detenida.
     } finally {
       this.qrScanner = null;
       this.escaneando = false;
@@ -288,7 +401,9 @@ export class LecturasLecturador implements OnDestroy {
     this.error = '';
     this.exito = '';
     this.qrProcesado = false;
+    this.modoOperacion = null;
     this.lecturaForm = this.crearLecturaVacia();
+    this.mantenimientoForm = this.crearMantenimientoVacio();
   }
 
   cerrarSesion(): void {
@@ -297,6 +412,76 @@ export class LecturasLecturador implements OnDestroy {
     localStorage.clear();
     sessionStorage.clear();
     this.router.navigate(['/login']);
+  }
+
+  puedeRegistrarLectura(): boolean {
+    return Boolean(this.suministro?.estado) && this.esInstalado();
+  }
+
+  puedeGenerarMantenimiento(): boolean {
+    return Boolean(this.suministro?.estado) && (this.esInstalado() || this.esPendienteInstalacion());
+  }
+
+  esInstalado(): boolean {
+    return String(this.suministro?.estadoInstalacion || '').toUpperCase() === 'INSTALADO';
+  }
+
+  esPendienteInstalacion(): boolean {
+    const estado = String(this.suministro?.estadoInstalacion || '').toUpperCase();
+
+    return estado === 'PENDIENTE_INSTALACION' || estado === '';
+  }
+
+  estadoInstalacionTexto(estado?: string): string {
+    const valor = String(estado || '').toUpperCase();
+
+    if (valor === 'INSTALADO') {
+      return 'Instalado';
+    }
+
+    if (valor === 'PENDIENTE_INSTALACION') {
+      return 'Pendiente de instalación';
+    }
+
+    if (valor === 'SUSPENDIDO') {
+      return 'Suspendido';
+    }
+
+    return 'Pendiente de instalación';
+  }
+
+  estadoInstalacionClase(estado?: string): string {
+    const valor = String(estado || '').toUpperCase();
+
+    if (valor === 'INSTALADO') {
+      return 'instalado';
+    }
+
+    if (valor === 'SUSPENDIDO') {
+      return 'suspendido';
+    }
+
+    return 'pendiente-instalacion';
+  }
+
+  mensajeEstadoVisible(): string {
+    if (!this.suministro) {
+      return '';
+    }
+
+    if (!this.suministro.estado) {
+      return 'El suministro se encuentra inactivo. No se puede registrar lectura ni generar recibo.';
+    }
+
+    if (this.esPendienteInstalacion()) {
+      return 'Este suministro aún no está instalado. Solo corresponde generar recibo básico por mantenimiento.';
+    }
+
+    if (this.esInstalado()) {
+      return 'Suministro instalado. Puede registrar lectura normal. Si no hubo consumo, use la opción Consumo cero.';
+    }
+
+    return this.suministro.mensajeEstado || 'Suministro pendiente de revisión.';
   }
 
   nombreMes(mes: number): string {
@@ -372,11 +557,13 @@ export class LecturasLecturador implements OnDestroy {
     return nombre.substring(0, 1).toUpperCase();
   }
 
-  private irARegistroLectura(): void {
-    document.getElementById('registro-lectura')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
+  private irAReciboGenerado(): void {
+    setTimeout(() => {
+      document.getElementById('recibo-generado')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 300);
   }
 
   private normalizarCodigoQr(valor: string): string {
@@ -408,6 +595,15 @@ export class LecturasLecturador implements OnDestroy {
       mes: new Date().getMonth() + 1,
       lecturaActual: 0,
       observacion: 'Lectura mensual registrada'
+    };
+  }
+
+  private crearMantenimientoVacio(): MantenimientoRequest {
+    return {
+      codigoSuministro: '',
+      anio: new Date().getFullYear(),
+      mes: new Date().getMonth() + 1,
+      observacion: 'Recibo generado por mantenimiento.'
     };
   }
 }

@@ -11,6 +11,12 @@ export interface SuministroLecturadorResponse {
   aliasSuministro: string;
   lecturaInicial: number;
   estado: boolean;
+
+  estadoInstalacion?: string;
+  permiteRegistrarLectura?: boolean;
+  permiteGenerarMantenimiento?: boolean;
+  mensajeEstado?: string;
+
   nombreCliente?: string;
   dniCliente?: string;
 }
@@ -23,20 +29,34 @@ export interface LecturaRequest {
   observacion: string;
 }
 
+export interface MantenimientoRequest {
+  codigoSuministro: string;
+  anio: number;
+  mes: number;
+  observacion: string;
+}
+
 export interface ReciboGeneradoResponse {
   id: number;
   codigoRecibo: string;
+  codigoSuministro?: string;
+  direccionSuministro?: string;
+
   anio: number;
   mes: number;
+
   consumoM3: number;
   subtotalAgua: number;
   cargoMantenimiento: number;
   cargoLector: number;
+  cargoOtros: number;
   mora: number;
   total: number;
+
   estadoRecibo: string;
   fechaEmision: string;
   fechaVencimiento: string;
+  codigoBarras?: string;
 }
 
 export interface LecturaResponse {
@@ -70,5 +90,9 @@ export class Lecturador {
 
   registrarLectura(data: LecturaRequest): Observable<LecturaResponse> {
     return this.http.post<LecturaResponse>(this.apiLecturas, data);
+  }
+
+  registrarMantenimiento(data: MantenimientoRequest): Observable<LecturaResponse> {
+    return this.http.post<LecturaResponse>(`${this.apiLecturas}/mantenimiento`, data);
   }
 }

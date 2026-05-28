@@ -122,6 +122,7 @@
             <th>Recibo</th>
             <th>Total</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
 
@@ -161,10 +162,22 @@
                 {{ item.estadoRecibo || 'PENDIENTE' }}
               </span>
             </td>
+
+            <td>
+              <div class="actions-cell">
+                <button type="button" class="table-action" (click)="abrirDetalleLectura(item)">
+                  Ver detalle
+                </button>
+
+                <button type="button" class="table-action" (click)="imprimirReciboLectura(item)">
+                  Imprimir recibo
+                </button>
+              </div>
+            </td>
           </tr>
 
           <tr *ngIf="lecturasFiltradas.length === 0 && !cargando">
-            <td colspan="9" class="empty-state">
+            <td colspan="10" class="empty-state">
               No hay lecturas registradas.
             </td>
           </tr>
@@ -172,4 +185,81 @@
       </table>
     </div>
   </section>
+
+  <div class="modal-backdrop" *ngIf="lecturaSeleccionada">
+    <div class="payment-modal">
+      <div class="payment-modal__header">
+        <div>
+          <span class="tag">Detalle de lectura</span>
+          <h3>{{ lecturaSeleccionada.codigoRecibo || 'Sin recibo' }}</h3>
+          <p>{{ nombreMes(lecturaSeleccionada.mes) }} {{ lecturaSeleccionada.anio }}</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarDetalleLectura()">
+          ✕
+        </button>
+      </div>
+
+      <div class="payment-summary">
+        <div>
+          <span>Suministro</span>
+          <strong>{{ lecturaSeleccionada.codigoSuministro }}</strong>
+        </div>
+
+        <div>
+          <span>Cliente</span>
+          <strong>{{ lecturaSeleccionada.cliente }}</strong>
+        </div>
+
+        <div>
+          <span>DNI</span>
+          <strong>{{ lecturaSeleccionada.dniCliente }}</strong>
+        </div>
+      </div>
+
+      <div class="payment-summary">
+        <div>
+          <span>Lectura anterior</span>
+          <strong>{{ lecturaSeleccionada.lecturaAnterior | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div>
+          <span>Lectura actual</span>
+          <strong>{{ lecturaSeleccionada.lecturaActual | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div>
+          <span>Consumo</span>
+          <strong>{{ lecturaSeleccionada.consumoM3 | number:'1.2-3' }} m³</strong>
+        </div>
+      </div>
+
+      <div class="payment-summary">
+        <div>
+          <span>Sector</span>
+          <strong>{{ lecturaSeleccionada.sector || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Estado recibo</span>
+          <strong>{{ lecturaSeleccionada.estadoRecibo || 'PENDIENTE' }}</strong>
+        </div>
+
+        <div>
+          <span>Total recibo</span>
+          <strong>S/ {{ lecturaSeleccionada.totalRecibo | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarDetalleLectura()">
+          Cerrar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="imprimirReciboLectura(lecturaSeleccionada)">
+          Imprimir recibo
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

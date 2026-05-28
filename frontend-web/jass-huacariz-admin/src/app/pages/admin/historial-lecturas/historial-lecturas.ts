@@ -9,6 +9,8 @@ import {
   LecturaAdmin
 } from '../../../core/services/lectura-admin';
 
+import { imprimirReciboJass } from '../../../core/utils/recibo-print';
+
 @Component({
   selector: 'app-historial-lecturas',
   imports: [CommonModule, FormsModule],
@@ -25,6 +27,8 @@ export class HistorialLecturas implements OnInit {
 
   cargando = false;
   error = '';
+
+  lecturaSeleccionada: any = null;
 
   constructor(
     private lecturaAdmin: LecturaAdmin,
@@ -71,6 +75,7 @@ export class HistorialLecturas implements OnInit {
         String(item.aliasSuministro || '').toLowerCase().includes(texto) ||
         String(item.direccionSuministro || '').toLowerCase().includes(texto) ||
         String(item.cliente || '').toLowerCase().includes(texto) ||
+        String(item.nombreCliente || '').toLowerCase().includes(texto) ||
         String(item.dniCliente || '').toLowerCase().includes(texto) ||
         String(item.codigoRecibo || '').toLowerCase().includes(texto) ||
         String(item.sector || '').toLowerCase().includes(texto) ||
@@ -93,6 +98,46 @@ export class HistorialLecturas implements OnInit {
     this.aplicarFiltros();
   }
 
+  abrirDetalleLectura(item: any): void {
+    this.lecturaSeleccionada = item;
+  }
+
+  cerrarDetalleLectura(): void {
+    this.lecturaSeleccionada = null;
+  }
+
+  imprimirReciboLectura(item: any): void {
+    if (!item || !item.codigoRecibo) {
+      alert('Esta lectura no tiene recibo asociado para imprimir.');
+      return;
+    }
+
+    const reciboTemporal: any = {
+      codigoRecibo: item.codigoRecibo,
+      codigoSuministro: item.codigoSuministro,
+      direccionSuministro: item.direccionSuministro || item.aliasSuministro || '-',
+      aliasSuministro: item.aliasSuministro || '',
+      sector: item.sector || '-',
+      nombreCliente: item.nombreCliente || item.cliente || 'No disponible',
+      dniCliente: item.dniCliente || '-',
+      anio: item.anio,
+      mes: item.mes,
+      consumoM3: item.consumoM3 || 0,
+      subtotalAgua: item.subtotalAgua || item.totalAgua || 0,
+      cargoMantenimiento: item.cargoMantenimiento || 0,
+      cargoLector: item.cargoLector || 0,
+      cargoOtros: item.cargoOtros || 0,
+      mora: item.mora || 0,
+      total: item.totalRecibo || item.total || 0,
+      estadoRecibo: item.estadoRecibo || 'PENDIENTE',
+      fechaEmision: item.fechaEmision || item.fechaLectura || '-',
+      fechaVencimiento: item.fechaVencimiento || '-',
+      codigoBarras: item.codigoBarras || `${item.codigoRecibo || ''}-${item.codigoSuministro || ''}`
+    };
+
+    imprimirReciboJass(reciboTemporal, this.lecturas);
+  }
+
   nombreMes(mes: number): string {
     const meses = [
       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -110,7 +155,7 @@ export class HistorialLecturas implements OnInit {
 
   totalEmitido(): number {
     return this.lecturasFiltradas.reduce((total: number, item: any) => {
-      return total + Number(item.totalRecibo || 0);
+      return total + Number(item.totalRecibo || item.total || 0);
     }, 0);
   }
 
@@ -144,31 +189,37 @@ export class HistorialLecturas implements OnInit {
     const fechaArchivo = new Date().toISOString().slice(0, 10);
     const fechaTexto = new Date().toLocaleString('es-PE');
 
-    const filas: any[][] = [];
+    const data: any[][] = [];
 
-    filas.push(['JASS HUACARIZ - HISTORIAL DE LECTURAS']);
-    filas.push(['Reporte administrativo de lecturas, consumos y recibos generados']);
-    filas.push([`Fecha de exportación: ${fechaTexto}`]);
-    filas.push([]);
+    data.push(['JASS HUACARIZ - HISTORIAL DE LECTURAS']);
+    data.push([`Fecha de exportación: ${fechaTexto}`]);
+    data.push([]);
 
-    const filaResumenTitulo = filas.length;
-    filas.push(['RESUMEN GENERAL']);
+    const resumenTituloRow = data.length;
+    data.push(['RESUMEN GENERAL']);
 
-    const filaResumenCabecera = filas.length;
-    filas.push(['Indicador', 'Valor', '', 'Indicador', 'Valor']);
+    const resumenHeaderRow = data.length;
+    data.push(['Indicador', 'Valor', '', 'Indicador', 'Valor']);
 
-    filas.push(['Lecturas registradas', this.lecturasFiltradas.length, '', 'Pendientes', this.totalPendientes()]);
-    filas.push(['Consumo total m³', Number(this.totalConsumo().toFixed(3)), '', 'Pagados', this.totalPagados()]);
-    filas.push(['Total emitido S/', Number(this.totalEmitido().toFixed(2)), '', 'Filtros aplicados', `${this.filtroMes ? this.nombreMes(Number(this.filtroMes)) : 'Todos los meses'} / ${this.filtroAnio || 'Todos los años'}`]);
-    filas.push([]);
+    data.push(['Lecturas registradas', this.lecturasFiltradas.length, '', 'Pendientes', this.totalPendientes()]);
+    data.push(['Consumo total m³', Number(this.totalConsumo().toFixed(3)), '', 'Pagados', this.totalPagados()]);
+    data.push([
+      'Total emitido S/',
+      Number(this.totalEmitido().toFixed(2)),
+      '',
+      'Filtros aplicados',
+      `${this.filtroMes ? this.nombreMes(Number(this.filtroMes)) : 'Todos los meses'} / ${this.filtroAnio || 'Todos los años'}`
+    ]);
+    data.push([]);
 
-    const filaDetalleTitulo = filas.length;
-    filas.push(['DETALLE DE LECTURAS']);
+    const detalleTituloRow = data.length;
+    data.push(['DETALLE DE LECTURAS']);
 
-    const filaDetalleCabecera = filas.length;
-    filas.push([
+    const headerRow = data.length;
+    data.push([
       'Suministro',
-      'Alias / Dirección',
+      'Alias',
+      'Dirección',
       'Cliente',
       'DNI',
       'Sector',
@@ -181,13 +232,14 @@ export class HistorialLecturas implements OnInit {
       'Estado'
     ]);
 
-    const primeraFilaDatos = filas.length;
+    const firstDataRow = data.length;
 
     this.lecturasFiltradas.forEach((item: any) => {
-      filas.push([
+      data.push([
         item.codigoSuministro || '',
-        item.aliasSuministro || item.direccionSuministro || '',
-        item.cliente || '',
+        item.aliasSuministro || '',
+        item.direccionSuministro || '',
+        item.nombreCliente || item.cliente || '',
         item.dniCliente || '',
         item.sector || '',
         `${this.nombreMes(Number(item.mes))} ${item.anio}`,
@@ -195,108 +247,208 @@ export class HistorialLecturas implements OnInit {
         Number(item.lecturaActual || 0),
         Number(item.consumoM3 || 0),
         item.codigoRecibo || '-',
-        Number(item.totalRecibo || 0),
+        Number(item.totalRecibo || item.total || 0),
         item.estadoRecibo || 'PENDIENTE'
       ]);
     });
 
     if (this.lecturasFiltradas.length === 0) {
-      filas.push(['No hay lecturas registradas']);
+      data.push(['No hay lecturas registradas']);
     }
 
-    const worksheet: any = XLSX.utils.aoa_to_sheet(filas);
+    const ws: any = XLSX.utils.aoa_to_sheet(data);
 
-    worksheet['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
-      { s: { r: filaResumenTitulo, c: 0 }, e: { r: filaResumenTitulo, c: 11 } },
-      { s: { r: filaDetalleTitulo, c: 0 }, e: { r: filaDetalleTitulo, c: 11 } }
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } },
+      { s: { r: resumenTituloRow, c: 0 }, e: { r: resumenTituloRow, c: 12 } },
+      { s: { r: detalleTituloRow, c: 0 }, e: { r: detalleTituloRow, c: 12 } }
     ];
 
-    worksheet['!cols'] = [
-      { wch: 20 },
-      { wch: 32 },
+    ws['!cols'] = [
+      { wch: 18 },
+      { wch: 22 },
+      { wch: 30 },
       { wch: 28 },
       { wch: 14 },
       { wch: 18 },
       { wch: 18 },
       { wch: 18 },
       { wch: 18 },
-      { wch: 16 },
+      { wch: 15 },
       { wch: 18 },
       { wch: 14 },
-      { wch: 15 }
+      { wch: 14 }
     ];
 
-    worksheet['!rows'] = [
-      { hpt: 30 },
-      { hpt: 22 },
-      { hpt: 22 },
-      { hpt: 10 }
-    ];
-
-    worksheet['!autofilter'] = {
-      ref: `A${filaDetalleCabecera + 1}:L${filas.length}`
+    const border: any = {
+      top: { style: 'thin', color: { rgb: 'D9E6EC' } },
+      bottom: { style: 'thin', color: { rgb: 'D9E6EC' } },
+      left: { style: 'thin', color: { rgb: 'D9E6EC' } },
+      right: { style: 'thin', color: { rgb: 'D9E6EC' } }
     };
 
-    this.aplicarEstilosExcel(
-      worksheet,
-      filaResumenTitulo,
-      filaResumenCabecera,
-      filaDetalleTitulo,
-      filaDetalleCabecera,
-      primeraFilaDatos,
-      filas.length - 1,
-      filas
-    );
+    const tituloStyle: any = {
+      font: { bold: true, sz: 18, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '07384A' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border
+    };
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Historial lecturas');
+    const subtituloStyle: any = {
+      font: { bold: true, sz: 11, color: { rgb: '64748B' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border
+    };
 
-    const detalleCompleto = this.lecturasFiltradas.map((item: any) => ({
-      'Código suministro': item.codigoSuministro || '',
-      'Alias suministro': item.aliasSuministro || '',
-      'Dirección': item.direccionSuministro || '',
-      'Cliente': item.cliente || '',
-      'DNI': item.dniCliente || '',
-      'Sector': item.sector || '',
-      'Año': item.anio || '',
-      'Mes': this.nombreMes(Number(item.mes)),
-      'Lectura anterior': Number(item.lecturaAnterior || 0),
-      'Lectura actual': Number(item.lecturaActual || 0),
-      'Consumo m³': Number(item.consumoM3 || 0),
-      'Código recibo': item.codigoRecibo || '',
-      'Total recibo': Number(item.totalRecibo || 0),
-      'Estado recibo': item.estadoRecibo || 'PENDIENTE',
-      'Fecha registro': item.fechaRegistro || ''
-    }));
+    const seccionStyle: any = {
+      font: { bold: true, sz: 13, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '1BA3C7' } },
+      alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+      border
+    };
 
-    const worksheetDetalle = this.crearHojaDetalle(detalleCompleto);
-    XLSX.utils.book_append_sheet(workbook, worksheetDetalle, 'Detalle completo');
+    const headerStyle: any = {
+      font: { bold: true, color: { rgb: '0F2F3D' } },
+      fill: { fgColor: { rgb: 'E8F7FB' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border
+    };
 
-    XLSX.writeFile(workbook, `historial_lecturas_jass_huacariz_${fechaArchivo}.xlsx`);
+    const normalStyle: any = {
+      alignment: { vertical: 'center', wrapText: true },
+      border
+    };
+
+    const moneyStyle: any = {
+      alignment: { vertical: 'center', wrapText: true },
+      numFmt: '"S/ "#,##0.00',
+      border
+    };
+
+    const numberStyle: any = {
+      alignment: { vertical: 'center', wrapText: true },
+      numFmt: '#,##0.000',
+      border
+    };
+
+    const setStyle = (row: number, col: number, style: any): void => {
+      const ref = XLSX.utils.encode_cell({ r: row, c: col });
+
+      if (!ws[ref]) {
+        ws[ref] = { t: 's', v: '' };
+      }
+
+      ws[ref].s = style;
+    };
+
+    const styleRow = (row: number, fromCol: number, toCol: number, style: any): void => {
+      for (let col = fromCol; col <= toCol; col++) {
+        setStyle(row, col, style);
+      }
+    };
+
+    styleRow(0, 0, 12, tituloStyle);
+    styleRow(1, 0, 12, subtituloStyle);
+    styleRow(resumenTituloRow, 0, 12, seccionStyle);
+    styleRow(detalleTituloRow, 0, 12, seccionStyle);
+    styleRow(resumenHeaderRow, 0, 4, headerStyle);
+    styleRow(headerRow, 0, 12, headerStyle);
+
+    for (let row = resumenHeaderRow + 1; row <= resumenHeaderRow + 3; row++) {
+      for (let col = 0; col <= 4; col++) {
+        setStyle(row, col, {
+          ...normalStyle,
+          font: col === 0 || col === 3
+            ? { bold: true, color: { rgb: '0F2F3D' } }
+            : { color: { rgb: '0F2F3D' } },
+          fill: { fgColor: { rgb: row % 2 === 0 ? 'FFFFFF' : 'F8FCFD' } }
+        });
+      }
+    }
+
+    const lastRow = data.length - 1;
+
+    for (let row = firstDataRow; row <= lastRow; row++) {
+      for (let col = 0; col <= 12; col++) {
+        let style: any = {
+          ...normalStyle,
+          fill: { fgColor: { rgb: row % 2 === 0 ? 'FFFFFF' : 'F8FCFD' } }
+        };
+
+        if ([7, 8, 9].includes(col)) {
+          style = {
+            ...numberStyle,
+            fill: { fgColor: { rgb: row % 2 === 0 ? 'FFFFFF' : 'F8FCFD' } }
+          };
+        }
+
+        if (col === 11) {
+          style = {
+            ...moneyStyle,
+            fill: { fgColor: { rgb: row % 2 === 0 ? 'FFFFFF' : 'F8FCFD' } }
+          };
+        }
+
+        setStyle(row, col, style);
+      }
+
+      const estado = String(data[row][12] || '').toUpperCase();
+      const estadoRef = XLSX.utils.encode_cell({ r: row, c: 12 });
+
+      if (ws[estadoRef]) {
+        ws[estadoRef].s = {
+          font: {
+            bold: true,
+            color: {
+              rgb: estado === 'PAGADO'
+                ? '166534'
+                : estado === 'VENCIDO'
+                  ? 'B91C1C'
+                  : 'C2410C'
+            }
+          },
+          fill: {
+            fgColor: {
+              rgb: estado === 'PAGADO'
+                ? 'DCFCE7'
+                : estado === 'VENCIDO'
+                  ? 'FEE2E2'
+                  : 'FFEDD5'
+            }
+          },
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+          border
+        };
+      }
+    }
+
+    ws['!autofilter'] = {
+      ref: `A${headerRow + 1}:M${data.length}`
+    };
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Historial lecturas');
+
+    XLSX.writeFile(wb, `historial_lecturas_jass_huacariz_${fechaArchivo}.xlsx`);
   }
 
   imprimirReporte(): void {
-    if (!this.lecturasFiltradas.length) {
-      alert('No hay datos para imprimir.');
-      return;
-    }
+    const fecha = new Date().toLocaleString('es-PE');
 
     const filas = this.lecturasFiltradas.map((item: any) => `
       <tr>
-        <td>${this.textoSeguro(item.codigoSuministro)}</td>
-        <td>${this.textoSeguro(item.aliasSuministro || item.direccionSuministro || '-')}</td>
-        <td>${this.textoSeguro(item.cliente)}</td>
-        <td>${this.textoSeguro(item.dniCliente)}</td>
-        <td>${this.textoSeguro(item.sector)}</td>
+        <td>${this.textoSeguro(item.codigoSuministro || '')}</td>
+        <td>${this.textoSeguro(item.aliasSuministro || item.direccionSuministro || '')}</td>
+        <td>${this.textoSeguro(item.nombreCliente || item.cliente || '')}</td>
+        <td>${this.textoSeguro(item.dniCliente || '')}</td>
+        <td>${this.textoSeguro(item.sector || '')}</td>
         <td>${this.nombreMes(Number(item.mes))} ${item.anio}</td>
         <td>${Number(item.lecturaAnterior || 0).toFixed(3)} m³</td>
         <td>${Number(item.lecturaActual || 0).toFixed(3)} m³</td>
         <td>${Number(item.consumoM3 || 0).toFixed(3)} m³</td>
         <td>${this.textoSeguro(item.codigoRecibo || '-')}</td>
-        <td>S/ ${Number(item.totalRecibo || 0).toFixed(2)}</td>
+        <td>S/ ${Number(item.totalRecibo || item.total || 0).toFixed(2)}</td>
         <td>${this.textoSeguro(item.estadoRecibo || 'PENDIENTE')}</td>
       </tr>
     `).join('');
@@ -304,7 +456,7 @@ export class HistorialLecturas implements OnInit {
     const ventana = window.open('', '_blank', 'width=1200,height=800');
 
     if (!ventana) {
-      alert('El navegador bloqueó la ventana de impresión.');
+      this.error = 'No se pudo abrir la ventana de impresión. Revisa si el navegador bloqueó ventanas emergentes.';
       return;
     }
 
@@ -315,6 +467,7 @@ export class HistorialLecturas implements OnInit {
       <head>
         <meta charset="UTF-8">
         <title>Historial de lecturas - JASS Huacariz</title>
+
         <style>
           * {
             box-sizing: border-box;
@@ -457,10 +610,11 @@ export class HistorialLecturas implements OnInit {
         <div class="header">
           <div class="brand">
             <div class="logo">💧</div>
+
             <div>
               <h1>JASS Huacariz</h1>
               <p>Reporte de historial de lecturas</p>
-              <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
+              <p>Fecha de emisión: ${fecha}</p>
             </div>
           </div>
 
@@ -508,7 +662,7 @@ export class HistorialLecturas implements OnInit {
           </thead>
 
           <tbody>
-            ${filas}
+            ${filas || '<tr><td colspan="12">No hay lecturas registradas.</td></tr>'}
           </tbody>
         </table>
 
@@ -519,170 +673,8 @@ export class HistorialLecturas implements OnInit {
       </body>
       </html>
     `);
+
     ventana.document.close();
-  }
-
-  private crearHojaDetalle(data: any[]): any {
-    const datos = data.length ? data : [{ Mensaje: 'Sin datos registrados' }];
-    const worksheet: any = XLSX.utils.json_to_sheet(datos);
-    const ref = worksheet['!ref'] || 'A1:A1';
-    const range = XLSX.utils.decode_range(ref);
-
-    worksheet['!cols'] = Array.from({ length: range.e.c + 1 }, () => ({ wch: 24 }));
-    worksheet['!autofilter'] = { ref };
-
-    const estilos = this.estilosExcel();
-
-    this.aplicarEstiloRango(worksheet, 0, 0, 0, range.e.c, estilos.cabeceraTabla);
-
-    if (range.e.r >= 1) {
-      this.aplicarEstiloRango(worksheet, 1, 0, range.e.r, range.e.c, estilos.celda);
-    }
-
-    return worksheet;
-  }
-
-  private aplicarEstilosExcel(
-    worksheet: any,
-    filaResumenTitulo: number,
-    filaResumenCabecera: number,
-    filaDetalleTitulo: number,
-    filaDetalleCabecera: number,
-    primeraFilaDatos: number,
-    ultimaFilaDatos: number,
-    filas: any[][]
-  ): void {
-    const estilos = this.estilosExcel();
-    const ref = worksheet['!ref'] || 'A1:A1';
-    const range = XLSX.utils.decode_range(ref);
-
-    this.aplicarEstiloRango(worksheet, 0, 0, range.e.r, range.e.c, estilos.celda);
-
-    this.aplicarEstiloRango(worksheet, 0, 0, 0, 11, estilos.titulo);
-    this.aplicarEstiloRango(worksheet, 1, 0, 1, 11, estilos.subtitulo);
-    this.aplicarEstiloRango(worksheet, 2, 0, 2, 11, estilos.fecha);
-
-    this.aplicarEstiloRango(worksheet, filaResumenTitulo, 0, filaResumenTitulo, 11, estilos.seccion);
-    this.aplicarEstiloRango(worksheet, filaResumenCabecera, 0, filaResumenCabecera, 4, estilos.cabeceraTabla);
-    this.aplicarEstiloRango(worksheet, filaResumenCabecera + 1, 0, filaResumenCabecera + 3, 4, estilos.resumen);
-
-    this.aplicarEstiloRango(worksheet, filaDetalleTitulo, 0, filaDetalleTitulo, 11, estilos.seccion);
-    this.aplicarEstiloRango(worksheet, filaDetalleCabecera, 0, filaDetalleCabecera, 11, estilos.cabeceraTabla);
-
-    if (ultimaFilaDatos >= primeraFilaDatos) {
-      this.aplicarEstiloRango(worksheet, primeraFilaDatos, 0, ultimaFilaDatos, 11, estilos.celda);
-
-      for (let fila = primeraFilaDatos; fila <= ultimaFilaDatos; fila++) {
-        [6, 7, 8].forEach((columna) => {
-          const celda = XLSX.utils.encode_cell({ r: fila, c: columna });
-          if (worksheet[celda]) {
-            worksheet[celda].z = '#,##0.000';
-          }
-        });
-
-        const celdaTotal = XLSX.utils.encode_cell({ r: fila, c: 10 });
-        if (worksheet[celdaTotal]) {
-          worksheet[celdaTotal].z = '"S/ "#,##0.00';
-        }
-
-        const estado = String(filas[fila][11] || '').toUpperCase();
-        const celdaEstado = XLSX.utils.encode_cell({ r: fila, c: 11 });
-
-        if (worksheet[celdaEstado]) {
-          worksheet[celdaEstado].s = {
-            ...estilos.estado,
-            font: {
-              bold: true,
-              color: {
-                rgb: estado === 'PAGADO' ? '166534' : estado === 'VENCIDO' ? 'B91C1C' : 'C2410C'
-              }
-            },
-            fill: {
-              fgColor: {
-                rgb: estado === 'PAGADO' ? 'DCFCE7' : estado === 'VENCIDO' ? 'FEE2E2' : 'FFEDD5'
-              }
-            }
-          };
-        }
-      }
-    }
-  }
-
-  private aplicarEstiloRango(
-    worksheet: any,
-    filaInicio: number,
-    columnaInicio: number,
-    filaFin: number,
-    columnaFin: number,
-    estilo: any
-  ): void {
-    for (let fila = filaInicio; fila <= filaFin; fila++) {
-      for (let columna = columnaInicio; columna <= columnaFin; columna++) {
-        const celda = XLSX.utils.encode_cell({ r: fila, c: columna });
-
-        if (!worksheet[celda]) {
-          worksheet[celda] = { t: 's', v: '' };
-        }
-
-        worksheet[celda].s = estilo;
-      }
-    }
-  }
-
-  private estilosExcel(): any {
-    const borde = {
-      top: { style: 'thin', color: { rgb: 'D9EAF0' } },
-      bottom: { style: 'thin', color: { rgb: 'D9EAF0' } },
-      left: { style: 'thin', color: { rgb: 'D9EAF0' } },
-      right: { style: 'thin', color: { rgb: 'D9EAF0' } }
-    };
-
-    return {
-      titulo: {
-        font: { bold: true, sz: 20, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '07384A' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: borde
-      },
-      subtitulo: {
-        font: { bold: true, sz: 13, color: { rgb: '0F2F3D' } },
-        fill: { fgColor: { rgb: 'E8F7FB' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: borde
-      },
-      fecha: {
-        font: { italic: true, sz: 11, color: { rgb: '64748B' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: borde
-      },
-      seccion: {
-        font: { bold: true, sz: 13, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '1BA3C7' } },
-        alignment: { horizontal: 'left', vertical: 'center' },
-        border: borde
-      },
-      cabeceraTabla: {
-        font: { bold: true, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '0F766E' } },
-        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-        border: borde
-      },
-      resumen: {
-        font: { color: { rgb: '0F2F3D' } },
-        fill: { fgColor: { rgb: 'F8FCFD' } },
-        alignment: { vertical: 'center', wrapText: true },
-        border: borde
-      },
-      celda: {
-        font: { color: { rgb: '0F2F3D' } },
-        alignment: { vertical: 'center', wrapText: true },
-        border: borde
-      },
-      estado: {
-        alignment: { horizontal: 'center', vertical: 'center' },
-        border: borde
-      }
-    };
   }
 
   private textoSeguro(value: unknown): string {

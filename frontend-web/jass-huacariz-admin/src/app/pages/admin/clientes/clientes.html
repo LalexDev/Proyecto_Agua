@@ -26,11 +26,11 @@
   </section>
 
   <div *ngIf="error && !mostrarFormulario" class="alert alert-error">
-  {{ error }}
+    {{ error }}
   </div>
 
   <div *ngIf="exito && !mostrarFormulario" class="alert alert-success">
-   {{ exito }}
+    {{ exito }}
   </div>
 
   <div *ngIf="cargando" class="alert alert-info">
@@ -70,7 +70,7 @@
       <div class="stat-card__content">
         <span>Instalados</span>
         <strong>{{ suministrosInstalados() }}</strong>
-        <small>Suministros activos</small>
+        <small>Suministros con consumo habilitado</small>
       </div>
     </article>
   </section>
@@ -80,8 +80,8 @@
       <span class="tag">Estado general</span>
       <h3>Control de clientes y conexiones</h3>
       <p>
-        Desde este módulo el administrador puede activar clientes, registrar lecturadores,
-        marcar suministros como instalados, generar QR y exportar reportes.
+        Desde este módulo el administrador puede editar clientes, agregar puntos de agua,
+        actualizar suministros, generar QR, suspender conexiones y exportar reportes.
       </p>
     </div>
 
@@ -116,6 +116,7 @@
       <option value="TODOS">Todos los suministros</option>
       <option value="INSTALADO">Instalados</option>
       <option value="PENDIENTE">Pendientes / suspendidos</option>
+      <option value="BLOQUEADO">Bloqueados por cliente</option>
     </select>
 
     <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
@@ -197,6 +198,10 @@
                   Ver detalle
                 </button>
 
+                <button type="button" class="table-action" (click)="abrirEditarCliente(cliente)">
+                  Editar
+                </button>
+
                 <button
                   type="button"
                   class="table-action"
@@ -219,6 +224,7 @@
     </div>
   </section>
 
+  <!-- MODAL NUEVO USUARIO -->
   <div class="modal-backdrop" *ngIf="mostrarFormulario">
     <div class="modal-card large">
       <div class="modal-header">
@@ -232,7 +238,6 @@
           ✕
         </button>
       </div>
-
 
       <div *ngIf="error" class="alert alert-error modal-alert">
         {{ error }}
@@ -424,6 +429,7 @@
     </div>
   </div>
 
+  <!-- MODAL DETALLE CLIENTE -->
   <div class="modal-backdrop" *ngIf="mostrarDetalle && clienteDetalle">
     <div class="modal-card large">
       <div class="modal-header">
@@ -464,7 +470,24 @@
         </div>
       </div>
 
-      <h4 class="section-title">Suministros del cliente</h4>
+      <div class="suministros-form-header">
+        <h4 class="section-title">Suministros del cliente</h4>
+
+        <div class="actions-cell">
+          <button type="button" class="table-action" (click)="abrirEditarCliente(clienteDetalle)">
+            Editar cliente
+          </button>
+
+          <button
+            type="button"
+            class="table-action success-soft"
+            *ngIf="clienteDetalle.estado"
+            (click)="abrirAgregarSuministro(clienteDetalle)"
+          >
+            + Agregar suministro
+          </button>
+        </div>
+      </div>
 
       <div class="suministro-detail-card" *ngFor="let suministro of clienteDetalle.suministros">
         <div class="suministro-detail-info">
@@ -475,12 +498,16 @@
         </div>
 
         <div class="suministro-detail-status">
-          <span class="status-badge" [ngClass]="estadoSuministroClase(suministro.estado)">
-            {{ estadoSuministroTexto(suministro.estado) }}
+          <span class="status-badge" [ngClass]="estadoSuministroClase(suministro)">
+            {{ estadoSuministroTexto(suministro) }}
           </span>
         </div>
 
         <div class="suministro-detail-actions">
+          <button type="button" class="table-action" (click)="abrirEditarSuministro(clienteDetalle, suministro)">
+            Editar
+          </button>
+
           <button type="button" class="table-action" (click)="irQr(suministro)">
             Generar QR
           </button>
@@ -488,7 +515,7 @@
           <button
             type="button"
             class="table-action success-soft"
-            *ngIf="!suministro.estado"
+            *ngIf="clienteDetalle.estado && !esSuministroInstalado(suministro)"
             (click)="abrirCambiarEstadoSuministro(clienteDetalle, suministro, true)"
           >
             Marcar instalado
@@ -497,11 +524,24 @@
           <button
             type="button"
             class="table-action danger-soft"
-            *ngIf="suministro.estado"
+            *ngIf="clienteDetalle.estado && esSuministroInstalado(suministro)"
             (click)="abrirCambiarEstadoSuministro(clienteDetalle, suministro, false)"
           >
             Suspender
           </button>
+
+          <button
+            type="button"
+            class="table-action danger-soft"
+            *ngIf="clienteDetalle.estado && totalSuministrosCliente(clienteDetalle) > 1"
+            (click)="abrirEliminarSuministro(clienteDetalle, suministro)"
+          >
+            Eliminar
+          </button>
+
+          <span class="mini-note" *ngIf="!clienteDetalle.estado">
+            Cliente desactivado
+          </span>
         </div>
       </div>
 
@@ -522,6 +562,204 @@
     </div>
   </div>
 
+  <!-- MODAL EDITAR CLIENTE -->
+  <div class="modal-backdrop" *ngIf="mostrarEditarCliente && clienteEditando">
+    <div class="modal-card large">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Editar cliente</span>
+          <h3>{{ nombreCompleto(clienteEditando) }}</h3>
+          <p>Actualiza los datos personales y de contacto del cliente.</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarEditarCliente()">
+          ✕
+        </button>
+      </div>
+
+      <div *ngIf="error" class="alert alert-error modal-alert">
+        {{ error }}
+      </div>
+
+      <div class="form-grid">
+        <label>
+          DNI
+          <input type="text" maxlength="8" [(ngModel)]="formEditarCliente.dni">
+        </label>
+
+        <label>
+          Nombres
+          <input type="text" [(ngModel)]="formEditarCliente.nombres">
+        </label>
+
+        <label>
+          Apellidos
+          <input type="text" [(ngModel)]="formEditarCliente.apellidos">
+        </label>
+
+        <label>
+          Teléfono
+          <input type="text" [(ngModel)]="formEditarCliente.telefono">
+        </label>
+
+        <label>
+          Correo
+          <input type="email" [(ngModel)]="formEditarCliente.correo">
+        </label>
+
+        <label>
+          Estado cliente
+          <select [(ngModel)]="formEditarCliente.estado">
+            <option [ngValue]="true">Activo</option>
+            <option [ngValue]="false">Inactivo</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="info-note">
+        <strong>Nota:</strong>
+        Si cambias el DNI, también se actualizará el usuario de acceso del cliente.
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarEditarCliente()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" [disabled]="guardando" (click)="guardarEdicionCliente()">
+          {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AGREGAR SUMINISTRO -->
+  <div class="modal-backdrop" *ngIf="mostrarAgregarSuministro && clienteSuministroEditando">
+    <div class="modal-card large">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Nuevo suministro</span>
+          <h3>{{ nombreCompleto(clienteSuministroEditando) }}</h3>
+          <p>Agrega un nuevo punto de agua para este cliente.</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarAgregarSuministro()">
+          ✕
+        </button>
+      </div>
+
+      <div *ngIf="error" class="alert alert-error modal-alert">
+        {{ error }}
+      </div>
+
+      <div class="form-grid">
+        <label>
+          ID sector
+          <input type="number" [(ngModel)]="formNuevoSuministro.idSector">
+        </label>
+
+        <label>
+          Alias
+          <input type="text" [(ngModel)]="formNuevoSuministro.aliasSuministro" placeholder="Ejemplo: Casa principal">
+        </label>
+
+        <label class="full">
+          Dirección del suministro
+          <input type="text" [(ngModel)]="formNuevoSuministro.direccionSuministro" placeholder="Ejemplo: Av. Principal 123">
+        </label>
+
+        <label>
+          Referencia
+          <input type="text" [(ngModel)]="formNuevoSuministro.referencia" placeholder="Referencia opcional">
+        </label>
+
+        <label>
+          Lectura inicial
+          <input type="number" [(ngModel)]="formNuevoSuministro.lecturaInicial">
+        </label>
+      </div>
+
+      <div class="info-note">
+        <strong>Importante:</strong>
+        El nuevo suministro iniciará como pendiente/suspendido hasta que el administrador lo marque como instalado.
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarAgregarSuministro()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" [disabled]="guardando" (click)="guardarNuevoSuministro()">
+          {{ guardando ? 'Guardando...' : 'Agregar suministro' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR SUMINISTRO -->
+  <div class="modal-backdrop" *ngIf="mostrarEditarSuministro && clienteSuministroEditando && suministroEditando">
+    <div class="modal-card large">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Editar suministro</span>
+          <h3>{{ suministroEditando.codigoSuministro }}</h3>
+          <p>Actualiza sector, alias, dirección, referencia y lectura inicial si aún no tiene lecturas.</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarEditarSuministro()">
+          ✕
+        </button>
+      </div>
+
+      <div *ngIf="error" class="alert alert-error modal-alert">
+        {{ error }}
+      </div>
+
+      <div class="form-grid">
+        <label>
+          ID sector
+          <input type="number" [(ngModel)]="formEditarSuministro.idSector">
+        </label>
+
+        <label>
+          Alias
+          <input type="text" [(ngModel)]="formEditarSuministro.aliasSuministro">
+        </label>
+
+        <label class="full">
+          Dirección del suministro
+          <input type="text" [(ngModel)]="formEditarSuministro.direccionSuministro">
+        </label>
+
+        <label>
+          Referencia
+          <input type="text" [(ngModel)]="formEditarSuministro.referencia">
+        </label>
+
+        <label>
+          Lectura inicial
+          <input type="number" [(ngModel)]="formEditarSuministro.lecturaInicial">
+        </label>
+      </div>
+
+      <div class="info-note">
+        <strong>Nota:</strong>
+        Si el suministro ya tiene lecturas registradas, el backend no permitirá modificar la lectura inicial.
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarEditarSuministro()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" [disabled]="guardando" (click)="guardarEdicionSuministro()">
+          {{ guardando ? 'Guardando...' : 'Guardar suministro' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMACIÓN -->
   <div class="modal-backdrop" *ngIf="accionPendiente">
     <div class="modal-card confirm">
       <div class="modal-header">

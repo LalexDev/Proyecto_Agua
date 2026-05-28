@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
 import { PagoRequest, Recibo, ReciboResponse } from '../../../core/services/recibo';
+import { imprimirReciboJass } from '../../../core/utils/recibo-print';
 
 @Component({
   selector: 'app-recibos',
@@ -23,7 +24,8 @@ export class Recibos implements OnInit {
   filtroEstado = 'TODOS';
   busqueda = '';
 
-  reciboSeleccionado: ReciboResponse | null = null;
+  reciboSeleccionado: any = null;
+  reciboDetalle: any = null;
 
   pago: PagoRequest = {
     metodoPago: 'PagoEfectivo',
@@ -69,7 +71,7 @@ export class Recibos implements OnInit {
   }
 
   aplicarFiltros(): void {
-    const texto = this.busqueda.trim().toLowerCase();
+    const textoBusqueda = this.busqueda.trim().toLowerCase();
 
     this.recibosFiltrados = this.recibos.filter((recibo: any) => {
       const estado = String(recibo.estadoRecibo || '').toUpperCase();
@@ -80,14 +82,18 @@ export class Recibos implements OnInit {
         estado === this.filtroEstado;
 
       const coincideTexto =
-        !texto ||
-        String(recibo.codigoRecibo || '').toLowerCase().includes(texto) ||
-        String(recibo.codigoSuministro || '').toLowerCase().includes(texto) ||
-        String(recibo.direccionSuministro || '').toLowerCase().includes(texto) ||
-        String(recibo.estadoRecibo || '').toLowerCase().includes(texto) ||
-        String(recibo.total || '').toLowerCase().includes(texto) ||
-        String(recibo.consumoM3 || '').toLowerCase().includes(texto) ||
-        this.periodo(recibo).toLowerCase().includes(texto);
+        !textoBusqueda ||
+        String(recibo.codigoRecibo || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.codigoSuministro || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.direccionSuministro || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.aliasSuministro || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.nombreCliente || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.dniCliente || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.sector || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.estadoRecibo || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.total || '').toLowerCase().includes(textoBusqueda) ||
+        String(recibo.consumoM3 || '').toLowerCase().includes(textoBusqueda) ||
+        this.periodo(recibo).toLowerCase().includes(textoBusqueda);
 
       return coincideEstado && coincideTexto;
     });
@@ -101,6 +107,20 @@ export class Recibos implements OnInit {
     this.busqueda = '';
     this.filtroEstado = 'TODOS';
     this.aplicarFiltros();
+  }
+
+  abrirDetalleRecibo(recibo: ReciboResponse): void {
+    this.reciboDetalle = recibo;
+    this.error = '';
+    this.exito = '';
+  }
+
+  cerrarDetalleRecibo(): void {
+    this.reciboDetalle = null;
+  }
+
+  imprimirRecibo(recibo: ReciboResponse): void {
+    imprimirReciboJass(recibo, this.recibos);
   }
 
   abrirPago(recibo: ReciboResponse): void {

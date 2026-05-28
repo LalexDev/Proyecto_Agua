@@ -3,16 +3,16 @@
     <div class="page-header-content">
       <span class="tag">Portal cliente</span>
       <h2>Pagar recibo</h2>
-      <p>Registra el pago de tu recibo pendiente del servicio de agua potable.</p>
+      <p>Registra el pago digital de tu recibo pendiente. El pago en efectivo solo lo registra administración.</p>
     </div>
 
     <div class="header-actions">
       <button type="button" class="btn-secondary action-click" (click)="volver()">
-        Volver
+        ← Volver
       </button>
 
       <button type="button" class="btn-secondary action-click" (click)="irDetalle()" [disabled]="!recibo">
-        Ver detalle
+        🧾 Ver detalle
       </button>
     </div>
   </section>
@@ -74,40 +74,44 @@
       <article class="payment-card">
         <div class="card-title">
           <span class="tag">Registro de pago</span>
-          <h3>Datos del pago</h3>
-          <p>Selecciona el método de pago y confirma la operación.</p>
+          <h3>Selecciona tu método</h3>
+          <p>Elige cómo realizaste el pago y registra el código de operación.</p>
         </div>
 
         <div class="paid-message" *ngIf="estaPagado()">
-          Este recibo ya se encuentra pagado. No es necesario registrar otro pago.
+          ✅ Este recibo ya se encuentra pagado. No es necesario registrar otro pago.
         </div>
 
-        <div class="form-grid">
-          <label>
-            Método de pago
-            <select [(ngModel)]="pago.metodoPago" [disabled]="estaPagado()">
-              <option *ngFor="let metodo of metodosPago" [value]="metodo">
-                {{ metodo }}
-              </option>
-            </select>
-          </label>
+        <div class="method-grid">
+          <button
+            type="button"
+            class="method-card"
+            *ngFor="let metodo of metodosPago"
+            [class.selected]="pago.metodoPago === metodo.valor"
+            [disabled]="estaPagado()"
+            (click)="seleccionarMetodo(metodo)"
+          >
+            <span class="method-icon">{{ metodo.icono }}</span>
+            <strong>{{ metodo.nombre }}</strong>
+            <small>{{ metodo.descripcion }}</small>
+          </button>
+        </div>
 
+        <div class="operation-box">
           <label>
             Código de operación
             <input
               type="text"
               [(ngModel)]="pago.codigoOperacion"
               [disabled]="estaPagado()"
-              placeholder="Ejemplo: YAPE-001, OP-2026, efectivo..."
+              [placeholder]="metodoSeleccionado().placeholder"
             >
           </label>
-        </div>
 
-        <div class="payment-note">
-          <strong>Importante:</strong>
-          Si el pago es presencial o en efectivo, puedes dejar un código referencial como
-          <strong>EFECTIVO-CLIENTE</strong>. Si es Yape, Plin o transferencia, registra el número
-          de operación.
+          <div class="payment-note">
+            <strong>Importante:</strong>
+            El cliente no registra pagos en efectivo. Si el usuario paga presencialmente, ese pago debe ser marcado por el administrador.
+          </div>
         </div>
 
         <div class="actions">
@@ -155,7 +159,7 @@
 
         <div>
           <span>Método</span>
-          <strong>{{ pago.metodoPago }}</strong>
+          <strong>{{ metodoSeleccionado().nombre }}</strong>
         </div>
 
         <div>

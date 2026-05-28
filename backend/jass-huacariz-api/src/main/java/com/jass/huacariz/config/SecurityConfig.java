@@ -30,22 +30,29 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
 
+                        // PORTAL CLIENTE
                         .requestMatchers("/api/cliente/**").hasAuthority("CLIENTE")
-			
-			.requestMatchers("/api/lecturador/**").hasAuthority("LECTURADOR")
-			.requestMatchers("/api/lecturas/**").hasAuthority("LECTURADOR")
 
+                        // PORTAL LECTURADOR
+                        .requestMatchers("/api/lecturador/**").hasAuthority("LECTURADOR")
+
+                        // LECTURAS: ADMIN Y LECTURADOR
+                        .requestMatchers(HttpMethod.POST, "/api/lecturas").hasAnyAuthority("ADMIN", "LECTURADOR")
+                        .requestMatchers(HttpMethod.POST, "/api/lecturas/mantenimiento").hasAnyAuthority("ADMIN", "LECTURADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/lecturas/**").hasAnyAuthority("ADMIN", "LECTURADOR")
+
+                        // ADMINISTRACIÓN
                         .requestMatchers("/api/clientes/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/sectores/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/tarifas/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/recibos/**").hasAuthority("ADMIN")
-			.requestMatchers("/api/pagos/**").hasAuthority("ADMIN")	
-
-                        .requestMatchers(HttpMethod.POST, "/api/lecturas/**").hasAnyAuthority("ADMIN", "LECTURADOR")
-                        .requestMatchers(HttpMethod.GET, "/api/lecturas/**").hasAnyAuthority("ADMIN", "LECTURADOR")
+                        .requestMatchers("/api/pagos/**").hasAuthority("ADMIN")
 
                         .anyRequest().authenticated()
                 )

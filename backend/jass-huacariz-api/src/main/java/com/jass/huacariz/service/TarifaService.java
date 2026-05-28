@@ -1,14 +1,19 @@
 package com.jass.huacariz.service;
 
+import com.jass.huacariz.dto.request.ConfiguracionCobranzaRequest;
 import com.jass.huacariz.dto.request.TarifaRequest;
+import com.jass.huacariz.dto.response.ConfiguracionCobranzaResponse;
 import com.jass.huacariz.dto.response.TarifaResponse;
+import com.jass.huacariz.entity.ConfiguracionCobranza;
 import com.jass.huacariz.entity.Tarifa;
+import com.jass.huacariz.repository.ConfiguracionCobranzaRepository;
 import com.jass.huacariz.repository.TarifaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,6 +22,7 @@ import java.util.List;
 public class TarifaService {
 
     private final TarifaRepository tarifaRepository;
+    private final ConfiguracionCobranzaRepository configuracionCobranzaRepository;
 
     @Transactional(readOnly = true)
     public List<TarifaResponse> listarTarifas() {
@@ -90,6 +96,34 @@ public class TarifaService {
         tarifaRepository.save(tarifa);
     }
 
+    @Transactional(readOnly = true)
+    public ConfiguracionCobranzaResponse obtenerConfiguracionCobranza() {
+        ConfiguracionCobranza configuracion = configuracionCobranzaRepository.findById(1)
+                .orElse(configuracionPorDefecto());
+
+        return convertirConfiguracionAResponse(configuracion);
+    }
+
+    @Transactional
+    public ConfiguracionCobranzaResponse guardarConfiguracionCobranza(ConfiguracionCobranzaRequest request) {
+        validarConfiguracionCobranza(request);
+
+        ConfiguracionCobranza configuracion = configuracionCobranzaRepository.findById(1)
+                .orElse(configuracionPorDefecto());
+
+        configuracion.setId(1);
+        configuracion.setCargoLector(request.getCargoLector());
+        configuracion.setCargoMantenimiento(request.getCargoMantenimiento());
+        configuracion.setCargoOtros(request.getCargoOtros());
+        configuracion.setDiasVencimiento(request.getDiasVencimiento());
+        configuracion.setMoraBase(request.getMoraBase());
+        configuracion.setFechaActualizacion(LocalDateTime.now());
+
+        configuracion = configuracionCobranzaRepository.save(configuracion);
+
+        return convertirConfiguracionAResponse(configuracion);
+    }
+
     private void validarTarifa(TarifaRequest request) {
         if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
             throw new RuntimeException("Ingrese el nombre de la tarifa.");
@@ -113,6 +147,28 @@ public class TarifaService {
         }
     }
 
+    private void validarConfiguracionCobranza(ConfiguracionCobranzaRequest request) {
+        if (request.getCargoLector() == null || request.getCargoLector().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("El cargo del lector no puede ser negativo.");
+        }
+
+        if (request.getCargoMantenimiento() == null || request.getCargoMantenimiento().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("El cargo de mantenimiento no puede ser negativo.");
+        }
+
+        if (request.getCargoOtros() == null || request.getCargoOtros().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("Otros cargos no puede ser negativo.");
+        }
+
+        if (request.getDiasVencimiento() == null || request.getDiasVencimiento() <= 0) {
+            throw new RuntimeException("Los días de vencimiento deben ser mayor a cero.");
+        }
+
+        if (request.getMoraBase() == null || request.getMoraBase().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("La mora base no puede ser negativa.");
+        }
+    }
+
     private TarifaResponse convertirAResponse(Tarifa tarifa) {
         return TarifaResponse.builder()
                 .id(tarifa.getId())
@@ -122,6 +178,30 @@ public class TarifaService {
                 .consumoHasta(tarifa.getConsumoHasta())
                 .precioM3(tarifa.getPrecioM3())
                 .estado(tarifa.getEstado())
+                .build();
+    }
+
+    private ConfiguracionCobranzaResponse convertirConfiguracionAResponse(ConfiguracionCobranza configuracion) {
+        return ConfiguracionCobranzaResponse.builder()
+                .id(configuracion.getId())
+                .cargoLector(configuracion.getCargoLector())
+                .cargoMantenimiento(configuracion.getCargoMantenimiento())
+                .cargoOtros(configuracion.getCargoOtros())
+                .diasVencimiento(configuracion.getDiasVencimiento())
+                .moraBase(configuracion.getMoraBase())
+                .fechaActualizacion(configuracion.getFechaActualizacion())
+                .build();
+    }
+
+    private ConfiguracionCobranza configuracionPorDefecto() {
+        return ConfiguracionCobranza.builder()
+                .id(1)
+                .cargoLector(new BigDecimal("1.00"))
+                .cargoMantenimiento(new BigDecimal("3.00"))
+                .cargoOtros(new BigDecimal("0.20"))
+                .diasVencimiento(15)
+                .moraBase(new BigDecimal("0.00"))
+                .fechaActualizacion(LocalDateTime.now())
                 .build();
     }
 

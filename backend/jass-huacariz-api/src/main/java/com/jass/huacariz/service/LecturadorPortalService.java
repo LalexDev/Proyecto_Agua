@@ -13,11 +13,26 @@ public class LecturadorPortalService {
 
     private final SuministroRepository suministroRepository;
 
+    private static final String INSTALADO = "INSTALADO";
+    private static final String PENDIENTE_INSTALACION = "PENDIENTE_INSTALACION";
+
     @Transactional(readOnly = true)
     public SuministroLecturadorResponse buscarSuministroPorCodigo(String codigoSuministro) {
         Suministro suministro = suministroRepository
                 .findByCodigoSuministro(codigoSuministro.trim().toUpperCase())
                 .orElseThrow(() -> new RuntimeException("No existe el suministro con código: " + codigoSuministro));
+
+        String estadoInstalacion = obtenerEstadoInstalacion(suministro);
+
+        boolean suministroActivo = Boolean.TRUE.equals(suministro.getEstado());
+        boolean clienteActivo = suministro.getCliente() != null && Boolean.TRUE.equals(suministro.getCliente().getEstado());
+        boolean estaActivo = suministroActivo && clienteActivo;
+
+        boolean instalado = INSTALADO.equalsIgnoreCase(estadoInstalacion);
+        boolean pendienteInstalacion = PENDIENTE_INSTALACION.equalsIgnoreCase(estadoInstalacion);
+
+        boolean permiteRegistrarLectura = estaActivo && instalado;
+        boolean permiteGenerarMantenimiento = estaActivo && (instalado || pendienteInstalacion);
 
         return SuministroLecturadorResponse.builder()
                 .id(suministro.getId())
@@ -27,10 +42,38 @@ public class LecturadorPortalService {
                 .referencia(suministro.getReferencia())
                 .aliasSuministro(suministro.getAliasSuministro())
                 .lecturaInicial(suministro.getLecturaInicial())
-                .estado(suministro.getEstado())
+                .estado(estaActivo)
+                .estadoInstalacion(estadoInstalacion)
+                .permiteRegistrarLectura(permiteRegistrarLectura)
+                .permiteGenerarMantenimiento(permiteGenerarMantenimiento)
+                .mensajeEstado(obtenerMensajeEstado(estaActivo, estadoInstalacion))
                 .nombreCliente(obtenerNombreCliente(suministro))
                 .dniCliente(obtenerDniCliente(suministro))
                 .build();
+    }
+
+    private String obtenerEstadoInstalacion(Suministro suministro) {
+        if (suministro == null || suministro.getEstadoInstalacion() == null || suministro.getEstadoInstalacion().isBlank()) {
+            return PENDIENTE_INSTALACION;
+        }
+
+        return suministro.getEstadoInstalacion().trim().toUpperCase();
+    }
+
+    private String obtenerMensajeEstado(boolean estaActivo, String estadoInstalacion) {
+        if (!estaActivo) {
+            return "El cliente o suministro se encuentra desactivado. No se puede registrar lectura ni generar mantenimiento.";
+        }
+
+        if (INSTALADO.equalsIgnoreCase(estadoInstalacion)) {
+            return "Suministro instalado. Puede registrar lectura normal o generar mantenimiento si no hubo consumo.";
+        }
+
+        if (PENDIENTE_INSTALACION.equalsIgnoreCase(estadoInstalacion)) {
+            return "Este suministro aún no está instalado o fue suspendido. Solo se puede generar recibo por mantenimiento.";
+        }
+
+        return "Estado de suministro pendiente de revisión.";
     }
 
     private String obtenerNombreSector(Suministro suministro) {

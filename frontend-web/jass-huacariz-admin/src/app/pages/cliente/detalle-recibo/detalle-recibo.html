@@ -3,16 +3,16 @@
     <div>
       <span class="tag">Portal cliente</span>
       <h2>Detalle del recibo</h2>
-      <p>Consulta el consumo, cargos, vencimiento y estado de tu recibo.</p>
+      <p>Consulta el consumo, cargos, vencimiento, código de barras y estado de tu recibo.</p>
     </div>
 
     <div class="header-actions">
       <a class="btn-secondary" routerLink="/cliente/mis-recibos">
-        Volver
+        ← Volver
       </a>
 
       <button type="button" class="btn-secondary" (click)="imprimirRecibo()" [disabled]="!recibo">
-        Imprimir PDF
+        🧾 Imprimir recibo
       </button>
 
       <a
@@ -20,7 +20,7 @@
         class="btn-primary"
         [routerLink]="['/cliente/pagar-recibo', recibo.id]"
       >
-        Pagar recibo
+        💳 Pagar recibo
       </a>
     </div>
   </section>
@@ -72,7 +72,7 @@
         <div>
           <span>Cargos</span>
           <strong>S/ {{ totalCargos() | number:'1.2-2' }}</strong>
-          <small>Mantenimiento, lector y mora</small>
+          <small>Mantenimiento, lector, otros y mora</small>
         </div>
       </article>
 
@@ -99,6 +99,16 @@
 
         <div class="info-list">
           <div>
+            <span>Cliente</span>
+            <strong>{{ recibo.nombreCliente || 'No disponible' }}</strong>
+          </div>
+
+          <div>
+            <span>DNI</span>
+            <strong>{{ recibo.dniCliente || '-' }}</strong>
+          </div>
+
+          <div>
             <span>Código de recibo</span>
             <strong>{{ recibo.codigoRecibo }}</strong>
           </div>
@@ -106,6 +116,16 @@
           <div>
             <span>Código de suministro</span>
             <strong>{{ recibo.codigoSuministro }}</strong>
+          </div>
+
+          <div>
+            <span>Alias</span>
+            <strong>{{ recibo.aliasSuministro || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Sector</span>
+            <strong>{{ recibo.sector || '-' }}</strong>
           </div>
 
           <div>
@@ -121,6 +141,11 @@
           <div>
             <span>Fecha de vencimiento</span>
             <strong>{{ recibo.fechaVencimiento || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Código de barras</span>
+            <strong>{{ recibo.codigoBarras || (recibo.codigoRecibo + '-' + recibo.codigoSuministro) }}</strong>
           </div>
         </div>
       </article>
@@ -148,6 +173,11 @@
           </div>
 
           <div>
+            <span>Otros cargos</span>
+            <strong>S/ {{ recibo.cargoOtros | number:'1.2-2' }}</strong>
+          </div>
+
+          <div>
             <span>Mora</span>
             <strong>S/ {{ recibo.mora | number:'1.2-2' }}</strong>
           </div>
@@ -156,6 +186,20 @@
             <span>Total</span>
             <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
           </div>
+        </div>
+
+        <div class="receipt-actions-box">
+          <button type="button" class="btn-secondary" (click)="imprimirRecibo()">
+            🖨️ Ver / imprimir recibo oficial
+          </button>
+
+          <a
+            *ngIf="puedePagar()"
+            class="btn-primary"
+            [routerLink]="['/cliente/pagar-recibo', recibo.id]"
+          >
+            💳 Pagar ahora
+          </a>
         </div>
       </article>
     </section>

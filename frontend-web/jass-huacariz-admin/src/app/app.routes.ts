@@ -11,21 +11,22 @@ import { Recibos } from './pages/admin/recibos/recibos';
 import { Pagos } from './pages/admin/pagos/pagos';
 import { Reportes } from './pages/admin/reportes/reportes';
 import { Tarifas } from './pages/admin/tarifas/tarifas';
+import { QrSuministro } from './pages/admin/qr-suministro/qr-suministro';
+import { Lecturadores } from './pages/admin/lecturadores/lecturadores';
 
 import { Inicio } from './pages/cliente/inicio/inicio';
+import { MisSuministros } from './pages/cliente/mis-suministros/mis-suministros';
+import { DetalleSuministro } from './pages/cliente/detalle-suministro/detalle-suministro';
 import { MisRecibos } from './pages/cliente/mis-recibos/mis-recibos';
 import { DetalleRecibo } from './pages/cliente/detalle-recibo/detalle-recibo';
 import { PagarRecibo } from './pages/cliente/pagar-recibo/pagar-recibo';
 import { Perfil } from './pages/cliente/perfil/perfil';
 import { Contrasena } from './pages/cliente/contrasena/contrasena';
 
+import { LecturasLecturador } from './pages/lecturador/lecturas/lecturas';
+
 import { authGuard } from './core/guards/auth-guard';
 import { roleGuard } from './core/guards/role-guard';
-
-import { QrSuministro } from './pages/admin/qr-suministro/qr-suministro';
-
-import { LecturasLecturador } from './pages/lecturador/lecturas/lecturas';
-import { Lecturadores } from './pages/admin/lecturadores/lecturadores';
 
 export const routes: Routes = [
   {
@@ -36,8 +37,7 @@ export const routes: Routes = [
   {
     path: 'login',
     component: Login
-  },  
-
+  },
   {
     path: 'admin',
     component: AdminLayout,
@@ -47,13 +47,13 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: Dashboard },
       { path: 'clientes', component: Clientes },
+      { path: 'lecturadores', component: Lecturadores },
       { path: 'recibos', component: Recibos },
       { path: 'pagos', component: Pagos },
       { path: 'reportes', component: Reportes },
       { path: 'tarifas', component: Tarifas },
       { path: 'qr-suministro', component: QrSuministro },
-      { path: 'historial-lecturas', component: HistorialLecturas },
-      { path: 'lecturadores', component: Lecturadores }
+      { path: 'historial-lecturas', component: HistorialLecturas }
     ]
   },
   {
@@ -64,6 +64,8 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
       { path: 'inicio', component: Inicio },
+      { path: 'mis-suministros', component: MisSuministros },
+      { path: 'detalle-suministro/:codigo', component: DetalleSuministro },
       { path: 'mis-recibos', component: MisRecibos },
       { path: 'detalle-recibo/:id', component: DetalleRecibo },
       { path: 'pagar-recibo/:id', component: PagarRecibo },
@@ -72,17 +74,15 @@ export const routes: Routes = [
       { path: 'cambiar-password', redirectTo: 'contrasena', pathMatch: 'full' }
     ]
   },
-  
   {
-  	path: 'lecturador',
-  	canActivate: [authGuard, roleGuard],
-  	data: { roles: ['LECTURADOR'] },
-  	children: [
-    	{ path: '', redirectTo: 'lecturas', pathMatch: 'full' },
-    	{ path: 'lecturas', component: LecturasLecturador }
-   ]
+    path: 'lecturador',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['LECTURADOR'] },
+    children: [
+      { path: '', redirectTo: 'lecturas', pathMatch: 'full' },
+      { path: 'lecturas', component: LecturasLecturador }
+    ]
   },
-	
   {
     path: '**',
     redirectTo: 'login'
