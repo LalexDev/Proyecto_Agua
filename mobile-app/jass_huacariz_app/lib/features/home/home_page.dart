@@ -78,6 +78,15 @@ class _HomePageState extends State<HomePage> {
     return double.tryParse(value.toString()) ?? 0.0;
   }
 
+  int _id(Map<String, dynamic> recibo) {
+    final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
+
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
   String _estado(Map<String, dynamic> recibo) {
     return _texto(
       recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
@@ -87,7 +96,11 @@ class _HomePageState extends State<HomePage> {
 
   double _total(Map<String, dynamic> recibo) {
     return _numero(
-      recibo['total'] ?? recibo['montoTotal'] ?? recibo['importeTotal'] ?? 0,
+      recibo['total'] ??
+          recibo['montoTotal'] ??
+          recibo['importeTotal'] ??
+          recibo['totalPagar'] ??
+          0,
     );
   }
 
@@ -95,6 +108,73 @@ class _HomePageState extends State<HomePage> {
     return _numero(
       recibo['consumoM3'] ?? recibo['consumo'] ?? recibo['consumoMes'] ?? 0,
     );
+  }
+
+  String _codigoRecibo(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['codigoRecibo'] ??
+          recibo['numeroRecibo'] ??
+          recibo['codigo'] ??
+          'REC-${_id(recibo)}',
+    );
+  }
+
+  String _codigoSuministro(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['codigoSuministro'] ??
+          recibo['suministroCodigo'] ??
+          recibo['suministro'] ??
+          'SIN-SUMINISTRO',
+    );
+  }
+
+  String _periodo(Map<String, dynamic> recibo) {
+    final mes = recibo['mes'];
+    final anio = recibo['anio'];
+
+    if (mes != null && anio != null) {
+      const meses = [
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre',
+      ];
+
+      final mesNumero = int.tryParse(mes.toString()) ?? 1;
+      final index = (mesNumero - 1).clamp(0, 11);
+
+      return '${meses[index]} $anio';
+    }
+
+    return _texto(
+      recibo['periodo'] ?? recibo['mesFacturado'],
+      'Periodo no registrado',
+    );
+  }
+
+  int _periodoNumero(Map<String, dynamic> recibo) {
+    final anio = int.tryParse('${recibo['anio'] ?? 0}') ?? 0;
+    final mes = int.tryParse('${recibo['mes'] ?? 0}') ?? 0;
+
+    return anio * 100 + mes;
+  }
+
+  List<Map<String, dynamic>> get recibosOrdenados {
+    final lista = [...recibos];
+
+    lista.sort((a, b) {
+      return _periodoNumero(b).compareTo(_periodoNumero(a));
+    });
+
+    return lista;
   }
 
   String get nombreCliente {
@@ -130,35 +210,31 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  int get totalSuministros {
-    return suministros.length;
+  int get totalSuministros => suministros.length;
+
+  int get recibosPendientes {
+    return recibos.where((recibo) => _estado(recibo) == 'PENDIENTE').length;
+  }
+
+  int get recibosVencidos {
+    return recibos.where((recibo) => _estado(recibo) == 'VENCIDO').length;
   }
 
   double get consumoUltimoMes {
-    if (recibos.isEmpty) {
-      return 0;
-    }
-
-    final recibosOrdenados = [...recibos];
-
-    recibosOrdenados.sort((a, b) {
-      final anioA = int.tryParse('${a['anio'] ?? 0}') ?? 0;
-      final mesA = int.tryParse('${a['mes'] ?? 0}') ?? 0;
-      final anioB = int.tryParse('${b['anio'] ?? 0}') ?? 0;
-      final mesB = int.tryParse('${b['mes'] ?? 0}') ?? 0;
-
-      final fechaA = anioA * 100 + mesA;
-      final fechaB = anioB * 100 + mesB;
-
-      return fechaB.compareTo(fechaA);
-    });
+    if (recibosOrdenados.isEmpty) return 0;
 
     return _consumo(recibosOrdenados.first);
   }
 
+  Map<String, dynamic>? get ultimoRecibo {
+    if (recibosOrdenados.isEmpty) return null;
+
+    return recibosOrdenados.first;
+  }
+
   Map<String, dynamic>? get reciboPendiente {
     try {
-      return recibos.firstWhere((recibo) {
+      return recibosOrdenados.firstWhere((recibo) {
         final estado = _estado(recibo);
         return estado == 'PENDIENTE' || estado == 'VENCIDO';
       });
@@ -191,6 +267,26 @@ class _HomePageState extends State<HomePage> {
     Navigator.pushNamed(
       context,
       '/pago-cip',
+      arguments: recibo,
+    );
+  }
+
+  void verUltimoRecibo() {
+    final recibo = ultimoRecibo;
+
+    if (recibo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aún no tienes recibos registrados.'),
+          backgroundColor: Color(0xFFC77700),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pushNamed(
+      context,
+      '/recibo-detalle',
       arguments: recibo,
     );
   }
@@ -228,6 +324,8 @@ class _HomePageState extends State<HomePage> {
                   _buildWelcomeCard(),
                   const SizedBox(height: 18),
                   _buildStats(),
+                  const SizedBox(height: 18),
+                  _buildUltimoReciboCard(),
                   const SizedBox(height: 24),
                   const Text(
                     'Accesos rápidos',
@@ -239,6 +337,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 14),
                   _buildQuickActions(),
+                  const SizedBox(height: 90),
                 ],
               ],
             ),
@@ -379,7 +478,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.14),
+            color: primary.withValues(alpha: 0.14),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -391,7 +490,7 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
+              color: Colors.white.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(100),
             ),
             child: const Text(
@@ -427,9 +526,11 @@ class _HomePageState extends State<HomePage> {
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
+              color: Colors.white.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -449,6 +550,15 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white,
                     fontSize: 31,
                     fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '$recibosPendientes pendiente(s) · $recibosVencidos vencido(s)',
+                  style: const TextStyle(
+                    color: Color(0xFFE7F8FF),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -475,7 +585,7 @@ class _HomePageState extends State<HomePage> {
           child: _StatBox(
             icon: Icons.bar_chart_rounded,
             label: 'Consumo',
-            value: '${consumoUltimoMes.toStringAsFixed(0)} m³',
+            value: '${consumoUltimoMes.toStringAsFixed(2)} m³',
             subLabel: 'Último mes',
           ),
         ),
@@ -483,27 +593,155 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildUltimoReciboCard() {
+    final recibo = ultimoRecibo;
+
+    if (recibo == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE2EDF3)),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              color: secondary,
+              size: 32,
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Aún no tienes recibos registrados.',
+                style: TextStyle(
+                  color: primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final estado = _estado(recibo);
+
+    return InkWell(
+      onTap: verUltimoRecibo,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE2EDF3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Último recibo',
+              style: TextStyle(
+                color: primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const CircleAvatar(
+                  backgroundColor: Color(0xFFE8F7FB),
+                  child: Icon(
+                    Icons.receipt_long_rounded,
+                    color: secondary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _codigoRecibo(recibo),
+                        style: const TextStyle(
+                          color: primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${_codigoSuministro(recibo)} · ${_periodo(recibo)}',
+                        style: const TextStyle(
+                          color: muted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _EstadoMiniBadge(estado: estado),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _SmallInfo(
+                    label: 'Consumo',
+                    value: '${_consumo(recibo).toStringAsFixed(2)} m³',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _SmallInfo(
+                    label: 'Total',
+                    value: 'S/ ${_total(recibo).toStringAsFixed(2)}',
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickActions() {
-  return Row(
-    children: [
-      Expanded(
-        child: _QuickAction(
-          icon: Icons.receipt_long_rounded,
-          label: 'Recibos',
-          onTap: irRecibos,
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickAction(
+            icon: Icons.receipt_long_rounded,
+            label: 'Recibos',
+            onTap: irRecibos,
+          ),
         ),
-      ),
-      const SizedBox(width: 14),
-      Expanded(
-        child: _QuickAction(
-          icon: Icons.payments_rounded,
-          label: 'Pagos',
-          onTap: irPagar,
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickAction(
+            icon: Icons.payments_rounded,
+            label: 'Pagar',
+            onTap: irPagar,
+          ),
         ),
-      ),
-    ],
-  );
-}
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickAction(
+            icon: Icons.person_rounded,
+            label: 'Perfil',
+            onTap: irPerfil,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _StatBox extends StatelessWidget {
@@ -552,6 +790,8 @@ class _StatBox extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: primary,
               fontSize: 23,
@@ -568,6 +808,98 @@ class _StatBox extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SmallInfo extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SmallInfo({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primary = Color(0xFF0F3D57);
+    const Color muted = Color(0xFF7B8794);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBFD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2EDF3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: primary,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EstadoMiniBadge extends StatelessWidget {
+  final String estado;
+
+  const _EstadoMiniBadge({
+    required this.estado,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final upper = estado.toUpperCase();
+
+    Color bg;
+    Color text;
+
+    if (upper == 'PAGADO') {
+      bg = const Color(0xFFEAF8EF);
+      text = const Color(0xFF1F8F4D);
+    } else if (upper == 'VENCIDO') {
+      bg = const Color(0xFFFFECEC);
+      text = const Color(0xFFD93025);
+    } else {
+      bg = const Color(0xFFFFF3DF);
+      text = const Color(0xFFC77700);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Text(
+        upper,
+        style: TextStyle(
+          color: text,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }
@@ -593,39 +925,39 @@ class _QuickAction extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
       child: Container(
-  height: 96,
-  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(22),
-    border: Border.all(color: const Color(0xFFE2EDF3)),
-  ),
-  child: Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(
-        icon,
-        color: secondary,
-        size: 28,
-      ),
-      const SizedBox(height: 8),
-      Flexible(
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: primary,
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-          ),
+        height: 96,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFE2EDF3)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: secondary,
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-    ],
-  ),
-),
     );
   }
 }
