@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/services/recibo_service.dart';
+
 import '../../core/services/pago_service.dart';
+import '../../core/services/recibo_service.dart';
 
 class PagoCipPage extends StatefulWidget {
   const PagoCipPage({super.key});
@@ -36,6 +37,10 @@ class _PagoCipPageState extends State<PagoCipPage> {
       return args;
     }
 
+    if (args is Map) {
+      return Map<String, dynamic>.from(args);
+    }
+
     return {};
   }
 
@@ -43,6 +48,7 @@ class _PagoCipPageState extends State<PagoCipPage> {
     final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
 
     if (value is int) return value;
+    if (value is num) return value.toInt();
 
     return int.tryParse(value.toString()) ?? 0;
   }
@@ -115,7 +121,11 @@ class _PagoCipPageState extends State<PagoCipPage> {
 
   double _total(Map<String, dynamic> recibo) {
     return _numero(
-      recibo['total'] ?? recibo['montoTotal'] ?? recibo['importeTotal'] ?? 0,
+      recibo['total'] ??
+          recibo['montoTotal'] ??
+          recibo['importeTotal'] ??
+          recibo['totalPagar'] ??
+          0,
     );
   }
 
@@ -123,107 +133,133 @@ class _PagoCipPageState extends State<PagoCipPage> {
     return _texto(
       recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
       'PENDIENTE',
-    );
+    ).toUpperCase();
   }
 
-Future<void> registrarPago(Map<String, dynamic> recibo) async {
-  final idRecibo = _id(recibo);
-
-  if (idRecibo <= 0) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('No se encontró el ID del recibo.'),
-        backgroundColor: Color(0xFFD93025),
-      ),
-    );
-    return;
+  bool _puedePagar(Map<String, dynamic> recibo) {
+    final estado = _estado(recibo);
+    return estado == 'PENDIENTE' || estado == 'VENCIDO';
   }
 
-  setState(() {
-    cargando = true;
-  });
-
-  try {
-    // Verifica que el recibo realmente pertenezca al cliente logueado.
-    final reciboCliente = await reciboService.obtenerMiReciboPorId(idRecibo);
-
-    if (reciboCliente == null) {
-      if (!mounted) return;
-
-      setState(() {
-        cargando = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Este recibo no pertenece al cliente autenticado. Cierra sesión e ingresa con el usuario correcto.',
-          ),
-          backgroundColor: Color(0xFFD93025),
-        ),
-      );
-      return;
-    }
-
-    if (_estado(reciboCliente).toUpperCase() == 'PAGADO') {
-      if (!mounted) return;
-
-      setState(() {
-        cargando = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Este recibo ya se encuentra pagado.'),
-          backgroundColor: Color(0xFF1F8F4D),
-        ),
-      );
-      return;
-    }
-
-    final codigoOperacion = codigoOperacionController.text.trim().isEmpty
-        ? 'APP-${DateTime.now().millisecondsSinceEpoch}'
-        : codigoOperacionController.text.trim();
-
-    await pagoService.pagarMiRecibo(
-      idRecibo: idRecibo,
-      metodoPago: metodoPago,
-      codigoOperacion: codigoOperacion,
-    );
-
-    if (!mounted) return;
-
-    setState(() {
-      cargando = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Pago registrado correctamente.'),
-        backgroundColor: Color(0xFF1F8F4D),
-      ),
-    );
-
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/recibos',
-      (route) => false,
-    );
-  } catch (e) {
-    if (!mounted) return;
-
-    setState(() {
-      cargando = false;
-    });
-
+  void _mostrarMensaje(String mensaje, {bool error = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Error al registrar pago: $e'),
-        backgroundColor: const Color(0xFFD93025),
+        content: Text(mensaje),
+        backgroundColor:
+            error ? const Color(0xFFD93025) : const Color(0xFF1F8F4D),
       ),
     );
   }
-}
+
+  Future<Map<String, dynamic>?> _buscarReciboDelCliente(int idRecibo) async {
+    final misRecibos = await reciboService.listarMisRecibos();
+
+    for (final recibo in misRecibos) {
+      if (_id(recibo) == idRecibo) {
+        return recibo;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> registrarPago(Map<String, dynamic> recibo) async {
+    final idRecibo = _id(recibo);
+
+    if (idRecibo <= 0) {
+      _mostrarMensaje(
+        'No se encontró el ID del recibo.',
+        error: true,
+      );
+      return;
+    }
+
+    if (!_puedePagar(recibo)) {
+      _mostrarMensaje(
+        'Este recibo ya se encuentra pagado o no está disponible para pago.',
+        error: true,
+      );
+      return;
+    }
+
+    final codigoDigitado = codigoOperacionController.text.trim();
+
+    if (metodoPago != 'EFECTIVO' && codigoDigitado.isEmpty) {
+      _mostrarMensaje(
+        'Ingrese el código de operación para $metodoPago.',
+        error: true,
+      );
+      return;
+    }
+
+    setState(() {
+      cargando = true;
+    });
+
+    try {
+      final reciboCliente = await _buscarReciboDelCliente(idRecibo);
+
+      if (reciboCliente == null) {
+        if (!mounted) return;
+
+        setState(() {
+          cargando = false;
+        });
+
+        _mostrarMensaje(
+          'Este recibo no pertenece al cliente autenticado.',
+          error: true,
+        );
+        return;
+      }
+
+      if (_estado(reciboCliente) == 'PAGADO') {
+        if (!mounted) return;
+
+        setState(() {
+          cargando = false;
+        });
+
+        _mostrarMensaje('Este recibo ya se encuentra pagado.');
+        return;
+      }
+
+      final codigoOperacion = codigoDigitado.isEmpty
+          ? 'APP-${DateTime.now().millisecondsSinceEpoch}'
+          : codigoDigitado;
+
+      await pagoService.pagarMiRecibo(
+        idRecibo: idRecibo,
+        metodoPago: metodoPago,
+        codigoOperacion: codigoOperacion,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        cargando = false;
+      });
+
+      _mostrarMensaje('Pago registrado correctamente.');
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/recibos',
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        cargando = false;
+      });
+
+      _mostrarMensaje(
+        'Error al registrar pago: ${e.toString().replaceFirst('Exception: ', '')}',
+        error: true,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -264,16 +300,18 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: primary.withOpacity(0.08),
+                color: primary.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
           child: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: cargando
+                ? null
+                : () {
+                    Navigator.pop(context);
+                  },
             icon: const Icon(
               Icons.arrow_back_rounded,
               color: primary,
@@ -310,6 +348,8 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
   }
 
   Widget _buildResumenPago(Map<String, dynamic> recibo) {
+    final estado = _estado(recibo);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -325,7 +365,7 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.12),
+            color: primary.withValues(alpha: 0.12),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -368,14 +408,24 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
               fontWeight: FontWeight.w700,
             ),
           ),
+          Text(
+            'Estado: $estado',
+            style: const TextStyle(
+              color: Color(0xFFE7F8FF),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 18),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.14),
+              color: Colors.white.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.18)),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.18),
+              ),
             ),
             child: Row(
               children: [
@@ -468,6 +518,8 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
   }
 
   Widget _buildOperacionInput() {
+    final requiereCodigo = metodoPago != 'EFECTIVO';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -479,18 +531,22 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Código de operación',
-            style: TextStyle(
+          Text(
+            requiereCodigo
+                ? 'Código de operación obligatorio'
+                : 'Código de operación',
+            style: const TextStyle(
               color: primary,
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Si el pago es en efectivo, este campo puede quedar vacío.',
-            style: TextStyle(
+          Text(
+            requiereCodigo
+                ? 'Ingrese el código generado por Yape, Plin o banco.'
+                : 'Si el pago es en efectivo, este campo puede quedar vacío.',
+            style: const TextStyle(
               color: muted,
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -499,8 +555,10 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
           const SizedBox(height: 14),
           TextField(
             controller: codigoOperacionController,
+            enabled: !cargando,
+            textInputAction: TextInputAction.done,
             decoration: InputDecoration(
-              hintText: 'Ej. 842913 / APP automático',
+              hintText: requiereCodigo ? 'Ej. 842913' : 'APP automático',
               filled: true,
               fillColor: const Color(0xFFF8FBFD),
               border: OutlineInputBorder(
@@ -523,11 +581,13 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
   }
 
   Widget _buildBotonPagar(Map<String, dynamic> recibo) {
+    final puedePagar = _puedePagar(recibo);
+
     return SizedBox(
       width: double.infinity,
       height: 54,
       child: ElevatedButton.icon(
-        onPressed: cargando ? null : () => registrarPago(recibo),
+        onPressed: cargando || !puedePagar ? null : () => registrarPago(recibo),
         icon: cargando
             ? const SizedBox(
                 width: 20,
@@ -539,7 +599,11 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
               )
             : const Icon(Icons.check_circle_rounded),
         label: Text(
-          cargando ? 'Registrando pago...' : 'Confirmar pago',
+          cargando
+              ? 'Registrando pago...'
+              : puedePagar
+                  ? 'Confirmar pago'
+                  : 'Recibo no disponible',
           style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 16,
@@ -549,6 +613,8 @@ Future<void> registrarPago(Map<String, dynamic> recibo) async {
           backgroundColor: secondary,
           foregroundColor: Colors.white,
           elevation: 0,
+          disabledBackgroundColor: const Color(0xFFB6C7D0),
+          disabledForegroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(17),
           ),
