@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/services/recibo_service.dart';
+
 import '../../core/services/cliente_portal_service.dart';
+import '../../core/services/recibo_service.dart';
 
 class RecibosPage extends StatefulWidget {
   const RecibosPage({super.key});
@@ -20,6 +21,7 @@ class _RecibosPageState extends State<RecibosPage> {
 
   List<Map<String, dynamic>> recibos = [];
   List<Map<String, dynamic>> suministros = [];
+
   bool cargando = false;
   String error = '';
   String filtro = 'TODOS';
@@ -30,49 +32,102 @@ class _RecibosPageState extends State<RecibosPage> {
     cargarRecibos();
   }
 
-Future<void> cargarRecibos() async {
-  setState(() {
-    cargando = true;
-    error = '';
-  });
+  String _texto(dynamic value, [String fallback = '-']) {
+    if (value == null) return fallback;
 
-  try {
-    final recibosData = await reciboService.listarMisRecibos();
-    final suministrosData = await clientePortalService.listarMisSuministros();
+    final text = value.toString().trim();
 
-    final codigosSuministroCliente = suministrosData
-        .map((s) => _texto(s['codigoSuministro'], '').trim().toUpperCase())
-        .where((codigo) => codigo.isNotEmpty)
-        .toSet();
+    if (text.isEmpty || text == 'null') return fallback;
 
-    final recibosValidados = recibosData.where((recibo) {
-      final codigoReciboSuministro =
-          _codigoSuministro(recibo).trim().toUpperCase();
-
-      return codigosSuministroCliente.contains(codigoReciboSuministro);
-    }).toList();
-
-    if (!mounted) return;
-
-    setState(() {
-      suministros = suministrosData;
-      recibos = recibosValidados;
-      cargando = false;
-    });
-  } catch (e) {
-    if (!mounted) return;
-
-    setState(() {
-      error = e.toString().replaceFirst('Exception: ', '');
-      cargando = false;
-    });
+    return text;
   }
-}
+
+  String _normalizarCodigo(String value) {
+    return value.trim().toUpperCase();
+  }
+
+  String _codigoSuministroDesdeSuministro(Map<String, dynamic> suministro) {
+    return _normalizarCodigo(
+      _texto(
+        suministro['codigoSuministro'] ??
+            suministro['suministroCodigo'] ??
+            suministro['codigo'] ??
+            suministro['numeroSuministro'],
+        '',
+      ),
+    );
+  }
+
+  String _codigoSuministro(Map<String, dynamic> recibo) {
+    return _normalizarCodigo(
+      _texto(
+        recibo['codigoSuministro'] ??
+            recibo['suministroCodigo'] ??
+            recibo['codigoSuministroRecibo'] ??
+            recibo['numeroSuministro'] ??
+            recibo['suministro'],
+        'SIN-SUMINISTRO',
+      ),
+    );
+  }
+
+  Future<void> cargarRecibos() async {
+    setState(() {
+      cargando = true;
+      error = '';
+    });
+
+    try {
+      final recibosData = await reciboService.listarMisRecibos();
+      final suministrosData = await clientePortalService.listarMisSuministros();
+
+      final codigosSuministroCliente = suministrosData
+          .map(_codigoSuministroDesdeSuministro)
+          .where((codigo) => codigo.isNotEmpty)
+          .toSet();
+
+      final recibosValidados = recibosData.where((recibo) {
+        final codigoReciboSuministro = _codigoSuministro(recibo);
+
+        if (codigoReciboSuministro.isEmpty ||
+            codigoReciboSuministro == 'SIN-SUMINISTRO') {
+          return false;
+        }
+
+        return codigosSuministroCliente.contains(codigoReciboSuministro);
+      }).toList();
+
+      recibosValidados.sort((a, b) {
+        final anioA = int.tryParse('${a['anio'] ?? 0}') ?? 0;
+        final anioB = int.tryParse('${b['anio'] ?? 0}') ?? 0;
+        final mesA = int.tryParse('${a['mes'] ?? 0}') ?? 0;
+        final mesB = int.tryParse('${b['mes'] ?? 0}') ?? 0;
+
+        final periodoA = anioA * 100 + mesA;
+        final periodoB = anioB * 100 + mesB;
+
+        return periodoB.compareTo(periodoA);
+      });
+
+      if (!mounted) return;
+
+      setState(() {
+        suministros = suministrosData;
+        recibos = recibosValidados;
+        cargando = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        error = e.toString().replaceFirst('Exception: ', '');
+        cargando = false;
+      });
+    }
+  }
 
   List<Map<String, dynamic>> get recibosFiltrados {
-    if (filtro == 'TODOS') {
-      return recibos;
-    }
+    if (filtro == 'TODOS') return recibos;
 
     return recibos.where((recibo) {
       final estado = _estado(recibo).toUpperCase();
@@ -88,6 +143,12 @@ Future<void> cargarRecibos() async {
     }).length;
   }
 
+  int get vencidos {
+    return recibos.where((recibo) {
+      return _estado(recibo).toUpperCase() == 'VENCIDO';
+    }).length;
+  }
+
   int get pagados {
     return recibos.where((recibo) {
       return _estado(recibo).toUpperCase() == 'PAGADO';
@@ -96,22 +157,18 @@ Future<void> cargarRecibos() async {
 
   double get deudaPendiente {
     return recibos.where((recibo) {
-      return _estado(recibo).toUpperCase() == 'PENDIENTE';
+      final estado = _estado(recibo).toUpperCase();
+      return estado == 'PENDIENTE' || estado == 'VENCIDO';
     }).fold(0.0, (sum, recibo) {
       return sum + _total(recibo);
     });
   }
 
-  String _texto(dynamic value, [String fallback = '-']) {
-    if (value == null) return fallback;
-    final text = value.toString();
-    if (text.trim().isEmpty) return fallback;
-    return text;
-  }
-
   int _id(Map<String, dynamic> recibo) {
     final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
+
     if (value is int) return value;
+
     return int.tryParse(value.toString()) ?? 0;
   }
 
@@ -121,15 +178,6 @@ Future<void> cargarRecibos() async {
           recibo['numeroRecibo'] ??
           recibo['codigo'] ??
           'REC-${_id(recibo)}',
-    );
-  }
-
-  String _codigoSuministro(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['codigoSuministro'] ??
-          recibo['suministroCodigo'] ??
-          recibo['suministro'] ??
-          'SIN-SUMINISTRO',
     );
   }
 
@@ -164,6 +212,7 @@ Future<void> cargarRecibos() async {
 
       final mesNumero = int.tryParse(mes.toString()) ?? 1;
       final nombreMes = meses[(mesNumero - 1).clamp(0, 11)];
+
       return '$nombreMes $anio';
     }
 
@@ -173,27 +222,33 @@ Future<void> cargarRecibos() async {
     );
   }
 
-  double _consumo(Map<String, dynamic> recibo) {
-    final value =
-        recibo['consumoM3'] ?? recibo['consumo'] ?? recibo['consumoMes'] ?? 0;
-
+  double _numero(dynamic value) {
     if (value is num) return value.toDouble();
+
     return double.tryParse(value.toString()) ?? 0.0;
   }
 
-  double _total(Map<String, dynamic> recibo) {
-    final value =
-        recibo['total'] ?? recibo['montoTotal'] ?? recibo['importeTotal'] ?? 0;
+  double _consumo(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['consumoM3'] ?? recibo['consumo'] ?? recibo['consumoMes'] ?? 0,
+    );
+  }
 
-    if (value is num) return value.toDouble();
-    return double.tryParse(value.toString()) ?? 0.0;
+  double _total(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['total'] ??
+          recibo['montoTotal'] ??
+          recibo['importeTotal'] ??
+          recibo['totalPagar'] ??
+          0,
+    );
   }
 
   String _estado(Map<String, dynamic> recibo) {
     return _texto(
       recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
       'PENDIENTE',
-    );
+    ).toUpperCase();
   }
 
   String _vencimiento(Map<String, dynamic> recibo) {
@@ -204,7 +259,8 @@ Future<void> cargarRecibos() async {
   }
 
   bool _puedePagar(Map<String, dynamic> recibo) {
-    return _estado(recibo).toUpperCase() == 'PENDIENTE';
+    final estado = _estado(recibo);
+    return estado == 'PENDIENTE' || estado == 'VENCIDO';
   }
 
   void _verDetalle(Map<String, dynamic> recibo) {
@@ -249,6 +305,8 @@ Future<void> cargarRecibos() async {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
+                const SizedBox(height: 18),
+                _buildHero(),
                 const SizedBox(height: 18),
                 _buildStats(),
                 const SizedBox(height: 18),
@@ -300,7 +358,7 @@ Future<void> cargarRecibos() async {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: primary.withOpacity(0.08),
+                color: primary.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -315,6 +373,61 @@ Future<void> cargarRecibos() async {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildHero() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF0F3D57),
+            Color(0xFF1DA1C2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 28,
+            backgroundColor: Colors.white24,
+            child: Icon(
+              Icons.receipt_long_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Consulta tus recibos',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Suministros asociados: ${suministros.length}',
+                  style: const TextStyle(
+                    color: Color(0xFFE7F8FF),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -340,16 +453,16 @@ Future<void> cargarRecibos() async {
           color: const Color(0xFFC77700),
         ),
         _StatCard(
-          icon: Icons.check_circle_rounded,
-          label: 'Pagados',
-          value: '$pagados',
-          color: const Color(0xFF1F8F4D),
+          icon: Icons.warning_amber_rounded,
+          label: 'Vencidos',
+          value: '$vencidos',
+          color: const Color(0xFFD93025),
         ),
         _StatCard(
           icon: Icons.account_balance_wallet_rounded,
           label: 'Deuda',
           value: 'S/ ${deudaPendiente.toStringAsFixed(2)}',
-          color: const Color(0xFFD93025),
+          color: const Color(0xFF1DA1C2),
         ),
       ],
     );
@@ -611,7 +724,7 @@ class _ReciboCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE2EDF3)),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.06),
+            color: primary.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -665,8 +778,13 @@ class _ReciboCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: OutlinedButton.icon(
                   onPressed: onVerDetalle,
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  label: const Text(
+                    'Ver recibo',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primary,
                     backgroundColor: const Color(0xFFF0FAFD),
@@ -676,17 +794,18 @@ class _ReciboCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: const Text(
-                    'Ver recibo',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
                 ),
               ),
               if (puedePagar) ...[
                 const SizedBox(width: 10),
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: onPagar,
+                    icon: const Icon(Icons.payment_rounded, size: 18),
+                    label: const Text(
+                      'Pagar',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: secondary,
                       foregroundColor: Colors.white,
@@ -695,10 +814,6 @@ class _ReciboCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                    ),
-                    child: const Text(
-                      'Pagar',
-                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
                 ),

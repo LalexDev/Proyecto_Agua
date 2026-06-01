@@ -8,7 +8,7 @@ import 'features/perfil/perfil_page.dart';
 
 import 'features/recibos/recibos_page.dart';
 import 'features/recibos/recibo_detail_page.dart';
-import 'features/recibos/pdf_viewer_page.dart' as recibo_pdf_viewer;
+import 'features/recibos/pdf_viewer_page.dart';
 
 import 'features/pagos/pago_cip_page.dart';
 
@@ -24,6 +24,7 @@ import 'features/lector/detalle_suministro_page.dart';
 import 'features/lector/registrar_lectura_page.dart';
 import 'features/lector/comprobante_recibo_page.dart';
 import 'features/lector/historial_lecturas_page.dart';
+import 'features/lector/qr_scanner_page.dart';
 
 class JassHuacarizApp extends StatelessWidget {
   const JassHuacarizApp({super.key});
@@ -54,7 +55,7 @@ class JassHuacarizApp extends StatelessWidget {
         '/recibo-detalle': (_) => const ReciboDetailPage(),
         '/pago-cip': (_) => const PagoCipPage(),
         '/perfil': (_) => const PerfilPage(),
-        '/pdf-viewer': (_) => const recibo_pdf_viewer.ReciboPdfViewerPage(),
+        '/pdf-viewer': (_) => const PdfViewerPage(),
 
         // Admin
         '/admin-dashboard': (_) => const AdminDashboardPage(),
@@ -66,6 +67,7 @@ class JassHuacarizApp extends StatelessWidget {
         // Lecturador
         '/lector-home': (_) => const LectorHomePage(),
         '/buscar-suministro': (_) => const BuscarSuministroPage(),
+        '/qr-scanner': (_) => const QrScannerPage(),
         '/detalle-suministro': (_) => const DetalleSuministroPage(),
         '/registrar-lectura': (_) => const RegistrarLecturaPage(),
         '/comprobante-recibo': (_) => const ComprobanteReciboPage(),
@@ -75,7 +77,6 @@ class JassHuacarizApp extends StatelessWidget {
   }
 }
 
-// Compatibilidad si tu main.dart todavía usa MyApp()
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

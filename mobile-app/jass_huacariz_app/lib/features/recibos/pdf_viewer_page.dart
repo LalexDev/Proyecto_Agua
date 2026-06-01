@@ -5,22 +5,24 @@ import 'package:printing/printing.dart';
 
 import '../../core/services/recibo_pdf_service.dart';
 
-class ReciboPdfViewerPage extends StatefulWidget {
-  const ReciboPdfViewerPage({super.key});
+class PdfViewerPage extends StatefulWidget {
+  const PdfViewerPage({super.key});
 
   @override
-  State<ReciboPdfViewerPage> createState() => _ReciboPdfViewerPageState();
+  State<PdfViewerPage> createState() => _PdfViewerPageState();
 }
 
-class _ReciboPdfViewerPageState extends State<ReciboPdfViewerPage> {
+class _PdfViewerPageState extends State<PdfViewerPage> {
   static const Color primary = Color(0xFF0F3D57);
   static const Color secondary = Color(0xFF1DA1C2);
+  static const Color background = Color(0xFFEFF7FB);
 
   Map<String, dynamic> recibo = {};
   Uint8List? pdfBytes;
 
   bool cargando = true;
   bool generado = false;
+  String error = '';
 
   @override
   void didChangeDependencies() {
@@ -39,7 +41,7 @@ class _ReciboPdfViewerPageState extends State<ReciboPdfViewerPage> {
       recibo = {};
     }
 
-    _generarPdf();
+    _cargarPdfReal();
   }
 
   String _codigoRecibo() {
@@ -53,7 +55,12 @@ class _ReciboPdfViewerPageState extends State<ReciboPdfViewerPage> {
     return text.replaceAll('/', '-').replaceAll(' ', '_');
   }
 
-  Future<void> _generarPdf() async {
+  Future<void> _cargarPdfReal() async {
+    setState(() {
+      cargando = true;
+      error = '';
+    });
+
     try {
       final bytes = await ReciboPdfService.generar(recibo);
 
@@ -68,11 +75,12 @@ class _ReciboPdfViewerPageState extends State<ReciboPdfViewerPage> {
 
       setState(() {
         cargando = false;
+        error = e.toString().replaceFirst('Exception: ', '');
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al generar PDF: $e'),
+          content: Text('Error al cargar PDF: $error'),
           backgroundColor: const Color(0xFFD93025),
         ),
       );
@@ -100,76 +108,153 @@ class _ReciboPdfViewerPageState extends State<ReciboPdfViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF7FB),
+      backgroundColor: background,
       appBar: AppBar(
         backgroundColor: primary,
         foregroundColor: Colors.white,
-        title: const Text('Recibo PDF'),
+        title: const Text(
+          'Recibo PDF',
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
         actions: [
           IconButton(
-            onPressed: cargando ? null : _imprimirPdf,
+            onPressed: cargando ? null : _cargarPdfReal,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Recargar',
+          ),
+          IconButton(
+            onPressed: cargando || pdfBytes == null ? null : _imprimirPdf,
             icon: const Icon(Icons.print_rounded),
             tooltip: 'Imprimir',
           ),
           IconButton(
-            onPressed: cargando ? null : _compartirPdf,
+            onPressed: cargando || pdfBytes == null ? null : _compartirPdf,
             icon: const Icon(Icons.share_rounded),
             tooltip: 'Compartir / Guardar',
           ),
         ],
       ),
-      body: cargando
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : pdfBytes == null
-              ? const Center(
-                  child: Text('No se pudo generar el PDF.'),
-                )
-              : Column(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      color: Colors.white,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: _compartirPdf,
-                              icon: const Icon(Icons.download_rounded),
-                              label: const Text('Descargar / Compartir'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: secondary,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _imprimirPdf,
-                              icon: const Icon(Icons.print_rounded),
-                              label: const Text('Imprimir'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: PdfPreview(
-                        canChangeOrientation: false,
-                        canChangePageFormat: false,
-                        canDebug: false,
-                        pdfFileName: '${_codigoRecibo()}.pdf',
-                        build: (_) async => pdfBytes!,
-                      ),
-                    ),
-                  ],
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (cargando) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (pdfBytes == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFECEC),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: const Color(0xFFFFD1D1),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.picture_as_pdf_outlined,
+                  color: Color(0xFFD93025),
+                  size: 44,
                 ),
+                const SizedBox(height: 12),
+                const Text(
+                  'No se pudo cargar el PDF real del recibo.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: primary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.isEmpty ? 'Verifica el endpoint del backend.' : error,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFD93025),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _cargarPdfReal,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Reintentar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: secondary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          color: Colors.white,
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _compartirPdf,
+                  icon: const Icon(Icons.download_rounded),
+                  label: const Text(
+                    'Descargar / Compartir',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: secondary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size(0, 48),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _imprimirPdf,
+                  icon: const Icon(Icons.print_rounded),
+                  label: const Text(
+                    'Imprimir',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primary,
+                    minimumSize: const Size(0, 48),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: PdfPreview(
+            canChangeOrientation: false,
+            canChangePageFormat: false,
+            canDebug: false,
+            pdfFileName: '${_codigoRecibo()}.pdf',
+            build: (_) async => pdfBytes!,
+          ),
+        ),
+      ],
     );
   }
 }

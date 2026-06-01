@@ -80,4 +80,12 @@ class ApiConfig {
 
   // ADMIN HISTORIAL LECTURAS
   static const String historialLecturasAdmin = '/admin/lecturas/historial';
+
+  static String reciboPdfPorId(int idRecibo) {
+  return '/recibos/$idRecibo/pdf';
+}
+
+static String reciboPdfPorCodigo(String codigoRecibo) {
+  return '/recibos/pdf/$codigoRecibo';
+}
 }

@@ -7,7 +7,11 @@ import com.jass.huacariz.dto.response.PagoResponse;
 import com.jass.huacariz.dto.response.ReciboResponse;
 import com.jass.huacariz.dto.response.SuministroResponse;
 import com.jass.huacariz.service.ClientePortalService;
+import com.jass.huacariz.service.ReciboPdfService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +24,7 @@ import java.util.Map;
 public class ClientePortalController {
 
     private final ClientePortalService clientePortalService;
+    private final ReciboPdfService reciboPdfService;
 
     @GetMapping("/me")
     public ResponseEntity<ClientePerfilResponse> obtenerMiPerfil() {
@@ -34,6 +39,22 @@ public class ClientePortalController {
     @GetMapping("/me/recibos")
     public ResponseEntity<List<ReciboResponse>> listarMisRecibos() {
         return ResponseEntity.ok(clientePortalService.listarMisRecibos());
+    }
+
+    @GetMapping(value = "/me/recibos/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> descargarMiReciboPdf(@PathVariable Integer id) {
+        byte[] pdf = reciboPdfService.generarPdfCliente(id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.inline()
+                                .filename("mi-recibo-" + id + ".pdf")
+                                .build()
+                                .toString()
+                )
+                .body(pdf);
     }
 
     @PatchMapping("/me/recibos/{id}/pagar")
