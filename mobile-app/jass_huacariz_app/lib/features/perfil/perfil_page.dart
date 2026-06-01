@@ -102,17 +102,54 @@ class _PerfilPageState extends State<PerfilPage> {
     return value.toString().toLowerCase() == 'true';
   }
 
-  Future<void> cerrarSesion() async {
-    await storageService.clearSession();
+Future<void> cerrarSesion() async {
+  final confirmar = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text(
+          'Cerrar sesión',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        content: const Text(
+          '¿Deseas cerrar tu sesión actual?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, false);
+            },
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD93025),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      );
+    },
+  );
 
-    if (!mounted) return;
+  if (confirmar != true) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
-  }
+  await storageService.clearSession();
+
+  if (!mounted) return;
+
+  Navigator.pushNamedAndRemoveUntil(
+    context,
+    '/login',
+    (route) => false,
+  );
+}
 
   void irCambiarPassword() {
     Navigator.pushNamed(context, '/cambiar-password');
