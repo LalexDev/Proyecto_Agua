@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../core/services/auth_service.dart';
 import '../../core/storage/secure_storage_service.dart';
 
@@ -10,6 +11,9 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  static const Color primary = Color(0xFF0F3D57);
+  static const Color secondary = Color(0xFF1DA1C2);
+
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -19,361 +23,605 @@ class _LoginPageState extends State<LoginPage> {
   bool mostrarPassword = false;
   bool cargando = false;
 
-Future<void> iniciarSesion() async {
-  final usuario = usuarioController.text.trim();
-  final password = passwordController.text.trim();
-
-  if (usuario.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Ingresa usuario y contraseña.'),
-        backgroundColor: Color(0xFFD93025),
-      ),
-    );
-    return;
+  @override
+  void dispose() {
+    usuarioController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
-  setState(() {
-    cargando = true;
-  });
+  Future<void> iniciarSesion() async {
+    final usuario = usuarioController.text.trim();
+    final password = passwordController.text.trim();
 
-  try {
-    await authService.login(
-      codigoUsuario: usuario,
-      password: password,
-    );
-
-    final role = await storageService.getUserRole();
-    final rolNormalizado = role?.toUpperCase().trim() ?? '';
-
-    if (!mounted) return;
+    if (usuario.isEmpty || password.isEmpty) {
+      _mostrarMensaje('Ingresa usuario y contraseña.', esError: true);
+      return;
+    }
 
     setState(() {
-      cargando = false;
+      cargando = true;
     });
 
-    if (rolNormalizado.contains('ADMIN')) {
-      Navigator.pushReplacementNamed(context, '/admin-dashboard');
-      return;
-    }
+    try {
+      await authService.login(
+        codigoUsuario: usuario,
+        password: password,
+      );
 
-    if (rolNormalizado.contains('LECTURADOR') ||
-        rolNormalizado.contains('LECTOR')) {
-      Navigator.pushReplacementNamed(context, '/lector-home');
-      return;
-    }
+      final role = await storageService.getUserRole();
+      final rol = role?.toUpperCase().trim() ?? '';
 
-    if (rolNormalizado.contains('CLIENTE') ||
-        rolNormalizado.contains('USUARIO') ||
-        rolNormalizado.contains('USER')) {
+      if (!mounted) return;
+
+      setState(() {
+        cargando = false;
+      });
+
+      if (rol.contains('ADMIN')) {
+        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        return;
+      }
+
+      if (rol.contains('LECTURADOR') || rol.contains('LECTOR')) {
+        Navigator.pushReplacementNamed(context, '/lector-home');
+        return;
+      }
+
       Navigator.pushReplacementNamed(context, '/home');
-      return;
-    }
+    } catch (e) {
+      if (!mounted) return;
 
+      setState(() {
+        cargando = false;
+      });
+
+      _mostrarMensaje(
+        'Error al iniciar sesión: ${e.toString().replaceFirst('Exception: ', '')}',
+        esError: true,
+      );
+    }
+  }
+
+  void _mostrarMensaje(String mensaje, {required bool esError}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Rol no reconocido: $role'),
-        backgroundColor: const Color(0xFFD93025),
+        content: Text(mensaje),
+        backgroundColor: esError ? Colors.red : Colors.green,
       ),
     );
-  } catch (e) {
-    if (!mounted) return;
+  }
 
-    setState(() {
-      cargando = false;
-    });
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFEFF5F8),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/login-fondo-huacariz.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(color: primary);
+              },
+            ),
+          ),
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error al iniciar sesión: $e'),
-        backgroundColor: const Color(0xFFD93025),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF061A24).withValues(alpha: 0.48),
+                    const Color(0xFF0F3D57).withValues(alpha: 0.45),
+                    const Color(0xFF1DA1C2).withValues(alpha: 0.28),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTopBrand(),
+                  const SizedBox(height: 28),
+                  _buildHeroText(),
+                  const SizedBox(height: 26),
+                  _buildLoginCard(),
+                  const SizedBox(height: 18),
+                  const Center(
+                    child: Text(
+                      'Proyecto Agua · JASS Huacariz',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopBrand() {
+    return Row(
+      children: [
+        Container(
+          width: 54,
+          height: 54,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.14),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.water_drop_outlined,
+            color: Colors.white,
+            size: 30,
+          ),
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'JASS Huacariz',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                'Sistema Administrador de Servicios de Saneamiento',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeroText() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.verified_user_outlined, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Servicio público confiable y transparente',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'Agua que nos une,\ncomunidad que avanza.',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 37,
+            height: 1.08,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Trabajamos cada día para brindar un servicio de agua potable seguro, sostenible y cercano a las familias de Huacariz.',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 14,
+            height: 1.45,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 18),
+        Row(
+          children: const [
+            Expanded(
+              child: _InfoMiniCard(
+                icon: Icons.water_drop_outlined,
+                title: 'Agua segura',
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: _InfoMiniCard(
+                icon: Icons.groups_2_outlined,
+                title: 'Gestión',
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: _InfoMiniCard(
+                icon: Icons.eco_outlined,
+                title: 'Cuidado',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 74,
+            height: 74,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE7F6FA),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: const Icon(
+              Icons.water_drop_outlined,
+              color: secondary,
+              size: 42,
+            ),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'AGUA POTABLE\nHUACARIZ\nSAN ANTONIO',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: primary,
+              fontSize: 18,
+              height: 1.35,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Tu servicio de agua en línea',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Color(0xFF667085),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          _label('Usuario o DNI'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: usuarioController,
+            enabled: !cargando,
+            decoration: _inputDecoration(
+              hint: 'Ej. 12345678',
+              icon: Icons.person_outline,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          _label('Contraseña'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: passwordController,
+            enabled: !cargando,
+            obscureText: !mostrarPassword,
+            onSubmitted: (_) {
+              if (!cargando) iniciarSesion();
+            },
+            decoration: _inputDecoration(
+              hint: 'Ingresa tu contraseña',
+              icon: Icons.lock_outline,
+              suffix: IconButton(
+                onPressed: cargando
+                    ? null
+                    : () {
+                        setState(() {
+                          mostrarPassword = !mostrarPassword;
+                        });
+                      },
+                icon: Icon(
+                  mostrarPassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: cargando ? null : iniciarSesion,
+              icon: cargando
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.3,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.login_rounded),
+              label: Text(
+                cargando ? 'Validando datos...' : 'Ingresar al portal',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 18),
+          const Text(
+            '¿Qué deseas hacer hoy?',
+            style: TextStyle(
+              color: Color(0xFF667085),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: const [
+              Expanded(
+                child: _AccionMiniCard(
+                  icon: Icons.receipt_long_outlined,
+                  title: 'Consultar',
+                  subtitle: 'mi recibo',
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: _AccionMiniCard(
+                  icon: Icons.credit_card_outlined,
+                  title: 'Pagar',
+                  subtitle: 'en línea',
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: _AccionMiniCard(
+                  icon: Icons.report_problem_outlined,
+                  title: 'Reportar',
+                  subtitle: 'incidencia',
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+          const Divider(color: Color(0xFFE4E7EC)),
+          const SizedBox(height: 10),
+
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _FooterMini(icon: Icons.access_time, text: 'Atención rápida'),
+              _FooterMini(icon: Icons.lock_outline, text: 'Pagos seguros'),
+              _FooterMini(icon: Icons.support_agent, text: 'Consulta 24/7'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _label(String texto) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        texto,
+        style: const TextStyle(
+          color: primary,
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String hint,
+    required IconData icon,
+    Widget? suffix,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon, color: const Color(0xFF98A2B3)),
+      suffixIcon: suffix,
+      filled: true,
+      fillColor: const Color(0xFFF7FAFC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: secondary, width: 1.5),
       ),
     );
   }
 }
 
+class _InfoMiniCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const _InfoMiniCard({
+    required this.icon,
+    required this.title,
+  });
+
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
-    const Color background = Color(0xFFF4F8FB);
+    return Container(
+      height: 84,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.22),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          const Spacer(),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-    return Scaffold(
-      backgroundColor: background,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 48,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            primary,
-                            Color(0xFF146C94),
-                            secondary,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: [
-                          BoxShadow(
-                            color: primary.withOpacity(0.20),
-                            blurRadius: 28,
-                            offset: const Offset(0, 14),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 86,
-                            height: 86,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.18),
-                              borderRadius: BorderRadius.circular(26),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                '💧',
-                                style: TextStyle(fontSize: 44),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            'JASS Huacariz',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Sistema móvil para clientes del servicio de agua potable',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xFFE7F8FF),
-                              fontSize: 14,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+class _AccionMiniCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
 
-                    const SizedBox(height: 28),
+  const _AccionMiniCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: primary.withOpacity(0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Iniciar sesión',
-                            style: TextStyle(
-                              color: primary,
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Ingresa con tu DNI o usuario y contraseña.',
-                            style: TextStyle(
-                              color: Color(0xFF7B8794),
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
-                          ),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 92,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE4E7EC)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: _LoginPageState.secondary, size: 22),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF0F3D57),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF98A2B3),
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-                          const SizedBox(height: 26),
+class _FooterMini extends StatelessWidget {
+  final IconData icon;
+  final String text;
 
-                          const Text(
-                            'Usuario o DNI',
-                            style: TextStyle(
-                              color: primary,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: usuarioController,
-                            keyboardType: TextInputType.text,
-                            decoration: InputDecoration(
-                              hintText: 'Ej. 12345678',
-                              prefixIcon: const Icon(Icons.person_outline),
-                              filled: true,
-                              fillColor: background,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(
-                                  color: secondary,
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                          ),
+  const _FooterMini({
+    required this.icon,
+    required this.text,
+  });
 
-                          const SizedBox(height: 18),
-
-                          const Text(
-                            'Contraseña',
-                            style: TextStyle(
-                              color: primary,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: passwordController,
-                            obscureText: !mostrarPassword,
-                            decoration: InputDecoration(
-                              hintText: 'Ingresa tu contraseña',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    mostrarPassword = !mostrarPassword;
-                                  });
-                                },
-                                icon: Icon(
-                                  mostrarPassword
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                ),
-                              ),
-                              filled: true,
-                              fillColor: background,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(
-                                  color: secondary,
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 26),
-
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton(
-                              onPressed: cargando ? null : iniciarSesion,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: secondary,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: cargando
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Ingresar',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: background,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '¿No tienes cuenta?',
-                                  style: TextStyle(
-                                    color: primary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                SizedBox(height: 6),
-                                Text(
-                                  'Contacta a tu administrador para crear una cuenta.',
-                                  style: TextStyle(
-                                    color: Color(0xFF7B8794),
-                                    fontSize: 13,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    const Text(
-                      'Proyecto Agua · JASS Huacariz',
-                      style: TextStyle(
-                        color: Color(0xFF7B8794),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF98A2B3)),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              text,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF98A2B3),
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
               ),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
