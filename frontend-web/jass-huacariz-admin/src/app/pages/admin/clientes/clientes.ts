@@ -10,7 +10,9 @@ import {
   ClienteResponse,
   LecturadorRequest,
   SuministroRequest,
-  SuministroResponse
+  SuministroResponse,
+  SectorResponse,
+  SectorRequest
 } from '../../../core/services/cliente';
 
 type TipoAccion = 'CLIENTE' | 'SUMINISTRO' | 'ELIMINAR_SUMINISTRO';
@@ -35,6 +37,15 @@ interface AccionPendiente {
 export class Clientes implements OnInit {
   clientes: ClienteResponse[] = [];
   clientesFiltrados: ClienteResponse[] = [];
+  sectores: SectorResponse[] = [];
+
+  nuevoSector: SectorRequest = {
+    nombre: '',
+    descripcion: '',
+    estado: true
+  };
+
+  guardandoSector = false;
 
   cargando = false;
   guardando = false;
@@ -76,7 +87,30 @@ export class Clientes implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.cargarSectores();
     this.cargarClientes();
+  }
+
+  cargarSectores(): void {
+
+  this.clienteService.listarSectores().subscribe({
+
+    next: (data) => {
+
+      this.sectores = data || [];
+
+      this.cdr.detectChanges();
+    },
+
+    error: () => {
+
+      this.sectores = [];
+
+      this.cdr.detectChanges();
+    }
+
+    });
+
   }
 
   cargarClientes(): void {

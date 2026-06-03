@@ -23,8 +23,33 @@ public class SectorController {
         return ResponseEntity.ok(sectorService.listarSectores());
     }
 
+    @GetMapping("/activos")
+    public ResponseEntity<List<SectorResponse>> listarSectoresActivos() {
+        return ResponseEntity.ok(sectorService.listarSectoresActivos());
+    }
+
     @PostMapping
-    public ResponseEntity<SectorResponse> registrarSector(@Valid @RequestBody SectorRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(sectorService.registrarSector(request));
+    public ResponseEntity<SectorResponse> registrarSector(
+            @Valid @RequestBody SectorRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(sectorService.registrarSector(request));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<SectorResponse> actualizarSector(
+            @PathVariable Integer id,
+            @Valid @RequestBody SectorRequest request
+    ) {
+        return ResponseEntity.ok(sectorService.actualizarSector(id, request));
+    }
+
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<SectorResponse> cambiarEstado(
+            @PathVariable Integer id,
+            @RequestParam Boolean estado
+    ) {
+        return ResponseEntity.ok(sectorService.cambiarEstado(id, estado));
     }
 }

@@ -1,0 +1,208 @@
+<div class="sectores-page">
+  <section class="page-header">
+    <div class="page-header__content">
+      <span class="page-kicker">ADMINISTRACIÓN / SECTORES</span>
+      <h2>Sectores</h2>
+      <p>Registra, edita, activa o desactiva los sectores donde se ubican los suministros.</p>
+    </div>
+
+    <div class="page-header__actions">
+      <button type="button" class="btn-secondary" (click)="cargarSectores()" [disabled]="cargando">
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+      </button>
+
+      <button type="button" class="btn-primary" (click)="abrirNuevo()">
+        + Nuevo sector
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="error && !mostrarFormulario" class="alert alert-error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="exito && !mostrarFormulario" class="alert alert-success">
+    {{ exito }}
+  </div>
+
+  <div *ngIf="cargando" class="alert alert-info">
+    Cargando sectores...
+  </div>
+
+  <section class="stats-grid">
+    <article class="stat-card featured">
+      <div class="stat-card__icon">🗺️</div>
+      <div class="stat-card__content">
+        <span>Total sectores</span>
+        <strong>{{ totalSectores() }}</strong>
+        <small>Sectores registrados</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon success">✅</div>
+      <div class="stat-card__content">
+        <span>Activos</span>
+        <strong>{{ sectoresActivos() }}</strong>
+        <small>Disponibles para asignar</small>
+      </div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-card__icon danger">⛔</div>
+      <div class="stat-card__content">
+        <span>Inactivos</span>
+        <strong>{{ sectoresInactivos() }}</strong>
+        <small>No disponibles</small>
+      </div>
+    </article>
+  </section>
+
+  <section class="filter-card">
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        type="text"
+        placeholder="Buscar por nombre o descripción..."
+        [(ngModel)]="busqueda"
+        (input)="aplicarFiltros()"
+      >
+    </div>
+
+    <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
+      <option value="TODOS">Todos</option>
+      <option value="ACTIVO">Activos</option>
+      <option value="INACTIVO">Inactivos</option>
+    </select>
+
+    <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+      Limpiar
+    </button>
+  </section>
+
+  <section class="table-card">
+    <div class="table-card__header">
+      <div>
+        <span class="page-kicker small">REGISTROS</span>
+        <h3>Listado de sectores</h3>
+      </div>
+
+      <span>{{ sectoresFiltrados.length }} resultado(s)</span>
+    </div>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Sector</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let sector of sectoresFiltrados">
+            <td>
+              <strong>{{ sector.id }}</strong>
+            </td>
+
+            <td>
+              <strong>{{ sector.nombre }}</strong>
+            </td>
+
+            <td>{{ sector.descripcion || '-' }}</td>
+
+            <td>
+              <span class="status-badge" [ngClass]="estadoClase(sector.estado)">
+                {{ estadoTexto(sector.estado) }}
+              </span>
+            </td>
+
+            <td>
+              <div class="actions-cell">
+                <button type="button" class="table-action" (click)="abrirEditar(sector)">
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  class="table-action"
+                  [ngClass]="sector.estado ? 'danger-soft' : 'success-soft'"
+                  (click)="cambiarEstado(sector)"
+                >
+                  {{ sector.estado ? 'Desactivar' : 'Activar' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!cargando && sectoresFiltrados.length === 0">
+            <td colspan="5" class="empty-state">
+              No hay sectores registrados con los filtros seleccionados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="mostrarFormulario">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="tag">{{ editando ? 'Editar sector' : 'Nuevo sector' }}</span>
+          <h3>{{ editando ? 'Actualizar sector' : 'Registrar sector' }}</h3>
+          <p>El nombre del sector se usará para asignar suministros y lecturadores.</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarFormulario()">
+          ✕
+        </button>
+      </div>
+
+      <div *ngIf="error" class="alert alert-error modal-alert">
+        {{ error }}
+      </div>
+
+      <div class="form-grid">
+        <label class="full">
+          Nombre del sector
+          <input
+            type="text"
+            [(ngModel)]="formSector.nombre"
+            placeholder="Ejemplo: SECTOR HUACARIZ"
+          >
+        </label>
+
+        <label class="full">
+          Descripción
+          <input
+            type="text"
+            [(ngModel)]="formSector.descripcion"
+            placeholder="Referencia o descripción opcional"
+          >
+        </label>
+
+        <label>
+          Estado
+          <select [(ngModel)]="formSector.estado">
+            <option [ngValue]="true">Activo</option>
+            <option [ngValue]="false">Inactivo</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarFormulario()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" [disabled]="guardando" (click)="guardarSector()">
+          {{ guardando ? 'Guardando...' : 'Guardar sector' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -6,7 +6,6 @@ import com.jass.huacariz.entity.Sector;
 import com.jass.huacariz.repository.SectorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,37 +15,77 @@ public class SectorService {
 
     private final SectorRepository sectorRepository;
 
-    @Transactional(readOnly = true)
     public List<SectorResponse> listarSectores() {
-        return sectorRepository.findAll()
+        return sectorRepository.findAllByOrderByNombreAsc()
                 .stream()
-                .map(this::convertirAResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
-    @Transactional
+    public List<SectorResponse> listarSectoresActivos() {
+        return sectorRepository.findByEstadoTrueOrderByNombreAsc()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public SectorResponse registrarSector(SectorRequest request) {
-        if (sectorRepository.existsByNombre(request.getNombre())) {
-            throw new RuntimeException("Ya existe un sector con el nombre: " + request.getNombre());
+        String nombre = normalizarNombre(request.getNombre());
+
+        if (sectorRepository.existsByNombreIgnoreCase(nombre)) {
+            throw new RuntimeException("Ya existe un sector con ese nombre.");
         }
 
         Sector sector = Sector.builder()
-                .nombre(request.getNombre())
-                .descripcion(request.getDescripcion())
-                .estado(request.getEstado() != null ? request.getEstado() : true)
+                .nombre(nombre)
+                .descripcion(limpiar(request.getDescripcion()))
+                .estado(request.getEstado() == null ? true : request.getEstado())
                 .build();
 
-        sector = sectorRepository.save(sector);
-
-        return convertirAResponse(sector);
+        return toResponse(sectorRepository.save(sector));
     }
 
-    private SectorResponse convertirAResponse(Sector sector) {
+    public SectorResponse actualizarSector(Integer id, SectorRequest request) {
+        Sector sector = sectorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No existe el sector seleccionado."));
+
+        String nombre = normalizarNombre(request.getNombre());
+
+        if (!sector.getNombre().equalsIgnoreCase(nombre)
+                && sectorRepository.existsByNombreIgnoreCase(nombre)) {
+            throw new RuntimeException("Ya existe otro sector con ese nombre.");
+        }
+
+        sector.setNombre(nombre);
+        sector.setDescripcion(limpiar(request.getDescripcion()));
+        sector.setEstado(request.getEstado() == null ? sector.getEstado() : request.getEstado());
+
+        return toResponse(sectorRepository.save(sector));
+    }
+
+    public SectorResponse cambiarEstado(Integer id, Boolean estado) {
+        Sector sector = sectorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No existe el sector seleccionado."));
+
+        sector.setEstado(Boolean.TRUE.equals(estado));
+
+        return toResponse(sectorRepository.save(sector));
+    }
+
+    private SectorResponse toResponse(Sector sector) {
         return SectorResponse.builder()
                 .id(sector.getId())
                 .nombre(sector.getNombre())
                 .descripcion(sector.getDescripcion())
                 .estado(sector.getEstado())
                 .build();
+    }
+
+    private String normalizarNombre(String valor) {
+        return valor == null ? "" : valor.trim().toUpperCase();
+    }
+
+    private String limpiar(String valor) {
+        return valor == null ? "" : valor.trim();
     }
 }

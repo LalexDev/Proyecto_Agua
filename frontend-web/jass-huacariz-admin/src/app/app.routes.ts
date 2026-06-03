@@ -28,6 +28,8 @@ import { LecturasLecturador } from './pages/lecturador/lecturas/lecturas';
 import { authGuard } from './core/guards/auth-guard';
 import { roleGuard } from './core/guards/role-guard';
 
+import { Sectores } from './pages/admin/sectores/sectores';
+
 export const routes: Routes = [
   {
     path: '',
@@ -53,7 +55,8 @@ export const routes: Routes = [
       { path: 'reportes', component: Reportes },
       { path: 'tarifas', component: Tarifas },
       { path: 'qr-suministro', component: QrSuministro },
-      { path: 'historial-lecturas', component: HistorialLecturas }
+      { path: 'historial-lecturas', component: HistorialLecturas },
+      { path: 'sectores', component: Sectores },
     ]
   },
   {

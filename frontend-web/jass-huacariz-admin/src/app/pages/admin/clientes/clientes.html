@@ -366,8 +366,16 @@
 
           <div class="form-grid">
             <label>
-              ID sector
-              <input type="number" [(ngModel)]="suministro.idSector" placeholder="Ejemplo: 1">
+              Sector
+              <select [(ngModel)]="suministro.idSector">
+                <option [ngValue]="0">Seleccione un sector</option>
+
+                <option
+                  *ngFor="let sector of sectores"
+                  [ngValue]="sector.id">
+                  {{ sector.nombre }}
+                </option>
+              </select>
             </label>
 
             <label>
@@ -427,7 +435,21 @@
 
           <label>
             Sector asignado
-            <input type="text" [(ngModel)]="nuevoLecturador.sectorAsignado" placeholder="Ejemplo: Sector 1">
+            <select [(ngModel)]="nuevoLecturador.sectorAsignado">
+
+              <option value="">
+                Seleccione un sector
+              </option>
+
+              <option
+                *ngFor="let sector of sectores"
+                [value]="sector.nombre">
+
+                {{ sector.nombre }}
+
+              </option>
+
+            </select>
           </label>
 
           <label>
@@ -693,8 +715,16 @@
 
       <div class="form-grid">
         <label>
-          ID sector
-          <input type="number" [(ngModel)]="formNuevoSuministro.idSector">
+          Sector
+          <select [(ngModel)]="formNuevoSuministro.idSector">
+            <option [ngValue]="0">Seleccione un sector</option>
+
+            <option
+              *ngFor="let sector of sectores"
+              [ngValue]="sector.id">
+              {{ sector.nombre }}
+            </option>
+          </select>
         </label>
 
         <label>
@@ -756,8 +786,16 @@
 
       <div class="form-grid">
         <label>
-          ID sector
-          <input type="number" [(ngModel)]="formEditarSuministro.idSector">
+          Sector
+          <select [(ngModel)]="formEditarSuministro.idSector">
+            <option [ngValue]="0">Seleccione un sector</option>
+
+            <option
+              *ngFor="let sector of sectores"
+              [ngValue]="sector.id">
+              {{ sector.nombre }}
+            </option>
+          </select>
         </label>
 
         <label>

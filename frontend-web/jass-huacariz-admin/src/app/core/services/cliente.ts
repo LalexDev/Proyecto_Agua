@@ -74,6 +74,18 @@ export interface LecturadorResponse {
   sectorAsignado?: string;
   passwordInicial?: string;
 }
+export interface SectorResponse {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  estado: boolean;
+}
+
+export interface SectorRequest {
+  nombre: string;
+  descripcion?: string;
+  estado: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -81,8 +93,29 @@ export interface LecturadorResponse {
 export class Cliente {
   private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/clientes';
   private readonly usuariosUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/usuarios';
+  private readonly sectoresUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/sectores';
 
   constructor(private http: HttpClient) {}
+
+  listarSectores(): Observable<SectorResponse[]> {
+    return this.http.get<SectorResponse[]>(this.sectoresUrl);
+  }
+
+  registrarSector(data: SectorRequest): Observable<SectorResponse> {
+    return this.http.post<SectorResponse>(this.sectoresUrl, data);
+  }
+
+  actualizarSector(id: number, data: SectorRequest): Observable<SectorResponse> {
+  return this.http.put<SectorResponse>(`${this.sectoresUrl}/${id}`, data);
+  }
+
+  cambiarEstadoSector(id: number, estado: boolean): Observable<SectorResponse> {
+    return this.http.patch<SectorResponse>(
+      `${this.sectoresUrl}/${id}/estado?estado=${estado}`,
+      {}
+    );
+  }
+
 
   listarClientes(): Observable<ClienteResponse[]> {
     return this.http.get<ClienteResponse[]>(this.apiUrl);

@@ -70,8 +70,8 @@ public class ClienteService {
                 .dni(request.getDni())
                 .nombres(request.getNombres())
                 .apellidos(request.getApellidos())
-                .telefono(request.getTelefono())
-                .correo(request.getCorreo())
+                .telefono(limpiarOpcional(request.getTelefono()))
+                .correo(limpiarOpcional(request.getCorreo()))
                 .estado(request.getEstado() != null ? request.getEstado() : true)
                 .fechaRegistro(LocalDateTime.now())
                 .build();
@@ -428,5 +428,13 @@ public class ClienteService {
 
     private String limpiarTexto(String value) {
         return value == null ? null : value.trim();
+    }
+
+    private String limpiarOpcional(String valor) {
+    if (valor == null || valor.trim().isBlank()) {
+        return null;
+    }
+
+    return valor.trim();
     }
 }

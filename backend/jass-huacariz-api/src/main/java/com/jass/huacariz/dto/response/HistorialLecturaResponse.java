@@ -1,6 +1,7 @@
 package com.jass.huacariz.dto.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class HistorialLecturaResponse {
@@ -22,6 +23,16 @@ public class HistorialLecturaResponse {
     private String estadoRecibo;
     private LocalDateTime fechaRegistro;
 
+    private BigDecimal subtotalAgua;
+    private BigDecimal cargoMantenimiento;
+    private BigDecimal cargoLector;
+    private BigDecimal cargoOtros;
+    private BigDecimal mora;
+    private BigDecimal total;
+    private LocalDateTime fechaEmision;
+    private LocalDate fechaVencimiento;
+    private String codigoBarras;
+
     public HistorialLecturaResponse() {
     }
 
@@ -41,7 +52,16 @@ public class HistorialLecturaResponse {
             String codigoRecibo,
             BigDecimal totalRecibo,
             String estadoRecibo,
-            LocalDateTime fechaRegistro
+            LocalDateTime fechaRegistro,
+            BigDecimal subtotalAgua,
+            BigDecimal cargoMantenimiento,
+            BigDecimal cargoLector,
+            BigDecimal cargoOtros,
+            BigDecimal mora,
+            BigDecimal total,
+            LocalDateTime fechaEmision,
+            LocalDate fechaVencimiento,
+            String codigoBarras
     ) {
         this.idLectura = idLectura;
         this.codigoSuministro = codigoSuministro;
@@ -59,133 +79,89 @@ public class HistorialLecturaResponse {
         this.totalRecibo = totalRecibo;
         this.estadoRecibo = estadoRecibo;
         this.fechaRegistro = fechaRegistro;
+        this.subtotalAgua = subtotalAgua;
+        this.cargoMantenimiento = cargoMantenimiento;
+        this.cargoLector = cargoLector;
+        this.cargoOtros = cargoOtros;
+        this.mora = mora;
+        this.total = total;
+        this.fechaEmision = fechaEmision;
+        this.fechaVencimiento = fechaVencimiento;
+        this.codigoBarras = codigoBarras;
     }
 
-    public Integer getIdLectura() {
-        return idLectura;
-    }
+    public Integer getIdLectura() { return idLectura; }
+    public void setIdLectura(Integer idLectura) { this.idLectura = idLectura; }
 
-    public void setIdLectura(Integer idLectura) {
-        this.idLectura = idLectura;
-    }
+    public String getCodigoSuministro() { return codigoSuministro; }
+    public void setCodigoSuministro(String codigoSuministro) { this.codigoSuministro = codigoSuministro; }
 
-    public String getCodigoSuministro() {
-        return codigoSuministro;
-    }
+    public String getAliasSuministro() { return aliasSuministro; }
+    public void setAliasSuministro(String aliasSuministro) { this.aliasSuministro = aliasSuministro; }
 
-    public void setCodigoSuministro(String codigoSuministro) {
-        this.codigoSuministro = codigoSuministro;
-    }
+    public String getDireccionSuministro() { return direccionSuministro; }
+    public void setDireccionSuministro(String direccionSuministro) { this.direccionSuministro = direccionSuministro; }
 
-    public String getAliasSuministro() {
-        return aliasSuministro;
-    }
+    public String getCliente() { return cliente; }
+    public void setCliente(String cliente) { this.cliente = cliente; }
 
-    public void setAliasSuministro(String aliasSuministro) {
-        this.aliasSuministro = aliasSuministro;
-    }
+    public String getDniCliente() { return dniCliente; }
+    public void setDniCliente(String dniCliente) { this.dniCliente = dniCliente; }
 
-    public String getDireccionSuministro() {
-        return direccionSuministro;
-    }
+    public String getSector() { return sector; }
+    public void setSector(String sector) { this.sector = sector; }
 
-    public void setDireccionSuministro(String direccionSuministro) {
-        this.direccionSuministro = direccionSuministro;
-    }
+    public Integer getAnio() { return anio; }
+    public void setAnio(Integer anio) { this.anio = anio; }
 
-    public String getCliente() {
-        return cliente;
-    }
+    public Integer getMes() { return mes; }
+    public void setMes(Integer mes) { this.mes = mes; }
 
-    public void setCliente(String cliente) {
-        this.cliente = cliente;
-    }
+    public BigDecimal getLecturaAnterior() { return lecturaAnterior; }
+    public void setLecturaAnterior(BigDecimal lecturaAnterior) { this.lecturaAnterior = lecturaAnterior; }
 
-    public String getDniCliente() {
-        return dniCliente;
-    }
+    public BigDecimal getLecturaActual() { return lecturaActual; }
+    public void setLecturaActual(BigDecimal lecturaActual) { this.lecturaActual = lecturaActual; }
 
-    public void setDniCliente(String dniCliente) {
-        this.dniCliente = dniCliente;
-    }
+    public BigDecimal getConsumoM3() { return consumoM3; }
+    public void setConsumoM3(BigDecimal consumoM3) { this.consumoM3 = consumoM3; }
 
-    public String getSector() {
-        return sector;
-    }
+    public String getCodigoRecibo() { return codigoRecibo; }
+    public void setCodigoRecibo(String codigoRecibo) { this.codigoRecibo = codigoRecibo; }
 
-    public void setSector(String sector) {
-        this.sector = sector;
-    }
+    public BigDecimal getTotalRecibo() { return totalRecibo; }
+    public void setTotalRecibo(BigDecimal totalRecibo) { this.totalRecibo = totalRecibo; }
 
-    public Integer getAnio() {
-        return anio;
-    }
+    public String getEstadoRecibo() { return estadoRecibo; }
+    public void setEstadoRecibo(String estadoRecibo) { this.estadoRecibo = estadoRecibo; }
 
-    public void setAnio(Integer anio) {
-        this.anio = anio;
-    }
+    public LocalDateTime getFechaRegistro() { return fechaRegistro; }
+    public void setFechaRegistro(LocalDateTime fechaRegistro) { this.fechaRegistro = fechaRegistro; }
 
-    public Integer getMes() {
-        return mes;
-    }
+    public BigDecimal getSubtotalAgua() { return subtotalAgua; }
+    public void setSubtotalAgua(BigDecimal subtotalAgua) { this.subtotalAgua = subtotalAgua; }
 
-    public void setMes(Integer mes) {
-        this.mes = mes;
-    }
+    public BigDecimal getCargoMantenimiento() { return cargoMantenimiento; }
+    public void setCargoMantenimiento(BigDecimal cargoMantenimiento) { this.cargoMantenimiento = cargoMantenimiento; }
 
-    public BigDecimal getLecturaAnterior() {
-        return lecturaAnterior;
-    }
+    public BigDecimal getCargoLector() { return cargoLector; }
+    public void setCargoLector(BigDecimal cargoLector) { this.cargoLector = cargoLector; }
 
-    public void setLecturaAnterior(BigDecimal lecturaAnterior) {
-        this.lecturaAnterior = lecturaAnterior;
-    }
+    public BigDecimal getCargoOtros() { return cargoOtros; }
+    public void setCargoOtros(BigDecimal cargoOtros) { this.cargoOtros = cargoOtros; }
 
-    public BigDecimal getLecturaActual() {
-        return lecturaActual;
-    }
+    public BigDecimal getMora() { return mora; }
+    public void setMora(BigDecimal mora) { this.mora = mora; }
 
-    public void setLecturaActual(BigDecimal lecturaActual) {
-        this.lecturaActual = lecturaActual;
-    }
+    public BigDecimal getTotal() { return total; }
+    public void setTotal(BigDecimal total) { this.total = total; }
 
-    public BigDecimal getConsumoM3() {
-        return consumoM3;
-    }
+    public LocalDateTime getFechaEmision() { return fechaEmision; }
+    public void setFechaEmision(LocalDateTime fechaEmision) { this.fechaEmision = fechaEmision; }
 
-    public void setConsumoM3(BigDecimal consumoM3) {
-        this.consumoM3 = consumoM3;
-    }
+    public LocalDate getFechaVencimiento() { return fechaVencimiento; }
+    public void setFechaVencimiento(LocalDate fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
 
-    public String getCodigoRecibo() {
-        return codigoRecibo;
-    }
-
-    public void setCodigoRecibo(String codigoRecibo) {
-        this.codigoRecibo = codigoRecibo;
-    }
-
-    public BigDecimal getTotalRecibo() {
-        return totalRecibo;
-    }
-
-    public void setTotalRecibo(BigDecimal totalRecibo) {
-        this.totalRecibo = totalRecibo;
-    }
-
-    public String getEstadoRecibo() {
-        return estadoRecibo;
-    }
-
-    public void setEstadoRecibo(String estadoRecibo) {
-        this.estadoRecibo = estadoRecibo;
-    }
-
-    public LocalDateTime getFechaRegistro() {
-        return fechaRegistro;
-    }
-
-    public void setFechaRegistro(LocalDateTime fechaRegistro) {
-        this.fechaRegistro = fechaRegistro;
-    }
+    public String getCodigoBarras() { return codigoBarras; }
+    public void setCodigoBarras(String codigoBarras) { this.codigoBarras = codigoBarras; }
 }

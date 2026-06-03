@@ -1,7 +1,6 @@
 package com.jass.huacariz.dto.request;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -26,7 +25,6 @@ public class ClienteRequest {
 
     private String telefono;
 
-    @Email(message = "El correo no tiene un formato válido")
     private String correo;
 
     private Boolean estado = true;
