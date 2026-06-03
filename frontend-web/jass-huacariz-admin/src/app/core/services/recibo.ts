@@ -52,7 +52,7 @@ export interface PagoResponse {
   providedIn: 'root',
 })
 export class Recibo {
-  private readonly apiUrl = 'http://localhost:8080/api/recibos';
+  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/recibos';
 
   constructor(private http: HttpClient) {}
 

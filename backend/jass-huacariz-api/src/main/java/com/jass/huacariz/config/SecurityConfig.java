@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // RUTAS PÚBLICAS
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
 
@@ -46,6 +47,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/lecturas/mantenimiento").hasAnyAuthority("ADMIN", "LECTURADOR")
                         .requestMatchers(HttpMethod.GET, "/api/lecturas/**").hasAnyAuthority("ADMIN", "LECTURADOR")
 
+                        // ADMIN LECTURAS / HISTORIAL
+                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+
+                        // ADMIN LECTURAS
+                        .requestMatchers("/api/admin/lecturas/**").hasAuthority("ADMIN")
+
                         // ADMINISTRACIÓN
                         .requestMatchers("/api/clientes/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
@@ -53,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/tarifas/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/recibos/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/pagos/**").hasAuthority("ADMIN")
+
 
                         .anyRequest().authenticated()
                 )
@@ -65,11 +73,35 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:4200",
+                "http://127.0.0.1:4200",
+                "https://*.devtunnels.ms"
+        ));
+
+        config.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        config.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With"
+        ));
+
+        config.setExposedHeaders(List.of(
+                "Authorization"
+        ));
+
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

@@ -1,7 +1,40 @@
-<div class="cliente-shell">
+<div
+  class="cliente-shell"
+  [class.dark-mode]="isDarkMode"
+  [class.mobile-menu-open]="menuMovilAbierto"
+>
+  <div
+    class="sidebar-backdrop"
+    *ngIf="menuMovilAbierto"
+    (click)="cerrarMenuMovil()"
+  ></div>
+
   <aside class="cliente-sidebar">
-    <div class="brand">
-      <div class="brand-icon">💧</div>
+    <div class="sidebar-mobile-header">
+      <div class="brand compact">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path>
+          </svg>
+        </div>
+
+        <div>
+          <h1>JASS<br>Huacariz</h1>
+          <p>Portal del cliente</p>
+        </div>
+      </div>
+
+      <button type="button" class="close-menu" (click)="cerrarMenuMovil()">
+        ×
+      </button>
+    </div>
+
+    <div class="brand desktop-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path>
+        </svg>
+      </div>
 
       <div>
         <h1>JASS<br>Huacariz</h1>
@@ -10,40 +43,94 @@
     </div>
 
     <nav class="menu">
-      <a routerLink="/cliente/inicio" routerLinkActive="active">
-        <span>⌂</span>
+      <a
+        routerLink="/cliente/inicio"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="cerrarMenuMovil()"
+      >
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 11.5 12 4l9 7.5V21h-6v-6H9v6H3v-9.5Z"></path>
+          </svg>
+        </span>
         Inicio
       </a>
 
-      <a routerLink="/cliente/mis-suministros" routerLinkActive="active">
-        <span>▣</span>
+      <a
+        routerLink="/cliente/mis-suministros"
+        routerLinkActive="active"
+        (click)="cerrarMenuMovil()"
+      >
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"></path>
+          </svg>
+        </span>
         Mis suministros
       </a>
 
-      <a routerLink="/cliente/mis-recibos" routerLinkActive="active">
-        <span>▤</span>
+      <a
+        routerLink="/cliente/mis-recibos"
+        routerLinkActive="active"
+        (click)="cerrarMenuMovil()"
+      >
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3Zm3 5h4m-4 4h5m-5 4h3"></path>
+          </svg>
+        </span>
         Mis recibos
       </a>
 
-      <a routerLink="/cliente/perfil" routerLinkActive="active">
-        <span>◉</span>
+      <a
+        routerLink="/cliente/perfil"
+        routerLinkActive="active"
+        (click)="cerrarMenuMovil()"
+      >
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 21a8 8 0 0 1 16 0"></path>
+          </svg>
+        </span>
         Perfil
       </a>
 
-      <a routerLink="/cliente/contrasena" routerLinkActive="active">
-        <span>⌘</span>
+      <a
+        routerLink="/cliente/contrasena"
+        routerLinkActive="active"
+        (click)="cerrarMenuMovil()"
+      >
+        <span class="nav-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+            <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+          </svg>
+        </span>
         Contraseña
       </a>
     </nav>
 
     <button type="button" class="logout" (click)="cerrarSesion()">
-      <span>↳</span>
-      Cerrar sesión
+      <span class="logout-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M10 17l5-5-5-5"></path>
+          <path d="M15 12H3"></path>
+          <path d="M21 3v18"></path>
+        </svg>
+      </span>
+      <span>Cerrar sesión</span>
     </button>
   </aside>
 
   <main class="cliente-main">
     <header class="topbar">
+      <button type="button" class="mobile-menu-button" (click)="abrirCerrarMenuMovil()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
       <div class="topbar-title">
         <h2>Sistema de Gestión de Agua</h2>
         <p>Consulta tus suministros, recibos, pagos y datos personales.</p>

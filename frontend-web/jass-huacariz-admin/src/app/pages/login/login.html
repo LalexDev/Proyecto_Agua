@@ -1,33 +1,254 @@
-<div class="login-page">
-  <section class="login-brand">
-    <div class="brand-content">
-      <div class="brand-logo">💧</div>
+<div class="public-login-page">
+  <div class="background-filter"></div>
 
-      <h1>JASS Huacariz</h1>
+  <header class="public-header">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.5C8.8 6.7 6 10.7 6 14.2A6 6 0 0 0 18 14.2C18 10.7 15.2 6.7 12 2.5Z"></path>
+        </svg>
+      </div>
 
-      <p>
-        Sistema web para gestión de clientes, recibos, pagos y consumo
-        de agua potable.
-      </p>
+      <div>
+        <h1>JASS Huacariz</h1>
+        <p>Junta Administradora de Servicios de Saneamiento</p>
+      </div>
     </div>
 
-    <div class="brand-card">
-      <h3>Gestión inteligente del servicio de agua</h3>
+    <nav class="public-nav">
+      <a href="#inicio">Inicio</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#transparencia">Transparencia</a>
+      <a href="#ayuda">Ayuda</a>
+    </nav>
+
+    <button type="button" class="header-login-btn" (click)="abrirLogin()">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+        <path d="M10 17l5-5-5-5"></path>
+        <path d="M15 12H3"></path>
+      </svg>
+      Acceder
+    </button>
+  </header>
+
+  <main class="hero-section" id="inicio">
+    <section class="hero-left">
+      <div class="public-badge">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+          <path d="m9 12 2 2 4-4"></path>
+        </svg>
+        Servicio público confiable y transparente
+      </div>
+
+      <h2>
+        Agua que nos une,
+        <span>comunidad que avanza.</span>
+      </h2>
+
       <p>
-        Administra usuarios, lecturas, tarifas, recibos y pagos desde una
-        plataforma moderna, segura y fácil de usar.
+        Trabajamos cada día para brindar un servicio de agua potable seguro,
+        sostenible y cercano a las familias de Huacariz.
       </p>
-    </div>
+
+      <div class="hero-features">
+        <article>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2.5C8.8 6.7 6 10.7 6 14.2A6 6 0 0 0 18 14.2C18 10.7 15.2 6.7 12 2.5Z"></path>
+            </svg>
+          </div>
+          <strong>Agua segura</strong>
+          <small>Servicio orientado al bienestar de la comunidad.</small>
+        </article>
+
+        <article>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M16 11c1.7 0 3-1.3 3-3s-1.3-3-3-3"></path>
+              <path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path>
+              <path d="M2 20c.7-3.3 3-5 6-5s5.3 1.7 6 5"></path>
+              <path d="M14 15c3 0 5.3 1.7 6 5"></path>
+            </svg>
+          </div>
+          <strong>Gestión comunitaria</strong>
+          <small>Participación y atención responsable.</small>
+        </article>
+
+        <article>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 20c8-1 14-7 16-16"></path>
+              <path d="M6 18C4 12 7 6 20 4c-1 13-7 16-14 14Z"></path>
+            </svg>
+          </div>
+          <strong>Cuidado del recurso</strong>
+          <small>Promovemos el uso responsable del agua.</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="portal-card">
+      <div class="portal-logo">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.5C8.8 6.7 6 10.7 6 14.2A6 6 0 0 0 18 14.2C18 10.7 15.2 6.7 12 2.5Z"></path>
+        </svg>
+      </div>
+
+      <h3>AGUA POTABLE HUACARIZ SAN ANTONIO</h3>
+      <p>Tu servicio de agua en línea</p>
+
+      <button type="button" class="portal-main-btn" (click)="abrirLogin()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+          <path d="M10 17l5-5-5-5"></path>
+          <path d="M15 12H3"></path>
+        </svg>
+
+        <span>Ingresar al portal</span>
+
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 18 6-6-6-6"></path>
+        </svg>
+      </button>
+
+      <div class="portal-question">
+        ¿Qué deseas hacer hoy?
+      </div>
+
+      <div class="quick-actions" id="servicios">
+        <button type="button" (click)="abrirLoginDesdeAccion('recibo')">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2Z"></path>
+              <path d="M9 8h6"></path>
+              <path d="M9 12h6"></path>
+              <path d="M9 16h4"></path>
+            </svg>
+          </div>
+          <strong>Consultar mi recibo</strong>
+          <small>Ver estado y detalle</small>
+        </button>
+
+        <button type="button" (click)="abrirLoginDesdeAccion('pago')">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+              <path d="M3 10h18"></path>
+              <path d="M7 15h4"></path>
+            </svg>
+          </div>
+          <strong>Pagar en línea</strong>
+          <small>Registrar operación</small>
+        </button>
+
+        <button type="button" (click)="abrirLoginDesdeAccion('incidencia')">
+          <div class="quick-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2.5C8.8 6.7 6 10.7 6 14.2A6 6 0 0 0 18 14.2C18 10.7 15.2 6.7 12 2.5Z"></path>
+              <path d="M12 10v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+          </div>
+          <strong>Reportar incidencia</strong>
+          <small>Comunicar un problema</small>
+        </button>
+      </div>
+
+      <div class="portal-benefits">
+        <div>
+          <span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v5l3 2"></path>
+            </svg>
+          </span>
+          <strong>Atención rápida</strong>
+        </div>
+
+        <div>
+          <span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+            </svg>
+          </span>
+          <strong>Pagos seguros</strong>
+        </div>
+
+        <div>
+          <span class="number-icon">24/7</span>
+          <strong>Consulta disponible</strong>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section class="public-info" id="transparencia">
+    <article>
+      <span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+        </svg>
+      </span>
+      <div>
+        <strong>Compromiso comunitario</strong>
+        <p>Atención clara y responsable para los usuarios.</p>
+      </div>
+    </article>
+
+    <article>
+      <span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.5C8.8 6.7 6 10.7 6 14.2A6 6 0 0 0 18 14.2C18 10.7 15.2 6.7 12 2.5Z"></path>
+        </svg>
+      </span>
+      <div>
+        <strong>Servicio de agua potable</strong>
+        <p>Gestión de consumo, recibos, pagos y lecturas.</p>
+      </div>
+    </article>
+
+    <article id="ayuda">
+      <span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 12a8 8 0 0 1 16 0"></path>
+          <path d="M4 12v4a2 2 0 0 0 2 2h2v-6H6a2 2 0 0 0-2 2"></path>
+          <path d="M20 12v4a2 2 0 0 1-2 2h-2v-6h2a2 2 0 0 1 2 2"></path>
+        </svg>
+      </span>
+      <div>
+        <strong>Atención al usuario</strong>
+        <p>Soporte para consultas, pagos e incidencias.</p>
+      </div>
+    </article>
   </section>
 
-  <section class="login-wrapper">
-    <div class="login-card">
-      <h2>Iniciar sesión</h2>
-      <p class="subtitle">Ingresa tus credenciales para acceder al sistema</p>
+  <div class="login-modal-backdrop" *ngIf="mostrarLogin" (click)="cerrarLogin()">
+    <section class="login-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="close-modal" (click)="cerrarLogin()">
+        ×
+      </button>
+
+      <div class="modal-brand">
+        <div class="modal-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2.5C8.8 6.7 6 10.7 6 14.2A6 6 0 0 0 18 14.2C18 10.7 15.2 6.7 12 2.5Z"></path>
+          </svg>
+        </div>
+
+        <div>
+          <span>Acceso privado</span>
+          <h2>Iniciar sesión</h2>
+          <p>Ingresa tus credenciales para acceder al sistema.</p>
+        </div>
+      </div>
 
       <div class="form-group">
         <label>Código de usuario</label>
         <input
+          id="codigoUsuario"
           type="text"
           [(ngModel)]="codigoUsuario"
           placeholder="Ejemplo: ADMIN001, 12345678, LECTOR001"
@@ -37,13 +258,20 @@
 
       <div class="form-group">
         <label>Contraseña</label>
-        <input
-          type="password"
-          [(ngModel)]="password"
-          placeholder="Ingresa tu contraseña"
-          autocomplete="current-password"
-          (keyup.enter)="iniciarSesion()"
-        >
+
+        <div class="password-field">
+          <input
+            [type]="mostrarPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            placeholder="Ingresa tu contraseña"
+            autocomplete="current-password"
+            (keyup.enter)="iniciarSesion()"
+          >
+
+          <button type="button" (click)="alternarPassword()">
+            {{ mostrarPassword ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
       </div>
 
       <div *ngIf="error" class="error-message">
@@ -52,18 +280,26 @@
 
       <button
         type="button"
-        class="btn-primary"
+        class="modal-login-btn"
         [disabled]="cargando"
         (click)="iniciarSesion()">
-        {{ cargando ? 'Validando...' : 'Iniciar sesión' }}
+        {{ cargando ? 'Validando acceso...' : 'Acceder al portal' }}
       </button>
 
-      <div class="test-users">
-        <strong>Usuarios de prueba:</strong>
-        <p>Admin: ADMIN001 / admin123</p>
-        <p>Cliente: 12345678 / tu nueva contraseña</p>
-        <p>Lecturador: LECTOR001 / lector123</p>
+      <div class="security-note">
+        <span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+            <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+          </svg>
+        </span>
+        Plataforma protegida para usuarios autorizados de JASS Huacariz.
       </div>
-    </div>
-  </section>
+
+      <div class="test-users">
+        <strong>Usuarios de prueba</strong>
+        <p>Cliente: 12345678 / tu nueva contraseña</p>
+      </div>
+    </section>
+  </div>
 </div>

@@ -79,8 +79,8 @@ export interface LecturadorResponse {
   providedIn: 'root',
 })
 export class Cliente {
-  private readonly apiUrl = 'http://localhost:8080/api/clientes';
-  private readonly usuariosUrl = 'http://localhost:8080/api/usuarios';
+  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/clientes';
+  private readonly usuariosUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/usuarios';
 
   constructor(private http: HttpClient) {}
 

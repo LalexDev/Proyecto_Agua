@@ -27,13 +27,56 @@ export class Login {
   cargando = false;
   error = '';
 
-  private readonly apiUrl = 'http://localhost:8080/api/auth/login';
+  mostrarLogin = false;
+  mostrarPassword = false;
+
+  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/auth/login';
 
   constructor(
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
+
+  abrirLogin(): void {
+    this.mostrarLogin = true;
+    this.error = '';
+
+    setTimeout(() => {
+      document.getElementById('codigoUsuario')?.focus();
+    }, 150);
+  }
+
+  cerrarLogin(): void {
+    if (this.cargando) {
+      return;
+    }
+
+    this.mostrarLogin = false;
+    this.error = '';
+    this.password = '';
+    this.mostrarPassword = false;
+  }
+
+  alternarPassword(): void {
+    this.mostrarPassword = !this.mostrarPassword;
+  }
+
+  abrirLoginDesdeAccion(accion: string): void {
+    this.abrirLogin();
+
+    if (accion === 'recibo') {
+      this.error = 'Para consultar tus recibos, primero inicia sesión.';
+    }
+
+    if (accion === 'pago') {
+      this.error = 'Para registrar pagos, primero inicia sesión.';
+    }
+
+    if (accion === 'incidencia') {
+      this.error = 'Para reportar una incidencia, primero inicia sesión.';
+    }
+  }
 
   iniciarSesion(): void {
     this.error = '';

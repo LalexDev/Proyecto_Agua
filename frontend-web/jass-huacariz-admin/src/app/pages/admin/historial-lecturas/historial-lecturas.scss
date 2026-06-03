@@ -945,3 +945,198 @@ tbody td small {
     font-size: 1.3rem;
   }
 }
+
+/* =========================================================
+   PENDIENTES DE LECTURA
+   ========================================================= */
+
+.pending-panel {
+  background: var(--panel-bg);
+  border-radius: 28px;
+  padding: 24px 28px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--border);
+}
+
+.pending-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.pending-header h3 {
+  margin: 10px 0 8px;
+  color: var(--text-main);
+  font-size: 1.8rem;
+  font-weight: 950;
+}
+
+.pending-header p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.pending-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pending-filter {
+  display: grid;
+  grid-template-columns: 220px 160px auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.pending-filter input,
+.pending-filter select,
+.pending-search input {
+  width: 100%;
+  border: 1px solid var(--border);
+  outline: none;
+  border-radius: 18px;
+  padding: 15px 18px;
+  font-size: 0.97rem;
+  background: var(--panel-bg);
+  color: var(--text-main);
+}
+
+.pending-filter input:focus,
+.pending-filter select:focus,
+.pending-search input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(17, 166, 200, 0.12);
+}
+
+.pending-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.pending-stats article {
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.pending-stats span {
+  display: block;
+  color: var(--text-muted);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.pending-stats strong {
+  display: block;
+  color: var(--text-main);
+  font-size: 2rem;
+  font-weight: 950;
+}
+
+.pending-search {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.pending-table {
+  min-width: 1180px;
+}
+
+.warning-card {
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.pending-icon {
+  background: var(--warning-bg) !important;
+}
+
+.instalado {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+
+.suspendido {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+.pendiente-instalacion {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+}
+
+.warning-hero {
+  background: linear-gradient(135deg, #7c3f00, #f59e0b);
+}
+
+@media (max-width: 1200px) {
+  .pending-filter {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pending-filter button {
+    grid-column: 1 / -1;
+  }
+
+  .pending-search {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pending-panel,
+  .pending-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pending-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .pending-filter,
+  .pending-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .pending-panel {
+    padding: 20px;
+  }
+}
+
+@media print {
+  .page-header__actions,
+  .filter-card,
+  .pending-filter,
+  .pending-search,
+  .pending-actions,
+  .actions-cell,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  .historial-page {
+    gap: 12px;
+  }
+
+  .page-header,
+  .table-card,
+  .summary-panel,
+  .chart-card,
+  .filter-card,
+  .pending-panel {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+}

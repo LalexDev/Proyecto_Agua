@@ -17,7 +17,7 @@ export interface PagoResponse {
   providedIn: 'root',
 })
 export class Pago {
-  private readonly apiUrl = 'http://localhost:8080/api/pagos';
+  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/pagos';
 
   constructor(private http: HttpClient) {}
 

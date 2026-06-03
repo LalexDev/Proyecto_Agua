@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 
 import {
@@ -19,6 +19,7 @@ export class ClienteLayout implements OnInit {
   nombreUsuario = 'Cliente';
   codigoUsuario = '';
   isDarkMode = false;
+  menuMovilAbierto = false;
 
   constructor(
     private router: Router,
@@ -30,6 +31,14 @@ export class ClienteLayout implements OnInit {
     this.cargarTema();
     this.cargarDatosLocales();
     this.cargarPerfilCliente();
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    if (window.innerWidth > 980) {
+      this.menuMovilAbierto = false;
+      document.body.classList.remove('menu-mobile-open');
+    }
   }
 
   cargarDatosLocales(): void {
@@ -122,9 +131,24 @@ export class ClienteLayout implements OnInit {
     document.body.classList.toggle('jass-dark-theme', this.isDarkMode);
   }
 
+  abrirCerrarMenuMovil(): void {
+    this.menuMovilAbierto = !this.menuMovilAbierto;
+    document.body.classList.toggle('menu-mobile-open', this.menuMovilAbierto);
+  }
+
+  cerrarMenuMovil(): void {
+    this.menuMovilAbierto = false;
+    document.body.classList.remove('menu-mobile-open');
+  }
+
   cerrarSesion(): void {
     localStorage.clear();
     sessionStorage.clear();
+
+    document.body.classList.remove('jass-dark-theme');
+    document.body.classList.remove('menu-mobile-open');
+    document.body.setAttribute('data-theme', 'light');
+
     this.router.navigate(['/login']);
   }
 }

@@ -21,7 +21,7 @@ export interface LoginResponse {
   providedIn: 'root',
 })
 export class Auth {
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/auth';
 
   constructor(
     private http: HttpClient,

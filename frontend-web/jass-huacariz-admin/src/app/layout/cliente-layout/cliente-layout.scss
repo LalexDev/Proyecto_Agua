@@ -35,7 +35,11 @@
   background:
     radial-gradient(circle at top right, rgba(19, 168, 200, 0.08), transparent 32%),
     var(--shell-bg);
+  color: var(--text-main);
+  overflow-x: hidden;
 }
+
+/* SIDEBAR */
 
 .cliente-sidebar {
   width: 290px;
@@ -50,12 +54,25 @@
   gap: 28px;
   z-index: 100;
   overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-mobile-header {
+  display: none;
+}
+
+.sidebar-backdrop {
+  display: none;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 14px;
+}
+
+.brand.compact {
+  padding: 0;
 }
 
 .brand-icon {
@@ -66,8 +83,17 @@
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   display: grid;
   place-items: center;
-  font-size: 32px;
   box-shadow: 0 14px 28px rgba(19, 168, 200, 0.25);
+}
+
+.brand-icon svg {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .brand h1 {
@@ -84,6 +110,8 @@
   font-size: 13px;
   font-weight: 750;
 }
+
+/* MENU */
 
 .menu {
   display: flex;
@@ -103,7 +131,7 @@
   transition: 0.22s ease;
 }
 
-.menu a span {
+.nav-icon {
   width: 34px;
   height: 34px;
   min-width: 34px;
@@ -112,7 +140,16 @@
   place-items: center;
   background: rgba(255, 255, 255, 0.08);
   color: #d8f8ff;
-  font-size: 17px;
+}
+
+.nav-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .menu a:hover,
@@ -123,10 +160,12 @@
   transform: translateX(3px);
 }
 
-.menu a.active span {
+.menu a.active .nav-icon {
   background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
 }
+
+/* LOGOUT */
 
 .logout {
   margin-top: auto;
@@ -143,16 +182,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-}
-
-.logout span {
-  width: 34px;
-  height: 34px;
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.16);
-  display: grid;
-  place-items: center;
-  font-size: 18px;
+  transition: 0.22s ease;
 }
 
 .logout:hover {
@@ -160,9 +190,32 @@
   background: #dc2626;
 }
 
+.logout-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+}
+
+.logout-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* MAIN */
+
 .cliente-main {
   margin-left: 290px;
   min-height: 100vh;
+  min-width: 0;
 }
 
 .topbar {
@@ -183,6 +236,14 @@
 :host-context(body[data-theme='dark']) .topbar,
 :host-context(body.jass-dark-theme) .topbar {
   background: rgba(11, 23, 38, 0.92);
+}
+
+.mobile-menu-button {
+  display: none;
+}
+
+.topbar-title {
+  min-width: 0;
 }
 
 .topbar-title h2 {
@@ -214,6 +275,13 @@
   cursor: pointer;
   box-shadow: var(--shadow);
   font-size: 18px;
+  display: grid;
+  place-items: center;
+  transition: 0.22s ease;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-2px);
 }
 
 .user-card {
@@ -270,51 +338,282 @@
 
 .content {
   padding: 34px;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
-@media (max-width: 980px) {
+/* EVITA QUE LAS TABLAS ROMPAN EN CELULAR */
+
+:host ::ng-deep .table-wrapper,
+:host ::ng-deep .table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+:host ::ng-deep table {
+  max-width: 100%;
+}
+
+/* RESPONSIVE TABLET */
+
+@media (max-width: 1180px) {
   .cliente-sidebar {
-    position: relative;
+    width: 260px;
+  }
+
+  .cliente-main {
+    margin-left: 260px;
+  }
+
+  .topbar {
+    padding: 18px 24px;
+  }
+
+  .content {
+    padding: 24px;
+  }
+}
+
+/* RESPONSIVE CELULAR */
+
+@media (max-width: 980px) {
+  .cliente-shell {
     width: 100%;
-    height: auto;
-    border-radius: 0 0 24px 24px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 10, 18, 0.58);
+    backdrop-filter: blur(4px);
+    z-index: 180;
+  }
+
+  .cliente-sidebar {
+    width: min(84vw, 330px);
+    height: 100dvh;
+    position: fixed;
+    inset: 0 auto 0 0;
+    padding: 18px;
+    z-index: 200;
+    transform: translateX(-105%);
+    transition: transform 0.25s ease;
+    border-radius: 0 26px 26px 0;
+    box-shadow: 24px 0 60px rgba(0, 0, 0, 0.30);
+  }
+
+  .cliente-shell.mobile-menu-open .cliente-sidebar {
+    transform: translateX(0);
+  }
+
+  .sidebar-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  }
+
+  .desktop-brand {
+    display: none;
+  }
+
+  .close-menu {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.10);
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .menu a {
+    min-height: 48px;
+    font-size: 14px;
   }
 
   .cliente-main {
     margin-left: 0;
+    width: 100%;
+    min-height: 100vh;
   }
 
   .topbar {
-    position: relative;
-    flex-direction: column;
-    align-items: stretch;
+    min-height: auto;
+    padding: 14px 16px;
+    gap: 12px;
+    align-items: center;
   }
 
-  .topbar-actions {
-    justify-content: space-between;
+  .mobile-menu-button {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: var(--panel-bg);
+    color: var(--text-main);
+    display: grid;
+    place-items: center;
+    gap: 4px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
   }
 
-  .user-card {
+  .mobile-menu-button span {
+    width: 20px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    display: block;
+  }
+
+  .topbar-title {
     flex: 1;
   }
 
+  .topbar-title h2 {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
+  .topbar-title p {
+    display: none;
+  }
+
+  .topbar-actions {
+    gap: 8px;
+  }
+
+  .theme-toggle {
+    width: 46px;
+    min-width: 46px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .user-card {
+    min-width: auto;
+    width: 46px;
+    height: 46px;
+    min-height: 46px;
+    padding: 0;
+    border-radius: 16px;
+    justify-content: center;
+  }
+
+  .user-text {
+    display: none;
+  }
+
+  .avatar {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 16px;
+  }
+
   .content {
-    padding: 22px;
+    padding: 16px;
+    width: 100%;
+    overflow-x: hidden;
   }
 }
 
+/* CELULAR PEQUEÑO */
+
 @media (max-width: 620px) {
-  .topbar-actions {
-    flex-direction: column;
-    align-items: stretch;
+  .cliente-sidebar {
+    width: min(88vw, 318px);
   }
 
+  .brand-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 16px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+  }
+
+  .brand p {
+    font-size: 11px;
+  }
+
+  .menu a {
+    min-height: 46px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .nav-icon {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+  }
+
+  .logout {
+    min-height: 48px;
+    font-size: 14px;
+  }
+
+  .topbar {
+    padding: 12px;
+  }
+
+  .topbar-title h2 {
+    font-size: 16px;
+  }
+
+  .mobile-menu-button,
   .theme-toggle,
-  .user-card {
-    width: 100%;
+  .user-card,
+  .avatar {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
   }
 
-  .user-text strong {
-    max-width: 100%;
+  .content {
+    padding: 12px;
+  }
+
+  :host ::ng-deep .stats-grid,
+  :host ::ng-deep .dashboard-grid,
+  :host ::ng-deep .content-grid,
+  :host ::ng-deep .detail-grid,
+  :host ::ng-deep .cards-grid,
+  :host ::ng-deep .quick-grid,
+  :host ::ng-deep .suministros-grid,
+  :host ::ng-deep .receipts-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  :host ::ng-deep .page-header,
+  :host ::ng-deep .hero-card,
+  :host ::ng-deep .profile-hero,
+  :host ::ng-deep .receipt-hero,
+  :host ::ng-deep .panel-card,
+  :host ::ng-deep .stat-card {
+    border-radius: 22px !important;
+  }
+
+  :host ::ng-deep .page-header {
+    padding: 18px !important;
   }
 }

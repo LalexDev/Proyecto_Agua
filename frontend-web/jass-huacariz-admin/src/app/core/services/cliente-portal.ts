@@ -87,7 +87,7 @@ export interface CambiarPasswordRequest {
   providedIn: 'root',
 })
 export class ClientePortal {
-  private readonly apiUrl = 'http://localhost:8080/api/cliente';
+  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/cliente';
 
   constructor(private http: HttpClient) {}
 

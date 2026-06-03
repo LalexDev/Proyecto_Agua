@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -35,6 +35,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
   exito = '';
 
   isDarkMode = false;
+  menuMovilAbierto = false;
   modoOperacion: ModoOperacion = null;
 
   lecturaForm: LecturaRequest = this.crearLecturaVacia();
@@ -57,6 +58,15 @@ export class LecturasLecturador implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.detenerEscaneo();
+    document.body.classList.remove('menu-mobile-open');
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    if (window.innerWidth > 980) {
+      this.menuMovilAbierto = false;
+      document.body.classList.remove('menu-mobile-open');
+    }
   }
 
   cargarTema(): void {
@@ -76,12 +86,25 @@ export class LecturasLecturador implements OnInit, OnDestroy {
     document.body.classList.toggle('jass-dark-theme', this.isDarkMode);
   }
 
+  abrirCerrarMenuMovil(): void {
+    this.menuMovilAbierto = !this.menuMovilAbierto;
+    document.body.classList.toggle('menu-mobile-open', this.menuMovilAbierto);
+    this.cdr.detectChanges();
+  }
+
+  cerrarMenuMovil(): void {
+    this.menuMovilAbierto = false;
+    document.body.classList.remove('menu-mobile-open');
+    this.cdr.detectChanges();
+  }
+
   buscarSuministro(desdeQr: boolean = false): void {
     this.error = '';
     this.exito = '';
     this.lecturaGenerada = null;
     this.suministro = null;
     this.modoOperacion = null;
+    this.cerrarMenuMovil();
 
     const codigo = this.codigoBusqueda.trim().toUpperCase();
 
@@ -290,6 +313,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
     this.error = '';
     this.exito = '';
     this.qrProcesado = false;
+    this.cerrarMenuMovil();
 
     if (this.escaneando) {
       return;
@@ -412,6 +436,8 @@ export class LecturasLecturador implements OnInit, OnDestroy {
 
     localStorage.clear();
     sessionStorage.clear();
+    document.body.classList.remove('menu-mobile-open');
+
     this.router.navigate(['/login']);
   }
 

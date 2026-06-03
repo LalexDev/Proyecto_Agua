@@ -1,6 +1,35 @@
-<div class="admin-layout" [class.dark-mode]="esOscuro()">
+<div
+  class="admin-layout"
+  [class.dark-mode]="esOscuro()"
+  [class.mobile-menu-open]="menuMovilAbierto"
+>
+  <div
+    class="sidebar-backdrop"
+    *ngIf="menuMovilAbierto"
+    (click)="cerrarMenuMovil()"
+  ></div>
+
   <aside class="sidebar">
-    <div class="brand">
+    <div class="sidebar-mobile-header">
+      <div class="brand compact">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path>
+          </svg>
+        </div>
+
+        <div>
+          <h2>JASS Huacariz</h2>
+          <p>Panel administrativo</p>
+        </div>
+      </div>
+
+      <button type="button" class="close-menu" (click)="cerrarMenuMovil()">
+        ×
+      </button>
+    </div>
+
+    <div class="brand desktop-brand">
       <div class="brand-icon">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path>
@@ -14,85 +43,114 @@
     </div>
 
     <nav class="menu">
-      <a routerLink="/admin/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <a
+        routerLink="/admin/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="cerrarMenuMovil()"
+      >
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V21h-6v-6H9v6H3v-9.5Z"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M3 11.5 12 4l9 7.5V21h-6v-6H9v6H3v-9.5Z"></path>
+          </svg>
         </span>
         Dashboard
       </a>
 
-      <a routerLink="/admin/clientes" routerLinkActive="active">
+      <a routerLink="/admin/clientes" routerLinkActive="active" (click)="cerrarMenuMovil()">
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 21a8 8 0 0 1 16 0"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 21a8 8 0 0 1 16 0"></path>
+          </svg>
         </span>
         Clientes
       </a>
 
-      <a routerLink="/admin/lecturadores" routerLinkActive="active">
+      <a routerLink="/admin/lecturadores" routerLinkActive="active" (click)="cerrarMenuMovil()">
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3 15h2"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm3 15h2"></path>
+          </svg>
         </span>
         Lecturadores
       </a>
 
-      <a routerLink="/admin/recibos" routerLinkActive="active">
+      <a routerLink="/admin/recibos" routerLinkActive="active" (click)="cerrarMenuMovil()">
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3Zm3 5h4m-4 4h5m-5 4h3"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3Zm3 5h4m-4 4h5m-5 4h3"></path>
+          </svg>
         </span>
         Recibos
       </a>
 
-      <a routerLink="/admin/pagos" routerLinkActive="active">
+      <a routerLink="/admin/pagos" routerLinkActive="active" (click)="cerrarMenuMovil()">
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4V7Zm0 3h16M8 15h3"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M4 7h16v10H4V7Zm0 3h16M8 15h3"></path>
+          </svg>
         </span>
         Pagos
       </a>
 
-      <a routerLink="/admin/tarifas" routerLinkActive="active">
+      <a routerLink="/admin/tarifas" routerLinkActive="active" (click)="cerrarMenuMovil()">
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M12 3v18M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3v18M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6"></path>
+          </svg>
         </span>
         Tarifas
       </a>
 
-      <a routerLink="/admin/qr-suministro" routerLinkActive="active">
+      <a routerLink="/admin/qr-suministro" routerLinkActive="active" (click)="cerrarMenuMovil()">
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h2v2h-2v-2Zm4 0h2v6h-6v-2h4v-4Z"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h2v2h-2v-2Zm4 0h2v6h-6v-2h4v-4Z"></path>
+          </svg>
         </span>
         QR Suministro
       </a>
 
-      <a routerLink="/admin/historial-lecturas" routerLinkActive="active">
+      <a routerLink="/admin/historial-lecturas" routerLinkActive="active" (click)="cerrarMenuMovil()">
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5V4Zm4 4h6M9 12h6M9 16h4"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M5 4h14v16H5V4Zm4 4h6M9 12h6M9 16h4"></path>
+          </svg>
         </span>
         Historial lecturas
       </a>
 
-      <a routerLink="/admin/reportes" routerLinkActive="active">
+      <a routerLink="/admin/reportes" routerLinkActive="active" (click)="cerrarMenuMovil()">
         <span class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M5 20V10m7 10V4m7 16v-7"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M5 20V10m7 10V4m7 16v-7"></path>
+          </svg>
         </span>
         Reportes
       </a>
     </nav>
 
-      <button type="button" class="logout" (click)="cerrarSesion()">
-    <span class="logout-icon">
-      <svg viewBox="0 0 24 24">
-        <path d="M10 17l5-5-5-5"></path>
-        <path d="M15 12H3"></path>
-        <path d="M21 3v18"></path>
-      </svg>
-    </span>
-    <span>Cerrar sesión</span>
+    <button type="button" class="logout" (click)="cerrarSesion()">
+      <span class="logout-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M10 17l5-5-5-5"></path>
+          <path d="M15 12H3"></path>
+          <path d="M21 3v18"></path>
+        </svg>
+      </span>
+      <span>Cerrar sesión</span>
     </button>
   </aside>
 
   <main class="content">
     <header class="topbar">
-      <div>
+      <button type="button" class="mobile-menu-button" (click)="abrirCerrarMenuMovil()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="topbar-title">
         <h1>Sistema de Gestión de Agua</h1>
         <p>Administración de clientes, recibos, pagos y tarifas</p>
       </div>
@@ -102,7 +160,6 @@
           <span class="theme-icon">
             {{ esOscuro() ? '☀️' : '🌙' }}
           </span>
-          <span>{{ esOscuro() ? '' : '' }}</span>
         </button>
 
         <div class="user-box">
@@ -110,6 +167,7 @@
             <span>Administrador</span>
             <small>Administrador del sistema</small>
           </div>
+
           <div class="avatar">A</div>
         </div>
       </div>

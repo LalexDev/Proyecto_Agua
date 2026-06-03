@@ -1,6 +1,29 @@
-<div class="lecturador-page">
+<div
+  class="lecturador-page"
+  [class.dark-mode]="isDarkMode"
+  [class.mobile-menu-open]="menuMovilAbierto"
+>
+  <div
+    class="sidebar-backdrop"
+    *ngIf="menuMovilAbierto"
+    (click)="cerrarMenuMovil()"
+  ></div>
+
   <aside class="sidebar">
-    <div class="brand">
+    <div class="sidebar-mobile-header">
+      <div class="brand compact">
+        <div class="logo">💧</div>
+
+        <div>
+          <h3>JASS Huacariz</h3>
+          <p>Panel lecturador</p>
+        </div>
+      </div>
+
+      <button type="button" class="close-menu" (click)="cerrarMenuMovil()">×</button>
+    </div>
+
+    <div class="brand desktop-brand">
       <div class="logo">💧</div>
 
       <div>
@@ -10,7 +33,7 @@
     </div>
 
     <nav class="menu">
-      <button type="button" class="active">
+      <button type="button" class="active" (click)="cerrarMenuMovil()">
         <span>▣</span>
         Registrar lectura
       </button>
@@ -24,10 +47,16 @@
 
   <main class="content">
     <header class="topbar">
-      <div>
+      <button type="button" class="mobile-menu-button" (click)="abrirCerrarMenuMovil()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <div class="topbar-title">
         <span class="page-kicker">LECTURADOR / REGISTRO</span>
         <h1>Registro de lecturas</h1>
-        <p>Busca o escanea un suministro y registra la lectura o el recibo de mantenimiento según corresponda.</p>
+        <p>Busca o escanea un suministro y registra la lectura o el mantenimiento.</p>
       </div>
 
       <div class="topbar-actions">
@@ -41,20 +70,28 @@
             <strong>{{ nombreLecturador() }}</strong>
           </div>
 
-          <div class="avatar">
-            {{ inicialLecturador() }}
-          </div>
+          <div class="avatar">{{ inicialLecturador() }}</div>
         </div>
       </div>
     </header>
 
-    <div *ngIf="error" class="alert alert-error">
-      {{ error }}
-    </div>
 
-    <div *ngIf="exito" class="alert alert-success">
-      {{ exito }}
-    </div>
+
+
+
+    <div class="qr-scanner-card" *ngIf="escaneando">
+        <div class="qr-scanner-header">
+          <strong>Escaneando QR del suministro</strong>
+          <span>Apunta la cámara al código QR del usuario.</span>
+        </div>
+
+        <div class="qr-frame">
+          <div id="qr-reader-lecturador"></div>
+          <div class="scan-line"></div>
+        </div>
+      </div>
+
+
 
     <section class="hero-card">
       <div class="hero-info">
@@ -77,59 +114,16 @@
         </div>
       </div>
 
-      <div class="hero-icon">
-        ▣
-      </div>
+      <div class="hero-icon">▣</div>
     </section>
 
-    <section class="search-card">
-      <div class="search-header">
-        <div>
-          <span class="tag">Paso 1</span>
-          <h2>Buscar suministro</h2>
-          <p>Ingresa el código del suministro o escanea el QR instalado en la vivienda.</p>
-        </div>
-      </div>
 
-      <div class="search-box">
-        <input
-          type="text"
-          [(ngModel)]="codigoBusqueda"
-          placeholder="Ejemplo: SUM-C6DAD1A0"
-          (keyup.enter)="buscarSuministro()"
-        >
 
-        <button type="button" class="btn-primary" [disabled]="cargando" (click)="buscarSuministro()">
-          {{ cargando ? 'Buscando...' : 'Buscar' }}
-        </button>
 
-        <button type="button" class="btn-secondary" (click)="limpiar()">
-          Limpiar
-        </button>
 
-        <button type="button" class="btn-scan" [disabled]="escaneando" (click)="iniciarEscaneo()">
-          {{ escaneando ? 'Escaneando...' : 'Escanear QR' }}
-        </button>
 
-        <button *ngIf="escaneando" type="button" class="btn-danger" (click)="detenerEscaneo()">
-          Detener
-        </button>
-      </div>
 
-      <div class="qr-scanner-card" *ngIf="escaneando">
-        <div class="qr-scanner-header">
-          <strong>Escaneando QR del suministro</strong>
-          <span>Apunta la cámara al código QR del usuario.</span>
-        </div>
-
-        <div class="qr-frame">
-          <div id="qr-reader-lecturador"></div>
-          <div class="scan-line"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="suministro-card" *ngIf="suministro">
+        <section class="suministro-card" *ngIf="suministro">
       <div class="section-title">
         <div>
           <span class="tag">Paso 2</span>
@@ -336,23 +330,6 @@
         </div>
       </div>
 
-      <div class="help-grid">
-        <div>
-          <strong>No instalado</strong>
-          <span>No se registra lectura actual del medidor.</span>
-        </div>
-
-        <div>
-          <strong>Pago por mantenimiento</strong>
-          <span>El monto lo calcula el sistema según configuración del administrador.</span>
-        </div>
-
-        <div>
-          <strong>Sin cargos manuales</strong>
-          <span>El lecturador no modifica tarifas ni importes.</span>
-        </div>
-      </div>
-
       <div class="actions">
         <button type="button" class="btn-secondary" (click)="limpiar()">
           Cancelar
@@ -418,33 +395,54 @@
           <strong>S/ {{ lecturaGenerada.recibo.total | number:'1.2-2' }}</strong>
         </div>
       </div>
+    </section>
 
-      <div class="receipt-breakdown">
-        <div>
-          <span>Subtotal agua</span>
-          <strong>S/ {{ lecturaGenerada.recibo.subtotalAgua | number:'1.2-2' }}</strong>
-        </div>
 
-        <div>
-          <span>Mantenimiento</span>
-          <strong>S/ {{ lecturaGenerada.recibo.cargoMantenimiento | number:'1.2-2' }}</strong>
-        </div>
+        <div *ngIf="error" class="alert alert-error">
+      {{ error }}
+    </div>
 
-        <div>
-          <span>Cargo lector</span>
-          <strong>S/ {{ lecturaGenerada.recibo.cargoLector | number:'1.2-2' }}</strong>
-        </div>
+    <div *ngIf="exito" class="alert alert-success">
+      {{ exito }}
+    </div>
 
+    <section class="search-card">
+      <div class="search-header">
         <div>
-          <span>Otros cargos</span>
-          <strong>S/ {{ lecturaGenerada.recibo.cargoOtros | number:'1.2-2' }}</strong>
-        </div>
-
-        <div>
-          <span>Mora</span>
-          <strong>S/ {{ lecturaGenerada.recibo.mora | number:'1.2-2' }}</strong>
+          <span class="tag">Paso 1</span>
+          <h2>Buscar suministro</h2>
+          <p>Ingresa el código del suministro o escanea el QR instalado en la vivienda.</p>
         </div>
       </div>
+
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="codigoBusqueda"
+          placeholder="Ejemplo: SUM-C6DAD1A0"
+          (keyup.enter)="buscarSuministro()"
+        >
+
+        <button type="button" class="btn-primary" [disabled]="cargando" (click)="buscarSuministro()">
+          {{ cargando ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        <button type="button" class="btn-secondary" (click)="limpiar()">
+          Limpiar
+        </button>
+
+        <button type="button" class="btn-scan" [disabled]="escaneando" (click)="iniciarEscaneo()">
+          {{ escaneando ? 'Escaneando...' : 'Escanear QR' }}
+        </button>
+
+        <button *ngIf="escaneando" type="button" class="btn-danger" (click)="detenerEscaneo()">
+          Detener
+        </button>
+      </div>
+
+      
     </section>
+
+
   </main>
 </div>

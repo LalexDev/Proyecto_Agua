@@ -42,7 +42,7 @@ export interface ConfiguracionCobranzaResponse {
   providedIn: 'root',
 })
 export class Tarifa {
-  private readonly apiUrl = 'http://localhost:8080/api/tarifas';
+  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/tarifas';
 
   constructor(private http: HttpClient) {}
 

@@ -77,8 +77,8 @@ export interface LecturaResponse {
   providedIn: 'root',
 })
 export class Lecturador {
-  private readonly apiLecturador = 'http://localhost:8080/api/lecturador';
-  private readonly apiLecturas = 'http://localhost:8080/api/lecturas';
+  private readonly apiLecturador = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/lecturador';
+  private readonly apiLecturas = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/lecturas';
 
   constructor(private http: HttpClient) {}
 

@@ -13,7 +13,7 @@ export interface SectorResponse {
   providedIn: 'root',
 })
 export class Sector {
-  private readonly apiUrl = 'http://localhost:8080/api/sectores';
+  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/sectores';
 
   constructor(private http: HttpClient) {}
 
