@@ -1,24 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/lectura_admin_service.dart';
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/widgets/admin_bottom_nav.dart';
+import '../../shared/widgets/lector_bottom_nav.dart';
 
 class HistorialLecturasPage extends StatefulWidget {
-  const HistorialLecturasPage({super.key});
+  final bool modoAdmin;
+
+  const HistorialLecturasPage({
+    super.key,
+    this.modoAdmin = false,
+  });
 
   @override
-  State<HistorialLecturasPage> createState() => _HistorialLecturasPageState();
+  State<HistorialLecturasPage> createState() =>
+      _HistorialLecturasPageState();
 }
 
 class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
-
   final LecturaAdminService lecturaService = LecturaAdminService();
   final TextEditingController buscarController = TextEditingController();
 
   List<Map<String, dynamic>> lecturas = [];
+
   bool cargando = false;
   String error = '';
   String busqueda = '';
@@ -37,13 +42,17 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
 
   String _txt(dynamic value, [String fallback = '-']) {
     if (value == null) return fallback;
+
     final text = value.toString().trim();
+
     if (text.isEmpty || text == 'null') return fallback;
+
     return text;
   }
 
   double _num(dynamic value) {
     if (value is num) return value.toDouble();
+
     return double.tryParse(value.toString()) ?? 0.0;
   }
 
@@ -105,14 +114,19 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
     if (consumo > 0) return consumo;
 
     final calculado = _lecturaActual(lectura) - _lecturaAnterior(lectura);
+
     return calculado < 0 ? 0 : calculado;
   }
 
   String _periodo(Map<String, dynamic> lectura) {
-    final anio = int.tryParse('${lectura['anio'] ?? DateTime.now().year}') ??
+    final anio = int.tryParse(
+          '${lectura['anio'] ?? DateTime.now().year}',
+        ) ??
         DateTime.now().year;
 
-    final mes = int.tryParse('${lectura['mes'] ?? DateTime.now().month}') ??
+    final mes = int.tryParse(
+          '${lectura['mes'] ?? DateTime.now().month}',
+        ) ??
         DateTime.now().month;
 
     const meses = [
@@ -131,6 +145,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
     ];
 
     final index = (mes - 1).clamp(0, 11);
+
     return '${meses[index]} $anio';
   }
 
@@ -189,61 +204,108 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
   }
 
   void _volverInicio() {
-    Navigator.pushReplacementNamed(context, '/lector-home');
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+      return;
+    }
+
+    Navigator.pushReplacementNamed(
+      context,
+      widget.modoAdmin ? '/admin-dashboard' : '/lector-home',
+    );
   }
 
-  void _nuevaLectura() {
-    Navigator.pushReplacementNamed(context, '/buscar-suministro');
+  void _goAdminBottom(int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+    }
+
+    if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/admin-clientes');
+    }
+
+    if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/admin-tarifas');
+    }
+
+    if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/admin-recibos');
+    }
+  }
+
+  void _goLectorBottom(int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/lector-home');
+    }
+
+    if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/buscar-suministro');
+    }
+
+    if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/qr-scanner');
+    }
+
+    if (index == 3) return;
+  }
+
+  void _abrirMenu() {
+    if (widget.modoAdmin) {
+      showAdminQuickMenu(
+        context: context,
+        onRefresh: cargarHistorial,
+      );
+      return;
+    }
+
+    showLectorQuickMenu(
+      context: context,
+      onRefresh: cargarHistorial,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final oscuro = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: background,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: secondary,
-        foregroundColor: Colors.white,
-        onPressed: _nuevaLectura,
-        child: const Icon(Icons.add_rounded),
-      ),
+      backgroundColor:
+          oscuro ? JassColors.darkBackground : JassColors.background,
+      extendBody: true,
+      bottomNavigationBar: widget.modoAdmin
+          ? AdminBottomNav(
+              currentIndex: -1,
+              onTap: _goAdminBottom,
+              onPlus: _abrirMenu,
+            )
+          : LectorBottomNav(
+              currentIndex: 3,
+              onTap: _goLectorBottom,
+              onPlus: _abrirMenu,
+            ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: cargarHistorial,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 90),
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
+                _buildHeader(oscuro),
                 const SizedBox(height: 18),
-                _buildSearch(),
+                _buildSearch(oscuro),
                 const SizedBox(height: 18),
-                if (cargando)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(28),
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
+                if (cargando) _buildLoading(oscuro),
                 if (error.isNotEmpty && !cargando)
                   _ErrorCard(
                     error: error,
                     onRetry: cargarHistorial,
                   ),
-                if (!cargando && error.isEmpty && lecturasFiltradas.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(28),
-                      child: Text(
-                        'No hay lecturas registradas.',
-                        style: TextStyle(
-                          color: muted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
+                if (!cargando &&
+                    error.isEmpty &&
+                    lecturasFiltradas.isEmpty)
+                  _buildEmpty(oscuro),
                 if (!cargando && error.isEmpty)
                   ...lecturasFiltradas.map((lectura) {
                     return _LecturaCard(
@@ -255,6 +317,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
                       lecturaAnterior: _lecturaAnterior(lectura),
                       lecturaActual: _lecturaActual(lectura),
                       consumo: _consumo(lectura),
+                      oscuro: oscuro,
                     );
                   }),
               ],
@@ -265,42 +328,50 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool oscuro) {
     return Row(
       children: [
         Container(
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: oscuro ? JassColors.darkCard : JassColors.card,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color:
+                  oscuro ? JassColors.darkBorder : JassColors.border,
+            ),
           ),
           child: IconButton(
             onPressed: _volverInicio,
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
-              color: primary,
+              color: oscuro ? Colors.white : JassColors.primary,
             ),
           ),
         ),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Módulo lecturador',
+                widget.modoAdmin
+                    ? 'Panel del administrador'
+                    : 'Módulo lecturador',
                 style: TextStyle(
-                  color: muted,
+                  color: oscuro
+                      ? JassColors.darkMuted
+                      : JassColors.muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 'Historial de lecturas',
                 style: TextStyle(
-                  color: primary,
+                  color: oscuro ? Colors.white : JassColors.primary,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
@@ -308,18 +379,30 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
             ],
           ),
         ),
-        IconButton(
-          onPressed: cargarHistorial,
-          icon: const Icon(
-            Icons.refresh_rounded,
-            color: primary,
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: oscuro ? JassColors.darkCard : JassColors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color:
+                  oscuro ? JassColors.darkBorder : JassColors.border,
+            ),
+          ),
+          child: IconButton(
+            onPressed: cargarHistorial,
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: JassColors.secondary,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSearch() {
+  Widget _buildSearch(bool oscuro) {
     return TextField(
       controller: buscarController,
       onChanged: (value) {
@@ -327,15 +410,102 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
           busqueda = value;
         });
       },
+      style: TextStyle(
+        color: oscuro ? Colors.white : JassColors.primary,
+      ),
       decoration: InputDecoration(
         hintText: 'Buscar por suministro, cliente o periodo...',
-        prefixIcon: const Icon(Icons.search_rounded),
+        hintStyle: TextStyle(
+          color:
+              oscuro ? JassColors.darkMuted : JassColors.muted,
+        ),
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+          color: JassColors.secondary,
+        ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: oscuro ? JassColors.darkCard : JassColors.card,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(
+            color:
+                oscuro ? JassColors.darkBorder : JassColors.border,
+          ),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(
+            color:
+                oscuro ? JassColors.darkBorder : JassColors.border,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(
+            color: JassColors.secondary,
+            width: 1.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoading(bool oscuro) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(26),
+      decoration: BoxDecoration(
+        color: oscuro ? JassColors.darkCard : JassColors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
+        ),
+      ),
+      child: Column(
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 14),
+          Text(
+            'Cargando historial...',
+            style: TextStyle(
+              color:
+                  oscuro ? JassColors.darkMuted : JassColors.muted,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmpty(bool oscuro) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: oscuro ? JassColors.darkCard : JassColors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
+        ),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.history_toggle_off_rounded,
+            color: JassColors.secondary,
+            size: 52,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No hay lecturas registradas.',
+            style: TextStyle(
+              color: oscuro ? Colors.white : JassColors.primary,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -350,6 +520,7 @@ class _LecturaCard extends StatelessWidget {
   final double lecturaAnterior;
   final double lecturaActual;
   final double consumo;
+  final bool oscuro;
 
   const _LecturaCard({
     required this.codigo,
@@ -360,23 +531,20 @@ class _LecturaCard extends StatelessWidget {
     required this.lecturaAnterior,
     required this.lecturaActual,
     required this.consumo,
+    required this.oscuro,
   });
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
-    const Color muted = Color(0xFF7B8794);
-
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: oscuro ? JassColors.darkCard : JassColors.card,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
         ),
       ),
       child: Column(
@@ -388,15 +556,15 @@ class _LecturaCard extends StatelessWidget {
                 backgroundColor: Color(0xFFE8F7FB),
                 child: Icon(
                   Icons.water_drop_rounded,
-                  color: secondary,
+                  color: JassColors.secondary,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   codigo,
-                  style: const TextStyle(
-                    color: primary,
+                  style: TextStyle(
+                    color: oscuro ? Colors.white : JassColors.primary,
                     fontSize: 19,
                     fontWeight: FontWeight.w900,
                   ),
@@ -407,16 +575,17 @@ class _LecturaCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             cliente,
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: oscuro ? Colors.white : JassColors.primary,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             direccion,
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color:
+                  oscuro ? JassColors.darkMuted : JassColors.muted,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -427,6 +596,7 @@ class _LecturaCard extends StatelessWidget {
                 child: _MiniValue(
                   label: 'Periodo',
                   value: periodo,
+                  oscuro: oscuro,
                 ),
               ),
               const SizedBox(width: 10),
@@ -434,6 +604,7 @@ class _LecturaCard extends StatelessWidget {
                 child: _MiniValue(
                   label: 'Fecha',
                   value: fecha,
+                  oscuro: oscuro,
                 ),
               ),
             ],
@@ -444,14 +615,16 @@ class _LecturaCard extends StatelessWidget {
               Expanded(
                 child: _MiniValue(
                   label: 'Anterior',
-                  value: lecturaAnterior.toStringAsFixed(0),
+                  value: lecturaAnterior.toStringAsFixed(3),
+                  oscuro: oscuro,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _MiniValue(
                   label: 'Actual',
-                  value: lecturaActual.toStringAsFixed(0),
+                  value: lecturaActual.toStringAsFixed(3),
+                  oscuro: oscuro,
                 ),
               ),
               const SizedBox(width: 10),
@@ -459,6 +632,7 @@ class _LecturaCard extends StatelessWidget {
                 child: _MiniValue(
                   label: 'Consumo',
                   value: '${consumo.toStringAsFixed(2)} m³',
+                  oscuro: oscuro,
                 ),
               ),
             ],
@@ -472,24 +646,25 @@ class _LecturaCard extends StatelessWidget {
 class _MiniValue extends StatelessWidget {
   final String label;
   final String value;
+  final bool oscuro;
 
   const _MiniValue({
     required this.label,
     required this.value,
+    required this.oscuro,
   });
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
-
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
+        color: oscuro
+            ? const Color(0xFF162432)
+            : const Color(0xFFF8FBFD),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
         ),
       ),
       child: Column(
@@ -498,8 +673,9 @@ class _MiniValue extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color:
+                  oscuro ? JassColors.darkMuted : JassColors.muted,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -509,8 +685,8 @@ class _MiniValue extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: oscuro ? Colors.white : JassColors.primary,
               fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
@@ -538,6 +714,9 @@ class _ErrorCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFFFD1D1),
+        ),
       ),
       child: Column(
         children: [
@@ -545,7 +724,7 @@ class _ErrorCard extends StatelessWidget {
             error,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Color(0xFFD93025),
+              color: JassColors.danger,
               fontWeight: FontWeight.w800,
             ),
           ),

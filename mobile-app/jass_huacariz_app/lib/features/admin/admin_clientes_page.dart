@@ -1,7 +1,12 @@
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, prefer_const_declarations
 import 'package:flutter/material.dart';
+
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
 
 import '../../core/services/cliente_service.dart';
 import '../../core/services/sector_service.dart';
+import '../../shared/widgets/admin_bottom_nav.dart';
 
 class AdminClientesPage extends StatefulWidget {
   const AdminClientesPage({super.key});
@@ -11,11 +16,7 @@ class AdminClientesPage extends StatefulWidget {
 }
 
 class _AdminClientesPageState extends State<AdminClientesPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
-
+  final Color secondary = JassColors.secondary;
   final ClienteService clienteService = ClienteService();
   final SectorService sectorService = SectorService();
 
@@ -34,14 +35,20 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
 
   String _txt(dynamic value, [String fallback = '-']) {
     if (value == null) return fallback;
+
     final text = value.toString().trim();
+
     if (text.isEmpty || text == 'null') return fallback;
+
     return text;
   }
 
   int _idCliente(Map<String, dynamic> cliente) {
     final value = cliente['id'] ?? cliente['idCliente'];
+
     if (value is int) return value;
+    if (value is num) return value.toInt();
+
     return int.tryParse(value.toString()) ?? 0;
   }
 
@@ -55,8 +62,12 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
 
   bool _estadoCliente(Map<String, dynamic> cliente) {
     final value = cliente['estado'];
+
     if (value is bool) return value;
-    return value.toString().toLowerCase() == 'true';
+
+    final text = value.toString().toLowerCase().trim();
+
+    return text == 'true' || text == 'activo' || text == '1';
   }
 
   List<Map<String, dynamic>> get clientesFiltrados {
@@ -106,6 +117,132 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     }
   }
 
+  void _mensaje(String mensaje, bool esError) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor:
+            esError ? JassColors.danger : JassColors.success,
+      ),
+    );
+  }
+
+  Future<void> _cambiarEstadoCliente(
+    Map<String, dynamic> cliente, {
+    bool cerrarDetalle = false,
+  }) async {
+    final idCliente = _idCliente(cliente);
+    final activoActual = _estadoCliente(cliente);
+    final nuevoEstado = !activoActual;
+
+    if (idCliente <= 0) {
+      _mensaje('No se encontró el ID del cliente.', true);
+      return;
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            activoActual ? 'Desactivar cliente' : 'Activar cliente',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          content: Text(
+            activoActual
+                ? '¿Deseas desactivar este cliente?'
+                : '¿Deseas activar este cliente?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: nuevoEstado
+                    ? JassColors.success
+                    : JassColors.danger,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(nuevoEstado ? 'Activar' : 'Desactivar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await clienteService.cambiarEstadoCliente(
+        idCliente: idCliente,
+        estado: nuevoEstado,
+      );
+
+      if (!mounted) return;
+
+      if (cerrarDetalle) {
+        Navigator.pop(context);
+      }
+
+      _mensaje(
+        nuevoEstado
+            ? 'Cliente activado correctamente.'
+            : 'Cliente desactivado correctamente.',
+        false,
+      );
+
+      await cargarDatos();
+    } catch (e) {
+      if (!mounted) return;
+
+      _mensaje(
+        e.toString().replaceFirst('Exception: ', ''),
+        true,
+      );
+    }
+  }
+
+  void _abrirEditarCliente(Map<String, dynamic> cliente) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.jassSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+      ),
+      builder: (_) {
+        return _EditarClienteSheet(
+          cliente: cliente,
+          onGuardar: (payload) async {
+            final idCliente = _idCliente(cliente);
+
+            if (idCliente <= 0) {
+              throw Exception('No se encontró el ID del cliente.');
+            }
+
+            await clienteService.actualizarCliente(
+              idCliente,
+              payload,
+            );
+
+            if (!mounted) return;
+
+            Navigator.pop(context);
+
+            _mensaje('Cliente actualizado correctamente.', false);
+
+            await cargarDatos();
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _abrirDetalleCliente(Map<String, dynamic> cliente) async {
     final idCliente = _idCliente(cliente);
 
@@ -119,8 +256,9 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
 
     if (suministros.isEmpty && idCliente > 0) {
       try {
-        suministros =
-            await clienteService.listarSuministrosPorCliente(idCliente);
+        suministros = await clienteService.listarSuministrosPorCliente(
+          idCliente,
+        );
       } catch (_) {}
     }
 
@@ -128,9 +266,9 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: context.jassSurface,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(28),
         ),
@@ -138,55 +276,133 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       builder: (_) {
         return DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.72,
+          initialChildSize: 0.78,
           minChildSize: 0.45,
           maxChildSize: 0.94,
           builder: (_, controller) {
             return ListView(
               controller: controller,
-              padding: const EdgeInsets.all(22),
+              padding: EdgeInsets.all(22),
               children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Detalle del cliente',
+                        style: TextStyle(
+                          color: secondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
                 Text(
                   _nombreCliente(cliente),
-                  style: const TextStyle(
-                    color: primary,
+                  style: TextStyle(
+                    color: context.jassTextPrimary,
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 14),
-                _DetalleLine(label: 'DNI', value: _txt(cliente['dni'])),
-                _DetalleLine(
-                  label: 'Usuario',
-                  value: _txt(cliente['codigoUsuario']),
-                ),
-                _DetalleLine(
-                  label: 'Teléfono',
-                  value: _txt(cliente['telefono']),
-                ),
-                _DetalleLine(
-                  label: 'Correo',
-                  value: _txt(cliente['correo']),
-                ),
-                _DetalleLine(
-                  label: 'Estado',
-                  value: _estadoCliente(cliente) ? 'Activo' : 'Inactivo',
-                ),
-                const Divider(height: 32),
-                const Text(
-                  'Suministros',
+                SizedBox(height: 6),
+                Text(
+                  'DNI: ${_txt(cliente['dni'])} | Usuario: ${_txt(cliente['codigoUsuario'])}',
                   style: TextStyle(
-                    color: primary,
+                    color: context.jassTextMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 18),
+                _DetalleResumenGrid(
+                  telefono: _txt(cliente['telefono']),
+                  correo: _txt(cliente['correo']),
+                  activo: _estadoCliente(cliente),
+                  suministros: suministros.length,
+                ),
+                SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _abrirEditarCliente(cliente);
+                        },
+                        icon: Icon(Icons.edit_outlined),
+                        label: Text(
+                          'Editar cliente',
+                          style: TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: context.jassTextPrimary,
+                          side: BorderSide(
+                            color: context.jassBorder,
+                          ),
+                          backgroundColor: context.jassSelectedSurface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          _cambiarEstadoCliente(
+                            cliente,
+                            cerrarDetalle: true,
+                          );
+                        },
+                        icon: Icon(
+                          _estadoCliente(cliente)
+                              ? Icons.block_rounded
+                              : Icons.check_circle_outline_rounded,
+                        ),
+                        label: Text(
+                          _estadoCliente(cliente)
+                              ? 'Desactivar'
+                              : 'Activar',
+                          style: TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _estadoCliente(cliente)
+                              ? Color(0xFFFFECEC)
+                              : Color(0xFFEAF8EF),
+                          foregroundColor: _estadoCliente(cliente)
+                              ? JassColors.danger
+                              : JassColors.success,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Suministros del cliente',
+                  style: TextStyle(
+                    color: context.jassTextPrimary,
                     fontSize: 19,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 if (suministros.isEmpty)
-                  const Text(
+                  Text(
                     'Este cliente no tiene suministros registrados.',
                     style: TextStyle(
-                      color: muted,
+                      color: context.jassTextMuted,
                       fontWeight: FontWeight.w700,
                     ),
                   )
@@ -197,45 +413,56 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                             'true';
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(14),
+                      margin: EdgeInsets.only(bottom: 12),
+                      padding: EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FB),
+                        color: context.jassSurfaceAlt,
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: const Color(0xFFE2EDF3),
+                          color: context.jassBorder,
                         ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.water_drop_rounded,
                             color: secondary,
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   _txt(suministro['codigoSuministro']),
-                                  style: const TextStyle(
-                                    color: primary,
+                                  style: TextStyle(
+                                    color: context.jassTextPrimary,
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
+                                Text(
+                                  _txt(suministro['aliasSuministro']),
+                                  style: TextStyle(
+                                    color: context.jassTextPrimary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(height: 3),
                                 Text(
                                   _txt(suministro['direccionSuministro']),
-                                  style: const TextStyle(
-                                    color: muted,
+                                  style: TextStyle(
+                                    color: context.jassTextMuted,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 Text(
-                                  _txt(suministro['nombreSector']),
-                                  style: const TextStyle(
-                                    color: muted,
+                                  _txt(
+                                    suministro['nombreSector'] ??
+                                        suministro['sector'],
+                                  ),
+                                  style: TextStyle(
+                                    color: context.jassTextMuted,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -247,6 +474,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                       ),
                     );
                   }),
+                SizedBox(height: 18),
               ],
             );
           },
@@ -259,8 +487,8 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
+      backgroundColor: context.jassSurface,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(28),
         ),
@@ -275,12 +503,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
 
             Navigator.pop(context);
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Cliente registrado correctamente.'),
-                backgroundColor: Color(0xFF1F8F4D),
-              ),
-            );
+            _mensaje('Cliente registrado correctamente.', false);
 
             await cargarDatos();
           },
@@ -294,6 +517,8 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       Navigator.pushReplacementNamed(context, '/admin-dashboard');
     }
 
+    if (index == 1) return;
+
     if (index == 2) {
       Navigator.pushReplacementNamed(context, '/admin-tarifas');
     }
@@ -301,41 +526,40 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     if (index == 3) {
       Navigator.pushReplacementNamed(context, '/admin-recibos');
     }
+  }
 
-    if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/admin-reportes');
-    }
+  void _abrirMenuAdmin() {
+    showAdminQuickMenu(
+      context: context,
+      onRefresh: cargarDatos,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
-      bottomNavigationBar: _AdminBottomNav(
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: AdminBottomNav(
         currentIndex: 1,
         onTap: _go,
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: secondary,
-        foregroundColor: Colors.white,
-        onPressed: _abrirFormularioCliente,
-        child: const Icon(Icons.add_rounded),
+        onPlus: _abrirMenuAdmin,
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: cargarDatos,
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(22),
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(22, 20, 22, 116),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 _buildSearch(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 if (cargando)
-                  const Center(
+                  Center(
                     child: Padding(
                       padding: EdgeInsets.all(28),
                       child: CircularProgressIndicator(),
@@ -347,7 +571,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                     onRetry: cargarDatos,
                   ),
                 if (!cargando && error.isEmpty && clientesFiltrados.isEmpty)
-                  const Center(
+                  Center(
                     child: Padding(
                       padding: EdgeInsets.all(28),
                       child: Text('No hay clientes para mostrar.'),
@@ -367,9 +591,11 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                       cantidadSuministros:
                           suministros is List ? suministros.length : 0,
                       onDetalle: () => _abrirDetalleCliente(cliente),
+                      onEditar: () => _abrirEditarCliente(cliente),
+                      onCambiarEstado: () => _cambiarEstadoCliente(cliente),
                     );
                   }),
-                const SizedBox(height: 90),
+                SizedBox(height: 90),
               ],
             ),
           ),
@@ -381,14 +607,14 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Gestión de usuarios',
                 style: TextStyle(
-                  color: muted,
+                  color: context.jassTextMuted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -396,7 +622,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
               Text(
                 'Clientes',
                 style: TextStyle(
-                  color: primary,
+                  color: context.jassTextPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
@@ -404,11 +630,37 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
             ],
           ),
         ),
-        IconButton(
-          onPressed: cargarDatos,
-          icon: const Icon(
-            Icons.refresh_rounded,
-            color: primary,
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: secondary,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: IconButton(
+            onPressed: _abrirFormularioCliente,
+            tooltip: 'Registrar cliente',
+            icon: Icon(
+              Icons.person_add_alt_1_rounded,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        SizedBox(width: 8),
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: context.jassSurface,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: IconButton(
+            onPressed: cargarDatos,
+            tooltip: 'Actualizar',
+            icon: Icon(
+              Icons.refresh_rounded,
+              color: context.jassTextPrimary,
+            ),
           ),
         ),
       ],
@@ -424,13 +676,122 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       },
       decoration: InputDecoration(
         hintText: 'Buscar por DNI, cliente o suministro...',
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: Icon(Icons.search),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.jassSurface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
+      ),
+    );
+  }
+}
+
+class _DetalleResumenGrid extends StatelessWidget {
+  final String telefono;
+  final String correo;
+  final bool activo;
+  final int suministros;
+
+  _DetalleResumenGrid({
+    required this.telefono,
+    required this.correo,
+    required this.activo,
+    required this.suministros,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _ResumenBox(
+                label: 'Teléfono',
+                value: telefono,
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: _ResumenBox(
+                label: 'Correo',
+                value: correo,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _ResumenBox(
+                label: 'Estado cliente',
+                value: activo ? 'Activo' : 'Inactivo',
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: _ResumenBox(
+                label: 'Total suministros',
+                value: '$suministros',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ResumenBox extends StatelessWidget {
+  final String label;
+  final String value;
+
+  _ResumenBox({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+  constraints: BoxConstraints(
+    minHeight: 74,),
+  padding: EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: context.jassSurfaceAlt,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: context.jassBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: context.jassTextMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: context.jassTextPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -445,8 +806,10 @@ class _ClienteCard extends StatelessWidget {
   final bool activo;
   final int cantidadSuministros;
   final VoidCallback onDetalle;
+  final VoidCallback onEditar;
+  final VoidCallback onCambiarEstado;
 
-  const _ClienteCard({
+  _ClienteCard({
     required this.nombre,
     required this.dni,
     required this.codigo,
@@ -455,21 +818,20 @@ class _ClienteCard extends StatelessWidget {
     required this.activo,
     required this.cantidadSuministros,
     required this.onDetalle,
+    required this.onEditar,
+    required this.onCambiarEstado,
   });
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 14),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
@@ -478,21 +840,21 @@ class _ClienteCard extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: const Color(0xFFE8F7FB),
+                backgroundColor: context.jassSelectedSurface,
                 child: Text(
                   nombre.isNotEmpty ? nombre[0].toUpperCase() : 'C',
-                  style: const TextStyle(
-                    color: primary,
+                  style: TextStyle(
+                    color: context.jassTextPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Text(
                   nombre,
-                  style: const TextStyle(
-                    color: primary,
+                  style: TextStyle(
+                    color: context.jassTextPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
                   ),
@@ -501,53 +863,98 @@ class _ClienteCard extends StatelessWidget {
               _EstadoChip(activo: activo),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'DNI: $dni · Usuario: $codigo',
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color: context.jassTextMuted,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'Tel: $telefono · $correo',
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color: context.jassTextMuted,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             'Suministros: $cantidadSuministros',
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: 150,
-            height: 42,
-            child: OutlinedButton.icon(
-              onPressed: onDetalle,
-              icon: const Icon(Icons.visibility_outlined, size: 18),
-              label: const Text(
-                'Ver detalle',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onDetalle,
+                  icon: Icon(Icons.visibility_outlined, size: 18),
+                  label: Text(
+                    'Detalle',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: context.jassTextPrimary,
+                    side: BorderSide(color: context.jassTextPrimary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                 ),
               ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primary,
-                side: const BorderSide(
-                  color: primary,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+              SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onEditar,
+                  icon: Icon(Icons.edit_outlined, size: 18),
+                  label: Text(
+                    'Editar',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.jassSelectedSurface,
+                    foregroundColor: context.jassTextPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onCambiarEstado,
+                  icon: Icon(
+                    activo
+                        ? Icons.block_rounded
+                        : Icons.check_circle_outline_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    activo ? 'Desactivar' : 'Activar',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: activo
+                        ? Color(0xFFFFECEC)
+                        : Color(0xFFEAF8EF),
+                    foregroundColor: activo
+                        ? JassColors.danger
+                        : JassColors.success,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -559,7 +966,7 @@ class _RegistrarClienteSheet extends StatefulWidget {
   final List<Map<String, dynamic>> sectores;
   final Future<void> Function(Map<String, dynamic> payload) onGuardar;
 
-  const _RegistrarClienteSheet({
+  _RegistrarClienteSheet({
     required this.sectores,
     required this.onGuardar,
   });
@@ -569,10 +976,7 @@ class _RegistrarClienteSheet extends StatefulWidget {
 }
 
 class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color muted = Color(0xFF7B8794);
-
+  final Color secondary = JassColors.secondary;
   final dniController = TextEditingController();
   final nombresController = TextEditingController();
   final apellidosController = TextEditingController();
@@ -614,16 +1018,11 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
 
   int _idSector(Map<String, dynamic> sector) {
     final value = sector['id'] ?? sector['idSector'];
+
     if (value is int) return value;
+    if (value is num) return value.toInt();
+
     return int.tryParse(value.toString()) ?? 0;
-  }
-
-  String _nombreSector(Map<String, dynamic> sector) {
-    final value =
-        sector['nombreSector'] ?? sector['nombre'] ?? sector['descripcion'];
-
-    if (value == null) return 'Sector';
-    return value.toString();
   }
 
   void _mensaje(String mensaje, bool esError) {
@@ -631,7 +1030,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
       SnackBar(
         content: Text(mensaje),
         backgroundColor:
-            esError ? const Color(0xFFD93025) : const Color(0xFF1F8F4D),
+            esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -640,8 +1039,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
     final direccion = direccionController.text.trim();
     final referencia = referenciaController.text.trim();
     final alias = aliasController.text.trim();
-    final lectura =
-        double.tryParse(lecturaInicialController.text.trim()) ?? 0;
+    final lectura = double.tryParse(lecturaInicialController.text.trim()) ?? 0;
 
     if (idSectorSeleccionado == null || idSectorSeleccionado == 0) {
       _mensaje('Selecciona un sector.', true);
@@ -728,23 +1126,23 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Registrar cliente',
               style: TextStyle(
-                color: primary,
+                color: context.jassTextPrimary,
                 fontSize: 23,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 6),
-            const Text(
+            SizedBox(height: 6),
+            Text(
               'Registra los datos del cliente y uno o más suministros.',
               style: TextStyle(
-                color: muted,
+                color: context.jassTextMuted,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             _Input(
               controller: dniController,
               label: 'DNI',
@@ -768,18 +1166,18 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
               label: 'Correo',
               keyboardType: TextInputType.emailAddress,
             ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
-            const Text(
+            SizedBox(height: 12),
+            Divider(),
+            SizedBox(height: 12),
+            Text(
               'Suministros',
               style: TextStyle(
-                color: primary,
+                color: context.jassTextPrimary,
                 fontSize: 19,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             _SectorDropdown(
               sectores: widget.sectores,
               value: idSectorSeleccionado,
@@ -810,35 +1208,35 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: agregarSuministro,
-                icon: const Icon(Icons.add_location_alt_outlined),
-                label: const Text('Agregar suministro'),
+                icon: Icon(Icons.add_location_alt_outlined),
+                label: Text('Agregar suministro'),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             if (suministros.isNotEmpty)
               ...suministros.asMap().entries.map((entry) {
                 final index = entry.key;
                 final suministro = entry.value;
 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
+                  margin: EdgeInsets.only(bottom: 8),
+                  padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF7FB),
+                    color: context.jassSurfaceAlt,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.water_drop_rounded,
                         color: secondary,
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           '${suministro['aliasSuministro']} · ${suministro['direccionSuministro']}',
-                          style: const TextStyle(
-                            color: primary,
+                          style: TextStyle(
+                            color: context.jassTextPrimary,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -849,23 +1247,23 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
                             suministros.removeAt(index);
                           });
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.delete_outline,
-                          color: Color(0xFFD93025),
+                          color: JassColors.danger,
                         ),
                       ),
                     ],
                   ),
                 );
               }),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
                 onPressed: guardando ? null : guardarCliente,
                 icon: guardando
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
@@ -873,10 +1271,10 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Icon(Icons.save_outlined),
+                    : Icon(Icons.save_outlined),
                 label: Text(
                   guardando ? 'Guardando...' : 'Guardar cliente',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -897,12 +1295,279 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
   }
 }
 
+class _EditarClienteSheet extends StatefulWidget {
+  final Map<String, dynamic> cliente;
+  final Future<void> Function(Map<String, dynamic> payload) onGuardar;
+
+  _EditarClienteSheet({
+    required this.cliente,
+    required this.onGuardar,
+  });
+
+  @override
+  State<_EditarClienteSheet> createState() => _EditarClienteSheetState();
+}
+
+class _EditarClienteSheetState extends State<_EditarClienteSheet> {
+  final Color secondary = JassColors.secondary;
+  late final TextEditingController dniController;
+  late final TextEditingController nombresController;
+  late final TextEditingController apellidosController;
+  late final TextEditingController telefonoController;
+  late final TextEditingController correoController;
+
+  bool estado = true;
+  bool guardando = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    dniController = TextEditingController(
+      text: (widget.cliente['dni'] ?? '').toString(),
+    );
+
+    nombresController = TextEditingController(
+      text: (widget.cliente['nombres'] ?? '').toString(),
+    );
+
+    apellidosController = TextEditingController(
+      text: (widget.cliente['apellidos'] ?? '').toString(),
+    );
+
+    telefonoController = TextEditingController(
+      text: (widget.cliente['telefono'] ?? '').toString(),
+    );
+
+    correoController = TextEditingController(
+      text: (widget.cliente['correo'] ?? '').toString(),
+    );
+
+    final value = widget.cliente['estado'];
+
+    if (value is bool) {
+      estado = value;
+    } else {
+      final text = value.toString().toLowerCase().trim();
+      estado = text == 'true' || text == 'activo' || text == '1';
+    }
+  }
+
+  @override
+  void dispose() {
+    dniController.dispose();
+    nombresController.dispose();
+    apellidosController.dispose();
+    telefonoController.dispose();
+    correoController.dispose();
+    super.dispose();
+  }
+
+  Future<void> guardar() async {
+    final dni = dniController.text.trim();
+    final nombres = nombresController.text.trim();
+    final apellidos = apellidosController.text.trim();
+
+    if (dni.isEmpty || nombres.isEmpty || apellidos.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Completa DNI, nombres y apellidos.'),
+          backgroundColor: JassColors.danger,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      guardando = true;
+    });
+
+    try {
+      await widget.onGuardar({
+        'dni': dni,
+        'nombres': nombres,
+        'apellidos': apellidos,
+        'telefono': telefonoController.text.trim(),
+        'correo': correoController.text.trim(),
+        'estado': estado,
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        guardando = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: JassColors.danger,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final nombreCompleto =
+        '${nombresController.text} ${apellidosController.text}'.trim();
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 22,
+        right: 22,
+        top: 22,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 22,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Editar cliente',
+              style: TextStyle(
+                color: context.jassTextPrimary,
+                fontSize: 23,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              nombreCompleto.isEmpty
+                  ? 'Actualiza los datos personales y contacto del cliente.'
+                  : nombreCompleto,
+              style: TextStyle(
+                color: context.jassTextMuted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 18),
+            _Input(
+              controller: dniController,
+              label: 'DNI',
+              keyboardType: TextInputType.number,
+            ),
+            _Input(
+              controller: nombresController,
+              label: 'Nombres',
+            ),
+            _Input(
+              controller: apellidosController,
+              label: 'Apellidos',
+            ),
+            _Input(
+              controller: telefonoController,
+              label: 'Teléfono',
+              keyboardType: TextInputType.phone,
+            ),
+            _Input(
+              controller: correoController,
+              label: 'Correo',
+              keyboardType: TextInputType.emailAddress,
+            ),
+            DropdownButtonFormField<bool>(
+              value: estado,
+              decoration: InputDecoration(
+                labelText: 'Estado cliente',
+                filled: true,
+                fillColor: context.jassSurfaceAlt,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: true,
+                  child: Text('Activo'),
+                ),
+                DropdownMenuItem(
+                  value: false,
+                  child: Text('Inactivo'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+
+                setState(() {
+                  estado = value;
+                });
+              },
+            ),
+            SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Color(0xFFFFF3DF),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Color(0xFFFFD899)),
+              ),
+              child: Text(
+                'Nota: si cambias el DNI, también puede actualizarse el usuario de acceso del cliente si el backend lo permite.',
+                style: TextStyle(
+                  color: JassColors.warning,
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
+                ),
+              ),
+            ),
+            SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: guardando ? null : () => Navigator.pop(context),
+                    child: Text(
+                      'Cancelar',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: guardando ? null : guardar,
+                    icon: guardando
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Icon(Icons.save_outlined),
+                    label: Text(
+                      guardando ? 'Guardando...' : 'Guardar',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: secondary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SectorDropdown extends StatelessWidget {
   final List<Map<String, dynamic>> sectores;
   final int? value;
   final ValueChanged<int?> onChanged;
 
-  const _SectorDropdown({
+  _SectorDropdown({
     required this.sectores,
     required this.value,
     required this.onChanged,
@@ -910,7 +1575,10 @@ class _SectorDropdown extends StatelessWidget {
 
   int _idSector(Map<String, dynamic> sector) {
     final value = sector['id'] ?? sector['idSector'];
+
     if (value is int) return value;
+    if (value is num) return value.toInt();
+
     return int.tryParse(value.toString()) ?? 0;
   }
 
@@ -919,6 +1587,7 @@ class _SectorDropdown extends StatelessWidget {
         sector['nombreSector'] ?? sector['nombre'] ?? sector['descripcion'];
 
     if (value == null) return 'Sector';
+
     return value.toString();
   }
 
@@ -927,19 +1596,19 @@ class _SectorDropdown extends StatelessWidget {
     if (sectores.isEmpty) {
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF3DF),
+          color: Color(0xFFFFF3DF),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFFFFD899),
+            color: Color(0xFFFFD899),
           ),
         ),
-        child: const Text(
+        child: Text(
           'No hay sectores cargados. Verifica el endpoint /sectores.',
           style: TextStyle(
-            color: Color(0xFFC77700),
+            color: JassColors.warning,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -947,13 +1616,13 @@ class _SectorDropdown extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<int>(
         value: value,
         decoration: InputDecoration(
           labelText: 'Sector',
           filled: true,
-          fillColor: const Color(0xFFF4F8FB),
+          fillColor: context.jassSurfaceAlt,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
@@ -976,7 +1645,7 @@ class _Input extends StatelessWidget {
   final String label;
   final TextInputType? keyboardType;
 
-  const _Input({
+  _Input({
     required this.controller,
     required this.label,
     this.keyboardType,
@@ -985,14 +1654,14 @@ class _Input extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
-          fillColor: const Color(0xFFF4F8FB),
+          fillColor: context.jassSurfaceAlt,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
@@ -1006,68 +1675,28 @@ class _Input extends StatelessWidget {
 class _EstadoChip extends StatelessWidget {
   final bool activo;
 
-  const _EstadoChip({
+  _EstadoChip({
     required this.activo,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: 10,
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: activo ? const Color(0xFFEAF8EF) : const Color(0xFFFFECEC),
+        color: activo ? Color(0xFFEAF8EF) : Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(100),
       ),
       child: Text(
         activo ? 'Activo' : 'Inactivo',
         style: TextStyle(
-          color: activo ? const Color(0xFF1F8F4D) : const Color(0xFFD93025),
+          color: activo ? JassColors.success : JassColors.danger,
           fontSize: 11,
           fontWeight: FontWeight.w900,
         ),
-      ),
-    );
-  }
-}
-
-class _DetalleLine extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DetalleLine({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: muted,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: primary,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1077,7 +1706,7 @@ class _Error extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  const _Error({
+  _Error({
     required this.error,
     required this.onRetry,
   });
@@ -1086,9 +1715,9 @@ class _Error extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEC),
+        color: Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -1096,58 +1725,17 @@ class _Error extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFD93025),
+            style: TextStyle(
+              color: JassColors.danger,
               fontWeight: FontWeight.w800,
             ),
           ),
           TextButton(
             onPressed: onRetry,
-            child: const Text('Reintentar'),
+            child: Text('Reintentar'),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _AdminBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
-  const _AdminBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      height: 76,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          label: 'Inicio',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.groups_rounded),
-          label: 'Clientes',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.attach_money_rounded),
-          label: 'Tarifas',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_rounded),
-          label: 'Recibos',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.bar_chart_rounded),
-          label: 'Reportes',
-        ),
-      ],
     );
   }
 }

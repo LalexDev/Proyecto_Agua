@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
 import '../../core/services/cliente_portal_service.dart';
 import '../../core/services/recibo_service.dart';
+import '../../shared/widgets/cliente_bottom_nav.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,10 +15,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
+  Color get background => context.jassBackground;
+  Color get muted => context.jassTextMuted;
 
   final ClientePortalService clientePortalService = ClientePortalService();
   final ReciboService reciboService = ReciboService();
@@ -256,7 +260,7 @@ class _HomePageState extends State<HomePage> {
 
     if (recibo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('No tienes recibos pendientes para pagar.'),
           backgroundColor: Color(0xFF1F8F4D),
         ),
@@ -276,7 +280,7 @@ class _HomePageState extends State<HomePage> {
 
     if (recibo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Aún no tienes recibos registrados.'),
           backgroundColor: Color(0xFFC77700),
         ),
@@ -291,43 +295,190 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Barra inferior cliente:
+  // 0 = Inicio, 1 = Recibos, 2 = Pagar, 3 = Perfil.
+  void _goBottomCliente(int index) {
+    if (index == 0) return;
+
+    if (index == 1) {
+      irRecibos();
+    }
+
+    if (index == 2) {
+      irPagar();
+    }
+
+    if (index == 3) {
+      irPerfil();
+    }
+  }
+
+  // Menú flotante del botón "+".
+  // Este menú queda blanco para mantener el estilo claro de la app.
+  void _abrirMenuCliente() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
+      isScrollControlled: true,
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.jassSurface,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: context.jassBorder,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 28,
+                          offset: Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.92,
+                      children: [
+                        ClienteMenuTile(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Recibos',
+                          onTap: () {
+                            Navigator.pop(context);
+                            irRecibos();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.payments_rounded,
+                          label: 'Pagar',
+                          onTap: () {
+                            Navigator.pop(context);
+                            irPagar();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.person_rounded,
+                          label: 'Perfil',
+                          onTap: () {
+                            Navigator.pop(context);
+                            irPerfil();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.visibility_rounded,
+                          label: 'Último',
+                          onTap: () {
+                            Navigator.pop(context);
+                            verUltimoRecibo();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.lock_reset_rounded,
+                          label: 'Clave',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.pushNamed(context, '/cambiar-password');
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.refresh_rounded,
+                          label: 'Actualizar',
+                          onTap: () {
+                            Navigator.pop(context);
+                            cargarDatos();
+                          },
+                        ),
+                        ClienteThemeTile(
+                          onAfterChange: () {
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  borderRadius: BorderRadius.circular(100),
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: JassColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
-      bottomNavigationBar: _ClienteBottomNav(
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 1) {
-            irRecibos();
-          }
+      backgroundColor: context.jassBackground,
 
-          if (index == 2) {
-            irPerfil();
-          }
-        },
+      // Necesario para que la barra inferior flotante se vea moderna.
+      extendBody: true,
+
+      bottomNavigationBar: ClienteBottomNav(
+        currentIndex: 0,
+        onTap: _goBottomCliente,
+        onPlus: _abrirMenuCliente,
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: cargarDatos,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+
+            // Se deja más espacio inferior para que la barra no tape contenido.
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTopBar(),
-                const SizedBox(height: 22),
+                SizedBox(height: 22),
                 if (cargando) _buildLoading(),
                 if (error.isNotEmpty && !cargando) _buildError(),
                 if (!cargando && error.isEmpty) ...[
                   _buildWelcomeCard(),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildStats(),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildUltimoReciboCard(),
-                  const SizedBox(height: 24),
-                  const Text(
+                  SizedBox(height: 24),
+                  Text(
                     'Accesos rápidos',
                     style: TextStyle(
                       color: primary,
@@ -335,9 +486,8 @@ class _HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
                   _buildQuickActions(),
-                  const SizedBox(height: 90),
                 ],
               ],
             ),
@@ -357,13 +507,13 @@ class _HomePageState extends State<HomePage> {
             color: secondary,
             borderRadius: BorderRadius.circular(15),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.water_drop_rounded,
             color: Colors.white,
           ),
         ),
-        const SizedBox(width: 12),
-        const Expanded(
+        SizedBox(width: 12),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -389,7 +539,7 @@ class _HomePageState extends State<HomePage> {
         ),
         IconButton(
           onPressed: irPerfil,
-          icon: const Icon(
+          icon: Icon(
             Icons.account_circle_outlined,
             color: primary,
             size: 30,
@@ -404,10 +554,10 @@ class _HomePageState extends State<HomePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(26),
       ),
-      child: const Column(
+      child: Column(
         children: [
           CircularProgressIndicator(),
           SizedBox(height: 14),
@@ -434,28 +584,28 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
             color: Color(0xFFD93025),
             size: 42,
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFFD93025),
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           ElevatedButton(
             onPressed: cargarDatos,
             style: ElevatedButton.styleFrom(
               backgroundColor: secondary,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Reintentar'),
+            child: Text('Reintentar'),
           ),
         ],
       ),
@@ -478,7 +628,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.14),
+            color: JassColors.primary.withValues(alpha: 0.14),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -493,7 +643,7 @@ class _HomePageState extends State<HomePage> {
               color: Colors.white.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(100),
             ),
-            child: const Text(
+            child: Text(
               'Bienvenido',
               style: TextStyle(
                 color: Colors.white,
@@ -502,17 +652,17 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           Text(
             'Hola, $nombreCliente',
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 25,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 10),
-          const Text(
+          SizedBox(height: 10),
+          Text(
             'Consulta tus recibos, suministros y pagos del servicio de agua potable.',
             style: TextStyle(
               color: Color(0xFFE7F8FF),
@@ -521,7 +671,7 @@ class _HomePageState extends State<HomePage> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 22),
+          SizedBox(height: 22),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(18),
@@ -535,7 +685,7 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Deuda total pendiente',
                   style: TextStyle(
                     color: Color(0xFFE7F8FF),
@@ -543,19 +693,19 @@ class _HomePageState extends State<HomePage> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'S/ ${deudaPendiente.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 31,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Text(
                   '$recibosPendientes pendiente(s) · $recibosVencidos vencido(s)',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFFE7F8FF),
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -580,7 +730,7 @@ class _HomePageState extends State<HomePage> {
             subLabel: 'Asociados',
           ),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: 14),
         Expanded(
           child: _StatBox(
             icon: Icons.bar_chart_rounded,
@@ -601,11 +751,11 @@ class _HomePageState extends State<HomePage> {
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.jassSurface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE2EDF3)),
+          border: Border.all(color: context.jassBorder),
         ),
-        child: const Row(
+        child: Row(
           children: [
             Icon(
               Icons.receipt_long_outlined,
@@ -636,14 +786,14 @@ class _HomePageState extends State<HomePage> {
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.jassSurface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE2EDF3)),
+          border: Border.all(color: context.jassBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Último recibo',
               style: TextStyle(
                 color: primary,
@@ -651,33 +801,33 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
-                const CircleAvatar(
-                  backgroundColor: Color(0xFFE8F7FB),
+                CircleAvatar(
+                  backgroundColor: context.jassSelectedSurface,
                   child: Icon(
                     Icons.receipt_long_rounded,
                     color: secondary,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _codigoRecibo(recibo),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: primary,
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      SizedBox(height: 3),
                       Text(
                         '${_codigoSuministro(recibo)} · ${_periodo(recibo)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: muted,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -689,7 +839,7 @@ class _HomePageState extends State<HomePage> {
                 _EstadoMiniBadge(estado: estado),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Row(
               children: [
                 Expanded(
@@ -698,7 +848,7 @@ class _HomePageState extends State<HomePage> {
                     value: '${_consumo(recibo).toStringAsFixed(2)} m³',
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: _SmallInfo(
                     label: 'Total',
@@ -723,7 +873,7 @@ class _HomePageState extends State<HomePage> {
             onTap: irRecibos,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: _QuickAction(
             icon: Icons.payments_rounded,
@@ -731,7 +881,7 @@ class _HomePageState extends State<HomePage> {
             onTap: irPagar,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: _QuickAction(
             icon: Icons.person_rounded,
@@ -759,16 +909,16 @@ class _StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    const Color secondary = JassColors.secondary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -778,30 +928,30 @@ class _StatBox extends StatelessWidget {
             color: secondary,
             size: 30,
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: primary,
               fontSize: 23,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             subLabel,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -824,33 +974,33 @@ class _SmallInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
+        color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: primary,
               fontSize: 14,
               fontWeight: FontWeight.w900,
@@ -918,8 +1068,8 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
+    final Color primary = context.jassTextPrimary;
+    const Color secondary = JassColors.secondary;
 
     return InkWell(
       onTap: onTap,
@@ -928,9 +1078,9 @@ class _QuickAction extends StatelessWidget {
         height: 96,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.jassSurface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE2EDF3)),
+          border: Border.all(color: context.jassBorder),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -941,14 +1091,14 @@ class _QuickAction extends StatelessWidget {
               color: secondary,
               size: 28,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Flexible(
               child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: primary,
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
@@ -958,43 +1108,6 @@ class _QuickAction extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ClienteBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
-  const _ClienteBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      height: 76,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
-          label: 'Inicio',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long_rounded),
-          label: 'Recibos',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person_rounded),
-          label: 'Perfil',
-        ),
-      ],
     );
   }
 }

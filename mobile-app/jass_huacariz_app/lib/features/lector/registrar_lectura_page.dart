@@ -1,19 +1,30 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
 import '../../core/services/lecturador_service.dart';
+import '../../shared/widgets/admin_bottom_nav.dart';
+import '../../shared/widgets/lector_bottom_nav.dart';
 
 class RegistrarLecturaPage extends StatefulWidget {
-  const RegistrarLecturaPage({super.key});
+  final bool modoAdmin;
+
+  const RegistrarLecturaPage({
+    super.key,
+    this.modoAdmin = false,
+  });
 
   @override
-  State<RegistrarLecturaPage> createState() => _RegistrarLecturaPageState();
+  State<RegistrarLecturaPage> createState() =>
+      _RegistrarLecturaPageState();
 }
 
 class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
+  Color get background => context.jassBackground;
+  Color get muted => context.jassTextMuted;
 
   final LecturadorService lecturadorService = LecturadorService();
 
@@ -203,7 +214,9 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
 
       Navigator.pushReplacementNamed(
         context,
-        '/comprobante-recibo',
+        widget.modoAdmin
+            ? '/admin-comprobante-recibo'
+            : '/comprobante-recibo',
         arguments: comprobante,
       );
     } catch (e) {
@@ -228,7 +241,44 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
   }
 
   void _volverBuscar() {
-    Navigator.pushReplacementNamed(context, '/buscar-suministro');
+    Navigator.pushReplacementNamed(
+      context,
+      widget.modoAdmin
+          ? '/admin-buscar-suministro'
+          : '/buscar-suministro',
+    );
+  }
+
+  void _goBottomAdmin(int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+    } else if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/admin-clientes');
+    } else if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/admin-tarifas');
+    } else if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/admin-recibos');
+    }
+  }
+
+  void _abrirMenuAdmin() {
+    showAdminQuickMenu(context: context);
+  }
+
+  void _goBottomLector(int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/lector-home');
+    } else if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/buscar-suministro');
+    } else if (index == 2) {
+      Navigator.pushNamed(context, '/qr-scanner');
+    } else if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/historial-lecturas');
+    }
+  }
+
+  void _abrirMenuLector() {
+    showLectorQuickMenu(context: context);
   }
 
   @override
@@ -237,19 +287,31 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
     final consumo = _consumoCalculado();
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: widget.modoAdmin
+          ? AdminBottomNav(
+              currentIndex: -1,
+              onTap: _goBottomAdmin,
+              onPlus: _abrirMenuAdmin,
+            )
+          : LectorBottomNav(
+              currentIndex: -1,
+              onTap: _goBottomLector,
+              onPlus: _abrirMenuLector,
+            ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _buildSuministroCard(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildPeriodoSelector(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildLecturaForm(
                 lecturaAnterior: lecturaAnterior,
                 consumo: consumo,
@@ -268,24 +330,26 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.jassSurface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: IconButton(
             onPressed: _volverBuscar,
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
               color: primary,
             ),
           ),
         ),
-        const SizedBox(width: 14),
-        const Expanded(
+        SizedBox(width: 14),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Módulo lecturador',
+                widget.modoAdmin
+                    ? 'Panel del administrador'
+                    : 'Módulo lecturador',
                 style: TextStyle(
                   color: muted,
                   fontSize: 13,
@@ -326,23 +390,23 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Suministro seleccionado',
             style: TextStyle(
               color: Color(0xFFE7F8FF),
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             _codigoSuministro(),
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 25,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _WhiteInfo(label: 'Titular', value: _titular()),
           _WhiteInfo(label: 'Dirección', value: _direccion()),
           _WhiteInfo(label: 'Sector', value: _sector()),
@@ -358,16 +422,16 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Periodo de lectura',
             style: TextStyle(
               color: primary,
@@ -375,7 +439,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -384,7 +448,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                   decoration: InputDecoration(
                     labelText: 'Mes',
                     filled: true,
-                    fillColor: const Color(0xFFF4F8FB),
+                    fillColor: context.jassSurfaceAlt,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
@@ -407,14 +471,14 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<int>(
                   value: anioSeleccionado,
                   decoration: InputDecoration(
                     labelText: 'Año',
                     filled: true,
-                    fillColor: const Color(0xFFF4F8FB),
+                    fillColor: context.jassSurfaceAlt,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
@@ -441,10 +505,10 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             'Periodo seleccionado: ${_nombreMes(mesSeleccionado)} $anioSeleccionado',
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontWeight: FontWeight.w700,
             ),
@@ -462,16 +526,16 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Datos de lectura',
             style: TextStyle(
               color: primary,
@@ -479,7 +543,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -488,7 +552,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                   value: lecturaAnterior.toStringAsFixed(0),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: _LecturaValorCard(
                   label: 'Consumo calculado',
@@ -497,7 +561,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextField(
             controller: lecturaController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -507,39 +571,39 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
             decoration: InputDecoration(
               labelText: 'Lectura actual',
               hintText: 'Ingrese lectura actual del medidor',
-              prefixIcon: const Icon(Icons.speed_rounded),
+              prefixIcon: Icon(Icons.speed_rounded),
               filled: true,
-              fillColor: const Color(0xFFF4F8FB),
+              fillColor: context.jassSurfaceAlt,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           TextField(
             controller: observacionController,
             maxLines: 3,
             decoration: InputDecoration(
               labelText: 'Observación',
               hintText: 'Opcional',
-              prefixIcon: const Icon(Icons.note_alt_outlined),
+              prefixIcon: Icon(Icons.note_alt_outlined),
               filled: true,
-              fillColor: const Color(0xFFF4F8FB),
+              fillColor: context.jassSurfaceAlt,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
             height: 54,
             child: ElevatedButton.icon(
               onPressed: guardando ? null : registrarLectura,
               icon: guardando
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
@@ -547,10 +611,10 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(Icons.save_outlined),
+                  : Icon(Icons.save_outlined),
               label: Text(
                 guardando ? 'Registrando...' : 'Registrar lectura',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -588,7 +652,7 @@ class _WhiteInfo extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFFE7F8FF),
                 fontWeight: FontWeight.w700,
               ),
@@ -598,7 +662,7 @@ class _WhiteInfo extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
               ),
@@ -621,16 +685,16 @@ class _LecturaValorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
+        color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
@@ -638,17 +702,17 @@ class _LecturaValorCard extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             value,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: primary,
               fontSize: 16,
               fontWeight: FontWeight.w900,

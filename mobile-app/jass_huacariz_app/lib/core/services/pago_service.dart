@@ -1,5 +1,5 @@
-import '../config/api_config.dart';
-import 'api_service.dart';
+import 'package:jass_huacariz_app/core/config/api_config.dart';
+import 'package:jass_huacariz_app/core/services/api_service.dart';
 
 class PagoService {
   final ApiService _api = ApiService();
@@ -43,7 +43,7 @@ class PagoService {
     return _asList(response);
   }
 
-  Future<List<Map<String, dynamic>>> buscarPagosPorSuministro(
+  Future<List<Map<String, dynamic>>> listarPagosPorSuministro(
     String codigoSuministro,
   ) async {
     final response = await _api.get(
@@ -58,12 +58,14 @@ class PagoService {
     required String metodoPago,
     required String codigoOperacion,
   }) async {
-    final response = await _api.patch(
+    final payload = {
+      'metodoPago': metodoPago.trim().toUpperCase(),
+      'codigoOperacion': codigoOperacion.trim(),
+    };
+
+    final response = await _api.post(
       ApiConfig.pagarReciboCliente(idRecibo),
-      {
-        'metodoPago': metodoPago,
-        'codigoOperacion': codigoOperacion,
-      },
+      payload,
     );
 
     return _asMap(response);
@@ -74,12 +76,14 @@ class PagoService {
     required String metodoPago,
     required String codigoOperacion,
   }) async {
-    final response = await _api.patch(
+    final payload = {
+      'metodoPago': metodoPago.trim().toUpperCase(),
+      'codigoOperacion': codigoOperacion.trim(),
+    };
+
+    final response = await _api.post(
       ApiConfig.pagarReciboAdmin(idRecibo),
-      {
-        'metodoPago': metodoPago,
-        'codigoOperacion': codigoOperacion,
-      },
+      payload,
     );
 
     return _asMap(response);

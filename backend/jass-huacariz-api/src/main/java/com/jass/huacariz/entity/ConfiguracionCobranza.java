@@ -18,21 +18,81 @@ public class ConfiguracionCobranza {
     @Id
     private Integer id;
 
-    @Column(name = "cargo_lector", nullable = false, precision = 10, scale = 2)
+    @Column(
+        name = "cargo_lector",
+        nullable = false,
+        precision = 10,
+        scale = 2
+    )
     private BigDecimal cargoLector;
 
-    @Column(name = "cargo_mantenimiento", nullable = false, precision = 10, scale = 2)
+    @Column(
+        name = "cargo_mantenimiento",
+        nullable = false,
+        precision = 10,
+        scale = 2
+    )
     private BigDecimal cargoMantenimiento;
 
-    @Column(name = "cargo_otros", nullable = false, precision = 10, scale = 2)
+    @Column(
+        name = "cargo_otros",
+        nullable = false,
+        precision = 10,
+        scale = 2
+    )
     private BigDecimal cargoOtros;
 
-    @Column(name = "dias_vencimiento", nullable = false)
+    @Column(
+        name = "dias_vencimiento",
+        nullable = false
+    )
     private Integer diasVencimiento;
 
-    @Column(name = "mora_base", nullable = false, precision = 10, scale = 2)
+    @Column(
+        name = "mora_base",
+        nullable = false,
+        precision = 10,
+        scale = 2
+    )
     private BigDecimal moraBase;
 
-    @Column(name = "fecha_actualizacion", nullable = false)
+    @Column(
+        name = "fecha_actualizacion",
+        nullable = false
+    )
     private LocalDateTime fechaActualizacion;
+
+    @PrePersist
+    public void prePersist() {
+        if (id == null) {
+            id = 1;
+        }
+
+        if (cargoLector == null) {
+            cargoLector = new BigDecimal("3.00");
+        }
+
+        if (cargoMantenimiento == null) {
+            cargoMantenimiento = new BigDecimal("3.00");
+        }
+
+        if (cargoOtros == null) {
+            cargoOtros = new BigDecimal("0.25");
+        }
+
+        if (diasVencimiento == null) {
+            diasVencimiento = 15;
+        }
+
+        if (moraBase == null) {
+            moraBase = new BigDecimal("2.00");
+        }
+
+        fechaActualizacion = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        fechaActualizacion = LocalDateTime.now();
+    }
 }

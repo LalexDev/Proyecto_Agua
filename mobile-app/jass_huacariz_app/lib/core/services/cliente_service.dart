@@ -44,21 +44,42 @@ class ClienteService {
   }
 
   Future<Map<String, dynamic>> registrarCliente(
-  Map<String, dynamic> data,
-) async {
-  final payload = {
-    'dni': (data['dni'] ?? '').toString().trim(),
-    'nombres': (data['nombres'] ?? '').toString().trim(),
-    'apellidos': (data['apellidos'] ?? '').toString().trim(),
-    'telefono': (data['telefono'] ?? '').toString().trim(),
-    'correo': (data['correo'] ?? '').toString().trim(),
-    'estado': data['estado'] ?? true,
-    'suministros': data['suministros'] ?? [],
-  };
+    Map<String, dynamic> data,
+  ) async {
+    final payload = {
+      'dni': (data['dni'] ?? '').toString().trim(),
+      'nombres': (data['nombres'] ?? '').toString().trim(),
+      'apellidos': (data['apellidos'] ?? '').toString().trim(),
+      'telefono': (data['telefono'] ?? '').toString().trim(),
+      'correo': (data['correo'] ?? '').toString().trim(),
+      'estado': data['estado'] ?? true,
+      'suministros': data['suministros'] ?? [],
+    };
 
-  final response = await _api.post(ApiConfig.clientes, payload);
-  return _asMap(response);
-}
+    final response = await _api.post(ApiConfig.clientes, payload);
+    return _asMap(response);
+  }
+
+  Future<Map<String, dynamic>> actualizarCliente(
+    int idCliente,
+    Map<String, dynamic> data,
+  ) async {
+    final payload = {
+      'dni': (data['dni'] ?? '').toString().trim(),
+      'nombres': (data['nombres'] ?? '').toString().trim(),
+      'apellidos': (data['apellidos'] ?? '').toString().trim(),
+      'telefono': (data['telefono'] ?? '').toString().trim(),
+      'correo': (data['correo'] ?? '').toString().trim(),
+      'estado': data['estado'] ?? true,
+    };
+
+    final response = await _api.put(
+      ApiConfig.clientePorId(idCliente),
+      payload,
+    );
+
+    return _asMap(response);
+  }
 
   Future<Map<String, dynamic>> obtenerClientePorId(int idCliente) async {
     final response = await _api.get(ApiConfig.clientePorId(idCliente));

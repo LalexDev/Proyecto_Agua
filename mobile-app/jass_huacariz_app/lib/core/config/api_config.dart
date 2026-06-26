@@ -68,24 +68,47 @@ class ApiConfig {
     return '/tarifas/$idTarifa/estado?estado=$estado';
   }
 
+// CONFIGURACIÓN DE COBRANZA
+static const String configuracionCobranza =
+    '/configuracion-cobranza';
   // SECTORES
   static const String sectores = '/sectores';
+
+  static String sectorPorId(int idSector) {
+    return '/sectores/$idSector';
+  }
+
+  static String cambiarEstadoSector(int idSector, bool estado) {
+    return '/sectores/$idSector/estado?estado=$estado';
+  }
+
+  // ADMIN LECTURADORES
+  static const String lecturadores = '/usuarios/lecturadores';
+
+  static String lecturadorPorId(int idLecturador) {
+    return '/usuarios/lecturadores/$idLecturador';
+  }
+
+  static String cambiarEstadoLecturador(int idLecturador, bool estado) {
+    return '/usuarios/lecturadores/$idLecturador/estado?estado=$estado';
+  }
 
   // LECTURADOR
   static String buscarSuministroLecturador(String codigoSuministro) {
     return '/lecturador/suministros/$codigoSuministro';
   }
 
-  static const String registrarLectura = '/lecturador/lecturas';
+  static const String registrarLectura = '/lecturas';
 
   // ADMIN HISTORIAL LECTURAS
   static const String historialLecturasAdmin = '/admin/lecturas/historial';
 
+  // PDF RECIBOS
   static String reciboPdfPorId(int idRecibo) {
-  return '/recibos/$idRecibo/pdf';
-}
+    return '/recibos/$idRecibo/pdf';
+  }
 
-static String reciboPdfPorCodigo(String codigoRecibo) {
-  return '/recibos/pdf/$codigoRecibo';
-}
+  static String reciboPdfPorCodigo(String codigoRecibo) {
+    return '/recibos/pdf/$codigoRecibo';
+  }
 }

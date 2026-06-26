@@ -1,9 +1,14 @@
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, prefer_const_declarations
 import 'package:flutter/material.dart';
+
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
 
 import '../../core/services/cliente_service.dart';
 import '../../core/services/recibo_service.dart';
 import '../../core/services/pago_service.dart';
 import '../../core/services/lectura_admin_service.dart';
+import '../../shared/widgets/admin_bottom_nav.dart';
 
 class AdminReportesPage extends StatefulWidget {
   const AdminReportesPage({super.key});
@@ -13,11 +18,7 @@ class AdminReportesPage extends StatefulWidget {
 }
 
 class _AdminReportesPageState extends State<AdminReportesPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
-
+  final Color secondary = JassColors.secondary;
   final ClienteService clienteService = ClienteService();
   final ReciboService reciboService = ReciboService();
   final PagoService pagoService = PagoService();
@@ -254,27 +255,37 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
     }
   }
 
+
+  void _abrirMenuAdmin() {
+    showAdminQuickMenu(
+      context: context,
+      onRefresh: cargarReportes,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
-      bottomNavigationBar: _AdminBottomNav(
-        currentIndex: 4,
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: AdminBottomNav(
+        currentIndex: -1,
         onTap: _go,
+        onPlus: _abrirMenuAdmin,
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: cargarReportes,
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(22),
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(22, 22, 22, 116),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 if (cargando)
-                  const Center(
+                  Center(
                     child: Padding(
                       padding: EdgeInsets.all(28),
                       child: CircularProgressIndicator(),
@@ -287,14 +298,13 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
                   ),
                 if (!cargando && error.isEmpty) ...[
                   _buildResumenPrincipal(),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildIndicadoresGrid(),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildEstadoRecibos(),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildOperativo(),
                 ],
-                const SizedBox(height: 90),
               ],
             ),
           ),
@@ -306,14 +316,14 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Panel administrativo',
                 style: TextStyle(
-                  color: muted,
+                  color: context.jassTextMuted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -321,7 +331,7 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
               Text(
                 'Reportes',
                 style: TextStyle(
-                  color: primary,
+                  color: context.jassTextPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
@@ -331,9 +341,9 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
         ),
         IconButton(
           onPressed: cargarReportes,
-          icon: const Icon(
+          icon: Icon(
             Icons.refresh_rounded,
-            color: primary,
+            color: context.jassTextPrimary,
           ),
         ),
       ],
@@ -343,12 +353,12 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
   Widget _buildResumenPrincipal() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
+            context.jassTextPrimary,
+            JassColors.secondary,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -358,26 +368,26 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Resumen financiero',
             style: TextStyle(
               color: Color(0xFFE7F8FF),
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             'S/ ${recaudacionTotal.toStringAsFixed(2)}',
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 32,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             'Recaudación total registrada · Este mes: S/ ${recaudacionMes.toStringAsFixed(2)}',
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFFE7F8FF),
               fontWeight: FontWeight.w700,
               height: 1.4,
@@ -394,7 +404,7 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: NeverScrollableScrollPhysics(),
       childAspectRatio: 1.18,
       children: [
         _ReportCard(
@@ -440,49 +450,49 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
   Widget _buildEstadoRecibos() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Estado de recibos',
             style: TextStyle(
-              color: primary,
+              color: context.jassTextPrimary,
               fontSize: 19,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           _ProgressLine(
             label: 'Pagados',
             value: recibosPagados,
             total: recibosEmitidos,
-            color: const Color(0xFF1F8F4D),
+            color: JassColors.success,
           ),
           _ProgressLine(
             label: 'Pendientes',
             value: recibosPendientes,
             total: recibosEmitidos,
-            color: const Color(0xFFC77700),
+            color: JassColors.warning,
           ),
           _ProgressLine(
             label: 'Vencidos',
             value: recibosVencidos,
             total: recibosEmitidos,
-            color: const Color(0xFFD93025),
+            color: JassColors.danger,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Tasa de pago: ${porcentajePagados.toStringAsFixed(1)}%',
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -494,26 +504,26 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
   Widget _buildOperativo() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Indicadores operativos',
             style: TextStyle(
-              color: primary,
+              color: context.jassTextPrimary,
               fontSize: 19,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           _SimpleLine(
             label: 'Lecturas registradas',
             value: '$lecturasRegistradas',
@@ -542,7 +552,7 @@ class _ReportCard extends StatelessWidget {
   final String value;
   final String subtitle;
 
-  const _ReportCard({
+  _ReportCard({
     required this.icon,
     required this.label,
     required this.value,
@@ -551,17 +561,14 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
-    const Color muted = Color(0xFF7B8794);
-
+    final Color secondary = JassColors.secondary;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
@@ -572,24 +579,24 @@ class _ReportCard extends StatelessWidget {
             color: secondary,
             size: 30,
           ),
-          const Spacer(),
+          Spacer(),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -597,8 +604,8 @@ class _ReportCard extends StatelessWidget {
             subtitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color: context.jassTextMuted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -615,7 +622,7 @@ class _ProgressLine extends StatelessWidget {
   final int total;
   final Color color;
 
-  const _ProgressLine({
+  _ProgressLine({
     required this.label,
     required this.value,
     required this.total,
@@ -627,7 +634,7 @@ class _ProgressLine extends StatelessWidget {
     final percent = total == 0 ? 0.0 : value / total;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: Column(
         children: [
           Row(
@@ -635,27 +642,27 @@ class _ProgressLine extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: Color(0xFF0F3D57),
+                  style: TextStyle(
+                    color: context.jassTextPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
               Text(
                 '$value / $total',
-                style: const TextStyle(
-                  color: Color(0xFF7B8794),
+                style: TextStyle(
+                  color: context.jassTextMuted,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           LinearProgressIndicator(
             value: percent,
             minHeight: 8,
             borderRadius: BorderRadius.circular(100),
-            backgroundColor: const Color(0xFFEFF7FB),
+            backgroundColor: context.jassSurfaceAlt,
             color: color,
           ),
         ],
@@ -668,7 +675,7 @@ class _SimpleLine extends StatelessWidget {
   final String label;
   final String value;
 
-  const _SimpleLine({
+  _SimpleLine({
     required this.label,
     required this.value,
   });
@@ -676,13 +683,13 @@ class _SimpleLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         vertical: 10,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Color(0xFFE2EDF3),
+            color: context.jassBorder,
           ),
         ),
       ),
@@ -691,16 +698,16 @@ class _SimpleLine extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF7B8794),
+              style: TextStyle(
+                color: context.jassTextMuted,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
-              color: Color(0xFF0F3D57),
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -714,7 +721,7 @@ class _Error extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  const _Error({
+  _Error({
     required this.error,
     required this.onRetry,
   });
@@ -723,9 +730,9 @@ class _Error extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEC),
+        color: Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -733,58 +740,17 @@ class _Error extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFD93025),
+            style: TextStyle(
+              color: JassColors.danger,
               fontWeight: FontWeight.w800,
             ),
           ),
           TextButton(
             onPressed: onRetry,
-            child: const Text('Reintentar'),
+            child: Text('Reintentar'),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _AdminBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
-  const _AdminBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      height: 76,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          label: 'Inicio',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.groups_rounded),
-          label: 'Clientes',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.attach_money_rounded),
-          label: 'Tarifas',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_rounded),
-          label: 'Recibos',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.bar_chart_rounded),
-          label: 'Reportes',
-        ),
-      ],
     );
   }
 }
