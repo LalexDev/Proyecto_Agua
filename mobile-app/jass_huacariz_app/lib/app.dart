@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'core/app_theme_controller.dart';
+import 'shared/theme/jass_colors.dart';
+
 import 'features/auth/login_page.dart';
 import 'features/auth/change_password_page.dart';
 
@@ -14,6 +17,10 @@ import 'features/pagos/pago_cip_page.dart';
 
 import 'features/admin/admin_dashboard_page.dart';
 import 'features/admin/admin_clientes_page.dart';
+import 'features/admin/admin_lecturadores_page.dart';
+import 'features/admin/admin_sectores_page.dart';
+import 'features/admin/admin_pagos_page.dart';
+import 'features/admin/admin_qr_suministro_page.dart';
 import 'features/admin/admin_tarifas_page.dart';
 import 'features/admin/admin_recibos_page.dart';
 import 'features/admin/admin_reportes_page.dart';
@@ -26,52 +33,151 @@ import 'features/lector/comprobante_recibo_page.dart';
 import 'features/lector/historial_lecturas_page.dart';
 import 'features/lector/qr_scanner_page.dart';
 
+import 'features/suministros/mis_suministros_page.dart';
+import 'features/suministros/detalle_suministro_cliente_page.dart';
+
 class JassHuacarizApp extends StatelessWidget {
   const JassHuacarizApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'JASS Huacariz',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1DA1C2),
-          primary: const Color(0xFF0F3D57),
-          secondary: const Color(0xFF1DA1C2),
-        ),
-      ),
-      initialRoute: '/login',
-      routes: {
-        // Auth
-        '/login': (_) => const LoginPage(),
-        '/cambiar-password': (_) => const ChangePasswordPage(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: appThemeMode,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          title: 'AGUA POTABLE HUACARIZ SAN ANTONIO',
+          debugShowCheckedModeBanner: false,
+          themeMode: themeMode,
 
-        // Cliente
-        '/home': (_) => const HomePage(),
-        '/recibos': (_) => const RecibosPage(),
-        '/recibo-detalle': (_) => const ReciboDetailPage(),
-        '/pago-cip': (_) => const PagoCipPage(),
-        '/perfil': (_) => const PerfilPage(),
-        '/pdf-viewer': (_) => const PdfViewerPage(),
+          // Tema claro.
+          theme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.light,
+            fontFamily: 'Roboto',
+            scaffoldBackgroundColor: JassColors.background,
+            colorScheme: ColorScheme.fromSeed(
+              brightness: Brightness.light,
+              seedColor: JassColors.secondary,
+              primary: JassColors.primary,
+              secondary: JassColors.secondary,
+              surface: JassColors.card,
+            ),
+          ),
 
-        // Admin
-        '/admin-dashboard': (_) => const AdminDashboardPage(),
-        '/admin-clientes': (_) => const AdminClientesPage(),
-        '/admin-tarifas': (_) => const AdminTarifasPage(),
-        '/admin-recibos': (_) => const AdminRecibosPage(),
-        '/admin-reportes': (_) => const AdminReportesPage(),
+          // Tema oscuro.
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            fontFamily: 'Roboto',
+            scaffoldBackgroundColor: JassColors.darkBackground,
+            colorScheme: ColorScheme.fromSeed(
+              brightness: Brightness.dark,
+              seedColor: JassColors.secondary,
+              primary: JassColors.secondary,
+              secondary: JassColors.accent,
+              surface: JassColors.darkCard,
+            ),
+          ),
 
-        // Lecturador
-        '/lector-home': (_) => const LectorHomePage(),
-        '/buscar-suministro': (_) => const BuscarSuministroPage(),
-        '/qr-scanner': (_) => const QrScannerPage(),
-        '/detalle-suministro': (_) => const DetalleSuministroPage(),
-        '/registrar-lectura': (_) => const RegistrarLecturaPage(),
-        '/comprobante-recibo': (_) => const ComprobanteReciboPage(),
-        '/historial-lecturas': (_) => const HistorialLecturasPage(),
+          initialRoute: '/login',
+
+          routes: {
+            // =========================================================
+            // AUTENTICACIÓN
+            // =========================================================
+            '/login': (_) => const LoginPage(),
+            '/cambiar-password': (_) => const ChangePasswordPage(),
+
+            // =========================================================
+            // CLIENTE
+            // =========================================================
+            '/home': (_) => const HomePage(),
+            '/recibos': (_) => const RecibosPage(),
+            '/recibo-detalle': (_) => const ReciboDetailPage(),
+            '/pago-cip': (_) => const PagoCipPage(),
+            '/perfil': (_) => const PerfilPage(),
+            '/pdf-viewer': (_) => const PdfViewerPage(),
+
+            '/mis-suministros': (_) => const MisSuministrosPage(),
+            '/detalle-suministro-cliente': (_) =>
+                const DetalleSuministroClientePage(),
+
+            // =========================================================
+            // ADMINISTRADOR
+            // =========================================================
+            '/admin-dashboard': (_) => const AdminDashboardPage(),
+            '/admin-clientes': (_) => const AdminClientesPage(),
+            '/admin-lecturadores': (_) => const AdminLecturadoresPage(),
+            '/admin-sectores': (_) => const AdminSectoresPage(),
+            '/admin-pagos': (_) => const AdminPagosPage(),
+            '/admin-qr-suministro': (_) => const AdminQrSuministroPage(),
+            '/admin-tarifas': (_) => const AdminTarifasPage(),
+            '/admin-recibos': (_) => const AdminRecibosPage(),
+            '/admin-reportes': (_) => const AdminReportesPage(),
+
+            // Pantallas compartidas abiertas desde administrador.
+            '/admin-historial-lecturas': (_) =>
+                const HistorialLecturasPage(
+                  modoAdmin: true,
+                ),
+
+            '/admin-qr-scanner': (_) => const QrScannerPage(
+                  modoAdmin: true,
+                ),
+
+            '/admin-buscar-suministro': (_) =>
+    const BuscarSuministroPage(
+      modoAdmin: true,
+    ),
+            '/admin-detalle-suministro': (_) =>
+                const DetalleSuministroPage(
+                  modoAdmin: true,
+                ),
+
+            '/admin-registrar-lectura': (_) =>
+                const RegistrarLecturaPage(
+                  modoAdmin: true,
+                ),
+
+            '/admin-comprobante-recibo': (_) =>
+                const ComprobanteReciboPage(
+                  modoAdmin: true,
+                ),
+
+            // =========================================================
+            // LECTURADOR
+            // =========================================================
+            '/lector-home': (_) => const LectorHomePage(),
+
+            '/buscar-suministro': (_) => const BuscarSuministroPage(
+                  modoAdmin: false,
+                ),
+
+            '/qr-scanner': (_) => const QrScannerPage(
+                  modoAdmin: false,
+                ),
+
+            '/detalle-suministro': (_) =>
+                const DetalleSuministroPage(
+                  modoAdmin: false,
+                ),
+
+            '/registrar-lectura': (_) =>
+                const RegistrarLecturaPage(
+                  modoAdmin: false,
+                ),
+
+            '/comprobante-recibo': (_) =>
+                const ComprobanteReciboPage(
+                  modoAdmin: false,
+                ),
+
+            '/historial-lecturas': (_) =>
+                const HistorialLecturasPage(
+                  modoAdmin: false,
+                ),
+          },
+        );
       },
     );
   }

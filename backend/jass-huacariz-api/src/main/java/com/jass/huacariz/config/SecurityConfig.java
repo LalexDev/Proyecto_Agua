@@ -24,29 +24,77 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
 
+<<<<<<< HEAD
                         // RUTAS PÚBLICAS
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
+=======
+        http
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
+                )
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+                .authorizeHttpRequests(auth -> auth
+
+                        // PREFLIGHT CORS
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        )
+                        .permitAll()
+
+                        // RUTAS PÚBLICAS
+                        .requestMatchers("/api/auth/**")
+                        .permitAll()
+
+                        .requestMatchers("/api/health")
+                        .permitAll()
+>>>>>>> 8570199 (Actualización backend y aplicación móvil)
 
                         // PORTAL CLIENTE
-                        .requestMatchers("/api/cliente/**").hasAuthority("CLIENTE")
+                        .requestMatchers("/api/cliente/**")
+                        .hasAnyAuthority(
+                                "CLIENTE",
+                                "ROLE_CLIENTE",
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
 
                         // PORTAL LECTURADOR
-                        .requestMatchers("/api/lecturador/**").hasAuthority("LECTURADOR")
+                        .requestMatchers("/api/lecturador/**")
+                        .hasAnyAuthority(
+                                "LECTURADOR",
+                                "ROLE_LECTURADOR",
+                                "LECTOR",
+                                "ROLE_LECTOR",
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
 
-                        // LECTURAS: ADMIN Y LECTURADOR
-                        .requestMatchers(HttpMethod.POST, "/api/lecturas").hasAnyAuthority("ADMIN", "LECTURADOR")
-                        .requestMatchers(HttpMethod.POST, "/api/lecturas/mantenimiento").hasAnyAuthority("ADMIN", "LECTURADOR")
-                        .requestMatchers(HttpMethod.GET, "/api/lecturas/**").hasAnyAuthority("ADMIN", "LECTURADOR")
+                        // REGISTRAR LECTURAS
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/lecturas"
+                        )
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN",
+                                "LECTURADOR",
+                                "ROLE_LECTURADOR",
+                                "LECTOR",
+                                "ROLE_LECTOR"
+                        )
 
+<<<<<<< HEAD
                         // ADMIN LECTURAS / HISTORIAL
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
 
@@ -63,8 +111,94 @@ public class SecurityConfig {
 
 
                         .anyRequest().authenticated()
+=======
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/lecturas/**"
+                        )
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN",
+                                "LECTURADOR",
+                                "ROLE_LECTURADOR",
+                                "LECTOR",
+                                "ROLE_LECTOR"
+                        )
+
+                        // CONSULTAR LECTURAS
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/lecturas/**"
+                        )
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN",
+                                "LECTURADOR",
+                                "ROLE_LECTURADOR",
+                                "LECTOR",
+                                "ROLE_LECTOR"
+                        )
+
+                        // CONFIGURACIÓN DE COBRANZA
+                        .requestMatchers(
+                                "/api/configuracion-cobranza/**"
+                        )
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // ADMINISTRACIÓN DE CLIENTES
+                        .requestMatchers("/api/clientes/**")
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // ADMINISTRACIÓN DE USUARIOS
+                        .requestMatchers("/api/usuarios/**")
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // ADMINISTRACIÓN DE SECTORES
+                        .requestMatchers("/api/sectores/**")
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // ADMINISTRACIÓN DE TARIFAS
+                        .requestMatchers("/api/tarifas/**")
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // ADMINISTRACIÓN DE RECIBOS
+                        .requestMatchers("/api/recibos/**")
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // ADMINISTRACIÓN DE PAGOS
+                        .requestMatchers("/api/pagos/**")
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // CUALQUIER OTRA RUTA
+                        .anyRequest()
+                        .authenticated()
+>>>>>>> 8570199 (Actualización backend y aplicación móvil)
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
@@ -73,6 +207,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
+<<<<<<< HEAD
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:4200",
                 "http://127.0.0.1:4200",
@@ -99,12 +234,51 @@ public class SecurityConfig {
         config.setExposedHeaders(List.of(
                 "Authorization"
         ));
+=======
+        config.setAllowedOrigins(
+                List.of(
+                        "http://localhost:4200",
+                        "http://127.0.0.1:4200"
+                )
+        );
+
+        config.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "PATCH",
+                        "DELETE",
+                        "OPTIONS"
+                )
+        );
+
+        config.setAllowedHeaders(
+                List.of(
+                        "Authorization",
+                        "Content-Type",
+                        "Accept"
+                )
+        );
+
+        config.setExposedHeaders(
+                List.of(
+                        "Authorization",
+                        "Content-Disposition"
+                )
+        );
+>>>>>>> 8570199 (Actualización backend y aplicación móvil)
 
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                config
+        );
 
         return source;
     }

@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+import '../../shared/widgets/admin_bottom_nav.dart';
+import '../../shared/widgets/lector_bottom_nav.dart';
+
 class ComprobanteReciboPage extends StatefulWidget {
-  const ComprobanteReciboPage({super.key});
+  final bool modoAdmin;
+
+  const ComprobanteReciboPage({
+    super.key,
+    this.modoAdmin = false,
+  });
 
   @override
-  State<ComprobanteReciboPage> createState() => _ComprobanteReciboPageState();
+  State<ComprobanteReciboPage> createState() =>
+      _ComprobanteReciboPageState();
 }
 
 class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
+  Color get background => context.jassBackground;
+  Color get muted => context.jassTextMuted;
 
   Map<String, dynamic> comprobante = {};
+  String mensajeServidor = 'Lectura registrada correctamente.';
   bool cargadoArgs = false;
 
   @override
@@ -26,26 +38,59 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
     final args = ModalRoute.of(context)?.settings.arguments;
 
     if (args is Map<String, dynamic>) {
-      comprobante = args;
+      _cargarArgumentos(args);
     } else if (args is Map) {
-      comprobante = Map<String, dynamic>.from(args);
+      _cargarArgumentos(Map<String, dynamic>.from(args));
     }
+  }
+
+  void _cargarArgumentos(Map<String, dynamic> args) {
+    mensajeServidor = _txt(
+      args['mensaje'] ?? args['message'],
+      'Lectura registrada correctamente.',
+    );
+
+    final recibo = args['recibo'];
+
+    if (recibo is Map<String, dynamic>) {
+      comprobante = recibo;
+      return;
+    }
+
+    if (recibo is Map) {
+      comprobante = Map<String, dynamic>.from(recibo);
+      return;
+    }
+
+    comprobante = args;
   }
 
   String _txt(dynamic value, [String fallback = '-']) {
     if (value == null) return fallback;
+
     final text = value.toString().trim();
+
     if (text.isEmpty || text == 'null') return fallback;
+
     return text;
   }
 
   double _num(dynamic value) {
+    if (value == null) return 0.0;
+
     if (value is num) return value.toDouble();
-    return double.tryParse(value.toString()) ?? 0.0;
+
+    final text = value.toString().trim();
+
+    if (text.isEmpty || text == 'null') return 0.0;
+
+    return double.tryParse(text) ?? 0.0;
   }
 
   int _int(dynamic value, [int fallback = 0]) {
     if (value is int) return value;
+    if (value is num) return value.toInt();
+
     return int.tryParse(value.toString()) ?? fallback;
   }
 
@@ -53,7 +98,6 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
     return _txt(
       comprobante['codigoRecibo'] ??
           comprobante['numeroRecibo'] ??
-          comprobante['recibo'] ??
           comprobante['codigo'],
       'REC-GENERADO',
     );
@@ -125,16 +169,17 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
     if (consumo > 0) return consumo;
 
     final calculado = _lecturaActual() - _lecturaAnterior();
+
     return calculado < 0 ? 0 : calculado;
   }
 
   double _subtotalAgua() {
     return _num(
       comprobante['subtotalAgua'] ??
-          comprobante['volumenAgua'] ??
           comprobante['montoAgua'] ??
           comprobante['importeAgua'] ??
-          comprobante['total'] ??
+          comprobante['agua'] ??
+          comprobante['volumenAgua'] ??
           0,
     );
   }
@@ -151,8 +196,19 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
   double _lector() {
     return _num(
       comprobante['cargoLector'] ??
+          comprobante['pagoLector'] ??
           comprobante['pagoLecturador'] ??
           comprobante['montoLecturador'] ??
+          comprobante['lector'] ??
+          0,
+    );
+  }
+
+  double _otros() {
+    return _num(
+      comprobante['cargoOtros'] ??
+          comprobante['otrosCargos'] ??
+          comprobante['otros'] ??
           0,
     );
   }
@@ -165,24 +221,21 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
     );
   }
 
-  double _otros() {
-    return _num(
-      comprobante['otrosCargos'] ??
-          comprobante['otros'] ??
-          0,
-    );
-  }
-
   double _total() {
-    final total = _num(
+    final totalBackend = _num(
       comprobante['total'] ??
           comprobante['montoTotal'] ??
-          comprobante['importeTotal'],
+          comprobante['importeTotal'] ??
+          comprobante['totalPagar'],
     );
 
-    if (total > 0) return total;
+    if (totalBackend > 0) return totalBackend;
 
-    return _subtotalAgua() + _mantenimiento() + _lector() + _mora() + _otros();
+    return _subtotalAgua() +
+        _mantenimiento() +
+        _lector() +
+        _otros() +
+        _mora();
   }
 
   String _periodo() {
@@ -205,6 +258,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
     ];
 
     final index = (mes - 1).clamp(0, 11);
+
     return '${meses[index]} $anio';
   }
 
@@ -243,41 +297,100 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
   }
 
   void _nuevaLectura() {
-    Navigator.pushReplacementNamed(context, '/buscar-suministro');
+    Navigator.pushReplacementNamed(
+      context,
+      widget.modoAdmin
+          ? '/admin-buscar-suministro'
+          : '/buscar-suministro',
+    );
   }
 
   void _volverInicio() {
-    Navigator.pushReplacementNamed(context, '/lector-home');
+    Navigator.pushReplacementNamed(
+      context,
+      widget.modoAdmin
+          ? '/admin-dashboard'
+          : '/lector-home',
+    );
   }
 
   void _verHistorial() {
-    Navigator.pushReplacementNamed(context, '/historial-lecturas');
+    Navigator.pushReplacementNamed(
+      context,
+      widget.modoAdmin
+          ? '/admin-historial-lecturas'
+          : '/historial-lecturas',
+    );
+  }
+
+  void _goBottomAdmin(int index) {
+    if (index == 0) {
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+    } else if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/admin-clientes');
+    } else if (index == 2) {
+      Navigator.pushReplacementNamed(context, '/admin-tarifas');
+    } else if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/admin-recibos');
+    }
+  }
+
+  void _abrirMenuAdmin() {
+    showAdminQuickMenu(context: context);
+  }
+
+  void _goBottomLector(int index) {
+    if (index == 0) {
+      _volverInicio();
+    } else if (index == 1) {
+      _nuevaLectura();
+    } else if (index == 2) {
+      Navigator.pushNamed(context, '/qr-scanner');
+    } else if (index == 3) {
+      _verHistorial();
+    }
+  }
+
+  void _abrirMenuLector() {
+    showLectorQuickMenu(context: context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: widget.modoAdmin
+          ? AdminBottomNav(
+              currentIndex: -1,
+              onTap: _goBottomAdmin,
+              onPlus: _abrirMenuAdmin,
+            )
+          : LectorBottomNav(
+              currentIndex: -1,
+              onTap: _goBottomLector,
+              onPlus: _abrirMenuLector,
+            ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildSuccessCard(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildClienteCard(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildLecturasCard(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildFacturacionCard(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildTotalCard(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildObservacionCard(),
-              const SizedBox(height: 22),
+              SizedBox(height: 22),
               _buildActions(),
             ],
           ),
@@ -293,24 +406,26 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.jassSurface,
             borderRadius: BorderRadius.circular(16),
           ),
           child: IconButton(
             onPressed: _volverInicio,
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
               color: primary,
             ),
           ),
         ),
-        const SizedBox(width: 14),
-        const Expanded(
+        SizedBox(width: 14),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Módulo lecturador',
+                widget.modoAdmin
+                    ? 'Panel del administrador'
+                    : 'Módulo lecturador',
                 style: TextStyle(
                   color: muted,
                   fontSize: 13,
@@ -351,7 +466,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             backgroundColor: Colors.white24,
             radius: 28,
             child: Icon(
@@ -360,8 +475,8 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
               size: 34,
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Lectura registrada',
             style: TextStyle(
               color: Colors.white,
@@ -369,10 +484,10 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
-            'Se generó el recibo ${_codigoRecibo()} para el periodo ${_periodo()}.',
-            style: const TextStyle(
+            '$mensajeServidor\nRecibo: ${_codigoRecibo()}\nPeriodo: ${_periodo()}',
+            style: TextStyle(
               color: Color(0xFFE7F8FF),
               fontWeight: FontWeight.w700,
               height: 1.4,
@@ -410,14 +525,14 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
                 value: _lecturaAnterior().toStringAsFixed(0),
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: _MiniValue(
                 label: 'Actual',
                 value: _lecturaActual().toStringAsFixed(0),
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: _MiniValue(
                 label: 'Consumo',
@@ -471,11 +586,11 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Text(
               'Total generado',
               style: TextStyle(
-                color: primary,
+                color: JassColors.primary,
                 fontSize: 17,
                 fontWeight: FontWeight.w900,
               ),
@@ -483,8 +598,8 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
           ),
           Text(
             'S/ ${_total().toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: JassColors.primary,
               fontSize: 25,
               fontWeight: FontWeight.w900,
             ),
@@ -500,7 +615,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
       children: [
         Text(
           _observacion(),
-          style: const TextStyle(
+          style: TextStyle(
             color: muted,
             fontWeight: FontWeight.w700,
             height: 1.4,
@@ -518,8 +633,8 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
           height: 54,
           child: ElevatedButton.icon(
             onPressed: _nuevaLectura,
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            label: const Text(
+            icon: Icon(Icons.qr_code_scanner_rounded),
+            label: Text(
               'Registrar nueva lectura',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
@@ -535,14 +650,14 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           height: 52,
           child: OutlinedButton.icon(
             onPressed: _verHistorial,
-            icon: const Icon(Icons.history_rounded),
-            label: const Text(
+            icon: Icon(Icons.history_rounded),
+            label: Text(
               'Ver historial de lecturas',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
@@ -550,8 +665,8 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: primary,
-              side: const BorderSide(color: Color(0xFFE2EDF3)),
-              backgroundColor: Colors.white,
+              side: BorderSide(color: context.jassBorder),
+              backgroundColor: context.jassSurface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -574,16 +689,16 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
+    final Color primary = context.jassTextPrimary;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
@@ -591,13 +706,13 @@ class _SectionCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: primary,
               fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ...children,
         ],
       ),
@@ -616,15 +731,15 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Color(0xFFE2EDF3),
+            color: context.jassBorder,
           ),
         ),
       ),
@@ -633,7 +748,7 @@ class _InfoLine extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: muted,
                 fontWeight: FontWeight.w700,
               ),
@@ -643,7 +758,7 @@ class _InfoLine extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 color: primary,
                 fontWeight: FontWeight.w900,
               ),
@@ -666,33 +781,33 @@ class _MiniValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
+        color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             value,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: primary,
               fontSize: 15,
               fontWeight: FontWeight.w900,

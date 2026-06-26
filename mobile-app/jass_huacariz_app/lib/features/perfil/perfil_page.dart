@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
 import '../../core/services/cliente_portal_service.dart';
 import '../../core/storage/secure_storage_service.dart';
+import '../../shared/widgets/cliente_bottom_nav.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -11,10 +15,11 @@ class PerfilPage extends StatefulWidget {
 }
 
 class _PerfilPageState extends State<PerfilPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
+  Color get background => context.jassBackground;
+  Color get muted => context.jassTextMuted;
+  static const Color danger = JassColors.danger;
 
   final ClientePortalService clientePortalService = ClientePortalService();
   final SecureStorageService storageService = SecureStorageService();
@@ -102,93 +107,253 @@ class _PerfilPageState extends State<PerfilPage> {
     return value.toString().toLowerCase() == 'true';
   }
 
-Future<void> cerrarSesion() async {
-  final confirmar = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text(
-          'Cerrar sesión',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        content: const Text(
-          '¿Deseas cerrar tu sesión actual?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-            },
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context, true);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD93025),
-              foregroundColor: Colors.white,
+  Future<void> cerrarSesion() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Cerrar sesión',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
             ),
-            child: const Text('Cerrar sesión'),
           ),
-        ],
-      );
-    },
-  );
+          content: Text(
+            '¿Deseas cerrar tu sesión actual?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: danger,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Cerrar sesión'),
+            ),
+          ],
+        );
+      },
+    );
 
-  if (confirmar != true) return;
+    if (confirmar != true) return;
 
-  await storageService.clearSession();
+    await storageService.clearSession();
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  Navigator.pushNamedAndRemoveUntil(
-    context,
-    '/login',
-    (route) => false,
-  );
-}
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
 
   void irCambiarPassword() {
     Navigator.pushNamed(context, '/cambiar-password');
   }
 
+  void irHome() {
+    Navigator.pushReplacementNamed(context, '/home');
+  }
+
+  void irRecibos() {
+    Navigator.pushReplacementNamed(context, '/recibos');
+  }
+
+  void irPagar() {
+    Navigator.pushReplacementNamed(context, '/recibos');
+  }
+
+  void _volver() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      irHome();
+    }
+  }
+
+  // Barra inferior cliente:
+  // 0 = Inicio, 1 = Recibos, 2 = Pagar, 3 = Perfil.
+  void _goBottomCliente(int index) {
+    if (index == 0) {
+      irHome();
+    }
+
+    if (index == 1) {
+      irRecibos();
+    }
+
+    if (index == 2) {
+      irPagar();
+    }
+
+    if (index == 3) return;
+  }
+
+  void _abrirMenuCliente() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
+      isScrollControlled: true,
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.jassSurface,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: context.jassBorder,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 28,
+                          offset: Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.92,
+                      children: [
+                        ClienteMenuTile(
+                          icon: Icons.home_rounded,
+                          label: 'Inicio',
+                          onTap: () {
+                            Navigator.pop(context);
+                            irHome();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Recibos',
+                          onTap: () {
+                            Navigator.pop(context);
+                            irRecibos();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.payments_rounded,
+                          label: 'Pagar',
+                          onTap: () {
+                            Navigator.pop(context);
+                            irPagar();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.lock_reset_rounded,
+                          label: 'Clave',
+                          onTap: () {
+                            Navigator.pop(context);
+                            irCambiarPassword();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.refresh_rounded,
+                          label: 'Actualizar',
+                          onTap: () {
+                            Navigator.pop(context);
+                            cargarDatos();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.logout_rounded,
+                          label: 'Salir',
+                          onTap: () {
+                            Navigator.pop(context);
+                            cerrarSesion();
+                          },
+                        ),
+                        ClienteThemeTile(
+                          onAfterChange: () {
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  borderRadius: BorderRadius.circular(100),
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: JassColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
-      bottomNavigationBar: _ClienteBottomNav(
-        currentIndex: 2,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-
-          if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/recibos');
-          }
-        },
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: ClienteBottomNav(
+        currentIndex: 3,
+        onTap: _goBottomCliente,
+        onPlus: _abrirMenuCliente,
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: cargarDatos,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 if (cargando) _buildLoading(),
                 if (error.isNotEmpty && !cargando) _buildError(),
                 if (!cargando && error.isEmpty) ...[
                   _buildProfileCard(),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildActions(),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildSuministros(),
                 ],
               ],
@@ -202,7 +367,30 @@ Future<void> cerrarSesion() async {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Expanded(
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: context.jassSurface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: JassColors.primary.withValues(alpha: 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: _volver,
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: primary,
+            ),
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -230,11 +418,11 @@ Future<void> cerrarSesion() async {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.jassSurface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: primary.withOpacity(0.08),
+                color: JassColors.primary.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -242,7 +430,7 @@ Future<void> cerrarSesion() async {
           ),
           child: IconButton(
             onPressed: cargarDatos,
-            icon: const Icon(
+            icon: Icon(
               Icons.refresh_rounded,
               color: primary,
             ),
@@ -257,10 +445,10 @@ Future<void> cerrarSesion() async {
       width: double.infinity,
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(26),
       ),
-      child: const Column(
+      child: Column(
         children: [
           CircularProgressIndicator(),
           SizedBox(height: 14),
@@ -287,28 +475,28 @@ Future<void> cerrarSesion() async {
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: Color(0xFFD93025),
+            color: danger,
             size: 42,
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFD93025),
+            style: TextStyle(
+              color: danger,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           ElevatedButton(
             onPressed: cargarDatos,
             style: ElevatedButton.styleFrom(
               backgroundColor: secondary,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Reintentar'),
+            child: Text('Reintentar'),
           ),
         ],
       ),
@@ -331,7 +519,7 @@ Future<void> cerrarSesion() async {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.14),
+            color: JassColors.primary.withValues(alpha: 0.14),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -343,36 +531,38 @@ Future<void> cerrarSesion() async {
             width: 76,
             height: 76,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.16),
+              color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: Colors.white.withOpacity(0.20)),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.20),
+              ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person_rounded,
               color: Colors.white,
               size: 44,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Text(
             nombreCompleto,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 23,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             'Código: $codigoUsuario',
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFFE7F8FF),
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -392,7 +582,7 @@ Future<void> cerrarSesion() async {
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           _InfoProfileRow(
             icon: Icons.badge_rounded,
             label: 'DNI',
@@ -421,8 +611,8 @@ Future<void> cerrarSesion() async {
           height: 52,
           child: ElevatedButton.icon(
             onPressed: irCambiarPassword,
-            icon: const Icon(Icons.lock_reset_rounded),
-            label: const Text(
+            icon: Icon(Icons.lock_reset_rounded),
+            label: Text(
               'Cambiar contraseña',
               style: TextStyle(fontWeight: FontWeight.w900),
             ),
@@ -436,21 +626,21 @@ Future<void> cerrarSesion() async {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           height: 52,
           child: OutlinedButton.icon(
             onPressed: cerrarSesion,
-            icon: const Icon(Icons.logout_rounded),
-            label: const Text(
+            icon: Icon(Icons.logout_rounded),
+            label: Text(
               'Cerrar sesión',
               style: TextStyle(fontWeight: FontWeight.w900),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFD93025),
-              backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFFFFD1D1)),
+              foregroundColor: danger,
+              backgroundColor: context.jassSurface,
+              side: BorderSide(color: Color(0xFFFFD1D1)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(17),
               ),
@@ -466,14 +656,14 @@ Future<void> cerrarSesion() async {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Mis suministros',
             style: TextStyle(
               color: primary,
@@ -481,9 +671,9 @@ Future<void> cerrarSesion() async {
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           if (suministros.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(
                 child: Text(
@@ -500,7 +690,7 @@ Future<void> cerrarSesion() async {
               itemCount: suministros.length,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final suministro = suministros[index];
 
@@ -535,15 +725,15 @@ class _InfoProfileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.16)),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.16),
+        ),
       ),
       child: Row(
         children: [
@@ -552,11 +742,11 @@ class _InfoProfileRow extends StatelessWidget {
             color: Colors.white,
             size: 22,
           ),
-          const SizedBox(width: 11),
+          SizedBox(width: 11),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Color(0xFFE7F8FF),
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -567,7 +757,7 @@ class _InfoProfileRow extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
@@ -601,15 +791,15 @@ class _SuministroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
+        color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -620,19 +810,19 @@ class _SuministroCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F7FB),
+                  color: context.jassSelectedSurface,
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.water_drop_rounded,
                   color: Color(0xFF1DA1C2),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Text(
                   codigo,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: primary,
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
@@ -661,7 +851,7 @@ class _SuministroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _SuministroInfo(icon: Icons.map_rounded, text: sector),
           _SuministroInfo(icon: Icons.place_rounded, text: direccion),
           _SuministroInfo(icon: Icons.bookmark_rounded, text: alias),
@@ -687,18 +877,18 @@ class _SuministroInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color muted = Color(0xFF7B8794);
+    final Color muted = context.jassTextMuted;
 
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Row(
         children: [
           Icon(icon, size: 17, color: muted),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 color: muted,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -707,43 +897,6 @@ class _SuministroInfo extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ClienteBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
-  const _ClienteBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      height: 76,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
-          label: 'Inicio',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long_rounded),
-          label: 'Recibos',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person_rounded),
-          label: 'Perfil',
-        ),
-      ],
     );
   }
 }

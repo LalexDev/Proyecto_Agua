@@ -5,4 +5,4 @@ CREATE TABLE prueba_conexion (
 );
 
 INSERT INTO prueba_conexion (mensaje)
-VALUES ('Backend JASS Huacariz conectado correctamente');
+VALUES ('Backend AGUA POTABLE HUACARIZ SAN ANTONIO conectado correctamente');

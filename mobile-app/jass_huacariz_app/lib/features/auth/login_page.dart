@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
 import '../../core/services/auth_service.dart';
 import '../../core/storage/secure_storage_service.dart';
 
@@ -11,8 +14,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
 
   final TextEditingController usuarioController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -95,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF5F8),
+      backgroundColor: context.jassBackground,
       body: Stack(
         children: [
           Positioned.fill(
@@ -103,11 +106,11 @@ class _LoginPageState extends State<LoginPage> {
               'assets/images/login-fondo-huacariz.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                return Container(color: primary);
+                return Container(color: JassColors.primary);
               },
             ),
           ),
-
+          // cambio de fondo a un degradado para mejorar contraste y visibilidad del contenido
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -131,12 +134,12 @@ class _LoginPageState extends State<LoginPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTopBrand(),
-                  const SizedBox(height: 28),
+                  SizedBox(height: 28),
                   _buildHeroText(),
-                  const SizedBox(height: 26),
+                  SizedBox(height: 26),
                   _buildLoginCard(),
-                  const SizedBox(height: 18),
-                  const Center(
+                  SizedBox(height: 18),
+                  Center(
                     child: Text(
                       'Proyecto Agua · JASS Huacariz',
                       style: TextStyle(
@@ -146,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                 ],
               ),
             ),
@@ -166,14 +169,14 @@ class _LoginPageState extends State<LoginPage> {
             color: Colors.white.withOpacity(0.14),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.water_drop_outlined,
             color: Colors.white,
             size: 30,
           ),
         ),
-        const SizedBox(width: 12),
-        const Expanded(
+        SizedBox(width: 12),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -212,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
             borderRadius: BorderRadius.circular(30),
             border: Border.all(color: Colors.white24),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.verified_user_outlined, color: Colors.white, size: 18),
@@ -228,8 +231,8 @@ class _LoginPageState extends State<LoginPage> {
             ],
           ),
         ),
-        const SizedBox(height: 18),
-        const Text(
+        SizedBox(height: 18),
+        Text(
           'Agua que nos une,\ncomunidad que avanza.',
           style: TextStyle(
             color: Colors.white,
@@ -238,8 +241,8 @@ class _LoginPageState extends State<LoginPage> {
             fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: 12),
-        const Text(
+        SizedBox(height: 12),
+        Text(
           'Trabajamos cada día para brindar un servicio de agua potable seguro, sostenible y cercano a las familias de Huacariz.',
           style: TextStyle(
             color: Colors.white70,
@@ -248,9 +251,9 @@ class _LoginPageState extends State<LoginPage> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         Row(
-          children: const [
+          children: [
             Expanded(
               child: _InfoMiniCard(
                 icon: Icons.water_drop_outlined,
@@ -282,7 +285,7 @@ class _LoginPageState extends State<LoginPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
@@ -298,17 +301,17 @@ class _LoginPageState extends State<LoginPage> {
             width: 74,
             height: 74,
             decoration: BoxDecoration(
-              color: const Color(0xFFE7F6FA),
+              color: context.jassSelectedSurface,
               borderRadius: BorderRadius.circular(22),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.water_drop_outlined,
               color: secondary,
               size: 42,
             ),
           ),
-          const SizedBox(height: 18),
-          const Text(
+          SizedBox(height: 18),
+          Text(
             'AGUA POTABLE\nHUACARIZ\nSAN ANTONIO',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -319,20 +322,20 @@ class _LoginPageState extends State<LoginPage> {
               letterSpacing: 3,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Tu servicio de agua en línea',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF667085),
+              color: context.jassTextMuted,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           _label('Usuario o DNI'),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextField(
             controller: usuarioController,
             enabled: !cargando,
@@ -341,10 +344,10 @@ class _LoginPageState extends State<LoginPage> {
               icon: Icons.person_outline,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           _label('Contraseña'),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextField(
             controller: passwordController,
             enabled: !cargando,
@@ -372,7 +375,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          const SizedBox(height: 22),
+          SizedBox(height: 22),
 
           SizedBox(
             width: double.infinity,
@@ -380,7 +383,7 @@ class _LoginPageState extends State<LoginPage> {
             child: ElevatedButton.icon(
               onPressed: cargando ? null : iniciarSesion,
               icon: cargando
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
@@ -388,16 +391,16 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.login_rounded),
+                  : Icon(Icons.login_rounded),
               label: Text(
                 cargando ? 'Validando datos...' : 'Ingresar al portal',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
+                backgroundColor: JassColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -406,19 +409,19 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          const SizedBox(height: 18),
-          const Text(
+          SizedBox(height: 18),
+          Text(
             '¿Qué deseas hacer hoy?',
             style: TextStyle(
-              color: Color(0xFF667085),
+              color: context.jassTextMuted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: _AccionMiniCard(
                   icon: Icons.receipt_long_outlined,
@@ -445,11 +448,11 @@ class _LoginPageState extends State<LoginPage> {
             ],
           ),
 
-          const SizedBox(height: 16),
-          const Divider(color: Color(0xFFE4E7EC)),
-          const SizedBox(height: 10),
+          SizedBox(height: 16),
+          Divider(color: context.jassBorder),
+          SizedBox(height: 10),
 
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _FooterMini(icon: Icons.access_time, text: 'Atención rápida'),
@@ -467,7 +470,7 @@ class _LoginPageState extends State<LoginPage> {
       alignment: Alignment.centerLeft,
       child: Text(
         texto,
-        style: const TextStyle(
+        style: TextStyle(
           color: primary,
           fontSize: 13,
           fontWeight: FontWeight.w800,
@@ -483,10 +486,10 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon, color: const Color(0xFF98A2B3)),
+      prefixIcon: Icon(icon, color: context.jassTextMuted),
       suffixIcon: suffix,
       filled: true,
-      fillColor: const Color(0xFFF7FAFC),
+      fillColor: context.jassSurfaceAlt,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -494,11 +497,11 @@ class _LoginPageState extends State<LoginPage> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFFD0D5DD)),
+        borderSide: BorderSide(color: context.jassBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: secondary, width: 1.5),
+        borderSide: BorderSide(color: secondary, width: 1.5),
       ),
     );
   }
@@ -530,7 +533,7 @@ class _InfoMiniCard extends StatelessWidget {
           const Spacer(),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -559,30 +562,30 @@ class _AccionMiniCard extends StatelessWidget {
       height: 92,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE4E7EC)),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: _LoginPageState.secondary, size: 22),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF0F3D57),
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF98A2B3),
+            style: TextStyle(
+              color: context.jassTextMuted,
               fontSize: 10,
               fontWeight: FontWeight.w600,
             ),
@@ -608,14 +611,14 @@ class _FooterMini extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF98A2B3)),
-          const SizedBox(width: 4),
+          Icon(icon, size: 14, color: context.jassTextMuted),
+          SizedBox(width: 4),
           Flexible(
             child: Text(
               text,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFF98A2B3),
+              style: TextStyle(
+                color: context.jassTextMuted,
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
               ),

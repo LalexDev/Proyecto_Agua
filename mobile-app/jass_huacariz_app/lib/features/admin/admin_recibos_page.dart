@@ -1,6 +1,11 @@
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, prefer_const_declarations
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
 import '../../core/services/recibo_service.dart';
+import '../../shared/widgets/admin_bottom_nav.dart';
 
 class AdminRecibosPage extends StatefulWidget {
   const AdminRecibosPage({super.key});
@@ -10,11 +15,7 @@ class AdminRecibosPage extends StatefulWidget {
 }
 
 class _AdminRecibosPageState extends State<AdminRecibosPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
-
+  final Color secondary = JassColors.secondary;
   final ReciboService reciboService = ReciboService();
 
   List<Map<String, dynamic>> recibos = [];
@@ -112,7 +113,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
     final anio = recibo['anio'];
 
     if (mes != null && anio != null) {
-      const meses = [
+     const meses = [
         'Enero',
         'Febrero',
         'Marzo',
@@ -259,9 +260,9 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
 
     await showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: context.jassSurface,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(26),
         ),
@@ -320,35 +321,35 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Registrar pago presencial',
                       style: TextStyle(
-                        color: primary,
+                        color: context.jassTextPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       '${_codigoRecibo(recibo)} · S/ ${_total(recibo).toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: muted,
+                      style: TextStyle(
+                        color: context.jassTextMuted,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    SizedBox(height: 18),
                     DropdownButtonFormField<String>(
                       value: metodoPago,
                       decoration: InputDecoration(
                         labelText: 'Método de pago',
                         filled: true,
-                        fillColor: const Color(0xFFF4F8FB),
+                        fillColor: context.jassSurfaceAlt,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'EFECTIVO',
                           child: Text('Efectivo'),
@@ -369,28 +370,28 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                         });
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     TextField(
                       controller: codigoOperacionController,
                       decoration: InputDecoration(
                         labelText: 'Código de operación',
                         hintText: 'Opcional para efectivo',
                         filled: true,
-                        fillColor: const Color(0xFFF4F8FB),
+                        fillColor: context.jassSurfaceAlt,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    SizedBox(height: 18),
                     SizedBox(
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton.icon(
                         onPressed: guardando ? null : confirmar,
                         icon: guardando
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
@@ -398,10 +399,10 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(Icons.check_circle_outline),
+                            : Icon(Icons.check_circle_outline),
                         label: Text(
                           guardando ? 'Guardando...' : 'Confirmar pago',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -432,7 +433,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
       SnackBar(
         content: Text(mensaje),
         backgroundColor:
-            esError ? const Color(0xFFD93025) : const Color(0xFF1F8F4D),
+            esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -450,38 +451,49 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
       Navigator.pushReplacementNamed(context, '/admin-tarifas');
     }
 
-    if (index == 4) {
-      Navigator.pushReplacementNamed(context, '/admin-reportes');
-    }
+    if (index == 3) return;
+  }
+
+  void _abrirMenuAdmin() {
+    showAdminQuickMenu(
+      context: context,
+      onRefresh: cargarRecibos,
+    ).then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
-      bottomNavigationBar: _AdminBottomNav(
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: AdminBottomNav(
         currentIndex: 3,
         onTap: _go,
+        onPlus: _abrirMenuAdmin,
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: cargarRecibos,
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(22),
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(22, 20, 22, 116),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildStats(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _buildSearch(),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 _buildFilters(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 if (cargando)
-                  const Center(
+                  Center(
                     child: Padding(
                       padding: EdgeInsets.all(28),
                       child: CircularProgressIndicator(),
@@ -493,7 +505,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                     onRetry: cargarRecibos,
                   ),
                 if (!cargando && error.isEmpty && recibosFiltrados.isEmpty)
-                  const Center(
+                  Center(
                     child: Padding(
                       padding: EdgeInsets.all(28),
                       child: Text('No hay recibos para mostrar.'),
@@ -515,7 +527,6 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                       onPagar: () => _marcarPagado(recibo),
                     );
                   }),
-                const SizedBox(height: 90),
               ],
             ),
           ),
@@ -527,14 +538,14 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Facturación mensual',
                 style: TextStyle(
-                  color: muted,
+                  color: context.jassTextMuted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -542,7 +553,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
               Text(
                 'Recibos',
                 style: TextStyle(
-                  color: primary,
+                  color: context.jassTextPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
@@ -552,9 +563,9 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
         ),
         IconButton(
           onPressed: cargarRecibos,
-          icon: const Icon(
+          icon: Icon(
             Icons.refresh_rounded,
-            color: primary,
+            color: context.jassTextPrimary,
           ),
         ),
       ],
@@ -573,7 +584,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                 icon: Icons.receipt_long_rounded,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: _StatCard(
                 label: 'Pendientes',
@@ -583,25 +594,34 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: _StatCard(
                 label: 'Pagados',
                 value: '$pagados',
-                icon: Icons.check_circle_outline,
+                icon: Icons.check_circle_outline_rounded,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: _StatCard(
-                label: 'Deuda',
-                value: 'S/ ${deudaTotal.toStringAsFixed(2)}',
+                label: 'Vencidos',
+                value: '$vencidos',
                 icon: Icons.warning_amber_rounded,
               ),
             ),
           ],
+        ),
+        SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: _StatCard(
+            label: 'Deuda pendiente',
+            value: 'S/ ${deudaTotal.toStringAsFixed(2)}',
+            icon: Icons.account_balance_wallet_rounded,
+          ),
         ),
       ],
     );
@@ -617,13 +637,13 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
       onSubmitted: _buscarPorSuministro,
       decoration: InputDecoration(
         hintText: 'Buscar por recibo, cliente o suministro...',
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: Icon(Icons.search),
         suffixIcon: IconButton(
           onPressed: () => _buscarPorSuministro(busqueda),
-          icon: const Icon(Icons.manage_search_rounded),
+          icon: Icon(Icons.manage_search_rounded),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.jassSurface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
@@ -647,18 +667,18 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
           final selected = filtroEstado == item['value'];
 
           return Padding(
-            padding: const EdgeInsets.only(right: 10),
+            padding: EdgeInsets.only(right: 10),
             child: ChoiceChip(
               selected: selected,
               selectedColor: secondary,
-              backgroundColor: Colors.white,
-              side: const BorderSide(
-                color: Color(0xFFE2EDF3),
+              backgroundColor: context.jassSurface,
+              side: BorderSide(
+                color: context.jassBorder,
               ),
               label: Text(
                 item['label']!,
                 style: TextStyle(
-                  color: selected ? Colors.white : primary,
+                  color: selected ? Colors.white : context.jassTextPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -680,7 +700,7 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _StatCard({
+  _StatCard({
     required this.label,
     required this.value,
     required this.icon,
@@ -688,17 +708,14 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
-    const Color muted = Color(0xFF7B8794);
-
+    final Color secondary = JassColors.secondary;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
@@ -709,20 +726,20 @@ class _StatCard extends StatelessWidget {
             color: secondary,
             size: 28,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 3),
+          SizedBox(height: 3),
           Text(
             label,
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color: context.jassTextMuted,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -745,7 +762,7 @@ class _ReciboCard extends StatelessWidget {
   final bool puedeMarcarPagado;
   final VoidCallback onPagar;
 
-  const _ReciboCard({
+  _ReciboCard({
     required this.codigoRecibo,
     required this.codigoSuministro,
     required this.cliente,
@@ -761,18 +778,16 @@ class _ReciboCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
-    const Color secondary = Color(0xFF1DA1C2);
+    final Color secondary = JassColors.secondary;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 14),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
@@ -783,8 +798,8 @@ class _ReciboCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   codigoRecibo,
-                  style: const TextStyle(
-                    color: primary,
+                  style: TextStyle(
+                    color: context.jassTextPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                   ),
@@ -793,30 +808,30 @@ class _ReciboCard extends StatelessWidget {
               _EstadoBadge(estado: estado),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             cliente,
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'Suministro: $codigoSuministro',
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color: context.jassTextMuted,
               fontWeight: FontWeight.w700,
             ),
           ),
           Text(
             direccion,
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color: context.jassTextMuted,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -825,7 +840,7 @@ class _ReciboCard extends StatelessWidget {
                   value: periodo,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: _MiniInfo(
                   label: 'Consumo',
@@ -834,7 +849,7 @@ class _ReciboCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -843,7 +858,7 @@ class _ReciboCard extends StatelessWidget {
                   value: 'S/ ${total.toStringAsFixed(2)}',
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: _MiniInfo(
                   label: 'Vence',
@@ -853,14 +868,14 @@ class _ReciboCard extends StatelessWidget {
             ],
           ),
           if (puedeMarcarPagado) ...[
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
               height: 45,
               child: ElevatedButton.icon(
                 onPressed: onPagar,
-                icon: const Icon(Icons.payments_rounded),
-                label: const Text(
+                icon: Icon(Icons.payments_rounded),
+                label: Text(
                   'Registrar pago presencial',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
@@ -887,23 +902,20 @@ class _MiniInfo extends StatelessWidget {
   final String label;
   final String value;
 
-  const _MiniInfo({
+  _MiniInfo({
     required this.label,
     required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
-
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
+        color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: const Color(0xFFE2EDF3),
+          color: context.jassBorder,
         ),
       ),
       child: Column(
@@ -911,19 +923,19 @@ class _MiniInfo extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: muted,
+            style: TextStyle(
+              color: context.jassTextMuted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 5),
+          SizedBox(height: 5),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: primary,
+            style: TextStyle(
+              color: context.jassTextPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
@@ -937,7 +949,7 @@ class _MiniInfo extends StatelessWidget {
 class _EstadoBadge extends StatelessWidget {
   final String estado;
 
-  const _EstadoBadge({
+  _EstadoBadge({
     required this.estado,
   });
 
@@ -949,18 +961,18 @@ class _EstadoBadge extends StatelessWidget {
     Color text;
 
     if (upper == 'PAGADO') {
-      bg = const Color(0xFFEAF8EF);
-      text = const Color(0xFF1F8F4D);
+      bg = Color(0xFFEAF8EF);
+      text = JassColors.success;
     } else if (upper == 'VENCIDO') {
-      bg = const Color(0xFFFFECEC);
-      text = const Color(0xFFD93025);
+      bg = Color(0xFFFFECEC);
+      text = JassColors.danger;
     } else {
-      bg = const Color(0xFFFFF3DF);
-      text = const Color(0xFFC77700);
+      bg = Color(0xFFFFF3DF);
+      text = JassColors.warning;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
+      padding: EdgeInsets.symmetric(
         horizontal: 10,
         vertical: 6,
       ),
@@ -984,7 +996,7 @@ class _Error extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  const _Error({
+  _Error({
     required this.error,
     required this.onRetry,
   });
@@ -993,9 +1005,9 @@ class _Error extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFECEC),
+        color: Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -1003,58 +1015,17 @@ class _Error extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFFD93025),
+            style: TextStyle(
+              color: JassColors.danger,
               fontWeight: FontWeight.w800,
             ),
           ),
           TextButton(
             onPressed: onRetry,
-            child: const Text('Reintentar'),
+            child: Text('Reintentar'),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _AdminBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
-  const _AdminBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      height: 76,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          label: 'Inicio',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.groups_rounded),
-          label: 'Clientes',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.attach_money_rounded),
-          label: 'Tarifas',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_rounded),
-          label: 'Recibos',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.bar_chart_rounded),
-          label: 'Reportes',
-        ),
-      ],
     );
   }
 }

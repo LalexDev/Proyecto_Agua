@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,9 +36,10 @@ public class LecturaService {
     private final ReciboRepository reciboRepository;
     private final ConfiguracionCobranzaRepository configuracionCobranzaRepository;
 
-    private static final Integer CONFIGURACION_COBRANZA_ID = 1;
+    private static final BigDecimal CARGO_LECTOR_DEFAULT = new BigDecimal("1.00");
+    private static final BigDecimal CARGO_MANTENIMIENTO_DEFAULT = new BigDecimal("3.00");
+    private static final BigDecimal CARGO_OTROS_DEFAULT = new BigDecimal("0.20");
     private static final BigDecimal MORA_INICIAL = new BigDecimal("0.00");
-    private static final BigDecimal CONSUMO_MINIMO_COBRABLE = new BigDecimal("1.000");
 
     @Transactional
     public LecturaResponse registrarLectura(LecturaRequest request) {
@@ -177,22 +179,20 @@ public class LecturaService {
             Suministro suministro,
             BigDecimal consumo
     ) {
-        ConfiguracionCobranza configuracion = obtenerConfiguracionCobranza();
+        BigDecimal precioM3 = obtenerPrecioPorConsumo(consumo);
 
         BigDecimal consumoSeguro = consumo == null
                 ? BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP)
                 : consumo.setScale(3, RoundingMode.HALF_UP);
 
-        /*
-         * INSTALADO:
-         * - Si consumo >= 1 m³: agua por tramos + lector + otros.
-         * - Si consumo < 1 m³: solo lector + otros.
-         * - Nunca cobra mantenimiento.
-         */
-        BigDecimal subtotalAgua = calcularSubtotalAguaPorTramos(consumoSeguro);
-        BigDecimal cargoMantenimiento = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        BigDecimal cargoLector = valorSeguro(configuracion.getCargoLector());
-        BigDecimal cargoOtros = valorSeguro(configuracion.getCargoOtros());
+        BigDecimal cargoMantenimiento = consumo.compareTo(BigDecimal.ZERO) == 0
+                ? obtenerCargoMantenimiento()
+                : BigDecimal.ZERO;
+
+        cargoMantenimiento = cargoMantenimiento.setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal cargoLector = obtenerCargoLector();
+        BigDecimal cargoOtros = obtenerCargoOtros();
         BigDecimal mora = MORA_INICIAL.setScale(2, RoundingMode.HALF_UP);
 
         BigDecimal total = subtotalAgua
@@ -201,6 +201,10 @@ public class LecturaService {
                 .add(cargoOtros)
                 .add(mora)
                 .setScale(2, RoundingMode.HALF_UP);
+
+        Integer diasVencimiento = config.getDiasVencimiento() == null
+                ? DIAS_VENCIMIENTO_DEFAULT
+                : config.getDiasVencimiento();
 
         Recibo recibo = Recibo.builder()
                 .lectura(lectura)
@@ -217,7 +221,7 @@ public class LecturaService {
                 .total(total)
                 .estadoRecibo("PENDIENTE")
                 .fechaEmision(LocalDateTime.now())
-                .fechaVencimiento(calcularFechaVencimiento(configuracion))
+                .fechaVencimiento(LocalDate.now().plusDays(15))
                 .build();
 
         return reciboRepository.save(recibo);
@@ -227,34 +231,13 @@ public class LecturaService {
             Lectura lectura,
             Suministro suministro
     ) {
-        ConfiguracionCobranza configuracion = obtenerConfiguracionCobranza();
-
         BigDecimal subtotalAgua = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         BigDecimal consumo = BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
 
-        BigDecimal cargoMantenimiento;
-        BigDecimal cargoLector;
-        BigDecimal cargoOtros;
+        BigDecimal cargoMantenimiento = obtenerCargoMantenimiento();
+        BigDecimal cargoLector = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal cargoOtros = obtenerCargoOtros();
         BigDecimal mora = MORA_INICIAL.setScale(2, RoundingMode.HALF_UP);
-
-        if (esSuministroInstalado(suministro)) {
-            /*
-             * Instalado con consumo cero:
-             * cobra lector + otros.
-             */
-            cargoMantenimiento = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-            cargoLector = valorSeguro(configuracion.getCargoLector());
-            cargoOtros = valorSeguro(configuracion.getCargoOtros());
-        } else {
-            /*
-             * Pendiente de instalación:
-             * solo cobra mantenimiento.
-             * No cobra lector ni otros cargos.
-             */
-            cargoMantenimiento = valorSeguro(configuracion.getCargoMantenimiento());
-            cargoLector = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-            cargoOtros = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        }
 
         BigDecimal total = subtotalAgua
                 .add(cargoMantenimiento)
@@ -262,6 +245,10 @@ public class LecturaService {
                 .add(cargoOtros)
                 .add(mora)
                 .setScale(2, RoundingMode.HALF_UP);
+
+        Integer diasVencimiento = config.getDiasVencimiento() == null
+                ? DIAS_VENCIMIENTO_DEFAULT
+                : config.getDiasVencimiento();
 
         Recibo recibo = Recibo.builder()
                 .lectura(lectura)
@@ -278,7 +265,7 @@ public class LecturaService {
                 .total(total)
                 .estadoRecibo("PENDIENTE")
                 .fechaEmision(LocalDateTime.now())
-                .fechaVencimiento(calcularFechaVencimiento(configuracion))
+                .fechaVencimiento(LocalDate.now().plusDays(15))
                 .build();
 
         return reciboRepository.save(recibo);
@@ -302,92 +289,24 @@ public class LecturaService {
 
         List<Tarifa> tarifas = tarifaRepository.findByEstadoTrueOrderByConsumoDesdeAsc();
 
-        if (tarifas == null || tarifas.isEmpty()) {
-            throw new RuntimeException("No existen tarifas activas para calcular el consumo de agua.");
-        }
-
-        BigDecimal subtotal = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        BigDecimal inicioTramoAnterior = BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
-
-        for (Tarifa tarifa : tarifas) {
-            BigDecimal finTramo = tarifa.getConsumoHasta();
-            BigDecimal precioM3 = valorSeguro(tarifa.getPrecioM3());
-
-            BigDecimal limiteAplicable = finTramo == null
-                    ? consumoTotal
-                    : consumoTotal.min(finTramo.setScale(3, RoundingMode.HALF_UP));
-
-            if (consumoTotal.compareTo(inicioTramoAnterior) <= 0) {
-                break;
-            }
-
-            BigDecimal consumoDelTramo = limiteAplicable
-                    .subtract(inicioTramoAnterior)
-                    .setScale(3, RoundingMode.HALF_UP);
-
-            if (consumoDelTramo.compareTo(BigDecimal.ZERO) > 0) {
-                subtotal = subtotal.add(
-                        consumoDelTramo.multiply(precioM3).setScale(2, RoundingMode.HALF_UP)
-                );
-            }
-
-            if (finTramo == null || consumoTotal.compareTo(finTramo) <= 0) {
-                break;
-            }
-
-            inicioTramoAnterior = finTramo.setScale(3, RoundingMode.HALF_UP);
-        }
-
-        return subtotal.setScale(2, RoundingMode.HALF_UP);
+        return tarifas.stream()
+                .filter(tarifa -> consumo.compareTo(tarifa.getConsumoDesde()) >= 0)
+                .filter(tarifa -> tarifa.getConsumoHasta() == null || consumo.compareTo(tarifa.getConsumoHasta()) <= 0)
+                .findFirst()
+                .map(Tarifa::getPrecioM3)
+                .orElseThrow(() -> new RuntimeException("No existe una tarifa activa para el consumo: " + consumo));
     }
 
-    private void validarSuministroParaLectura(Suministro suministro) {
-        if (!Boolean.TRUE.equals(suministro.getEstado())) {
-            throw new RuntimeException("El suministro se encuentra inactivo o suspendido. No se puede registrar lectura.");
-        }
-
-        if (!esSuministroInstalado(suministro)) {
-            throw new RuntimeException("Este suministro aún no está instalado. No se puede registrar lectura normal. Genere recibo básico por mantenimiento.");
-        }
+    private BigDecimal obtenerCargoLector() {
+        return CARGO_LECTOR_DEFAULT.setScale(2, RoundingMode.HALF_UP);
     }
 
-    private String obtenerObservacionMantenimiento(Suministro suministro) {
-        if (esSuministroInstalado(suministro)) {
-            return "Recibo generado por consumo cero. Suministro instalado sin consumo registrado.";
-        }
-
-        return "Recibo generado por mantenimiento. Suministro pendiente de instalación.";
+    private BigDecimal obtenerCargoMantenimiento() {
+        return CARGO_MANTENIMIENTO_DEFAULT.setScale(2, RoundingMode.HALF_UP);
     }
 
-    private BigDecimal obtenerLecturaAnterior(Suministro suministro) {
-        return lecturaRepository.findTopBySuministroIdOrderByAnioDescMesDesc(suministro.getId())
-                .map(Lectura::getLecturaActual)
-                .orElse(suministro.getLecturaInicial() != null
-                        ? suministro.getLecturaInicial()
-                        : BigDecimal.ZERO)
-                .setScale(3, RoundingMode.HALF_UP);
-    }
-
-    private ConfiguracionCobranza obtenerConfiguracionCobranza() {
-        return configuracionCobranzaRepository.findById(CONFIGURACION_COBRANZA_ID)
-                .or(() -> configuracionCobranzaRepository.findTopByOrderByIdDesc())
-                .orElseThrow(() -> new RuntimeException("No existe configuración de cobranza. Registre la configuración desde el panel de tarifas."));
-    }
-
-    private LocalDate calcularFechaVencimiento(ConfiguracionCobranza configuracion) {
-        int dias = configuracion != null && configuracion.getDiasVencimiento() != null
-                ? configuracion.getDiasVencimiento()
-                : 15;
-
-        return LocalDate.now().plusDays(dias);
-    }
-
-    private boolean esSuministroInstalado(Suministro suministro) {
-        if (suministro == null || suministro.getEstadoInstalacion() == null) {
-            return false;
-        }
-
-        return "INSTALADO".equalsIgnoreCase(suministro.getEstadoInstalacion().trim());
+    private BigDecimal obtenerCargoOtros() {
+        return CARGO_OTROS_DEFAULT.setScale(2, RoundingMode.HALF_UP);
     }
 
     private LecturaResponse convertirAResponse(Lectura lectura, Recibo recibo) {
@@ -467,6 +386,16 @@ public class LecturaService {
         return valor == null
                 ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
                 : valor.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal valorSeguro(BigDecimal valor, BigDecimal fallback) {
+        BigDecimal resultado = valor == null ? fallback : valor;
+
+        if (resultado == null) {
+            resultado = BigDecimal.ZERO;
+        }
+
+        return resultado.setScale(2, RoundingMode.HALF_UP);
     }
 
     private String generarCodigoRecibo() {

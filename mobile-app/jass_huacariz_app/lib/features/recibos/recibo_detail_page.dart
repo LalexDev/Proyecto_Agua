@@ -1,18 +1,35 @@
 import 'package:flutter/material.dart';
 
-class ReciboDetailPage extends StatelessWidget {
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
+import '../../shared/widgets/cliente_bottom_nav.dart';
+
+class ReciboDetailPage extends StatefulWidget {
   const ReciboDetailPage({super.key});
 
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
+  @override
+  State<ReciboDetailPage> createState() => _ReciboDetailPageState();
+}
+
+class _ReciboDetailPageState extends State<ReciboDetailPage> {
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
+  Color get background => context.jassBackground;
+  Color get muted => context.jassTextMuted;
+  static const Color danger = JassColors.danger;
+  static const Color success = JassColors.success;
+  static const Color warning = JassColors.warning;
 
   Map<String, dynamic> _getRecibo(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
 
     if (args is Map<String, dynamic>) {
       return args;
+    }
+
+    if (args is Map) {
+      return Map<String, dynamic>.from(args);
     }
 
     return {};
@@ -28,10 +45,17 @@ class ReciboDetailPage extends StatelessWidget {
     return text;
   }
 
+  double _numero(dynamic value) {
+    if (value is num) return value.toDouble();
+
+    return double.tryParse(value.toString()) ?? 0.0;
+  }
+
   int _id(Map<String, dynamic> recibo) {
     final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
 
     if (value is int) return value;
+    if (value is num) return value.toInt();
 
     return int.tryParse(value.toString()) ?? 0;
   }
@@ -49,19 +73,10 @@ class ReciboDetailPage extends StatelessWidget {
     return _texto(
       recibo['codigoSuministro'] ??
           recibo['suministroCodigo'] ??
-          recibo['suministro'] ??
-          'SIN-SUMINISTRO',
-    );
-  }
-
-  String _titular(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['titular'] ??
-          recibo['cliente'] ??
-          recibo['nombreCliente'] ??
-          recibo['nombres'] ??
-          recibo['usuario'],
-      'Usuario del servicio',
+          recibo['codigoSuministroRecibo'] ??
+          recibo['numeroSuministro'] ??
+          recibo['suministro'],
+      'SIN-SUMINISTRO',
     );
   }
 
@@ -71,19 +86,6 @@ class ReciboDetailPage extends StatelessWidget {
           recibo['direccion'] ??
           recibo['direccionCliente'],
       'Dirección no registrada',
-    );
-  }
-
-  String _sector(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['sector'] ?? recibo['nombreSector'] ?? recibo['sectorNombre'],
-      'Huacariz',
-    );
-  }
-
-  String _dni(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['dni'] ?? recibo['documento'] ?? recibo['codigoUsuario'],
     );
   }
 
@@ -119,10 +121,29 @@ class ReciboDetailPage extends StatelessWidget {
     );
   }
 
-  double _numero(dynamic value) {
-    if (value is num) return value.toDouble();
+  String _estado(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
+      'PENDIENTE',
+    ).toUpperCase();
+  }
 
-    return double.tryParse(value.toString()) ?? 0.0;
+  double _lecturaAnterior(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['lecturaAnterior'] ??
+          recibo['lecturaAnteriorM3'] ??
+          recibo['lecturaInicial'] ??
+          0,
+    );
+  }
+
+  double _lecturaActual(Map<String, dynamic> recibo) {
+    return _numero(
+      recibo['lecturaActual'] ??
+          recibo['lecturaActualM3'] ??
+          recibo['lecturaFinal'] ??
+          0,
+    );
   }
 
   double _consumo(Map<String, dynamic> recibo) {
@@ -131,95 +152,269 @@ class ReciboDetailPage extends StatelessWidget {
     );
   }
 
-  double _lecturaAnterior(Map<String, dynamic> recibo) {
+  double _cargoAgua(Map<String, dynamic> recibo) {
     return _numero(
-      recibo['lecturaAnterior'] ??
-          recibo['lectura_anterior'] ??
-          recibo['anterior'] ??
-          0,
-    );
-  }
-
-  double _lecturaActual(Map<String, dynamic> recibo) {
-    return _numero(
-      recibo['lecturaActual'] ??
-          recibo['lectura_actual'] ??
-          recibo['actual'] ??
-          0,
-    );
-  }
-
-  double _volumenAgua(Map<String, dynamic> recibo) {
-    return _numero(
-      recibo['volumenAgua'] ??
+      recibo['cargoAgua'] ??
           recibo['montoAgua'] ??
           recibo['importeAgua'] ??
-          recibo['subtotalAgua'] ??
-          recibo['total'] ??
+          recibo['subtotal'] ??
           0,
     );
   }
 
-  double _mantenimiento(Map<String, dynamic> recibo) {
+  double _cargoMantenimiento(Map<String, dynamic> recibo) {
     return _numero(
-      recibo['mantenimiento'] ?? recibo['montoMantenimiento'] ?? 0,
+      recibo['cargoMantenimiento'] ??
+          recibo['mantenimiento'] ??
+          recibo['montoMantenimiento'] ??
+          0,
     );
   }
 
-  double _pagoLecturador(Map<String, dynamic> recibo) {
+  double _cargoOtros(Map<String, dynamic> recibo) {
     return _numero(
-      recibo['pagoLecturador'] ?? recibo['montoLecturador'] ?? 0,
-    );
-  }
-
-  double _otrosCargos(Map<String, dynamic> recibo) {
-    return _numero(
-      recibo['otrosCargos'] ?? recibo['otros'] ?? 0,
+      recibo['otrosCargos'] ??
+          recibo['cargoOtros'] ??
+          recibo['montoOtros'] ??
+          0,
     );
   }
 
   double _mora(Map<String, dynamic> recibo) {
     return _numero(
-      recibo['mora'] ?? recibo['montoMora'] ?? 0,
+      recibo['mora'] ?? recibo['cargoMora'] ?? recibo['montoMora'] ?? 0,
     );
   }
 
   double _total(Map<String, dynamic> recibo) {
     return _numero(
-      recibo['total'] ?? recibo['montoTotal'] ?? recibo['importeTotal'] ?? 0,
+      recibo['total'] ??
+          recibo['montoTotal'] ??
+          recibo['importeTotal'] ??
+          recibo['totalPagar'] ??
+          0,
     );
   }
 
-  String _estado(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
-      'PENDIENTE',
-    );
-  }
-
-  String _vencimiento(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['fechaVencimiento'] ?? recibo['vencimiento'],
-      '-',
-    );
-  }
-
-  String _emision(Map<String, dynamic> recibo) {
+  String _fechaEmision(Map<String, dynamic> recibo) {
     return _texto(
       recibo['fechaEmision'] ?? recibo['emision'],
       '-',
     );
   }
 
-  bool _puedePagar(Map<String, dynamic> recibo) {
-    return _estado(recibo).toUpperCase() == 'PENDIENTE';
+  String _fechaVencimiento(Map<String, dynamic> recibo) {
+    return _texto(
+      recibo['fechaVencimiento'] ?? recibo['vencimiento'],
+      '-',
+    );
   }
 
-  void _irPagar(BuildContext context, Map<String, dynamic> recibo) {
+  bool _puedePagar(Map<String, dynamic> recibo) {
+    final estado = _estado(recibo);
+
+    return estado == 'PENDIENTE' || estado == 'VENCIDO';
+  }
+
+  void _irHome() {
+    Navigator.pushReplacementNamed(context, '/home');
+  }
+
+  void _irRecibos() {
+    Navigator.pushReplacementNamed(context, '/recibos');
+  }
+
+  void _irPerfil() {
+    Navigator.pushReplacementNamed(context, '/perfil');
+  }
+
+  void _irCambiarPassword() {
+    Navigator.pushNamed(context, '/cambiar-password');
+  }
+
+  void _irPagar(Map<String, dynamic> recibo) {
+    if (!_puedePagar(recibo)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Este recibo no está pendiente de pago.'),
+          backgroundColor: success,
+        ),
+      );
+      return;
+    }
+
     Navigator.pushNamed(
       context,
       '/pago-cip',
       arguments: recibo,
+    );
+  }
+
+  void _verPdf(Map<String, dynamic> recibo) {
+    Navigator.pushNamed(
+      context,
+      '/pdf-viewer',
+      arguments: recibo,
+    );
+  }
+
+  void _volver() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      _irRecibos();
+    }
+  }
+
+  // Barra inferior cliente:
+  // 0 = Inicio, 1 = Recibos, 2 = Pagar, 3 = Perfil.
+  void _goBottomCliente(int index) {
+    final recibo = _getRecibo(context);
+
+    if (index == 0) {
+      _irHome();
+    }
+
+    if (index == 1) {
+      _irRecibos();
+    }
+
+    if (index == 2) {
+      _irPagar(recibo);
+    }
+
+    if (index == 3) {
+      _irPerfil();
+    }
+  }
+
+  void _abrirMenuCliente() {
+    final recibo = _getRecibo(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
+      isScrollControlled: true,
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.jassSurface,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: context.jassBorder,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 28,
+                          offset: Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.92,
+                      children: [
+                        ClienteMenuTile(
+                          icon: Icons.home_rounded,
+                          label: 'Inicio',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irHome();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Recibos',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irRecibos();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.payments_rounded,
+                          label: 'Pagar',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irPagar(recibo);
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.picture_as_pdf_rounded,
+                          label: 'PDF',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _verPdf(recibo);
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.person_rounded,
+                          label: 'Perfil',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irPerfil();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.lock_reset_rounded,
+                          label: 'Clave',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irCambiarPassword();
+                          },
+                        ),
+                        ClienteThemeTile(
+                          onAfterChange: () {
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  borderRadius: BorderRadius.circular(100),
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: JassColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -228,16 +423,30 @@ class ReciboDetailPage extends StatelessWidget {
     final recibo = _getRecibo(context);
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: ClienteBottomNav(
+        currentIndex: 1,
+        onTap: _goBottomCliente,
+        onPlus: _abrirMenuCliente,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(context, recibo),
-              const SizedBox(height: 18),
-              _buildReciboCard(context, recibo),
+              _buildHeader(),
+              SizedBox(height: 18),
+              _buildMainCard(recibo),
+              SizedBox(height: 18),
+              _buildLecturasCard(recibo),
+              SizedBox(height: 18),
+              _buildMontosCard(recibo),
+              SizedBox(height: 18),
+              _buildFechasCard(recibo),
+              SizedBox(height: 22),
+              _buildActions(recibo),
             ],
           ),
         ),
@@ -245,50 +454,48 @@ class ReciboDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, Map<String, dynamic> recibo) {
+  Widget _buildHeader() {
     return Row(
       children: [
         Container(
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.jassSurface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: primary.withOpacity(0.08),
+                color: JassColors.primary.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
           child: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
+            onPressed: _volver,
+            icon: Icon(
               Icons.arrow_back_rounded,
               color: primary,
             ),
           ),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Detalle del recibo',
+              Text(
+                'Portal cliente',
                 style: TextStyle(
                   color: muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
-                _codigoRecibo(recibo),
-                style: const TextStyle(
+                'Detalle de recibo',
+                style: TextStyle(
                   color: primary,
                   fontSize: 23,
                   fontWeight: FontWeight.w900,
@@ -301,84 +508,99 @@ class ReciboDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildReciboCard(BuildContext context, Map<String, dynamic> recibo) {
+  Widget _buildMainCard(Map<String, dynamic> recibo) {
     final estado = _estado(recibo);
-    final puedePagar = _puedePagar(recibo);
 
     return Container(
       width: double.infinity,
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF0F3D57),
+            Color(0xFF1DA1C2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.08),
+            color: JassColors.primary.withValues(alpha: 0.14),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTopBlue(recibo, estado),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.white24,
+                child: Icon(
+                  Icons.receipt_long_rounded,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _codigoRecibo(recibo),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              _EstadoBadge(estado: estado),
+            ],
+          ),
+          SizedBox(height: 18),
+          _HeroLine(
+            label: 'Suministro',
+            value: _codigoSuministro(recibo),
+          ),
+          _HeroLine(
+            label: 'Dirección',
+            value: _direccion(recibo),
+          ),
+          _HeroLine(
+            label: 'Periodo',
+            value: _periodo(recibo),
+          ),
+          SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+              ),
+            ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildClienteInfo(recibo),
-                const SizedBox(height: 14),
-                _buildPeriodoInfo(recibo),
-                const SizedBox(height: 14),
-                _buildLecturas(recibo),
-                const SizedBox(height: 14),
-                _buildDetalleFacturacion(recibo),
-                const SizedBox(height: 14),
-                _buildTotal(recibo),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/pdf-viewer',
-                            arguments: recibo,
-                          );
-                        },
-                        icon: const Icon(Icons.picture_as_pdf_rounded),
-                        label: const Text('PDF'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: primary,
-                          backgroundColor: const Color(0xFFF0FAFD),
-                          side: const BorderSide(color: Color(0xFFE2EDF3)),
-                          minimumSize: const Size(0, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (puedePagar) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _irPagar(context, recibo),
-                          icon: const Icon(Icons.payments_rounded),
-                          label: const Text('Pagar'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: secondary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            minimumSize: const Size(0, 50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                Text(
+                  'Total del recibo',
+                  style: TextStyle(
+                    color: Color(0xFFE7F8FF),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'S/ ${_total(recibo).toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ],
             ),
@@ -388,178 +610,173 @@ class ReciboDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTopBlue(Map<String, dynamic> recibo, String estado) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'JASS HUACARIZ',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _periodo(recibo),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _EstadoBadge(estado: estado),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Vence: ${_vencimiento(recibo)}',
-                  style: const TextStyle(
-                    color: Color(0xFFE7F8FF),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildClienteInfo(Map<String, dynamic> recibo) {
-    return _SectionCard(
-      title: 'Datos del cliente',
-      children: [
-        _InfoRow(label: 'Titular', value: _titular(recibo)),
-        _InfoRow(label: 'DNI / Código', value: _dni(recibo)),
-        _InfoRow(label: 'Suministro', value: _codigoSuministro(recibo)),
-        _InfoRow(label: 'Dirección', value: _direccion(recibo)),
-        _InfoRow(label: 'Sector', value: _sector(recibo)),
-      ],
-    );
-  }
-
-  Widget _buildPeriodoInfo(Map<String, dynamic> recibo) {
-    return _SectionCard(
-      title: 'Información del periodo',
-      children: [
-        _InfoRow(label: 'Periodo', value: _periodo(recibo)),
-        _InfoRow(label: 'Fecha emisión', value: _emision(recibo)),
-        _InfoRow(label: 'Vencimiento', value: _vencimiento(recibo)),
-      ],
-    );
-  }
-
-  Widget _buildLecturas(Map<String, dynamic> recibo) {
+  Widget _buildLecturasCard(Map<String, dynamic> recibo) {
     return _SectionCard(
       title: 'Lecturas y consumo',
+      icon: Icons.speed_rounded,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _MiniBox(
-                label: 'Anterior',
-                value: _lecturaAnterior(recibo).toStringAsFixed(0),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _MiniBox(
-                label: 'Actual',
-                value: _lecturaActual(recibo).toStringAsFixed(0),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _MiniBox(
-                label: 'Consumo',
-                value: '${_consumo(recibo).toStringAsFixed(2)} m³',
-              ),
-            ),
-          ],
+        _InfoRow(
+          label: 'Lectura anterior',
+          value: '${_lecturaAnterior(recibo).toStringAsFixed(3)} m³',
+        ),
+        _InfoRow(
+          label: 'Lectura actual',
+          value: '${_lecturaActual(recibo).toStringAsFixed(3)} m³',
+        ),
+        _InfoRow(
+          label: 'Consumo facturado',
+          value: '${_consumo(recibo).toStringAsFixed(2)} m³',
+          highlight: true,
         ),
       ],
     );
   }
 
-  Widget _buildDetalleFacturacion(Map<String, dynamic> recibo) {
+  Widget _buildMontosCard(Map<String, dynamic> recibo) {
     return _SectionCard(
-      title: 'Detalle de facturación',
+      title: 'Detalle de cobros',
+      icon: Icons.account_balance_wallet_rounded,
       children: [
         _InfoRow(
-          label: 'Volumen de agua potable',
-          value: 'S/ ${_volumenAgua(recibo).toStringAsFixed(2)}',
+          label: 'Cargo por agua',
+          value: 'S/ ${_cargoAgua(recibo).toStringAsFixed(2)}',
         ),
         _InfoRow(
           label: 'Mantenimiento',
-          value: 'S/ ${_mantenimiento(recibo).toStringAsFixed(2)}',
-        ),
-        _InfoRow(
-          label: 'Pago al lecturador',
-          value: 'S/ ${_pagoLecturador(recibo).toStringAsFixed(2)}',
+          value: 'S/ ${_cargoMantenimiento(recibo).toStringAsFixed(2)}',
         ),
         _InfoRow(
           label: 'Otros cargos',
-          value: 'S/ ${_otrosCargos(recibo).toStringAsFixed(2)}',
+          value: 'S/ ${_cargoOtros(recibo).toStringAsFixed(2)}',
         ),
         _InfoRow(
           label: 'Mora',
           value: 'S/ ${_mora(recibo).toStringAsFixed(2)}',
         ),
+        Divider(height: 22),
+        _InfoRow(
+          label: 'Total',
+          value: 'S/ ${_total(recibo).toStringAsFixed(2)}',
+          highlight: true,
+        ),
       ],
     );
   }
 
-  Widget _buildTotal(Map<String, dynamic> recibo) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3DF),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFFFD899)),
-      ),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text(
-              'Total a pagar',
+  Widget _buildFechasCard(Map<String, dynamic> recibo) {
+    return _SectionCard(
+      title: 'Fechas',
+      icon: Icons.calendar_month_rounded,
+      children: [
+        _InfoRow(
+          label: 'Fecha de emisión',
+          value: _fechaEmision(recibo),
+        ),
+        _InfoRow(
+          label: 'Fecha de vencimiento',
+          value: _fechaVencimiento(recibo),
+        ),
+        _InfoRow(
+          label: 'Estado',
+          value: _estado(recibo),
+          highlight: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActions(Map<String, dynamic> recibo) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton.icon(
+            onPressed: _puedePagar(recibo) ? () => _irPagar(recibo) : null,
+            icon: Icon(Icons.payments_rounded),
+            label: Text(
+              _puedePagar(recibo) ? 'Pagar recibo' : 'Recibo pagado',
               style: TextStyle(
-                color: primary,
-                fontSize: 17,
                 fontWeight: FontWeight.w900,
               ),
             ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: secondary,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: success.withValues(alpha: 0.60),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(17),
+              ),
+            ),
           ),
-          Text(
-            'S/ ${_total(recibo).toStringAsFixed(2)}',
-            style: const TextStyle(
-              color: primary,
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
+        ),
+        SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: OutlinedButton.icon(
+            onPressed: () => _verPdf(recibo),
+            icon: Icon(Icons.picture_as_pdf_rounded),
+            label: Text(
+              'Ver PDF del recibo',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: primary,
+              backgroundColor: context.jassSurface,
+              side: BorderSide(
+                color: context.jassBorder,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(17),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _HeroLine({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Color(0xFFE7F8FF),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
         ],
@@ -570,37 +787,60 @@ class ReciboDetailPage extends StatelessWidget {
 
 class _SectionCard extends StatelessWidget {
   final String title;
+  final IconData icon;
   final List<Widget> children;
 
   const _SectionCard({
     required this.title,
+    required this.icon,
     required this.children,
   });
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
+    final Color primary = context.jassTextPrimary;
+    const Color secondary = JassColors.secondary;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        color: context.jassSurface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: context.jassBorder,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: JassColors.primary.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: primary,
-              fontSize: 16,
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: secondary,
+                size: 28,
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: primary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 14),
           ...children,
         ],
       ),
@@ -611,22 +851,28 @@ class _SectionCard extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
+  final bool highlight;
 
   const _InfoRow({
     required this.label,
     required this.value,
+    this.highlight = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    const Color secondary = JassColors.secondary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE2EDF3)),
+      margin: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: highlight ? context.jassSelectedSurface : context.jassSurfaceAlt,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: context.jassBorder,
         ),
       ),
       child: Row(
@@ -634,69 +880,23 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: muted,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Flexible(
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: primary,
-                fontSize: 13,
+              style: TextStyle(
+                color: highlight ? secondary : primary,
+                fontSize: 14,
                 fontWeight: FontWeight.w900,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniBox extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _MiniBox({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: muted,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              color: primary,
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
             ),
           ),
         ],
@@ -714,15 +914,15 @@ class _EstadoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final estadoUpper = estado.toUpperCase();
+    final upper = estado.toUpperCase();
 
     Color bg;
     Color text;
 
-    if (estadoUpper == 'PAGADO') {
+    if (upper == 'PAGADO') {
       bg = const Color(0xFFEAF8EF);
       text = const Color(0xFF1F8F4D);
-    } else if (estadoUpper == 'VENCIDO') {
+    } else if (upper == 'VENCIDO') {
       bg = const Color(0xFFFFECEC);
       text = const Color(0xFFD93025);
     } else {
@@ -731,16 +931,16 @@ class _EstadoBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(100),
       ),
       child: Text(
-        estadoUpper,
+        upper,
         style: TextStyle(
           color: text,
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: FontWeight.w900,
         ),
       ),

@@ -6,9 +6,7 @@ class LecturaAdminService {
 
   List<Map<String, dynamic>> _asList(dynamic response) {
     if (response is List) {
-      return response
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      return response.map((item) => Map<String, dynamic>.from(item)).toList();
     }
 
     if (response is Map && response['data'] is List) {
@@ -26,13 +24,18 @@ class LecturaAdminService {
     return [];
   }
 
+  Future<List<Map<String, dynamic>>> listarHistorial() async {
+    final response = await _api.get(ApiConfig.historialLecturasAdmin);
+    return _asList(response);
+  }
+
   Future<List<Map<String, dynamic>>> listarHistorialLecturas() async {
     final response = await _api.get(ApiConfig.historialLecturasAdmin);
     return _asList(response);
   }
 
-  // Este método se deja porque tu pantalla antigua lo está llamando.
-  Future<List<Map<String, dynamic>>> listarHistorial() async {
-    return listarHistorialLecturas();
+  Future<List<Map<String, dynamic>>> listarLecturasAdmin() async {
+    final response = await _api.get(ApiConfig.historialLecturasAdmin);
+    return _asList(response);
   }
 }

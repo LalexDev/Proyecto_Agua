@@ -16,7 +16,7 @@
     <artifactId>jass-huacariz-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>jass-huacariz-api</name>
-    <description>API JASS Huacariz</description>
+    <description>API AGUA POTABLE HUACARIZ SAN ANTONIO</description>
 
     <properties>
         <java.version>21</java.version>

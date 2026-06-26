@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
 import '../../core/services/pago_service.dart';
 import '../../core/services/recibo_service.dart';
+import '../../shared/widgets/cliente_bottom_nav.dart';
 
 class PagoCipPage extends StatefulWidget {
   const PagoCipPage({super.key});
@@ -11,10 +15,13 @@ class PagoCipPage extends StatefulWidget {
 }
 
 class _PagoCipPageState extends State<PagoCipPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
+  Color get background => context.jassBackground;
+  Color get muted => context.jassTextMuted;
+  static const Color danger = JassColors.danger;
+  static const Color success = JassColors.success;
+  static const Color warning = JassColors.warning;
 
   final PagoService pagoService = PagoService();
   final ReciboService reciboService = ReciboService();
@@ -22,7 +29,7 @@ class _PagoCipPageState extends State<PagoCipPage> {
       TextEditingController();
 
   bool cargando = false;
-  String metodoPago = 'EFECTIVO';
+  String metodoPago = 'YAPE';
 
   @override
   void dispose() {
@@ -44,15 +51,6 @@ class _PagoCipPageState extends State<PagoCipPage> {
     return {};
   }
 
-  int _id(Map<String, dynamic> recibo) {
-    final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
-
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-
-    return int.tryParse(value.toString()) ?? 0;
-  }
-
   String _texto(dynamic value, [String fallback = '-']) {
     if (value == null) return fallback;
 
@@ -69,6 +67,15 @@ class _PagoCipPageState extends State<PagoCipPage> {
     return double.tryParse(value.toString()) ?? 0.0;
   }
 
+  int _id(Map<String, dynamic> recibo) {
+    final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
+
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
   String _codigoRecibo(Map<String, dynamic> recibo) {
     return _texto(
       recibo['codigoRecibo'] ??
@@ -82,8 +89,10 @@ class _PagoCipPageState extends State<PagoCipPage> {
     return _texto(
       recibo['codigoSuministro'] ??
           recibo['suministroCodigo'] ??
-          recibo['suministro'] ??
-          'SIN-SUMINISTRO',
+          recibo['codigoSuministroRecibo'] ??
+          recibo['numeroSuministro'] ??
+          recibo['suministro'],
+      'SIN-SUMINISTRO',
     );
   }
 
@@ -141,53 +150,54 @@ class _PagoCipPageState extends State<PagoCipPage> {
     return estado == 'PENDIENTE' || estado == 'VENCIDO';
   }
 
-  void _mostrarMensaje(String mensaje, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor:
-            error ? const Color(0xFFD93025) : const Color(0xFF1F8F4D),
-      ),
-    );
-  }
+ void _mostrarMensaje(
+  String mensaje, {
+  Color? color,
+}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(mensaje),
+      backgroundColor:
+          color ?? Theme.of(context).colorScheme.primary,
+    ),
+  );
+}
 
   Future<Map<String, dynamic>?> _buscarReciboDelCliente(int idRecibo) async {
-    final misRecibos = await reciboService.listarMisRecibos();
+    final recibos = await reciboService.listarMisRecibos();
 
-    for (final recibo in misRecibos) {
-      if (_id(recibo) == idRecibo) {
-        return recibo;
-      }
+    try {
+      return recibos.firstWhere((recibo) => _id(recibo) == idRecibo);
+    } catch (_) {
+      return null;
     }
-
-    return null;
   }
 
-  Future<void> registrarPago(Map<String, dynamic> recibo) async {
+  Future<void> registrarPago() async {
+    final recibo = _getRecibo(context);
     final idRecibo = _id(recibo);
+    final codigoOperacion = codigoOperacionController.text.trim();
 
     if (idRecibo <= 0) {
       _mostrarMensaje(
-        'No se encontró el ID del recibo.',
-        error: true,
+        'No se encontró el recibo para pagar.',
+        color: danger,
       );
       return;
     }
 
     if (!_puedePagar(recibo)) {
       _mostrarMensaje(
-        'Este recibo ya se encuentra pagado o no está disponible para pago.',
-        error: true,
+        'Este recibo no está pendiente de pago.',
+        color: warning,
       );
       return;
     }
 
-    final codigoDigitado = codigoOperacionController.text.trim();
-
-    if (metodoPago != 'EFECTIVO' && codigoDigitado.isEmpty) {
+    if (metodoPago != 'EFECTIVO' && codigoOperacion.isEmpty) {
       _mostrarMensaje(
-        'Ingrese el código de operación para $metodoPago.',
-        error: true,
+        'Ingresa el código de operación.',
+        color: warning,
       );
       return;
     }
@@ -197,9 +207,9 @@ class _PagoCipPageState extends State<PagoCipPage> {
     });
 
     try {
-      final reciboCliente = await _buscarReciboDelCliente(idRecibo);
+      final reciboValidado = await _buscarReciboDelCliente(idRecibo);
 
-      if (reciboCliente == null) {
+      if (reciboValidado == null) {
         if (!mounted) return;
 
         setState(() {
@@ -207,26 +217,11 @@ class _PagoCipPageState extends State<PagoCipPage> {
         });
 
         _mostrarMensaje(
-          'Este recibo no pertenece al cliente autenticado.',
-          error: true,
+          'Este recibo no pertenece a tus suministros.',
+          color: danger,
         );
         return;
       }
-
-      if (_estado(reciboCliente) == 'PAGADO') {
-        if (!mounted) return;
-
-        setState(() {
-          cargando = false;
-        });
-
-        _mostrarMensaje('Este recibo ya se encuentra pagado.');
-        return;
-      }
-
-      final codigoOperacion = codigoDigitado.isEmpty
-          ? 'APP-${DateTime.now().millisecondsSinceEpoch}'
-          : codigoDigitado;
 
       await pagoService.pagarMiRecibo(
         idRecibo: idRecibo,
@@ -240,7 +235,10 @@ class _PagoCipPageState extends State<PagoCipPage> {
         cargando = false;
       });
 
-      _mostrarMensaje('Pago registrado correctamente.');
+      _mostrarMensaje(
+        'Pago registrado correctamente.',
+        color: success,
+      );
 
       Navigator.pushNamedAndRemoveUntil(
         context,
@@ -255,10 +253,172 @@ class _PagoCipPageState extends State<PagoCipPage> {
       });
 
       _mostrarMensaje(
-        'Error al registrar pago: ${e.toString().replaceFirst('Exception: ', '')}',
-        error: true,
+        e.toString().replaceFirst('Exception: ', ''),
+        color: danger,
       );
     }
+  }
+
+  void _irHome() {
+    Navigator.pushReplacementNamed(context, '/home');
+  }
+
+  void _irRecibos() {
+    Navigator.pushReplacementNamed(context, '/recibos');
+  }
+
+  void _irPerfil() {
+    Navigator.pushReplacementNamed(context, '/perfil');
+  }
+
+  void _irCambiarPassword() {
+    Navigator.pushNamed(context, '/cambiar-password');
+  }
+
+  void _volver() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      _irRecibos();
+    }
+  }
+
+  // Barra inferior cliente:
+  // 0 = Inicio, 1 = Recibos, 2 = Pagar, 3 = Perfil.
+  void _goBottomCliente(int index) {
+    if (index == 0) {
+      _irHome();
+    }
+
+    if (index == 1) {
+      _irRecibos();
+    }
+
+    if (index == 2) return;
+
+    if (index == 3) {
+      _irPerfil();
+    }
+  }
+
+  void _abrirMenuCliente() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
+      isScrollControlled: true,
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.jassSurface,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: context.jassBorder,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 28,
+                          offset: Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.92,
+                      children: [
+                        ClienteMenuTile(
+                          icon: Icons.home_rounded,
+                          label: 'Inicio',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irHome();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Recibos',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irRecibos();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.person_rounded,
+                          label: 'Perfil',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irPerfil();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.lock_reset_rounded,
+                          label: 'Clave',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irCambiarPassword();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.arrow_back_rounded,
+                          label: 'Volver',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _volver();
+                          },
+                        ),
+                        ClienteThemeTile(
+                          onAfterChange: () {
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  borderRadius: BorderRadius.circular(100),
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: JassColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -266,22 +426,28 @@ class _PagoCipPageState extends State<PagoCipPage> {
     final recibo = _getRecibo(context);
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: ClienteBottomNav(
+        currentIndex: 2,
+        onTap: _goBottomCliente,
+        onPlus: _abrirMenuCliente,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(context),
-              const SizedBox(height: 18),
-              _buildResumenPago(recibo),
-              const SizedBox(height: 18),
+              _buildHeader(),
+              SizedBox(height: 18),
+              _buildResumenRecibo(recibo),
+              SizedBox(height: 18),
               _buildMetodoPago(),
-              const SizedBox(height: 18),
-              _buildOperacionInput(),
-              const SizedBox(height: 22),
-              _buildBotonPagar(recibo),
+              SizedBox(height: 18),
+              _buildCodigoOperacion(),
+              SizedBox(height: 22),
+              _buildBotonPagar(),
             ],
           ),
         ),
@@ -289,37 +455,33 @@ class _PagoCipPageState extends State<PagoCipPage> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader() {
     return Row(
       children: [
         Container(
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.jassSurface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: primary.withValues(alpha: 0.08),
+                color: JassColors.primary.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
           child: IconButton(
-            onPressed: cargando
-                ? null
-                : () {
-                    Navigator.pop(context);
-                  },
-            icon: const Icon(
+            onPressed: cargando ? null : _volver,
+            icon: Icon(
               Icons.arrow_back_rounded,
               color: primary,
             ),
           ),
         ),
-        const SizedBox(width: 14),
-        const Expanded(
+        SizedBox(width: 12),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -347,12 +509,13 @@ class _PagoCipPageState extends State<PagoCipPage> {
     );
   }
 
-  Widget _buildResumenPago(Map<String, dynamic> recibo) {
+  Widget _buildResumenRecibo(Map<String, dynamic> recibo) {
     final estado = _estado(recibo);
+    final puedePagar = _puedePagar(recibo);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
@@ -362,94 +525,109 @@ class _PagoCipPageState extends State<PagoCipPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.12),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            color: JassColors.primary.withValues(alpha: 0.14),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Resumen del recibo',
-            style: TextStyle(
-              color: Color(0xFFE7F8FF),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _codigoRecibo(recibo),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Suministro: ${_codigoSuministro(recibo)}',
-            style: const TextStyle(
-              color: Color(0xFFE7F8FF),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            'Periodo: ${_periodo(recibo)}',
-            style: const TextStyle(
-              color: Color(0xFFE7F8FF),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            'Estado: $estado',
-            style: const TextStyle(
-              color: Color(0xFFE7F8FF),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.18),
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.white24,
+                child: Icon(
+                  Icons.payments_rounded,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Total a pagar',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Resumen del pago',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          _ResumenLine(
+            label: 'Recibo',
+            value: _codigoRecibo(recibo),
+          ),
+          _ResumenLine(
+            label: 'Suministro',
+            value: _codigoSuministro(recibo),
+          ),
+          _ResumenLine(
+            label: 'Periodo',
+            value: _periodo(recibo),
+          ),
+          _ResumenLine(
+            label: 'Estado',
+            value: estado,
+          ),
+          SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.15),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Total a pagar',
+                  style: TextStyle(
+                    color: Color(0xFFE7F8FF),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 8),
                 Text(
                   'S/ ${_total(recibo).toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 28,
+                    fontSize: 34,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
             ),
           ),
+          if (!puedePagar) ...[
+            SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3DF),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                'Este recibo no está pendiente de pago.',
+                style: TextStyle(
+                  color: warning,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -460,52 +638,54 @@ class _PagoCipPageState extends State<PagoCipPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        color: context.jassSurface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Método de pago',
+          Text(
+            'Selecciona método de pago',
             style: TextStyle(
               color: primary,
-              fontSize: 17,
+              fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           _MetodoPagoTile(
-            title: 'Efectivo',
-            subtitle: 'Pago registrado como efectivo',
-            icon: Icons.payments_rounded,
-            value: 'EFECTIVO',
-            groupValue: metodoPago,
-            onChanged: (value) {
-              setState(() {
-                metodoPago = value;
-              });
-            },
-          ),
-          _MetodoPagoTile(
-            title: 'Yape / Plin',
-            subtitle: 'Pago con código de operación',
-            icon: Icons.phone_android_rounded,
             value: 'YAPE',
-            groupValue: metodoPago,
+            selectedValue: metodoPago,
+            icon: Icons.phone_android_rounded,
+            title: 'Yape',
+            subtitle: 'Pago por aplicativo móvil',
             onChanged: (value) {
               setState(() {
                 metodoPago = value;
               });
             },
           ),
+          SizedBox(height: 10),
           _MetodoPagoTile(
-            title: 'Transferencia',
-            subtitle: 'Pago mediante operación bancaria',
-            icon: Icons.account_balance_rounded,
+            value: 'PLIN',
+            selectedValue: metodoPago,
+            icon: Icons.mobile_friendly_rounded,
+            title: 'Plin',
+            subtitle: 'Transferencia por aplicativo',
+            onChanged: (value) {
+              setState(() {
+                metodoPago = value;
+              });
+            },
+          ),
+          SizedBox(height: 10),
+          _MetodoPagoTile(
             value: 'TRANSFERENCIA',
-            groupValue: metodoPago,
+            selectedValue: metodoPago,
+            icon: Icons.account_balance_rounded,
+            title: 'Transferencia',
+            subtitle: 'Pago desde banco o agente',
             onChanged: (value) {
               setState(() {
                 metodoPago = value;
@@ -517,61 +697,63 @@ class _PagoCipPageState extends State<PagoCipPage> {
     );
   }
 
-  Widget _buildOperacionInput() {
-    final requiereCodigo = metodoPago != 'EFECTIVO';
-
+  Widget _buildCodigoOperacion() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        color: context.jassSurface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            requiereCodigo
-                ? 'Código de operación obligatorio'
-                : 'Código de operación',
-            style: const TextStyle(
+            'Código de operación',
+            style: TextStyle(
               color: primary,
-              fontSize: 17,
+              fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
-            requiereCodigo
-                ? 'Ingrese el código generado por Yape, Plin o banco.'
-                : 'Si el pago es en efectivo, este campo puede quedar vacío.',
-            style: const TextStyle(
+            'Ingresa el código que aparece en tu comprobante de pago.',
+            style: TextStyle(
               color: muted,
               fontSize: 13,
               fontWeight: FontWeight.w700,
+              height: 1.35,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           TextField(
             controller: codigoOperacionController,
-            enabled: !cargando,
-            textInputAction: TextInputAction.done,
+            textCapitalization: TextCapitalization.characters,
             decoration: InputDecoration(
-              hintText: requiereCodigo ? 'Ej. 842913' : 'APP automático',
+              hintText: 'Ejemplo: 123456789',
+              prefixIcon: Icon(Icons.confirmation_number_rounded),
               filled: true,
-              fillColor: const Color(0xFFF8FBFD),
+              fillColor: context.jassSurfaceAlt,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFD8E6EE)),
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide(
+                  color: context.jassBorder,
+                ),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFFD8E6EE)),
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide(
+                  color: context.jassBorder,
+                ),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: secondary, width: 1.5),
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide(
+                  color: secondary,
+                  width: 1.5,
+                ),
               ),
             ),
           ),
@@ -580,43 +762,35 @@ class _PagoCipPageState extends State<PagoCipPage> {
     );
   }
 
-  Widget _buildBotonPagar(Map<String, dynamic> recibo) {
-    final puedePagar = _puedePagar(recibo);
-
+  Widget _buildBotonPagar() {
     return SizedBox(
       width: double.infinity,
-      height: 54,
+      height: 56,
       child: ElevatedButton.icon(
-        onPressed: cargando || !puedePagar ? null : () => registrarPago(recibo),
+        onPressed: cargando ? null : registrarPago,
         icon: cargando
-            ? const SizedBox(
-                width: 20,
-                height: 20,
+            ? SizedBox(
+                width: 19,
+                height: 19,
                 child: CircularProgressIndicator(
-                  color: Colors.white,
                   strokeWidth: 2.4,
+                  color: Colors.white,
                 ),
               )
-            : const Icon(Icons.check_circle_rounded),
+            : Icon(Icons.check_circle_rounded),
         label: Text(
-          cargando
-              ? 'Registrando pago...'
-              : puedePagar
-                  ? 'Confirmar pago'
-                  : 'Recibo no disponible',
-          style: const TextStyle(
+          cargando ? 'Registrando pago...' : 'Registrar pago',
+          style: TextStyle(
             fontWeight: FontWeight.w900,
-            fontSize: 16,
           ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: secondary,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: secondary.withValues(alpha: 0.55),
           elevation: 0,
-          disabledBackgroundColor: const Color(0xFFB6C7D0),
-          disabledForegroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
       ),
@@ -624,41 +798,81 @@ class _PagoCipPageState extends State<PagoCipPage> {
   }
 }
 
+class _ResumenLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ResumenLine({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 9),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Color(0xFFE7F8FF),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MetodoPagoTile extends StatelessWidget {
+  final String value;
+  final String selectedValue;
+  final IconData icon;
   final String title;
   final String subtitle;
-  final IconData icon;
-  final String value;
-  final String groupValue;
   final ValueChanged<String> onChanged;
 
   const _MetodoPagoTile({
+    required this.value,
+    required this.selectedValue,
+    required this.icon,
     required this.title,
     required this.subtitle,
-    required this.icon,
-    required this.value,
-    required this.groupValue,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final selected = value == groupValue;
+    final selected = value == selectedValue;
 
     return InkWell(
-      onTap: () {
-        onChanged(value);
-      },
+      onTap: () => onChanged(value),
       borderRadius: BorderRadius.circular(18),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFE8F7FB) : const Color(0xFFF8FBFD),
+          color: selected ? context.jassSelectedSurface : context.jassSurfaceAlt,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? const Color(0xFF1DA1C2) : const Color(0xFFE2EDF3),
-            width: selected ? 1.5 : 1,
+            color: selected ? const Color(0xFF1DA1C2) : context.jassBorder,
+            width: selected ? 1.4 : 1,
           ),
         ),
         child: Row(
@@ -668,8 +882,9 @@ class _MetodoPagoTile extends StatelessWidget {
               color: selected
                   ? const Color(0xFF1DA1C2)
                   : const Color(0xFF7B8794),
+              size: 28,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -677,18 +892,16 @@ class _MetodoPagoTile extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      color: selected
-                          ? const Color(0xFF0F3D57)
-                          : const Color(0xFF52616B),
+                      color: context.jassTextPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF7B8794),
+                    style: TextStyle(
+                      color: context.jassTextMuted,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -698,12 +911,11 @@ class _MetodoPagoTile extends StatelessWidget {
             ),
             Radio<String>(
               value: value,
-              groupValue: groupValue,
+              groupValue: selectedValue,
               activeColor: const Color(0xFF1DA1C2),
-              onChanged: (value) {
-                if (value != null) {
-                  onChanged(value);
-                }
+              onChanged: (newValue) {
+                if (newValue == null) return;
+                onChanged(newValue);
               },
             ),
           ],

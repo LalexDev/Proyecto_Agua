@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
 import '../../core/services/cliente_portal_service.dart';
 import '../../core/storage/secure_storage_service.dart';
+import '../../shared/widgets/cliente_bottom_nav.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -10,14 +15,18 @@ class ChangePasswordPage extends StatefulWidget {
 }
 
 class _ChangePasswordPageState extends State<ChangePasswordPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFF4F8FB);
-  static const Color textMuted = Color(0xFF7B8794);
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
+  Color get background => context.jassBackground;
+  Color get muted => context.jassTextMuted;
+  static const Color danger = JassColors.danger;
+  static const Color success = JassColors.success;
+  static const Color warning = JassColors.warning;
 
   final TextEditingController actualController = TextEditingController();
   final TextEditingController nuevaController = TextEditingController();
   final TextEditingController confirmarController = TextEditingController();
+
   final ClientePortalService clientePortalService = ClientePortalService();
   final SecureStorageService storageService = SecureStorageService();
 
@@ -34,122 +43,330 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     super.dispose();
   }
 
-Future<void> cambiarPassword() async {
-  final actual = actualController.text.trim();
-  final nueva = nuevaController.text.trim();
-  final confirmar = confirmarController.text.trim();
+  void mostrarMensaje(
+  String mensaje, {
+  Color? color,
+}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(mensaje),
+      backgroundColor:
+          color ?? Theme.of(context).colorScheme.primary,
+    ),
+  );
+}
 
-  if (actual.isEmpty || nueva.isEmpty || confirmar.isEmpty) {
-    mostrarMensaje(
-      'Completa todos los campos.',
-      esError: true,
-    );
-    return;
+  Future<void> cambiarPassword() async {
+    final actual = actualController.text.trim();
+    final nueva = nuevaController.text.trim();
+    final confirmar = confirmarController.text.trim();
+
+    if (actual.isEmpty || nueva.isEmpty || confirmar.isEmpty) {
+      mostrarMensaje(
+        'Completa todos los campos.',
+        color: warning,
+      );
+      return;
+    }
+
+    if (nueva.length < 6) {
+      mostrarMensaje(
+        'La nueva contraseña debe tener mínimo 6 caracteres.',
+        color: warning,
+      );
+      return;
+    }
+
+    if (nueva != confirmar) {
+      mostrarMensaje(
+        'La nueva contraseña y la confirmación no coinciden.',
+        color: danger,
+      );
+      return;
+    }
+
+    setState(() {
+      cargando = true;
+    });
+
+    try {
+      await clientePortalService.cambiarPassword(
+        passwordActual: actual,
+        nuevaPassword: nueva,
+        confirmarPassword: confirmar,
+      );
+
+      await storageService.clearSession();
+
+      if (!mounted) return;
+
+      setState(() {
+        cargando = false;
+      });
+
+      actualController.clear();
+      nuevaController.clear();
+      confirmarController.clear();
+
+      mostrarMensaje(
+        'Contraseña actualizada correctamente. Inicia sesión nuevamente.',
+        color: success,
+      );
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        cargando = false;
+      });
+
+      mostrarMensaje(
+        e.toString().replaceFirst('Exception: ', ''),
+        color: danger,
+      );
+    }
   }
 
-  if (nueva.length < 6) {
-    mostrarMensaje(
-      'La nueva contraseña debe tener mínimo 6 caracteres.',
-      esError: true,
+  Future<void> cerrarSesion() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Cerrar sesión',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: Text(
+            '¿Deseas cerrar tu sesión actual?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: danger,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Cerrar sesión'),
+            ),
+          ],
+        );
+      },
     );
-    return;
-  }
 
-  if (nueva != confirmar) {
-    mostrarMensaje(
-      'La nueva contraseña y la confirmación no coinciden.',
-      esError: true,
-    );
-    return;
-  }
-
-  setState(() {
-    cargando = true;
-  });
-
-  try {
-    await clientePortalService.cambiarPassword(
-      passwordActual: actual,
-      nuevaPassword: nueva,
-      confirmarPassword: confirmar,
-    );
+    if (confirmar != true) return;
 
     await storageService.clearSession();
 
     if (!mounted) return;
-
-    setState(() {
-      cargando = false;
-    });
-
-    actualController.clear();
-    nuevaController.clear();
-    confirmarController.clear();
-
-    mostrarMensaje(
-      'Contraseña actualizada correctamente. Inicia sesión nuevamente.',
-      esError: false,
-    );
 
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/login',
       (route) => false,
     );
-  } catch (e) {
-    if (!mounted) return;
-
-    setState(() {
-      cargando = false;
-    });
-
-    mostrarMensaje(
-      'Error al cambiar contraseña: ${e.toString().replaceFirst('Exception: ', '')}',
-      esError: true,
-    );
   }
-}
 
-  void mostrarMensaje(String mensaje, {required bool esError}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensaje),
-        backgroundColor: esError
-            ? const Color(0xFFD93025)
-            : const Color(0xFF1F8F4D),
-      ),
+  void _irHome() {
+    Navigator.pushReplacementNamed(context, '/home');
+  }
+
+  void _irRecibos() {
+    Navigator.pushReplacementNamed(context, '/recibos');
+  }
+
+  void _irPerfil() {
+    Navigator.pushReplacementNamed(context, '/perfil');
+  }
+
+  void _irPagar() {
+    Navigator.pushReplacementNamed(context, '/recibos');
+  }
+
+  void _volver() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      _irPerfil();
+    }
+  }
+
+  // Barra inferior cliente:
+  // 0 = Inicio, 1 = Recibos, 2 = Pagar, 3 = Perfil.
+  void _goBottomCliente(int index) {
+    if (index == 0) {
+      _irHome();
+    }
+
+    if (index == 1) {
+      _irRecibos();
+    }
+
+    if (index == 2) {
+      _irPagar();
+    }
+
+    if (index == 3) {
+      _irPerfil();
+    }
+  }
+
+  void _abrirMenuCliente() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
+      isScrollControlled: true,
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.jassSurface,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: context.jassBorder,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 28,
+                          offset: Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.92,
+                      children: [
+                        ClienteMenuTile(
+                          icon: Icons.home_rounded,
+                          label: 'Inicio',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irHome();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.receipt_long_rounded,
+                          label: 'Recibos',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irRecibos();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.payments_rounded,
+                          label: 'Pagar',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irPagar();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.person_rounded,
+                          label: 'Perfil',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irPerfil();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.logout_rounded,
+                          label: 'Salir',
+                          onTap: () {
+                            Navigator.pop(context);
+                            cerrarSesion();
+                          },
+                        ),
+                        ClienteThemeTile(
+                          onAfterChange: () {
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  borderRadius: BorderRadius.circular(100),
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: JassColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
-      appBar: AppBar(
-        title: const Text(
-          'Cambiar contraseña',
-          style: TextStyle(
-            color: primary,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: ClienteBottomNav(
+        currentIndex: 3,
+        onTap: _goBottomCliente,
+        onPlus: _abrirMenuCliente,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              const SizedBox(height: 18),
+              _buildHeaderTop(),
+              SizedBox(height: 18),
+              _buildHero(),
+              SizedBox(height: 18),
               _buildFormCard(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _buildTipsCard(),
             ],
           ),
@@ -158,26 +375,79 @@ Future<void> cambiarPassword() async {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeaderTop() {
+    return Row(
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: context.jassSurface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: JassColors.primary.withValues(alpha: 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: cargando ? null : _volver,
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: primary,
+            ),
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Portal cliente',
+                style: TextStyle(
+                  color: muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Cambiar contraseña',
+                style: TextStyle(
+                  color: primary,
+                  fontSize: 23,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHero() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            primary,
-            Color(0xFF146C94),
-            secondary,
+            Color(0xFF0F3D57),
+            Color(0xFF1DA1C2),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.18),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            color: JassColors.primary.withValues(alpha: 0.14),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -187,17 +457,20 @@ Future<void> cambiarPassword() async {
             width: 62,
             height: 62,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
+              color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.16),
+              ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lock_reset_rounded,
               color: Colors.white,
               size: 36,
             ),
           ),
-          const SizedBox(width: 16),
-          const Expanded(
+          SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -205,17 +478,18 @@ Future<void> cambiarPassword() async {
                   'Seguridad de cuenta',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 25,
+                    fontSize: 24,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Actualiza tu contraseña para mantener protegida tu información.',
+                  'Actualiza tu contraseña para proteger tu información.',
                   style: TextStyle(
                     color: Color(0xFFE7F8FF),
                     fontSize: 14,
                     height: 1.4,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -231,14 +505,14 @@ Future<void> cambiarPassword() async {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
-          color: const Color(0xFFE8EEF3),
+          color: context.jassBorder,
         ),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.05),
+            color: JassColors.primary.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -247,25 +521,25 @@ Future<void> cambiarPassword() async {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Actualizar contraseña',
             style: TextStyle(
               color: primary,
-              fontSize: 22,
+              fontSize: 21,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 6),
-          const Text(
+          SizedBox(height: 6),
+          Text(
             'Ingresa tu contraseña actual y define una nueva clave.',
             style: TextStyle(
-              color: textMuted,
+              color: muted,
               fontSize: 14,
               height: 1.4,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 22),
-
+          SizedBox(height: 22),
           _PasswordField(
             label: 'Contraseña actual',
             hint: 'Ingresa tu contraseña actual',
@@ -277,9 +551,7 @@ Future<void> cambiarPassword() async {
               });
             },
           ),
-
-          const SizedBox(height: 16),
-
+          SizedBox(height: 16),
           _PasswordField(
             label: 'Nueva contraseña',
             hint: 'Mínimo 6 caracteres',
@@ -291,9 +563,7 @@ Future<void> cambiarPassword() async {
               });
             },
           ),
-
-          const SizedBox(height: 16),
-
+          SizedBox(height: 16),
           _PasswordField(
             label: 'Confirmar contraseña',
             hint: 'Repite la nueva contraseña',
@@ -305,16 +575,14 @@ Future<void> cambiarPassword() async {
               });
             },
           ),
-
-          const SizedBox(height: 24),
-
+          SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: 54,
             child: ElevatedButton.icon(
               onPressed: cargando ? null : cambiarPassword,
               icon: cargando
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
@@ -322,10 +590,10 @@ Future<void> cambiarPassword() async {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.save_outlined),
+                  : Icon(Icons.save_rounded),
               label: Text(
                 cargando ? 'Actualizando...' : 'Guardar contraseña',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
                 ),
@@ -333,9 +601,10 @@ Future<void> cambiarPassword() async {
               style: ElevatedButton.styleFrom(
                 backgroundColor: secondary,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: secondary.withValues(alpha: 0.55),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(17),
                 ),
               ),
             ),
@@ -350,19 +619,19 @@ Future<void> cambiarPassword() async {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F7FB),
+        color: context.jassSelectedSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: const Color(0xFFCFEFF7),
         ),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(
-                Icons.security_outlined,
+                Icons.security_rounded,
                 color: secondary,
               ),
               SizedBox(width: 10),
@@ -404,28 +673,28 @@ class _PasswordField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
-    const Color background = Color(0xFFF4F8FB);
+    final Color primary = context.jassTextPrimary;
+    const Color secondary = JassColors.secondary;
+    final Color fieldBackground = context.jassSurfaceAlt;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: primary,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
             fontSize: 14,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: !visible,
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: const Icon(Icons.lock_outline),
+            prefixIcon: Icon(Icons.lock_outline_rounded),
             suffixIcon: IconButton(
               onPressed: onToggle,
               icon: Icon(
@@ -435,14 +704,22 @@ class _PasswordField extends StatelessWidget {
               ),
             ),
             filled: true,
-            fillColor: background,
+            fillColor: fieldBackground,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
+                color: context.jassBorder,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
+                color: context.jassBorder,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
+              borderRadius: BorderRadius.circular(17),
+              borderSide: BorderSide(
                 color: secondary,
                 width: 1.5,
               ),
@@ -463,27 +740,28 @@ class _TipItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color textMuted = Color(0xFF52616B);
+    final Color primary = context.jassTextPrimary;
+    final Color muted = context.jassTextMuted;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.check_circle_outline,
+          Icon(
+            Icons.check_circle_outline_rounded,
             color: primary,
             size: 18,
           ),
-          const SizedBox(width: 9),
+          SizedBox(width: 9),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: textMuted,
+              style: TextStyle(
+                color: muted,
                 fontSize: 14,
                 height: 1.35,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

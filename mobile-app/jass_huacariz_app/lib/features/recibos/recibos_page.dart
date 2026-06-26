@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
+
 import '../../core/services/cliente_portal_service.dart';
 import '../../core/services/recibo_service.dart';
+import '../../shared/widgets/cliente_bottom_nav.dart';
 
 class RecibosPage extends StatefulWidget {
   const RecibosPage({super.key});
@@ -11,10 +15,10 @@ class RecibosPage extends StatefulWidget {
 }
 
 class _RecibosPageState extends State<RecibosPage> {
-  static const Color primary = Color(0xFF0F3D57);
-  static const Color secondary = Color(0xFF1DA1C2);
-  static const Color background = Color(0xFFEFF7FB);
-  static const Color muted = Color(0xFF7B8794);
+  Color get primary => context.jassTextPrimary;
+  static const Color secondary = JassColors.secondary;
+  Color get background => context.jassBackground;
+  Color get muted => context.jassTextMuted;
 
   final ReciboService reciboService = ReciboService();
   final ClientePortalService clientePortalService = ClientePortalService();
@@ -135,6 +139,14 @@ class _RecibosPageState extends State<RecibosPage> {
     }).toList();
   }
 
+  Map<String, dynamic>? get reciboPendiente {
+    try {
+      return recibos.firstWhere((recibo) => _puedePagar(recibo));
+    } catch (_) {
+      return null;
+    }
+  }
+
   int get totalRecibos => recibos.length;
 
   int get pendientes {
@@ -168,6 +180,7 @@ class _RecibosPageState extends State<RecibosPage> {
     final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
 
     if (value is int) return value;
+    if (value is num) return value.toInt();
 
     return int.tryParse(value.toString()) ?? 0;
   }
@@ -279,39 +292,216 @@ class _RecibosPageState extends State<RecibosPage> {
     );
   }
 
+  void _irHome() {
+    Navigator.pushReplacementNamed(context, '/home');
+  }
+
+  void _irPerfil() {
+    Navigator.pushReplacementNamed(context, '/perfil');
+  }
+
+  void _irCambiarPassword() {
+    Navigator.pushNamed(context, '/cambiar-password');
+  }
+
+  void _volver() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      _irHome();
+    }
+  }
+
+  void _pagarPendiente() {
+    final recibo = reciboPendiente;
+
+    if (recibo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No tienes recibos pendientes para pagar.'),
+          backgroundColor: Color(0xFF1F8F4D),
+        ),
+      );
+      return;
+    }
+
+    _pagar(recibo);
+  }
+
+  // Barra inferior cliente:
+  // 0 = Inicio, 1 = Recibos, 2 = Pagar, 3 = Perfil.
+  void _goBottomCliente(int index) {
+    if (index == 0) {
+      _irHome();
+    }
+
+    if (index == 1) return;
+
+    if (index == 2) {
+      _pagarPendiente();
+    }
+
+    if (index == 3) {
+      _irPerfil();
+    }
+  }
+
+  // Menú blanco del botón "+".
+  void _abrirMenuCliente() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.28),
+      isScrollControlled: true,
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: context.jassSurface,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: context.jassBorder,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 28,
+                          offset: Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 3,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.92,
+                      children: [
+                        ClienteMenuTile(
+                          icon: Icons.home_rounded,
+                          label: 'Inicio',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irHome();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.payments_rounded,
+                          label: 'Pagar',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _pagarPendiente();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.person_rounded,
+                          label: 'Perfil',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irPerfil();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.lock_reset_rounded,
+                          label: 'Clave',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _irCambiarPassword();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.refresh_rounded,
+                          label: 'Actualizar',
+                          onTap: () {
+                            Navigator.pop(context);
+                            cargarRecibos();
+                          },
+                        ),
+                        ClienteMenuTile(
+                          icon: Icons.arrow_back_rounded,
+                          label: 'Volver',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _volver();
+                          },
+                        ),
+                        ClienteThemeTile(
+                          onAfterChange: () {
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  borderRadius: BorderRadius.circular(100),
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: JassColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
-      bottomNavigationBar: _ClienteBottomNav(
+      backgroundColor: context.jassBackground,
+      extendBody: true,
+      bottomNavigationBar: ClienteBottomNav(
         currentIndex: 1,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-
-          if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/perfil');
-          }
-        },
+        onTap: _goBottomCliente,
+        onPlus: _abrirMenuCliente,
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: cargarRecibos,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+            padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _buildHero(),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _buildStats(),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _buildFilters(),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 if (cargando) _buildLoading(),
                 if (error.isNotEmpty && !cargando) _buildError(),
                 if (!cargando && error.isEmpty) _buildRecibosList(),
@@ -326,7 +516,30 @@ class _RecibosPageState extends State<RecibosPage> {
   Widget _buildHeader() {
     return Row(
       children: [
-        const Expanded(
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: context.jassSurface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: JassColors.primary.withValues(alpha: 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: _volver,
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: primary,
+            ),
+          ),
+        ),
+        SizedBox(width: 12),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -354,11 +567,11 @@ class _RecibosPageState extends State<RecibosPage> {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.jassSurface,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: primary.withValues(alpha: 0.08),
+                color: JassColors.primary.withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -366,7 +579,7 @@ class _RecibosPageState extends State<RecibosPage> {
           ),
           child: IconButton(
             onPressed: cargarRecibos,
-            icon: const Icon(
+            icon: Icon(
               Icons.refresh_rounded,
               color: primary,
             ),
@@ -393,7 +606,7 @@ class _RecibosPageState extends State<RecibosPage> {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 28,
             backgroundColor: Colors.white24,
             child: Icon(
@@ -402,12 +615,12 @@ class _RecibosPageState extends State<RecibosPage> {
               size: 30,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Consulta tus recibos',
                   style: TextStyle(
                     color: Colors.white,
@@ -415,10 +628,10 @@ class _RecibosPageState extends State<RecibosPage> {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: 5),
                 Text(
                   'Suministros asociados: ${suministros.length}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFFE7F8FF),
                     fontWeight: FontWeight.w700,
                   ),
@@ -487,8 +700,8 @@ class _RecibosPageState extends State<RecibosPage> {
             child: ChoiceChip(
               selected: selected,
               selectedColor: secondary,
-              backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFFE2EDF3)),
+              backgroundColor: context.jassSurface,
+              side: BorderSide(color: context.jassBorder),
               label: Text(
                 item['label']!,
                 style: TextStyle(
@@ -513,10 +726,10 @@ class _RecibosPageState extends State<RecibosPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: const Column(
+      child: Column(
         children: [
           CircularProgressIndicator(),
           SizedBox(height: 14),
@@ -543,28 +756,28 @@ class _RecibosPageState extends State<RecibosPage> {
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
             color: Color(0xFFD93025),
             size: 40,
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFFD93025),
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           ElevatedButton(
             onPressed: cargarRecibos,
             style: ElevatedButton.styleFrom(
               backgroundColor: secondary,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Reintentar'),
+            child: Text('Reintentar'),
           ),
         ],
       ),
@@ -577,10 +790,10 @@ class _RecibosPageState extends State<RecibosPage> {
         width: double.infinity,
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.jassSurface,
           borderRadius: BorderRadius.circular(26),
         ),
-        child: const Column(
+        child: Column(
           children: [
             Icon(
               Icons.receipt_long_outlined,
@@ -605,7 +818,7 @@ class _RecibosPageState extends State<RecibosPage> {
       itemCount: recibosFiltrados.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      separatorBuilder: (_, _) => const SizedBox(height: 14),
+      separatorBuilder: (_, _) => SizedBox(height: 14),
       itemBuilder: (context, index) {
         final recibo = recibosFiltrados[index];
 
@@ -642,15 +855,15 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -661,16 +874,16 @@ class _StatCard extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: primary,
               fontSize: 22,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 3),
+          SizedBox(height: 3),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 12,
               fontWeight: FontWeight.w800,
@@ -711,20 +924,20 @@ class _ReciboCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color secondary = Color(0xFF1DA1C2);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    const Color secondary = JassColors.secondary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.jassSurface,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        border: Border.all(color: context.jassBorder),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.06),
+            color: JassColors.primary.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -737,7 +950,7 @@ class _ReciboCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   codigoRecibo,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: primary,
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
@@ -747,11 +960,11 @@ class _ReciboCard extends StatelessWidget {
               _EstadoBadge(estado: estado),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           _InfoLine(icon: Icons.water_drop_rounded, text: codigoSuministro),
           _InfoLine(icon: Icons.place_rounded, text: direccion),
           _InfoLine(icon: Icons.calendar_month_rounded, text: periodo),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -760,7 +973,7 @@ class _ReciboCard extends StatelessWidget {
                   value: '${consumo.toStringAsFixed(2)} m³',
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: _MiniBox(
                   label: 'Total',
@@ -769,26 +982,26 @@ class _ReciboCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _InfoLine(
             icon: Icons.event_busy_rounded,
             text: 'Vence: $vencimiento',
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onVerDetalle,
-                  icon: const Icon(Icons.visibility_outlined, size: 18),
-                  label: const Text(
+                  icon: Icon(Icons.visibility_outlined, size: 18),
+                  label: Text(
                     'Ver recibo',
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primary,
-                    backgroundColor: const Color(0xFFF0FAFD),
-                    side: const BorderSide(color: Color(0xFFE2EDF3)),
+                    backgroundColor: context.jassSelectedSurface,
+                    side: BorderSide(color: context.jassBorder),
                     minimumSize: const Size(0, 46),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -797,12 +1010,12 @@ class _ReciboCard extends StatelessWidget {
                 ),
               ),
               if (puedePagar) ...[
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: onPagar,
-                    icon: const Icon(Icons.payment_rounded, size: 18),
-                    label: const Text(
+                    icon: Icon(Icons.payment_rounded, size: 18),
+                    label: Text(
                       'Pagar',
                       style: TextStyle(fontWeight: FontWeight.w900),
                     ),
@@ -837,20 +1050,20 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color muted = Color(0xFF7B8794);
+    final Color muted = context.jassTextMuted;
 
     return Padding(
       padding: const EdgeInsets.only(top: 5),
       child: Row(
         children: [
           Icon(icon, size: 17, color: muted),
-          const SizedBox(width: 7),
+          SizedBox(width: 7),
           Expanded(
             child: Text(
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: muted,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -874,31 +1087,31 @@ class _MiniBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFF0F3D57);
-    const Color muted = Color(0xFF7B8794);
+    final Color primary = context.jassTextPrimary;
+    final Color muted = context.jassTextMuted;
 
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFD),
+        color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EDF3)),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 5),
+          SizedBox(height: 5),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: primary,
               fontSize: 15,
               fontWeight: FontWeight.w900,
@@ -949,43 +1162,6 @@ class _EstadoBadge extends StatelessWidget {
           fontWeight: FontWeight.w900,
         ),
       ),
-    );
-  }
-}
-
-class _ClienteBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
-  const _ClienteBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: onTap,
-      height: 76,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
-          label: 'Inicio',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long_rounded),
-          label: 'Recibos',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person_rounded),
-          label: 'Perfil',
-        ),
-      ],
     );
   }
 }

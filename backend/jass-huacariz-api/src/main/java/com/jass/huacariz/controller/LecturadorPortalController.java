@@ -5,6 +5,7 @@ import com.jass.huacariz.service.LecturadorPortalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/lecturador")
@@ -19,4 +20,13 @@ public class LecturadorPortalController {
     ) {
         return ResponseEntity.ok(lecturadorPortalService.buscarSuministroPorCodigo(codigoSuministro));
     }
+    @GetMapping("/suministros/offline")
+public ResponseEntity<List<SuministroLecturadorResponse>>
+listarSuministrosOffline() {
+
+    return ResponseEntity.ok(
+            lecturadorPortalService
+                    .listarSuministrosOffline()
+    );
+}
 }

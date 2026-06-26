@@ -1,13 +1,13 @@
-# Sistema Web JASS Huacariz
+# Sistema Web AGUA POTABLE HUACARIZ SAN ANTONIO
 
-Sistema web para la gestión del servicio de agua potable de la JASS Huacariz.  
+Sistema web para la gestión del servicio de agua potable de AGUA POTABLE HUACARIZ SAN ANTONIO.  
 Permite administrar clientes, suministros, lecturas, recibos, pagos, tarifas, reportes y generación de códigos QR para identificación de suministros.
 
 ---
 
 ## 1. Descripción del proyecto
 
-El sistema JASS Huacariz permite digitalizar y automatizar los procesos principales de una organización administradora de agua potable, reduciendo el trabajo manual y mejorando el control de clientes, consumos y pagos.
+El sistema AGUA POTABLE HUACARIZ SAN ANTONIO permite digitalizar y automatizar los procesos principales de una organización administradora de agua potable, reduciendo el trabajo manual y mejorando el control de clientes, consumos y pagos.
 
 El sistema cuenta con acceso por roles:
 
