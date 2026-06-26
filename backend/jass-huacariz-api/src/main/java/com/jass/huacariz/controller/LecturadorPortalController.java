@@ -13,13 +13,6 @@ import java.util.List;
 public class LecturadorPortalController {
 
     private final LecturadorPortalService lecturadorPortalService;
-
-    @GetMapping("/suministros/{codigoSuministro}")
-    public ResponseEntity<SuministroLecturadorResponse> buscarSuministro(
-            @PathVariable String codigoSuministro
-    ) {
-        return ResponseEntity.ok(lecturadorPortalService.buscarSuministroPorCodigo(codigoSuministro));
-    }
     @GetMapping("/suministros/offline")
 public ResponseEntity<List<SuministroLecturadorResponse>>
 listarSuministrosOffline() {
@@ -27,6 +20,19 @@ listarSuministrosOffline() {
     return ResponseEntity.ok(
             lecturadorPortalService
                     .listarSuministrosOffline()
+    );
+}
+
+@GetMapping("/suministros/{codigoSuministro}")
+public ResponseEntity<SuministroLecturadorResponse>
+buscarSuministro(
+        @PathVariable String codigoSuministro
+) {
+    return ResponseEntity.ok(
+            lecturadorPortalService
+                    .buscarSuministroPorCodigo(
+                            codigoSuministro
+                    )
     );
 }
 }

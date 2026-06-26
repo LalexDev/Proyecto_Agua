@@ -25,6 +25,20 @@ class _LoginPageState extends State<LoginPage> {
 
   bool mostrarPassword = false;
   bool cargando = false;
+  bool ingresandoOffline = false;
+  bool verificandoSesionOffline = true;
+  bool puedeIngresarOffline = false;
+
+  String usuarioOffline = '';
+  DateTime? ultimoLoginOnline;
+
+  bool get procesando => cargando || ingresandoOffline;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarSesionOffline();
+  }
 
   @override
   void dispose() {
@@ -33,14 +47,54 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _cargarSesionOffline() async {
+    final disponible =
+        await authService.puedeIngresarOfflineComoLecturador();
+    final usuario = await storageService.getUserName() ?? '';
+    final fecha = await storageService.getLastOnlineLogin();
+
+    if (!mounted) return;
+
+    setState(() {
+      puedeIngresarOffline = disponible;
+      usuarioOffline = usuario;
+      ultimoLoginOnline = fecha;
+      verificandoSesionOffline = false;
+    });
+
+    if (disponible && usuarioController.text.trim().isEmpty) {
+      usuarioController.text = usuario;
+    }
+  }
+
+  String _rutaPorRol(String? role) {
+    final rol = role?.toUpperCase().trim() ?? '';
+
+    if (rol.contains('ADMIN')) {
+      return '/admin-dashboard';
+    }
+
+    if (rol.contains('LECTURADOR') ||
+        rol.contains('LECTOR')) {
+      return '/lector-home';
+    }
+
+    return '/home';
+  }
+
   Future<void> iniciarSesion() async {
     final usuario = usuarioController.text.trim();
-    final password = passwordController.text.trim();
+    final password = passwordController.text;
 
-    if (usuario.isEmpty || password.isEmpty) {
-      _mostrarMensaje('Ingresa usuario y contraseña.', esError: true);
+    if (usuario.isEmpty || password.trim().isEmpty) {
+      _mostrarMensaje(
+        'Ingresa usuario y contraseña.',
+        esError: true,
+      );
       return;
     }
+
+    if (procesando) return;
 
     setState(() {
       cargando = true;
@@ -53,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       final role = await storageService.getUserRole();
-      final rol = role?.toUpperCase().trim() ?? '';
+      final ruta = _rutaPorRol(role);
 
       if (!mounted) return;
 
@@ -61,17 +115,7 @@ class _LoginPageState extends State<LoginPage> {
         cargando = false;
       });
 
-      if (rol.contains('ADMIN')) {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
-        return;
-      }
-
-      if (rol.contains('LECTURADOR') || rol.contains('LECTOR')) {
-        Navigator.pushReplacementNamed(context, '/lector-home');
-        return;
-      }
-
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, ruta);
     } catch (e) {
       if (!mounted) return;
 
@@ -79,11 +123,70 @@ class _LoginPageState extends State<LoginPage> {
         cargando = false;
       });
 
+      final detalle = e
+          .toString()
+          .replaceFirst('Exception: ', '');
+
       _mostrarMensaje(
-        'Error al iniciar sesión: ${e.toString().replaceFirst('Exception: ', '')}',
+        puedeIngresarOffline
+            ? 'No se pudo iniciar en línea: $detalle '
+                'Puedes usar el modo sin conexión '
+                'guardado para el lecturador.'
+            : 'Error al iniciar sesión: $detalle',
         esError: true,
       );
     }
+  }
+
+  Future<void> iniciarSesionOffline() async {
+    if (procesando) return;
+
+    setState(() {
+      ingresandoOffline = true;
+    });
+
+    try {
+      await authService.loginOfflineLector(
+        codigoUsuario: usuarioController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        ingresandoOffline = false;
+      });
+
+      _mostrarMensaje(
+        'Modo sin conexión activado. Las lecturas se '
+        'guardarán en este dispositivo.',
+        esError: false,
+      );
+
+      Navigator.pushReplacementNamed(
+        context,
+        '/lector-home',
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        ingresandoOffline = false;
+      });
+
+      _mostrarMensaje(
+        e.toString().replaceFirst('Exception: ', ''),
+        esError: true,
+      );
+    }
+  }
+
+  String _formatearFecha(DateTime? fecha) {
+    if (fecha == null) return 'No disponible';
+
+    String dos(int value) => value.toString().padLeft(2, '0');
+
+    return '${dos(fecha.day)}/${dos(fecha.month)}/${fecha.year} '
+        '${dos(fecha.hour)}:${dos(fecha.minute)}';
   }
 
   void _mostrarMensaje(String mensaje, {required bool esError}) {
@@ -338,7 +441,7 @@ class _LoginPageState extends State<LoginPage> {
           SizedBox(height: 8),
           TextField(
             controller: usuarioController,
-            enabled: !cargando,
+            enabled: !procesando,
             decoration: _inputDecoration(
               hint: 'Ej. 12345678',
               icon: Icons.person_outline,
@@ -350,16 +453,16 @@ class _LoginPageState extends State<LoginPage> {
           SizedBox(height: 8),
           TextField(
             controller: passwordController,
-            enabled: !cargando,
+            enabled: !procesando,
             obscureText: !mostrarPassword,
             onSubmitted: (_) {
-              if (!cargando) iniciarSesion();
+              if (!procesando) iniciarSesion();
             },
             decoration: _inputDecoration(
               hint: 'Ingresa tu contraseña',
               icon: Icons.lock_outline,
               suffix: IconButton(
-                onPressed: cargando
+                onPressed: procesando
                     ? null
                     : () {
                         setState(() {
@@ -381,7 +484,7 @@ class _LoginPageState extends State<LoginPage> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: cargando ? null : iniciarSesion,
+              onPressed: procesando ? null : iniciarSesion,
               icon: cargando
                   ? SizedBox(
                       width: 18,
@@ -408,6 +511,112 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+
+          if (verificandoSesionOffline) ...[
+            SizedBox(height: 14),
+            LinearProgressIndicator(
+              minHeight: 3,
+              color: secondary,
+              backgroundColor: context.jassBorder,
+            ),
+          ],
+
+          if (!verificandoSesionOffline &&
+              puedeIngresarOffline) ...[
+            SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: context.jassSelectedSurface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: secondary.withValues(alpha: 0.28),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.cloud_off_rounded,
+                        color: secondary,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Sesión offline disponible',
+                          style: TextStyle(
+                            color: primary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 7),
+                  Text(
+                    'Lecturador: $usuarioOffline\n'
+                    'Último acceso en línea: '
+                    '${_formatearFecha(ultimoLoginOnline)}',
+                    style: TextStyle(
+                      color: context.jassTextMuted,
+                      fontSize: 12,
+                      height: 1.4,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: procesando
+                          ? null
+                          : iniciarSesionOffline,
+                      icon: ingresandoOffline
+                          ? SizedBox(
+                              width: 17,
+                              height: 17,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: secondary,
+                              ),
+                            )
+                          : Icon(Icons.offline_bolt_rounded),
+                      label: Text(
+                        ingresandoOffline
+                            ? 'Ingresando...'
+                            : 'Trabajar sin conexión',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: secondary,
+                        side: BorderSide(color: secondary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Disponible únicamente para el lecturador '
+                    'que inició sesión anteriormente en este celular.',
+                    style: TextStyle(
+                      color: context.jassTextMuted,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           SizedBox(height: 18),
           Text(

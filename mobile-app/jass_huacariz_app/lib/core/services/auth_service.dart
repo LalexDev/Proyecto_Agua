@@ -4,32 +4,88 @@ import 'api_service.dart';
 
 class AuthService {
   final ApiService _apiService = ApiService();
-  final SecureStorageService _storage = SecureStorageService();
+  final SecureStorageService _storage =
+      SecureStorageService();
+
+  Map<String, dynamic> _asMap(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      return response;
+    }
+
+    if (response is Map) {
+      return Map<String, dynamic>.from(response);
+    }
+
+    return {};
+  }
 
   Future<bool> login({
     required String codigoUsuario,
     required String password,
   }) async {
-    final response = await _apiService.post(
-      ApiConfig.login,
-      {
-        'codigoUsuario': codigoUsuario,
-        'password': password,
-      },
-      withAuth: false,
+    final response = _asMap(
+      await _apiService.post(
+        ApiConfig.login,
+        {
+          'codigoUsuario': codigoUsuario.trim(),
+          'password': password,
+        },
+        withAuth: false,
+      ),
     );
 
-    final token = response['token']?.toString() ?? '';
-    final rol = response['rol']?.toString() ?? '';
-    final usuario = response['codigoUsuario']?.toString() ?? codigoUsuario;
+    final token = response['token']?.toString().trim() ?? '';
+    final rol = response['rol']?.toString().trim() ?? '';
+    final usuario = response['codigoUsuario']
+            ?.toString()
+            .trim() ??
+        codigoUsuario.trim();
 
     if (token.isEmpty) {
       throw Exception('El backend no devolvió token.');
     }
 
-    await _storage.saveToken(token);
-    await _storage.saveUserRole(rol);
-    await _storage.saveUserName(usuario);
+    if (rol.isEmpty) {
+      throw Exception('El backend no devolvió el rol del usuario.');
+    }
+
+    await _storage.saveAuthenticatedSession(
+      token: token,
+      rol: rol,
+      codigoUsuario: usuario,
+    );
+
+    return true;
+  }
+
+  Future<bool> loginOfflineLector({
+    String? codigoUsuario,
+  }) async {
+    final disponible =
+        await _storage.canUseOfflineLectorSession();
+
+    if (!disponible) {
+      throw Exception(
+        'No existe una sesión anterior de lecturador '
+        'para ingresar sin conexión.',
+      );
+    }
+
+    final usuarioGuardado =
+        (await _storage.getUserName() ?? '').trim();
+    final usuarioIngresado =
+        (codigoUsuario ?? '').trim();
+
+    if (usuarioIngresado.isNotEmpty &&
+        usuarioGuardado.toUpperCase() !=
+            usuarioIngresado.toUpperCase()) {
+      throw Exception(
+        'El usuario ingresado no coincide con el '
+        'lecturador guardado en este dispositivo.',
+      );
+    }
+
+    await _storage.activateOfflineMode();
 
     return true;
   }
@@ -39,14 +95,22 @@ class AuthService {
   }
 
   Future<String?> getRol() async {
-    return await _storage.getUserRole();
+    return _storage.getUserRole();
   }
 
   Future<String?> getCodigoUsuario() async {
-    return await _storage.getUserName();
+    return _storage.getUserName();
   }
 
   Future<bool> estaAutenticado() async {
-    return await _storage.hasSession();
+    return _storage.hasSession();
+  }
+
+  Future<bool> puedeIngresarOfflineComoLecturador() async {
+    return _storage.canUseOfflineLectorSession();
+  }
+
+  Future<bool> estaEnModoOffline() async {
+    return _storage.isOfflineMode();
   }
 }

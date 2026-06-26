@@ -97,7 +97,8 @@ static const String configuracionCobranza =
   static String buscarSuministroLecturador(String codigoSuministro) {
     return '/lecturador/suministros/$codigoSuministro';
   }
-
+static const String suministrosOfflineLecturador =
+    '/lecturador/suministros/offline';
   static const String registrarLectura = '/lecturas';
 
   // ADMIN HISTORIAL LECTURAS

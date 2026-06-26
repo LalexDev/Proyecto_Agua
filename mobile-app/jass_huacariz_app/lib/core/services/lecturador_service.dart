@@ -41,7 +41,7 @@ class LecturadorService {
   Future<Map<String, dynamic>> buscarSuministro(
     String codigoSuministro,
   ) async {
-    final codigo = codigoSuministro.trim();
+    final codigo = codigoSuministro.trim().toUpperCase();
 
     final response = await _api.get(
       ApiConfig.buscarSuministroLecturador(codigo),
@@ -62,19 +62,34 @@ class LecturadorService {
     return buscarSuministro(codigoSuministro);
   }
 
+  Future<List<Map<String, dynamic>>>
+      listarSuministrosOffline() async {
+    final response = await _api.get(
+      ApiConfig.suministrosOfflineLecturador,
+    );
+
+    return _asList(response);
+  }
+
   Future<Map<String, dynamic>> registrarLectura({
     required String codigoSuministro,
     required double lecturaActual,
     required int anio,
     required int mes,
     String? observacion,
+    String? idOperacionCliente,
   }) async {
     final payload = {
-      'codigoSuministro': codigoSuministro.trim(),
+      'codigoSuministro':
+          codigoSuministro.trim().toUpperCase(),
       'lecturaActual': lecturaActual,
       'anio': anio,
       'mes': mes,
       'observacion': observacion?.trim() ?? '',
+      if (idOperacionCliente != null &&
+          idOperacionCliente.trim().isNotEmpty)
+        'idOperacionCliente':
+            idOperacionCliente.trim(),
     };
 
     final response = await _api.post(
@@ -91,11 +106,23 @@ class LecturadorService {
     final fechaActual = DateTime.now();
 
     final payload = {
-      'codigoSuministro': (data['codigoSuministro'] ?? '').toString().trim(),
+      'codigoSuministro':
+          (data['codigoSuministro'] ?? '')
+              .toString()
+              .trim()
+              .toUpperCase(),
       'lecturaActual': data['lecturaActual'],
       'anio': data['anio'] ?? fechaActual.year,
       'mes': data['mes'] ?? fechaActual.month,
-      'observacion': (data['observacion'] ?? '').toString().trim(),
+      'observacion':
+          (data['observacion'] ?? '')
+              .toString()
+              .trim(),
+      if (data['idOperacionCliente'] != null)
+        'idOperacionCliente':
+            data['idOperacionCliente']
+                .toString()
+                .trim(),
     };
 
     final response = await _api.post(
@@ -107,6 +134,6 @@ class LecturadorService {
   }
 
   Future<List<Map<String, dynamic>>> listarHistorialLocal() async {
-    return _asList([]);
+    return [];
   }
 }
