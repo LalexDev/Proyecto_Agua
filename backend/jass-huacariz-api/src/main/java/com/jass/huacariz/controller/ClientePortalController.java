@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -57,12 +58,30 @@ public class ClientePortalController {
                 .body(pdf);
     }
 
-    @PatchMapping("/me/recibos/{id}/pagar")
+    @PatchMapping(
+            value = "/me/recibos/{id}/pagar",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<PagoResponse> pagarMiRecibo(
+
             @PathVariable Integer id,
-            @RequestBody PagoRequest request
+
+            @RequestParam String metodoPago,
+
+            @RequestParam String codigoOperacion,
+
+            @RequestParam MultipartFile comprobante
+
     ) {
-        return ResponseEntity.ok(clientePortalService.pagarMiRecibo(id, request));
+
+        return ResponseEntity.ok(
+                clientePortalService.pagarMiRecibo(
+                        id,
+                        metodoPago,
+                        codigoOperacion,
+                        comprobante
+                )
+        );
     }
 
     @PatchMapping("/me/password")

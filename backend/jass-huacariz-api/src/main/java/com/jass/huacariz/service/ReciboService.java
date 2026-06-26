@@ -12,9 +12,12 @@ import com.jass.huacariz.repository.SuministroRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.jass.huacariz.entity.ConfiguracionCobranza;
+import com.jass.huacariz.repository.ConfiguracionCobranzaRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -25,17 +28,22 @@ public class ReciboService {
     private final ReciboRepository reciboRepository;
     private final SuministroRepository suministroRepository;
     private final PagoRepository pagoRepository;
+    private final ConfiguracionCobranzaRepository configuracionCobranzaRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ReciboResponse> listarRecibos() {
+        actualizarVencidosConMora();
+
         return reciboRepository.findAll()
                 .stream()
                 .map(this::convertirAResponse)
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ReciboResponse> listarRecibosPendientes() {
+        actualizarVencidosConMora();
+
         return reciboRepository.findByEstadoRecibo("PENDIENTE")
                 .stream()
                 .map(this::convertirAResponse)
@@ -95,6 +103,38 @@ public class ReciboService {
                 .fechaPago(pago.getFechaPago())
                 .build();
     }
+    private void actualizarVencidosConMora() {
+        ConfiguracionCobranza config = configuracionCobranzaRepository
+                .findTopByOrderByIdDesc()
+                .orElse(null);
+
+        BigDecimal moraBase = config != null && config.getMoraBase() != null
+                ? config.getMoraBase()
+                : BigDecimal.ZERO;
+
+        List<Recibo> vencidos = reciboRepository.findByEstadoRecibo("PENDIENTE")
+                .stream()
+                .filter(recibo -> recibo.getFechaVencimiento() != null)
+                .filter(recibo -> recibo.getFechaVencimiento().isBefore(LocalDate.now()))
+                .toList();
+
+        for (Recibo recibo : vencidos) {
+            BigDecimal mora = valorSeguro(moraBase);
+
+            BigDecimal totalConMora = valorSeguro(recibo.getSubtotalAgua())
+                    .add(valorSeguro(recibo.getCargoMantenimiento()))
+                    .add(valorSeguro(recibo.getCargoLector()))
+                    .add(valorSeguro(recibo.getCargoOtros()))
+                    .add(mora)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            recibo.setEstadoRecibo("VENCIDO");
+            recibo.setMora(mora);
+            recibo.setTotal(totalConMora);
+        }
+
+        reciboRepository.saveAll(vencidos);
+    }
 
     private ReciboResponse convertirAResponse(Recibo recibo) {
         Suministro suministro = recibo.getSuministro();
@@ -108,6 +148,7 @@ public class ReciboService {
                 .sector(obtenerSector(suministro))
                 .nombreCliente(obtenerNombreCliente(suministro))
                 .dniCliente(obtenerDniCliente(suministro))
+                .telefonoCliente(obtenerTelefonoCliente(suministro))
                 .anio(recibo.getAnio())
                 .mes(recibo.getMes())
                 .consumoM3(recibo.getConsumoM3())
@@ -123,6 +164,18 @@ public class ReciboService {
                 .codigoBarras(generarCodigoBarras(recibo))
                 .build();
     }
+
+
+    private String obtenerTelefonoCliente(Suministro suministro) {
+        if (suministro == null || suministro.getCliente() == null) {
+            return "";
+        }
+
+        return suministro.getCliente().getTelefono() != null
+                ? suministro.getCliente().getTelefono()
+                : "";
+    }
+
 
     private String obtenerNombreCliente(Suministro suministro) {
         if (suministro == null || suministro.getCliente() == null) {

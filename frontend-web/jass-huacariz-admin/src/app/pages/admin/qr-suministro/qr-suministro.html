@@ -8,12 +8,24 @@
 
     <div class="page-header__actions">
       <button type="button" class="btn-secondary" (click)="limpiar()">
+         <svg viewBox="0 0 24 24">
+        <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+        <path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17z"/>
+      </svg>
+
         Limpiar
       </button>
 
       <button type="button" class="btn-primary" (click)="generarQr()">
-        Generar QR
-      </button>
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="3" width="6" height="6"/>
+        <rect x="15" y="3" width="6" height="6"/>
+        <rect x="3" y="15" width="6" height="6"/>
+        <path d="M15 15h6v6"/>
+      </svg>
+
+      Generar QR
+    </button>
     </div>
   </section>
 
@@ -27,7 +39,15 @@
 
   <section class="stats-grid">
     <article class="stat-card featured">
-      <div class="stat-card__icon">▦</div>
+      <div class="stat-card__icon qr">
+        <svg viewBox="0 0 24 24">
+          <rect x="3" y="3" width="6" height="6"/>
+          <rect x="15" y="3" width="6" height="6"/>
+          <rect x="3" y="15" width="6" height="6"/>
+          <path d="M15 15h3v3h-3z"/>
+          <path d="M18 18h3v3h-3z"/>
+        </svg>
+      </div>
       <div class="stat-card__content">
         <span>Generador QR</span>
         <strong>{{ qrDataUrl ? 'Listo' : 'Pendiente' }}</strong>
@@ -36,7 +56,11 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon water">💧</div>
+            <div class="stat-card__icon water">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11z"/>
+        </svg>
+      </div>
       <div class="stat-card__content">
         <span>Código suministro</span>
         <strong class="small-text">{{ codigoSuministro || '-' }}</strong>
@@ -45,7 +69,12 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon user">👤</div>
+      <div class="stat-card__icon user">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/>
+        </svg>
+      </div>
       <div class="stat-card__content">
         <span>Cliente</span>
         <strong class="small-text">{{ nombreCliente || '-' }}</strong>
@@ -54,7 +83,12 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon home">🏠</div>
+      <div class="stat-card__icon home">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 10L12 3l9 7"/>
+          <path d="M5 10v10h14V10"/>
+        </svg>
+      </div>
       <div class="stat-card__content">
         <span>Alias</span>
         <strong class="small-text">{{ aliasSuministro || '-' }}</strong>
@@ -74,19 +108,35 @@
 
       <div class="qr-steps">
         <div>
-          <span>1</span>
+          <span>
+            <svg viewBox="0 0 24 24">
+              <path d="M5 12h14"/>
+              <path d="M12 5v14"/>
+            </svg>
+          </span>
           <strong>Ingresa el código</strong>
           <small>Usa el código real del suministro registrado.</small>
         </div>
 
         <div>
-          <span>2</span>
+          <span>
+            <svg viewBox="0 0 24 24">
+              <rect x="4" y="4" width="6" height="6"/>
+              <rect x="14" y="4" width="6" height="6"/>
+              <rect x="4" y="14" width="6" height="6"/>
+            </svg>
+          </span>
           <strong>Genera el QR</strong>
           <small>El sistema crea la imagen lista para descargar.</small>
         </div>
 
         <div>
-          <span>3</span>
+          <span>
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3v18"/>
+              <path d="M5 12h14"/>
+            </svg>
+          </span>
           <strong>Imprime y pega</strong>
           <small>Colócalo cerca del medidor o punto de agua.</small>
         </div>
@@ -171,40 +221,83 @@
 
       <div class="actions">
         <button type="button" class="btn-secondary" (click)="copiarCodigo()">
-          Copiar código
+          <svg viewBox="0 0 24 24">
+          <rect x="9" y="9" width="11" height="11"/>
+          <rect x="4" y="4" width="11" height="11"/>
+        </svg>
+        Copiar código
         </button>
 
-        <button type="button" class="btn-secondary" (click)="limpiar()">
-          Limpiar
-        </button>
+       <div class="page-header__actions">
 
-        <button type="button" class="btn-primary" (click)="generarQr()">
-          Generar QR
-        </button>
+          <button type="button" class="btn-secondary btn-icon" (click)="limpiar()">
+             <svg viewBox="0 0 24 24">
+              <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+              <path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17z"/>
+            </svg>
+            Limpiar
+          </button>
+
+          <button type="button" class="btn-primary btn-icon" (click)="generarQr()">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="6" height="6"/>
+              <rect x="15" y="3" width="6" height="6"/>
+              <rect x="3" y="15" width="6" height="6"/>
+              <path d="M15 15h6v6"/>
+            </svg>
+            Generar QR
+          </button>
+
+        </div>
       </div>
     </article>
 
     <article class="preview-panel">
-      <div class="empty-state" *ngIf="!qrDataUrl">
-        <div class="empty-icon">▦</div>
-        <h3>QR pendiente</h3>
-        <p>Ingresa el código del suministro para generar la ficha QR.</p>
+      <div class="empty-state modern-empty" *ngIf="!qrDataUrl">
 
-        <div class="empty-hint">
-          <span>Ejemplo:</span>
-          <strong>SUM-C6DAD1A0</strong>
+          <div class="empty-icon-box">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 3h7v7H3z"/>
+              <path d="M14 3h7v7h-7z"/>
+              <path d="M3 14h7v7H3z"/>
+              <path d="M17 14h1v1h-1z"/>
+              <path d="M14 17h1v1h-1z"/>
+              <path d="M20 17h1v1h-1z"/>
+              <path d="M17 20h1v1h-1z"/>
+              <path d="M20 20h1v1h-1z"/>
+            </svg>
+          </div>
+
+          <span class="empty-badge">
+            Generador QR
+          </span>
+
+          <h3>QR pendiente de generar</h3>
+
+          <p>
+            Ingresa el código del suministro para crear la ficha QR
+            lista para imprimir o descargar.
+          </p>
+
+          <div class="empty-hint">
+            <span>Ejemplo</span>
+            <strong>SUM-C6DAD1A0</strong>
+          </div>
+
         </div>
-      </div>
-
       <div class="qr-preview" *ngIf="qrDataUrl">
         <span class="tag">QR generado</span>
 
         <div class="qr-document">
           <div class="qr-document-header">
-            <div class="qr-logo">💧</div>
+            <div class="qr-logo">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11z"/>
+              </svg>
+            </div>
 
             <div>
-              <h3>JASS Huacariz</h3>
+              <h3>Agua Potable Huacariz</h3>
               <p>Ficha de identificación de suministro</p>
             </div>
           </div>
@@ -240,16 +333,32 @@
 
         <div class="preview-actions">
           <button type="button" class="btn-secondary" (click)="copiarCodigo()">
-            Copiar código
+            <svg viewBox="0 0 24 24">
+            <rect x="9" y="9" width="11" height="11"/>
+            <rect x="4" y="4" width="11" height="11"/>
+          </svg>
+          Copiar código
           </button>
 
-          <button type="button" class="btn-secondary" (click)="descargarQr()">
-            Descargar PNG
-          </button>
+        <button type="button" class="btn-secondary" (click)="descargarQr()">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3v12"/>
+            <path d="M7 10l5 5 5-5"/>
+            <path d="M5 20h14"/>
+          </svg>
 
-          <button type="button" class="btn-primary" (click)="imprimirQr()">
-            Imprimir / guardar PDF
-          </button>
+          Descargar PNG
+        </button>
+
+        <button type="button" class="btn-primary" (click)="imprimirQr()">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 9V3h12v6"/>
+            <path d="M6 18h12v3H6z"/>
+            <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+          </svg>
+
+          Imprimir PDF
+        </button>
         </div>
       </div>
     </article>

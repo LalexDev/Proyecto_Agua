@@ -30,6 +30,9 @@ import { roleGuard } from './core/guards/role-guard';
 
 import { Sectores } from './pages/admin/sectores/sectores';
 
+import { SinLecturas } from './pages/admin/sin-lecturas/sin-lecturas';
+import { CanalesPago } from './pages/admin/canales-pago/canales-pago';
+
 export const routes: Routes = [
   {
     path: '',
@@ -52,11 +55,13 @@ export const routes: Routes = [
       { path: 'lecturadores', component: Lecturadores },
       { path: 'recibos', component: Recibos },
       { path: 'pagos', component: Pagos },
+      { path: 'canales-pago', component: CanalesPago },
       { path: 'reportes', component: Reportes },
       { path: 'tarifas', component: Tarifas },
       { path: 'qr-suministro', component: QrSuministro },
       { path: 'historial-lecturas', component: HistorialLecturas },
       { path: 'sectores', component: Sectores },
+      { path: 'sin-lecturas', component: SinLecturas }
     ]
   },
   {
@@ -89,5 +94,6 @@ export const routes: Routes = [
   {
     path: '**',
     redirectTo: 'login'
-  }
+  },
+  
 ];

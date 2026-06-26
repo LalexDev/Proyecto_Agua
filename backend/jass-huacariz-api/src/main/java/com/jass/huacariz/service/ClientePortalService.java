@@ -19,6 +19,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -70,54 +75,125 @@ public class ClientePortalService {
                 .toList();
     }
 
-    @Transactional
-    public PagoResponse pagarMiRecibo(Integer reciboId, PagoRequest request) {
-        Cliente cliente = obtenerClienteAutenticado();
+   @Transactional
+public PagoResponse pagarMiRecibo(
+        Integer reciboId,
+        String metodoPago,
+        String codigoOperacion,
+        MultipartFile comprobante
+) {
+    Cliente cliente = obtenerClienteAutenticado();
 
-        Recibo recibo = reciboRepository.findById(reciboId)
-                .orElseThrow(() -> new RuntimeException("No existe el recibo con ID: " + reciboId));
+    Recibo recibo = reciboRepository.findById(reciboId)
+            .orElseThrow(() -> new RuntimeException("No existe el recibo con ID: " + reciboId));
 
-        if (!perteneceAlCliente(cliente, recibo)) {
-            throw new RuntimeException("No tienes permiso para pagar este recibo.");
-        }
-
-        if ("PAGADO".equalsIgnoreCase(recibo.getEstadoRecibo())) {
-            throw new RuntimeException("El recibo ya se encuentra pagado.");
-        }
-
-        if (request.getMetodoPago() == null || request.getMetodoPago().isBlank()) {
-            throw new RuntimeException("Seleccione un método de pago.");
-        }
-
-        if (request.getCodigoOperacion() == null || request.getCodigoOperacion().isBlank()) {
-            throw new RuntimeException("Ingrese el código de operación.");
-        }
-
-        Pago pago = Pago.builder()
-                .recibo(recibo)
-                .metodoPago(request.getMetodoPago())
-                .codigoOperacion(request.getCodigoOperacion())
-                .monto(valorSeguro(recibo.getTotal()))
-                .estadoPago("PAGADO")
-                .fechaPago(LocalDateTime.now())
-                .build();
-
-        recibo.setEstadoRecibo("PAGADO");
-
-        pagoRepository.save(pago);
-        reciboRepository.save(recibo);
-
-        return PagoResponse.builder()
-                .id(pago.getId())
-                .idRecibo(recibo.getId())
-                .codigoRecibo(recibo.getCodigoRecibo())
-                .metodoPago(pago.getMetodoPago())
-                .codigoOperacion(pago.getCodigoOperacion())
-                .monto(pago.getMonto())
-                .estadoPago(pago.getEstadoPago())
-                .fechaPago(pago.getFechaPago())
-                .build();
+    if (!perteneceAlCliente(cliente, recibo)) {
+        throw new RuntimeException("No tienes permiso para pagar este recibo.");
     }
+
+    if ("PAGADO".equalsIgnoreCase(recibo.getEstadoRecibo())) {
+        throw new RuntimeException("El recibo ya se encuentra pagado.");
+    }
+
+    if ("PAGO_EN_REVISION".equalsIgnoreCase(recibo.getEstadoRecibo())) {
+        throw new RuntimeException("Este recibo ya tiene un pago enviado para revisión.");
+    }
+
+    if (metodoPago == null || metodoPago.isBlank()) {
+        throw new RuntimeException("Seleccione un método de pago.");
+    }
+
+    if (codigoOperacion == null || codigoOperacion.isBlank()) {
+        throw new RuntimeException("Ingrese el código de operación.");
+    }
+
+    if (comprobante == null || comprobante.isEmpty()) {
+        throw new RuntimeException("Debe subir una captura del comprobante.");
+    }
+
+    String codigoLimpio = codigoOperacion.trim();
+
+    boolean codigoDuplicado = pagoRepository.existsByCodigoOperacionIgnoreCaseAndEstadoPagoIn(
+            codigoLimpio,
+            List.of("PAGO_EN_REVISION", "PAGADO_CONFIRMADO", "PAGADO")
+    );
+
+    if (codigoDuplicado) {
+        throw new RuntimeException("Este código de operación ya fue registrado.");
+    }
+
+    String comprobanteUrl = guardarComprobante(comprobante);
+
+    Pago pago = Pago.builder()
+            .recibo(recibo)
+            .metodoPago(metodoPago.trim())
+            .codigoOperacion(codigoLimpio)
+            .comprobanteUrl(comprobanteUrl)
+            .monto(valorSeguro(recibo.getTotal()))
+            .estadoPago("PAGO_EN_REVISION")
+            .fechaPago(LocalDateTime.now())
+            .build();
+
+    recibo.setEstadoRecibo("PAGO_EN_REVISION");
+
+    pagoRepository.save(pago);
+    reciboRepository.save(recibo);
+
+    return PagoResponse.builder()
+            .id(pago.getId())
+            .idRecibo(recibo.getId())
+            .codigoRecibo(recibo.getCodigoRecibo())
+            .metodoPago(pago.getMetodoPago())
+            .codigoOperacion(pago.getCodigoOperacion())
+            .comprobanteUrl(pago.getComprobanteUrl())
+            .monto(pago.getMonto())
+            .estadoPago(pago.getEstadoPago())
+            .fechaPago(pago.getFechaPago())
+            .build();
+}
+
+
+private String guardarComprobante(MultipartFile archivo) {
+    try {
+        String contentType = archivo.getContentType();
+
+        if (contentType == null ||
+                (!contentType.equalsIgnoreCase("image/jpeg") &&
+                 !contentType.equalsIgnoreCase("image/png") &&
+                 !contentType.equalsIgnoreCase("image/webp"))) {
+            throw new RuntimeException("Solo se permiten imágenes JPG, PNG o WEBP.");
+        }
+
+        long maxSize = 3 * 1024 * 1024;
+
+        if (archivo.getSize() > maxSize) {
+            throw new RuntimeException("La imagen no debe superar los 3 MB.");
+        }
+
+        String extension = switch (contentType.toLowerCase()) {
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
+            default -> ".jpg";
+        };
+
+        Path carpeta = Paths.get("uploads", "comprobantes");
+
+        if (!Files.exists(carpeta)) {
+            Files.createDirectories(carpeta);
+        }
+
+        String nombreArchivo = "comprobante-" + UUID.randomUUID() + extension;
+        Path destino = carpeta.resolve(nombreArchivo);
+
+        Files.copy(archivo.getInputStream(), destino);
+
+        return "/uploads/comprobantes/" + nombreArchivo;
+
+    } catch (Exception e) {
+        throw new RuntimeException("No se pudo guardar el comprobante: " + e.getMessage());
+    }
+}
 
     @Transactional
     public String cambiarMiPassword(CambiarPasswordRequest request) {

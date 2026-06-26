@@ -135,4 +135,15 @@ export class Login {
         }
       });
   }
+
+
+   irSeccion(id: string): void {
+  document.getElementById(id)?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  });
+}
+
+
+  
 }

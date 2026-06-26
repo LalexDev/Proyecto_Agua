@@ -35,6 +35,7 @@ public class SecurityConfig {
                         // RUTAS PÚBLICAS
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
 
                         // PORTAL CLIENTE
                         .requestMatchers("/api/cliente/**").hasAuthority("CLIENTE")
@@ -47,10 +48,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/lecturas/mantenimiento").hasAnyAuthority("ADMIN", "LECTURADOR")
                         .requestMatchers(HttpMethod.GET, "/api/lecturas/**").hasAnyAuthority("ADMIN", "LECTURADOR")
 
-                        // ADMIN LECTURAS / HISTORIAL
+                        // ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-
-                        // ADMIN LECTURAS
                         .requestMatchers("/api/admin/lecturas/**").hasAuthority("ADMIN")
 
                         // ADMINISTRACIÓN
@@ -61,6 +60,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/recibos/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/pagos/**").hasAuthority("ADMIN")
 
+
+                        .requestMatchers(HttpMethod.GET, "/api/canales-pago/activos").hasAnyAuthority("CLIENTE", "ADMIN")
+                        .requestMatchers("/api/canales-pago/**").hasAuthority("ADMIN")
 
                         .anyRequest().authenticated()
                 )

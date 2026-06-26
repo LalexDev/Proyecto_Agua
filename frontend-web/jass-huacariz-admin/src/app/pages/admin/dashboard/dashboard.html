@@ -3,7 +3,7 @@
     <div class="top-left">
       <span class="page-kicker">Dashboard / Home</span>
       <h2>Panel administrativo</h2>
-      <p>Resumen general del sistema de agua potable JASS Huacariz.</p>
+      <p>Resumen general del sistema de agua potable Agua Potable Huacariz.</p>
     </div>
 
     <div class="top-search">
@@ -25,29 +25,41 @@
     </div>
 
     <div class="top-actions">
-      <button type="button" class="icon-button" title="Actualizar" (click)="cargarDashboard()">
-        ↻
+      <button type="button" class="action-btn" title="Actualizar" (click)="cargarDashboard()">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 11a8 8 0 1 1-2.34-5.66"/>
+          <path d="M20 4v7h-7"/>
+        </svg>
       </button>
 
-      <button type="button" class="icon-button" title="Exportar Excel" (click)="exportarExcel()">
-        ⇩
+      <button type="button" class="action-btn" title="Exportar Excel" (click)="exportarExcel()">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3v12"/>
+          <path d="M7 10l5 5 5-5"/>
+          <path d="M4 21h16"/>
+        </svg>
       </button>
 
-      <button type="button" class="icon-button" title="Imprimir PDF" (click)="imprimirDashboard()">
-        ⎙
+      <button type="button" class="action-btn" title="Imprimir PDF" (click)="imprimirDashboard()">
+        <svg viewBox="0 0 24 24">
+          <path d="M7 8V3h10v5"/>
+          <path d="M6 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1"/>
+          <path d="M7 14h10v7H7z"/>
+        </svg>
       </button>
 
       <button type="button" class="create-button" routerLink="/admin/recibos">
-        + Ver recibos
+        <span>+</span>
+        Ver recibos
       </button>
     </div>
   </section>
 
-  <div *ngIf="error" class="alert-error">
+  <div *ngIf="error" class="alert alert-error">
     {{ error }}
   </div>
 
-  <div *ngIf="cargando" class="alert-info">
+  <div *ngIf="cargando" class="alert alert-info">
     Cargando información del dashboard...
   </div>
 
@@ -65,7 +77,12 @@
           <h4>Clientes</h4>
 
           <div class="result-item" *ngFor="let cliente of clientesFiltrados()">
-            <div class="result-icon">👤</div>
+            <div class="result-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Z"/>
+                <path d="M4 21a8 8 0 0 1 16 0"/>
+              </svg>
+            </div>
             <div>
               <strong>{{ cliente.nombres }} {{ cliente.apellidos }}</strong>
               <small>DNI: {{ cliente.dni }} · {{ cliente.correo || 'Sin correo' }}</small>
@@ -81,7 +98,12 @@
           <h4>Recibos / suministros</h4>
 
           <div class="result-item" *ngFor="let recibo of recibosFiltrados()">
-            <div class="result-icon receipt">🧾</div>
+            <div class="result-icon receipt">
+              <svg viewBox="0 0 24 24">
+                <path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3Z"/>
+                <path d="M10 8h4M10 12h5M10 16h3"/>
+              </svg>
+            </div>
             <div>
               <strong>{{ recibo.codigoRecibo }}</strong>
               <small>{{ recibo.codigoSuministro }} · {{ periodo(recibo) }} · S/ {{ recibo.total | number:'1.2-2' }}</small>
@@ -247,18 +269,10 @@
 
           <tbody>
             <tr *ngFor="let recibo of recibosFiltrados()">
-              <td>
-                <strong>{{ $any(recibo).codigoRecibo }}</strong>
-              </td>
-
+              <td><strong>{{ $any(recibo).codigoRecibo }}</strong></td>
               <td>{{ $any(recibo).codigoSuministro }}</td>
-
               <td>{{ periodo(recibo) }}</td>
-
-              <td>
-                <strong>S/ {{ $any(recibo).total | number:'1.2-2' }}</strong>
-              </td>
-
+              <td><strong>S/ {{ $any(recibo).total | number:'1.2-2' }}</strong></td>
               <td>
                 <span class="badge" [ngClass]="estadoClase($any(recibo).estadoRecibo)">
                   {{ $any(recibo).estadoRecibo }}
@@ -267,9 +281,7 @@
             </tr>
 
             <tr *ngIf="recibosFiltrados().length === 0">
-              <td colspan="5" class="empty-row">
-                No hay recibos para mostrar.
-              </td>
+              <td colspan="5" class="empty-row">No hay recibos para mostrar.</td>
             </tr>
           </tbody>
         </table>
@@ -286,37 +298,49 @@
 
       <div class="quick-grid">
         <a routerLink="/admin/clientes" class="quick-tile">
-          <span>👤</span>
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 9a7 7 0 0114 0"/></svg>
+          </span>
           <strong>Clientes</strong>
           <small>Registrar y consultar</small>
         </a>
 
         <a routerLink="/admin/recibos" class="quick-tile">
-          <span>🧾</span>
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1V3z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+          </span>
           <strong>Recibos</strong>
           <small>Estados y detalle</small>
         </a>
 
         <a routerLink="/admin/pagos" class="quick-tile">
-          <span>💳</span>
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
+          </span>
           <strong>Pagos</strong>
           <small>Registrar pago</small>
         </a>
 
         <a routerLink="/admin/qr-suministro" class="quick-tile">
-          <span>▣</span>
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/><path d="M14 14h2v2h-2zM18 14h2v6h-6v-2h4z"/></svg>
+          </span>
           <strong>QR</strong>
           <small>Generar código</small>
         </a>
 
         <a routerLink="/admin/historial-lecturas" class="quick-tile">
-          <span>📚</span>
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24"><path d="M5 4h5v16H5z"/><path d="M14 4h5v16h-5z"/></svg>
+          </span>
           <strong>Lecturas</strong>
           <small>Historial</small>
         </a>
 
         <a routerLink="/admin/reportes" class="quick-tile">
-          <span>📊</span>
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg>
+          </span>
           <strong>Reportes</strong>
           <small>Excel y PDF</small>
         </a>

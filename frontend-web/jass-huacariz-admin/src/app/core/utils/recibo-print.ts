@@ -372,7 +372,7 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
             <div class="logo">💧</div>
 
             <div>
-              <h1>JASS HUACARIZ</h1>
+              <h1>AGUA POTABLE HUACARIZ</h1>
               <p>Servicio de agua potable · Recibo de cobranza</p>
               <p>Cajamarca, Perú · Sistema de Gestión de Agua</p>
             </div>
@@ -515,7 +515,7 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
 
         <div class="footer">
           <div>
-            <strong>Atención:</strong> Documento emitido por el sistema de gestión de agua JASS Huacariz.
+            <strong>Atención:</strong> Documento emitido por el sistema de gestión de agua Agua Potable Huacariz.
           </div>
 
           <div>

@@ -28,6 +28,11 @@ export class Lecturadores implements OnInit {
   busqueda = '';
   filtroEstado = 'TODOS';
 
+
+  mostrarConfirmacion = false;
+  accionConfirmacion: 'ESTADO' | 'ELIMINAR' | null = null;
+  lecturadorSeleccionado: LecturadorResponse | null = null;
+
   mostrarFormulario = false;
   modoEdicion = false;
   lecturadorEditandoId: number | null = null;
@@ -184,59 +189,17 @@ export class Lecturadores implements OnInit {
       });
   }
 
-  cambiarEstado(item: LecturadorResponse): void {
-    const nuevoEstado = !item.estado;
-    const texto = nuevoEstado ? 'activar' : 'inactivar';
-
-    const confirmar = confirm(`¿Deseas ${texto} al lecturador ${this.nombreCompleto(item)}?`);
-
-    if (!confirmar) {
-      return;
+    cambiarEstado(item: LecturadorResponse): void {
+      this.lecturadorSeleccionado = item;
+      this.accionConfirmacion = 'ESTADO';
+      this.mostrarConfirmacion = true;
     }
 
-    this.error = '';
-    this.exito = '';
-
-    this.clienteService.cambiarEstadoLecturador(item.id, nuevoEstado)
-      .subscribe({
-        next: () => {
-          this.exito = nuevoEstado
-            ? 'Lecturador activado correctamente.'
-            : 'Lecturador inactivado correctamente.';
-
-          this.cargarLecturadores();
-        },
-        error: (err) => {
-          this.error = err?.error?.error || 'No se pudo cambiar el estado del lecturador.';
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
-  eliminarLecturador(item: LecturadorResponse): void {
-    const confirmar = confirm(
-      `¿Seguro que deseas eliminar al lecturador ${this.nombreCompleto(item)}?\n\nTambién se eliminará su usuario de acceso.`
-    );
-
-    if (!confirmar) {
-      return;
+    eliminarLecturador(item: LecturadorResponse): void {
+      this.lecturadorSeleccionado = item;
+      this.accionConfirmacion = 'ELIMINAR';
+      this.mostrarConfirmacion = true;
     }
-
-    this.error = '';
-    this.exito = '';
-
-    this.clienteService.eliminarLecturador(item.id)
-      .subscribe({
-        next: () => {
-          this.exito = 'Lecturador eliminado correctamente.';
-          this.cargarLecturadores();
-        },
-        error: (err) => {
-          this.error = err?.error?.error || 'No se pudo eliminar el lecturador.';
-          this.cdr.detectChanges();
-        }
-      });
-  }
 
   totalLecturadores(): number {
     return this.lecturadores.length;
@@ -318,5 +281,94 @@ export class Lecturadores implements OnInit {
       estado: true,
       sectorAsignado: ''
     };
+  }
+
+
+    cerrarConfirmacion(): void {
+    this.mostrarConfirmacion = false;
+    this.accionConfirmacion = null;
+    this.lecturadorSeleccionado = null;
+  }
+
+  confirmarAccion(): void {
+    if (!this.lecturadorSeleccionado || !this.accionConfirmacion) {
+      return;
+    }
+
+    if (this.accionConfirmacion === 'ESTADO') {
+      const item = this.lecturadorSeleccionado;
+      const nuevoEstado = !item.estado;
+
+      this.clienteService.cambiarEstadoLecturador(item.id, nuevoEstado)
+        .subscribe({
+          next: () => {
+            this.exito = nuevoEstado
+              ? 'Lecturador activado correctamente.'
+              : 'Lecturador inactivado correctamente.';
+
+            this.cerrarConfirmacion();
+            this.cargarLecturadores();
+          },
+          error: (err) => {
+            this.error = err?.error?.error || 'No se pudo cambiar el estado del lecturador.';
+            this.cerrarConfirmacion();
+            this.cdr.detectChanges();
+          }
+        });
+
+      return;
+    }
+
+    if (this.accionConfirmacion === 'ELIMINAR') {
+      const item = this.lecturadorSeleccionado;
+
+      this.clienteService.eliminarLecturador(item.id)
+        .subscribe({
+          next: () => {
+            this.exito = 'Lecturador eliminado correctamente.';
+            this.cerrarConfirmacion();
+            this.cargarLecturadores();
+          },
+          error: (err) => {
+            this.error = err?.error?.error || 'No se pudo eliminar el lecturador.';
+            this.cerrarConfirmacion();
+            this.cdr.detectChanges();
+          }
+        });
+    }
+  }
+
+  tituloConfirmacion(): string {
+    if (!this.lecturadorSeleccionado) return '';
+
+    if (this.accionConfirmacion === 'ELIMINAR') {
+      return 'Eliminar lecturador';
+    }
+
+    return this.lecturadorSeleccionado.estado
+      ? 'Inactivar lecturador'
+      : 'Activar lecturador';
+  }
+
+  mensajeConfirmacion(): string {
+    if (!this.lecturadorSeleccionado) return '';
+
+    const nombre = this.nombreCompleto(this.lecturadorSeleccionado);
+
+    if (this.accionConfirmacion === 'ELIMINAR') {
+      return `¿Deseas eliminar al lecturador ${nombre}? También se eliminará su usuario de acceso.`;
+    }
+
+    return this.lecturadorSeleccionado.estado
+      ? `¿Deseas inactivar al lecturador ${nombre}? No podrá iniciar sesión.`
+      : `¿Deseas activar al lecturador ${nombre}? Podrá iniciar sesión nuevamente.`;
+  }
+
+  textoBotonConfirmacion(): string {
+    if (this.accionConfirmacion === 'ELIMINAR') return 'Eliminar lecturador';
+
+    return this.lecturadorSeleccionado?.estado
+      ? 'Inactivar lecturador'
+      : 'Activar lecturador';
   }
 }

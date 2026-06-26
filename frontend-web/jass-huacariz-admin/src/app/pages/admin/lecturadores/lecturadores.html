@@ -7,13 +7,35 @@
     </div>
 
     <div class="header-actions">
-      <button type="button" class="btn-secondary" (click)="cargarLecturadores()">
+      <button
+        type="button"
+        class="btn-secondary btn-icon"
+        (click)="cargarLecturadores()"
+      >
+             <svg viewBox="0 0 24 24">
+        <path d="M21 2v6h-6"/>
+        <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/>
+        <path d="M3 22v-6h6"/>
+        <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/>
+      </svg>
+
         Actualizar
       </button>
 
-      <button type="button" class="btn-primary" (click)="abrirNuevo()">
-        + Nuevo lecturador
-      </button>
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="abrirNuevo()"
+    >
+      <svg viewBox="0 0 24 24">
+        <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4z"/>
+        <path d="M4 20a8 8 0 0 1 16 0"/>
+        <path d="M18 8h3"/>
+        <path d="M19.5 6.5v3"/>
+      </svg>
+
+      Nuevo lecturador
+    </button>
     </div>
   </section>
 
@@ -29,43 +51,88 @@
     Cargando lecturadores...
   </div>
 
-  <section class="stats-grid">
-    <article class="stat-card featured">
-      <div class="stat-icon">📲</div>
-      <div class="stat-content">
-        <span>Total lecturadores</span>
-        <strong>{{ totalLecturadores() }}</strong>
-        <small>Registrados en el sistema</small>
-      </div>
-    </article>
+ <section class="stats-grid">
 
-    <article class="stat-card">
-      <div class="stat-icon success">✅</div>
-      <div class="stat-content">
-        <span>Activos</span>
-        <strong>{{ lecturadoresActivos() }}</strong>
-        <small>Pueden iniciar sesión</small>
-      </div>
-    </article>
+  <article class="stat-card featured">
+    <div class="stat-icon">
 
-    <article class="stat-card">
-      <div class="stat-icon danger">🚫</div>
-      <div class="stat-content">
-        <span>Inactivos</span>
-        <strong>{{ lecturadoresInactivos() }}</strong>
-        <small>Acceso bloqueado</small>
-      </div>
-    </article>
+      <!-- Lecturador -->
+      <svg viewBox="0 0 24 24">
+        <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4z"/>
+        <path d="M4 20a8 8 0 0 1 16 0"/>
+        <path d="M18 8h3"/>
+        <path d="M19.5 6.5v3"/>
+      </svg>
 
-    <article class="stat-card">
-      <div class="stat-icon location">📍</div>
-      <div class="stat-content">
-        <span>Sectores asignados</span>
-        <strong>{{ sectoresAsignados() }}</strong>
-        <small>Zonas de trabajo</small>
-      </div>
-    </article>
-  </section>
+    </div>
+
+    <div class="stat-content">
+      <span>Total lecturadores</span>
+      <strong>{{ totalLecturadores() }}</strong>
+      <small>Registrados en el sistema</small>
+    </div>
+  </article>
+
+  <article class="stat-card">
+
+    <div class="stat-icon success">
+
+      <!-- Activo -->
+      <svg viewBox="0 0 24 24">
+        <path d="M20 6L9 17l-5-5"/>
+      </svg>
+
+    </div>
+
+    <div class="stat-content">
+      <span>Activos</span>
+      <strong>{{ lecturadoresActivos() }}</strong>
+      <small>Pueden iniciar sesión</small>
+    </div>
+
+  </article>
+
+  <article class="stat-card">
+
+    <div class="stat-icon danger">
+
+      <!-- Inactivo -->
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M8 8l8 8"/>
+      </svg>
+
+    </div>
+
+    <div class="stat-content">
+      <span>Inactivos</span>
+      <strong>{{ lecturadoresInactivos() }}</strong>
+      <small>Acceso bloqueado</small>
+    </div>
+
+  </article>
+
+  <article class="stat-card">
+
+    <div class="stat-icon location">
+
+      <!-- Sector -->
+      <svg viewBox="0 0 24 24">
+        <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/>
+        <circle cx="12" cy="10" r="2"/>
+      </svg>
+
+    </div>
+
+    <div class="stat-content">
+      <span>Sectores asignados</span>
+      <strong>{{ sectoresAsignados() }}</strong>
+      <small>Zonas de trabajo</small>
+    </div>
+
+  </article>
+
+</section>
 
   <section class="summary-panel">
     <div class="summary-info">
@@ -139,7 +206,16 @@
       <option value="INACTIVO">Inactivos</option>
     </select>
 
-    <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+    <button
+      type="button"
+      class="btn-secondary btn-icon"
+      (click)="limpiarFiltros()"
+    >
+            <svg viewBox="0 0 24 24">
+        <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+        <path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17z"/>
+      </svg>
+
       Limpiar
     </button>
   </section>
@@ -210,26 +286,61 @@
               </span>
             </td>
 
-            <td>
-              <div class="actions-cell">
-                <button type="button" class="btn-table" (click)="abrirEditar(item)">
-                  Editar
-                </button>
+           <td>
+          <div class="actions-cell">
 
-                <button
-                  type="button"
-                  class="btn-table"
-                  [ngClass]="item.estado ? 'danger-soft' : 'success-soft'"
-                  (click)="cambiarEstado(item)"
-                >
-                  {{ item.estado ? 'Inactivar' : 'Activar' }}
-                </button>
+            <button
+              type="button"
+              class="btn-editar-text"
+              title="Editar lecturador"
+              (click)="abrirEditar(item)"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25z"/>
+                <path d="M14.06 4.94l3.75 3.75"/>
+              </svg>
+              <span>Editar</span>
+            </button>
 
-                <button type="button" class="btn-table danger-soft" (click)="eliminarLecturador(item)">
-                  Eliminar
-                </button>
-              </div>
-            </td>
+            <button
+              type="button"
+              [ngClass]="item.estado ? 'btn-desactivar-text' : 'btn-activar-text'"
+              (click)="cambiarEstado(item)"
+              [title]="item.estado ? 'Inactivar lecturador' : 'Activar lecturador'"
+            >
+
+              <svg *ngIf="item.estado" viewBox="0 0 24 24">
+                <path d="M12 3v7"/>
+                <path d="M7.5 5.5a8 8 0 1 0 9 0"/>
+              </svg>
+
+              <svg *ngIf="!item.estado" viewBox="0 0 24 24">
+                <path d="M12 3v7"/>
+                <path d="M7.5 5.5a8 8 0 1 1 9 0"/>
+              </svg>
+
+              <span>{{ item.estado ? 'Inactivar' : 'Activar' }}</span>
+            </button>
+
+            <button
+              type="button"
+              class="btn-eliminar-text"
+              title="Eliminar lecturador"
+              (click)="eliminarLecturador(item)"
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M4 7h16"/>
+                <path d="M10 11v6"/>
+                <path d="M14 11v6"/>
+                <path d="M6 7l1 14h10l1-14"/>
+                <path d="M9 7V4h6v3"/>
+              </svg>
+
+              <span>Eliminar</span>
+            </button>
+
+          </div>
+        </td>
           </tr>
 
           <tr *ngIf="!cargando && lecturadoresFiltrados.length === 0">
@@ -328,4 +439,37 @@
       </div>
     </div>
   </div>
+
+
+  <div class="modal-backdrop confirm-backdrop" *ngIf="mostrarConfirmacion && lecturadorSeleccionado">
+    <div class="modal-card confirm">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Confirmación</span>
+          <h3>{{ tituloConfirmacion() }}</h3>
+          <p>{{ mensajeConfirmacion() }}</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarConfirmacion()">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarConfirmacion()">
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          [class.danger-confirm]="accionConfirmacion === 'ELIMINAR'"
+          (click)="confirmarAccion()"
+        >
+          {{ textoBotonConfirmacion() }}
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

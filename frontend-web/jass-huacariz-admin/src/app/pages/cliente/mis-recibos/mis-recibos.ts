@@ -287,7 +287,7 @@ export class MisRecibos implements OnInit {
       <html lang="es">
       <head>
         <meta charset="UTF-8">
-        <title>Mis recibos - JASS Huacariz</title>
+        <title>Mis recibos - Agua Potable Huacariz</title>
         <style>
           * { box-sizing: border-box; }
 
@@ -419,7 +419,7 @@ export class MisRecibos implements OnInit {
           <div class="brand">
             <div class="logo">💧</div>
             <div>
-              <h1>JASS Huacariz</h1>
+              <h1>Agua Potable Huacariz</h1>
               <p>Reporte de recibos del cliente</p>
               <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
             </div>

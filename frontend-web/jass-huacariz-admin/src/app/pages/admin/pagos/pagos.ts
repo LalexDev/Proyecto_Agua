@@ -26,6 +26,7 @@ export class Pagos implements OnInit {
   error = '';
   exito = '';
   busqueda = '';
+  comprobanteSeleccionado = '';
 
   constructor(
     private pagoService: Pago,
@@ -52,11 +53,11 @@ export class Pagos implements OnInit {
         next: (data) => {
           this.pagos = data || [];
           this.filtrarPagos();
-          this.exito = 'Pagos actualizados correctamente.';
+          this.mostrarExito('Pagos actualizados correctamente.');
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudieron cargar los pagos. Verifica el backend y tu sesión ADMIN.';
+          this.mostrarError('No se pudieron cargar los pagos.');
           this.exito = '';
           this.pagos = [];
           this.pagosFiltrados = [];
@@ -79,7 +80,9 @@ export class Pagos implements OnInit {
         String(pago.metodoPago || '').toLowerCase().includes(texto) ||
         String(pago.codigoOperacion || '').toLowerCase().includes(texto) ||
         String(pago.monto || '').toLowerCase().includes(texto) ||
+        String(pago.estadoPago || '').toLowerCase().includes(texto) ||
         this.fechaPagoTexto(pago).toLowerCase().includes(texto)
+        
       );
     });
   }
@@ -130,14 +133,14 @@ export class Pagos implements OnInit {
       return 'Sin datos';
     }
 
-    return resumen[0].metodo;
+    return this.normalizarMetodo(resumen[0].metodo);
   }
 
   resumenMetodos(): MetodoResumen[] {
     const contador: Record<string, { cantidad: number; monto: number }> = {};
 
     this.pagosFiltrados.forEach((pago: any) => {
-      const metodo = pago.metodoPago || 'Sin método';
+      const metodo = this.normalizarMetodo(pago.metodoPago);
 
       if (!contador[metodo]) {
         contador[metodo] = {
@@ -213,5 +216,116 @@ export class Pagos implements OnInit {
     }
 
     return fecha;
+  }
+
+
+  normalizarMetodo(metodo: string): string {
+  const valor = String(metodo || '').trim().toLowerCase();
+
+  if (valor === 'yape') return 'Yape';
+  if (valor === 'plin') return 'Plin';
+  if (valor === 'efectivo' || valor === 'pagoefectivo') return 'Efectivo';
+  if (valor === 'transferencia') return 'Transferencia';
+
+    return metodo || 'Sin método';
+  }
+
+
+  private mostrarExito(mensaje: string): void {
+  this.exito = mensaje;
+
+    setTimeout(() => {
+      this.exito = '';
+      this.cdr.detectChanges();
+    }, 1000); // 3 segundos
+  }
+
+
+  private mostrarError(mensaje: string): void {
+  this.error = mensaje;
+
+    setTimeout(() => {
+      this.error = '';
+      this.cdr.detectChanges();
+    }, 5000); // 5 segundos
+    
+  }
+
+  aprobarPago(id: number): void {
+
+    if (!confirm('¿Confirmar este pago?')) {
+      return;
+    }
+
+    this.pagoService.aprobarPago(id).subscribe({
+
+      next: () => {
+
+        this.mostrarExito('Pago aprobado correctamente.');
+
+        this.cargarPagos();
+
+      },
+
+      error: () => {
+
+        this.mostrarError('No fue posible aprobar el pago.');
+
+      }
+
+    });
+
+  }
+  rechazarPago(id: number): void {
+
+    if (!confirm('¿Rechazar este pago?')) {
+      return;
+    }
+
+    this.pagoService.rechazarPago(id).subscribe({
+
+      next: () => {
+
+        this.mostrarExito('Pago rechazado.');
+
+        this.cargarPagos();
+
+      },
+
+      error: () => {
+
+        this.mostrarError('No fue posible rechazar el pago.');
+
+      }
+
+    });
+
+  }
+  
+
+
+  verComprobante(pago: PagoResponse): void {
+    if (!pago.comprobanteUrl) {
+      this.mostrarError('Este pago no tiene comprobante adjunto.');
+      return;
+    }
+
+    this.comprobanteSeleccionado = this.urlComprobante(pago.comprobanteUrl);
+  }
+
+  cerrarComprobante(): void {
+    this.comprobanteSeleccionado = '';
+  }
+
+  urlComprobante(url: string): string {
+    if (!url) {
+      return '';
+    }
+
+    if (url.startsWith('http')) {
+      return url;
+    }
+
+    return `https://qnsdd0d9-8080.brs.devtunnels.ms${url}`;
   }
 }

@@ -34,4 +34,22 @@ public class PagoController {
     public ResponseEntity<List<PagoResponse>> listarPagosPorSuministro(@PathVariable String codigoSuministro) {
         return ResponseEntity.ok(pagoService.listarPagosPorSuministro(codigoSuministro));
     }
+
+    
+    @GetMapping("/revision")
+    public ResponseEntity<List<PagoResponse>> listarPagosEnRevision() {
+        return ResponseEntity.ok(pagoService.listarPagosEnRevision());
+    }
+
+    @PatchMapping("/{id}/aprobar")
+    public ResponseEntity<PagoResponse> aprobarPago(@PathVariable Integer id) {
+        return ResponseEntity.ok(pagoService.aprobarPago(id));
+    }
+
+    @PatchMapping("/{id}/rechazar")
+    public ResponseEntity<PagoResponse> rechazarPago(@PathVariable Integer id) {
+        return ResponseEntity.ok(pagoService.rechazarPago(id));
+    }
+
+        
 }

@@ -6,18 +6,28 @@
       <p>Administra tramos de consumo, precio por m³ y cargos automáticos que se aplicarán en los recibos.</p>
     </div>
 
-    <div class="page-header__actions">
-      <button type="button" class="btn-secondary" (click)="abrirNuevaTarifa()">
-        + Nueva tarifa
-      </button>
+   <div class="page-header__actions">
+  <button type="button" class="btn-primary btn-icon" (click)="abrirNuevaTarifa()">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 5v14"/>
+      <path d="M5 12h14"/>
+    </svg>
+    Nueva tarifa
+  </button>
 
-      <button
-        type="button"
-        class="btn-primary"
-        (click)="cargarTarifas(); cargarConfiguracionCobranza()"
-        [disabled]="cargando || cargandoConfiguracion"
-      >
-        {{ cargando || cargandoConfiguracion ? 'Actualizando...' : 'Actualizar' }}
+  <button
+    type="button"
+    class="btn-secondary btn-icon"
+    (click)="cargarTarifas(); cargarConfiguracionCobranza()"
+    [disabled]="cargando || cargandoConfiguracion"
+  >
+         <svg viewBox="0 0 24 24">
+        <path d="M21 2v6h-6"/>
+        <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/>
+        <path d="M3 22v-6h6"/>
+        <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/>
+      </svg>
+    {{ cargando || cargandoConfiguracion ? 'Actualizando...' : 'Actualizar' }}
       </button>
     </div>
   </section>
@@ -34,43 +44,63 @@
     Cargando tarifas y configuración de cobranza...
   </div>
 
-  <section class="stats-grid">
-    <article class="stat-card featured">
-      <div class="stat-card__icon">📋</div>
-      <div class="stat-card__content">
-        <span>Total tarifas</span>
-        <strong>{{ totalTarifas() }}</strong>
-        <small>Tramos registrados</small>
-      </div>
-    </article>
+<section class="stats-grid">
+  <article class="stat-card featured">
+    <div class="stat-card__icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3z"/>
+        <path d="M9 8h6"/>
+        <path d="M9 12h6"/>
+        <path d="M9 16h4"/>
+      </svg>
+    </div>
+    <div class="stat-card__content">
+      <span>Total tarifas</span>
+      <strong>{{ totalTarifas() }}</strong>
+      <small>Tramos registrados</small>
+    </div>
+  </article>
 
-    <article class="stat-card">
-      <div class="stat-card__icon success">✅</div>
-      <div class="stat-card__content">
-        <span>Tarifas activas</span>
-        <strong>{{ tarifasActivas() }}</strong>
-        <small>Disponibles para cálculo</small>
-      </div>
-    </article>
+  <article class="stat-card">
+    <div class="stat-card__icon success">
+      <svg viewBox="0 0 24 24">
+        <path d="M20 6L9 17l-5-5"/>
+      </svg>
+    </div>
+    <div class="stat-card__content">
+      <span>Tarifas activas</span>
+      <strong>{{ tarifasActivas() }}</strong>
+      <small>Disponibles para cálculo</small>
+    </div>
+  </article>
 
-    <article class="stat-card">
-      <div class="stat-card__icon money">💵</div>
-      <div class="stat-card__content">
-        <span>Cargos base</span>
-        <strong class="money-text">S/ {{ totalCargosConfigurados() | number:'1.2-2' }}</strong>
-        <small>Lector + mantenimiento + otros + mora</small>
-      </div>
-    </article>
+  <article class="stat-card">
+    <div class="stat-card__icon money">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3v18"/>
+        <path d="M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6"/>
+      </svg>
+    </div>
+    <div class="stat-card__content">
+      <span>Cargos base</span>
+      <strong class="money-text">S/ {{ totalCargosConfigurados() | number:'1.2-2' }}</strong>
+      <small>Lector + mantenimiento + otros + mora</small>
+    </div>
+  </article>
 
-    <article class="stat-card">
-      <div class="stat-card__icon water">💧</div>
-      <div class="stat-card__content">
-        <span>Precio promedio</span>
-        <strong class="money-text">S/ {{ precioPromedio() | number:'1.2-2' }}</strong>
-        <small>Promedio por m³</small>
-      </div>
-    </article>
-  </section>
+  <article class="stat-card">
+    <div class="stat-card__icon water">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3C9 7 6 10 6 14a6 6 0 0 0 12 0c0-4-3-7-6-11z"/>
+      </svg>
+    </div>
+    <div class="stat-card__content">
+      <span>Precio promedio</span>
+      <strong class="money-text">S/ {{ precioPromedio() | number:'1.2-2' }}</strong>
+      <small>Promedio por m³</small>
+    </div>
+  </article>
+</section>
 
   <section class="summary-panel">
     <div class="summary-info">
@@ -247,25 +277,56 @@
             </td>
 
             <td>
-              <div class="actions-cell">
-                <button type="button" class="table-action" (click)="abrirEditarTarifa(tarifa)">
-                  Editar
-                </button>
+                <div class="actions-cell">
+                  <button
+                    type="button"
+                    class="btn-editar-text"
+                    title="Editar tarifa"
+                    (click)="abrirEditarTarifa(tarifa)"
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path d="M4 20h4l10.5-10.5-4-4L4 16v4z"></path>
+                      <path d="M13.5 6.5l4 4"></path>
+                    </svg>
+                    <span>Editar</span>
+                  </button>
 
-                <button
-                  type="button"
-                  class="table-action"
-                  [ngClass]="tarifa.estado ? 'danger-soft' : 'success-soft'"
-                  (click)="abrirCambiarEstado(tarifa)"
-                >
-                  {{ tarifa.estado ? 'Desactivar' : 'Activar' }}
-                </button>
+                  <button
+                    type="button"
+                    [ngClass]="tarifa.estado ? 'btn-desactivar-text' : 'btn-activar-text'"
+                    [title]="tarifa.estado ? 'Desactivar tarifa' : 'Activar tarifa'"
+                    (click)="abrirCambiarEstado(tarifa)"
+                  >
+                    <svg *ngIf="tarifa.estado" viewBox="0 0 24 24">
+                      <path d="M12 3v7"></path>
+                      <path d="M7.5 5.5a8 8 0 1 0 9 0"></path>
+                    </svg>
 
-                <button type="button" class="table-action danger-soft" (click)="abrirEliminar(tarifa)">
-                  Eliminar
-                </button>
-              </div>
-            </td>
+                    <svg *ngIf="!tarifa.estado" viewBox="0 0 24 24">
+                      <path d="M12 3v7"></path>
+                      <path d="M7.5 5.5a8 8 0 1 1 9 0"></path>
+                    </svg>
+
+                    <span>{{ tarifa.estado ? 'Desactivar' : 'Activar' }}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-eliminar-text"
+                    title="Eliminar tarifa"
+                    (click)="abrirEliminar(tarifa)"
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path d="M4 7h16"></path>
+                      <path d="M10 11v6"></path>
+                      <path d="M14 11v6"></path>
+                      <path d="M6 7l1 14h10l1-14"></path>
+                      <path d="M9 7V4h6v3"></path>
+                    </svg>
+                    <span>Eliminar</span>
+                  </button>
+                </div>
+              </td>
           </tr>
 
           <tr *ngIf="!cargando && tarifas.length === 0">

@@ -12,10 +12,14 @@
   <aside class="sidebar">
     <div class="sidebar-mobile-header">
       <div class="brand compact">
-        <div class="logo">💧</div>
+        <div class="logo">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path>
+          </svg>
+        </div>
 
         <div>
-          <h3>JASS Huacariz</h3>
+          <h3>Agua Potable Huacariz</h3>
           <p>Panel lecturador</p>
         </div>
       </div>
@@ -24,23 +28,38 @@
     </div>
 
     <div class="brand desktop-brand">
-      <div class="logo">💧</div>
+      <div class="logo">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path>
+          </svg>
+        </div>
 
       <div>
-        <h3>JASS Huacariz</h3>
+        <h3>Agua Potable Huacariz</h3>
         <p>Panel lecturador</p>
       </div>
     </div>
 
     <nav class="menu">
       <button type="button" class="active" (click)="cerrarMenuMovil()">
-        <span>▣</span>
+        <span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 3h14v18H5z"></path>
+            <path d="M9 8h6M9 12h6M9 16h4"></path>
+          </svg>
+        </span>
         Registrar lectura
       </button>
     </nav>
 
     <button class="logout" type="button" (click)="cerrarSesion()">
-      <span>↳</span>
+      <span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 17l5-5-5-5"></path>
+          <path d="M15 12H3"></path>
+          <path d="M21 3v18"></path>
+        </svg>
+      </span>
       Cerrar sesión
     </button>
   </aside>
@@ -61,7 +80,19 @@
 
       <div class="topbar-actions">
         <button type="button" class="theme-toggle" (click)="cambiarTema()">
-          {{ isDarkMode ? '☀️' : '🌙' }}
+          <svg *ngIf="!isDarkMode" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8z"></path>
+          </svg>
+
+          <svg *ngIf="isDarkMode" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="M4.93 4.93l1.41 1.41"></path>
+            <path d="M17.66 17.66l1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+          </svg>
         </button>
 
         <div class="role-card">
@@ -114,7 +145,12 @@
         </div>
       </div>
 
-      <div class="hero-icon">▣</div>
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 3h14v18H5z"></path>
+          <path d="M9 8h6M9 12h6M9 16h4"></path>
+        </svg>
+      </div>
     </section>
 
 
@@ -347,7 +383,13 @@
     </section>
 
     <section class="blocked-card" *ngIf="suministro && !puedeRegistrarLectura() && !puedeGenerarMantenimiento()">
-      <div class="blocked-icon">!</div>
+      <div class="blocked-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 9v4"></path>
+          <path d="M12 17h.01"></path>
+          <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"></path>
+        </svg>
+      </div>
 
       <div>
         <span class="tag danger">Operación no permitida</span>

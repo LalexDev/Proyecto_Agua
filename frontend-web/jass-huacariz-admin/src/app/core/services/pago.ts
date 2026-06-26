@@ -8,6 +8,7 @@ export interface PagoResponse {
   codigoRecibo: string;
   metodoPago: string;
   codigoOperacion: string;
+  comprobanteUrl?: string;
   monto: number;
   estadoPago: string;
   fechaPago: string;
@@ -27,5 +28,25 @@ export class Pago {
 
   buscarPorSuministro(codigoSuministro: string): Observable<PagoResponse[]> {
     return this.http.get<PagoResponse[]>(`${this.apiUrl}/suministro/${codigoSuministro}`);
+  }
+
+  aprobarPago(id: number): Observable<PagoResponse> {
+    return this.http.patch<PagoResponse>(
+      `${this.apiUrl}/${id}/aprobar`,
+      {}
+    );
+  }
+
+  rechazarPago(id: number): Observable<PagoResponse> {
+    return this.http.patch<PagoResponse>(
+      `${this.apiUrl}/${id}/rechazar`,
+      {}
+    );
+  }
+
+  listarPagosEnRevision(): Observable<PagoResponse[]> {
+    return this.http.get<PagoResponse[]>(
+      `${this.apiUrl}/revision`
+    );
   }
 }

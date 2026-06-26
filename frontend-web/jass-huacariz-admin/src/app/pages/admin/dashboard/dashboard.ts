@@ -395,7 +395,7 @@ export class Dashboard implements OnInit {
       <html lang="es">
       <head>
         <meta charset="UTF-8">
-        <title>Dashboard - JASS Huacariz</title>
+        <title>Dashboard - Agua Potable Huacariz</title>
         <style>
           * { box-sizing: border-box; }
           body {
@@ -508,7 +508,7 @@ export class Dashboard implements OnInit {
           <div class="brand">
             <div class="logo">💧</div>
             <div>
-              <h1>JASS Huacariz</h1>
+              <h1>Agua Potable Huacariz</h1>
               <p>Resumen del Dashboard Administrativo</p>
               <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
             </div>

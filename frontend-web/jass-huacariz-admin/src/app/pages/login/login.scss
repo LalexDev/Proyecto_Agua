@@ -1127,3 +1127,472 @@ svg {
     height: 42px;
   }
 }
+
+/* =========================================================
+   LOGIN PANEL PREMIUM FINAL - MISMA ESTRUCTURA
+   ========================================================= */
+
+.public-login-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(34, 211, 238, .22), transparent 26%),
+    radial-gradient(circle at 82% 72%, rgba(37, 99, 235, .18), transparent 28%),
+    linear-gradient(120deg, rgba(2, 6, 23, .15), rgba(6, 182, 212, .10), rgba(34, 197, 94, .08));
+  pointer-events: none;
+  z-index: 1;
+  animation: loginAura 10s ease infinite alternate;
+}
+
+@keyframes loginAura {
+  from { opacity: .75; filter: hue-rotate(0deg); }
+  to { opacity: 1; filter: hue-rotate(18deg); }
+}
+
+.brand-logo,
+.portal-logo,
+.modal-icon {
+  background: linear-gradient(135deg, #06b6d4, #2563eb, #22c55e, #06b6d4) !important;
+  background-size: 300% 300% !important;
+  animation: loginRgbMove 6s ease infinite !important;
+  box-shadow:
+    0 14px 32px rgba(37, 99, 235, .28),
+    0 0 28px rgba(34, 211, 238, .24) !important;
+}
+
+.brand-logo svg,
+.portal-logo svg,
+.modal-icon svg {
+  color: #ffffff !important;
+  fill: rgba(255, 255, 255, .14) !important;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,.32));
+}
+
+@keyframes loginRgbMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.brand h1,
+.hero-left h2 span,
+.portal-card h3,
+.modal-brand h2 {
+  background: linear-gradient(90deg, #ffffff, #67e8f9, #22c55e, #60a5fa, #ffffff);
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  animation: loginTextRgb 7s linear infinite;
+}
+
+.portal-card h3,
+.modal-brand h2 {
+  background: linear-gradient(90deg, #07384a, #2563eb, #06b6d4, #22c55e, #07384a);
+  background-size: 400% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes loginTextRgb {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 400% 50%; }
+}
+
+.public-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(3, 20, 36, .36);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.public-nav a {
+  transition: all .25s ease;
+}
+
+.public-nav a:hover {
+  color: #67e8f9;
+  transform: translateY(-2px);
+}
+
+.header-login-btn,
+.portal-main-btn,
+.modal-login-btn {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, #06b6d4, #2563eb, #22c55e, #06b6d4) !important;
+  background-size: 300% 300% !important;
+  animation: loginRgbMove 6s ease infinite !important;
+  box-shadow:
+    0 16px 36px rgba(37, 99, 235, .32),
+    0 0 22px rgba(34, 211, 238, .18) !important;
+}
+
+.header-login-btn::before,
+.portal-main-btn::before,
+.modal-login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.34), transparent);
+  animation: loginShine 3s ease infinite;
+}
+
+@keyframes loginShine {
+  0% { left: -120%; }
+  55% { left: 140%; }
+  100% { left: 140%; }
+}
+
+.header-login-btn:hover,
+.portal-main-btn:hover,
+.modal-login-btn:hover,
+.quick-actions button:hover,
+.public-info article:hover,
+.hero-features article:hover {
+  transform: translateY(-4px) !important;
+}
+
+.portal-card,
+.login-modal,
+.hero-features,
+.public-info {
+  border: 1px solid rgba(255,255,255,.42) !important;
+  box-shadow:
+    0 34px 90px rgba(3, 18, 31, .30),
+    inset 0 1px 0 rgba(255,255,255,.35) !important;
+}
+
+.portal-card {
+  background: rgba(255,255,255,.92) !important;
+  backdrop-filter: blur(22px) saturate(130%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(130%) !important;
+}
+
+.quick-actions button,
+.public-info article,
+.hero-features article {
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-actions button::after,
+.public-info article::after,
+.hero-features article::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(34,211,238,.10), transparent);
+  opacity: 0;
+  transition: .28s ease;
+  pointer-events: none;
+}
+
+.quick-actions button:hover::after,
+.public-info article:hover::after,
+.hero-features article:hover::after {
+  opacity: 1;
+}
+
+.quick-icon,
+.feature-icon,
+.public-info span,
+.portal-benefits span {
+  transition: all .28s ease;
+}
+
+.quick-actions button:hover .quick-icon,
+.hero-features article:hover .feature-icon,
+.public-info article:hover span,
+.portal-benefits div:hover span {
+  transform: scale(1.08) rotate(-4deg);
+  box-shadow: 0 14px 28px rgba(37,99,235,.18);
+}
+
+.form-group input:focus {
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 0 4px rgba(6, 182, 212, .16), 0 12px 24px rgba(37,99,235,.08) !important;
+}
+
+.close-modal,
+.password-field button {
+  transition: all .25s ease;
+}
+
+.close-modal:hover,
+.password-field button:hover {
+  transform: translateY(-2px);
+  background: #dff8fb;
+  color: #0f7fa0;
+}
+
+@media (max-width: 760px) {
+  .public-header {
+    position: sticky;
+    top: 0;
+  }
+
+  .brand h1 {
+    background: linear-gradient(90deg, #ffffff, #67e8f9, #22c55e, #ffffff);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .portal-card {
+    box-shadow: 0 24px 60px rgba(3, 18, 31, .28) !important;
+  }
+}
+
+
+.password-toggle {
+  width: 52px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--primary);
+
+  transition: all .3s ease;
+}
+
+.password-toggle:hover {
+  color: #06b6d4;
+  transform: scale(1.12);
+}
+
+.password-toggle svg {
+  width: 22px;
+  height: 22px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.password-toggle:hover {
+  color: #06b6d4;
+  filter:
+    drop-shadow(0 0 5px #06b6d4)
+    drop-shadow(0 0 10px #3b82f6)
+    drop-shadow(0 0 15px #8b5cf6);
+
+  transform: scale(1.15);
+}
+
+.public-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+}
+
+.public-nav button {
+  position: relative;
+  border: none;
+  background: rgba(255,255,255,.10);
+  color: rgba(255,255,255,.90);
+  padding: 11px 18px;
+  border-radius: 999px;
+  font-weight: 950;
+  cursor: pointer;
+  transition: all .28s ease;
+  overflow: hidden;
+}
+
+.public-nav button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  left: -120%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.28),
+    transparent
+  );
+  transition: .65s ease;
+}
+
+.public-nav button:hover::before {
+  left: 120%;
+}
+
+.public-nav button:hover,
+.public-nav button.active {
+  background: linear-gradient(135deg, #06b6d4, #2563eb);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(37,99,235,.25);
+}
+
+.public-nav a:first-child::after {
+  display: none;
+}
+
+/*celular*/
+
+@media (max-width: 760px) {
+  .public-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 14px 16px !important;
+    background: rgba(3, 20, 36, .72) !important;
+  }
+
+  .hero-section {
+    padding: 18px 16px 24px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 22px !important;
+  }
+
+  .hero-left h2 {
+    font-size: 38px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -1px !important;
+  }
+
+  .hero-left p {
+    font-size: 15.5px !important;
+    line-height: 1.55 !important;
+  }
+
+  .public-badge {
+    font-size: 13px !important;
+    padding: 10px 14px !important;
+  }
+
+  .hero-features {
+    grid-template-columns: 1fr !important;
+    margin-top: 20px !important;
+  }
+
+  .hero-features article {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .portal-card {
+    padding: 22px 18px !important;
+    border-radius: 26px !important;
+  }
+
+  .portal-card h3 {
+    font-size: 26px !important;
+    letter-spacing: 2px !important;
+  }
+
+  .portal-card > p {
+    font-size: 15px !important;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .quick-actions button {
+    min-height: 76px !important;
+    display: flex !important;
+    text-align: left !important;
+    gap: 14px !important;
+  }
+
+  .quick-icon {
+    margin: 0 !important;
+  }
+
+  .public-section,
+  .public-info {
+    margin: 0 14px 18px !important;
+    padding: 22px 18px !important;
+  }
+
+  .public-grid,
+  .transparency-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .login-modal {
+    width: 100% !important;
+    margin: 14px 0 !important;
+    padding: 26px 20px !important;
+    border-radius: 26px !important;
+  }
+}
+
+/*Boton cerrar*/
+
+.close-modal {
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(12, 167, 216, 0.893);
+  backdrop-filter: blur(12px);
+
+  transition: all .3s ease;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: #e2d6d6;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: .3s ease;
+  }
+
+  &:hover {
+    transform: rotate(90deg) scale(1.08);
+
+    background: linear-gradient(
+      135deg,
+      #06b6d4,
+      #2563eb,
+      #7c3aed
+    );
+
+    box-shadow:
+      0 0 18px rgba(37,99,235,.45),
+      0 0 28px rgba(6,182,212,.25);
+  }
+
+  &:hover svg {
+    stroke: #ffffff;
+  }
+
+  &:active {
+    transform: rotate(90deg) scale(.96);
+  }
+}
+
+
+
+

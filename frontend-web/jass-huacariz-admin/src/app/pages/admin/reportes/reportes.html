@@ -3,21 +3,45 @@
     <div class="page-header__content">
       <span class="page-kicker">REPORTES / GERENCIA</span>
       <h2>Reportes generales</h2>
-      <p>Resumen operativo, financiero y de consumo del sistema de agua potable JASS Huacariz.</p>
+      <p>Resumen operativo, financiero y de consumo del sistema de agua potable Agua Potable Huacariz.</p>
     </div>
 
-    <div class="page-header__actions">
+   <div class="page-header__actions">
+
       <button type="button" class="btn-secondary" (click)="exportarExcel()">
+        <svg viewBox="0 0 24 24">
+          <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+          <path d="M14 3v6h6"/>
+          <path d="M8 13h8"/>
+          <path d="M8 17h5"/>
+        </svg>
         Exportar Excel
       </button>
 
       <button type="button" class="btn-secondary" (click)="imprimirReporte()">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 9V3h12v6"/>
+          <path d="M6 18h12v3H6z"/>
+          <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+        </svg>
         Imprimir PDF
       </button>
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="cargarReportes()"
+      [disabled]="cargando"
+    >
+      <svg viewBox="0 0 24 24">
+        <path d="M21 2v6h-6"/>
+        <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/>
+        <path d="M3 22v-6h6"/>
+        <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/>
+      </svg>
 
-      <button type="button" class="btn-primary" (click)="cargarReportes()" [disabled]="cargando">
-        {{ cargando ? 'Actualizando...' : 'Actualizar reportes' }}
-      </button>
+      {{ cargando ? 'Actualizando...' : 'Actualizar reportes' }}
+    </button>
+
     </div>
   </section>
 
@@ -30,42 +54,80 @@
   </div>
 
   <section class="stats-grid">
-    <article class="stat-card featured">
-      <div class="stat-card__icon">📊</div>
-      <div class="stat-card__content">
-        <span>Recibos generados</span>
-        <strong>{{ totalRecibos() }}</strong>
-        <small>Documentos emitidos</small>
-      </div>
-    </article>
 
-    <article class="stat-card">
-      <div class="stat-card__icon money">💰</div>
-      <div class="stat-card__content">
-        <span>Total recaudado</span>
-        <strong class="money-text">S/ {{ totalRecaudado() | number:'1.2-2' }}</strong>
-        <small>Pagos registrados</small>
-      </div>
-    </article>
+  <!-- RECIBOS -->
+  <article class="stat-card featured">
+    <div class="stat-card__icon reports-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <path d="M14 2v6h6"/>
+        <path d="M9 13h6"/>
+        <path d="M9 17h6"/>
+      </svg>
+    </div>
 
-    <article class="stat-card">
-      <div class="stat-card__icon water">💧</div>
-      <div class="stat-card__content">
-        <span>Consumo total</span>
-        <strong class="money-text">{{ consumoTotal() | number:'1.2-3' }} m³</strong>
-        <small>Consumo facturado</small>
-      </div>
-    </article>
+    <div class="stat-card__content">
+      <span>Recibos generados</span>
+      <strong>{{ totalRecibos() }}</strong>
+      <small>Documentos emitidos</small>
+    </div>
+  </article>
 
-    <article class="stat-card">
-      <div class="stat-card__icon user">👥</div>
-      <div class="stat-card__content">
-        <span>Clientes activos</span>
-        <strong>{{ clientesActivos() }}</strong>
-        <small>De {{ totalClientes() }} clientes</small>
-      </div>
-    </article>
-  </section>
+  <!-- RECAUDADO -->
+  <article class="stat-card">
+    <div class="stat-card__icon money-icon">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7v10"/>
+        <path d="M15.5 9.5c0-1.4-1.5-2.5-3.5-2.5s-3.5 1.1-3.5 2.5 1.5 2.5 3.5 2.5 3.5 1.1 3.5 2.5-1.5 2.5-3.5 2.5-3.5-1.1-3.5-2.5"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Total recaudado</span>
+      <strong class="money-text">
+        S/ {{ totalRecaudado() | number:'1.2-2' }}
+      </strong>
+      <small>Pagos registrados</small>
+    </div>
+  </article>
+
+  <!-- CONSUMO -->
+  <article class="stat-card">
+    <div class="stat-card__icon water-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Consumo total</span>
+      <strong class="money-text">
+        {{ consumoTotal() | number:'1.2-3' }} m³
+      </strong>
+      <small>Consumo facturado</small>
+    </div>
+  </article>
+
+  <!-- CLIENTES -->
+  <article class="stat-card">
+    <div class="stat-card__icon users-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/>
+        <circle cx="10" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Clientes activos</span>
+      <strong>{{ clientesActivos() }}</strong>
+      <small>De {{ totalClientes() }} clientes</small>
+    </div>
+  </article>
+
+</section>
 
   <section class="summary-panel">
     <div class="summary-info">
@@ -183,72 +245,140 @@
         </div>
       </div>
     </article>
+<article class="chart-card">
+  <div class="chart-header">
+    <div>
+      <span class="page-kicker small">PAGOS</span>
+      <h3>Métodos de pago</h3>
+      <p>Resumen por método de pago registrado.</p>
+    </div>
+  </div>
 
-    <article class="chart-card">
-      <div class="chart-header">
-        <div>
-          <span class="page-kicker small">PAGOS</span>
-          <h3>Métodos de pago</h3>
-          <p>Resumen por método de pago registrado.</p>
-        </div>
+  <div class="method-list">
+    <div class="method-row premium-method" *ngFor="let item of resumenMetodosPago(); let i = index">
+
+      <span class="method-logo" [ngClass]="normalizarMetodo(item.metodo).toLowerCase()">
+        <img
+          *ngIf="normalizarMetodo(item.metodo) === 'Yape'"
+          src="assets/img/pagos/yape.png"
+          alt="Yape"
+        >
+
+        <img
+          *ngIf="normalizarMetodo(item.metodo) === 'Plin'"
+          src="assets/img/pagos/plin.png"
+          alt="Plin"
+        >
+
+        <svg *ngIf="normalizarMetodo(item.metodo) === 'Efectivo'" viewBox="0 0 24 24">
+          <path d="M4 7h16v10H4z"/>
+          <circle cx="12" cy="12" r="2"/>
+          <path d="M7 10v4"/>
+          <path d="M17 10v4"/>
+        </svg>
+
+        <svg *ngIf="normalizarMetodo(item.metodo) === 'Transferencia'" viewBox="0 0 24 24">
+          <path d="M4 7h16"/>
+          <path d="M6 7l6-4 6 4"/>
+          <path d="M7 10v7"/>
+          <path d="M12 10v7"/>
+          <path d="M17 10v7"/>
+          <path d="M5 20h14"/>
+        </svg>
+
+        <svg
+          *ngIf="
+            normalizarMetodo(item.metodo) !== 'Yape' &&
+            normalizarMetodo(item.metodo) !== 'Plin' &&
+            normalizarMetodo(item.metodo) !== 'Efectivo' &&
+            normalizarMetodo(item.metodo) !== 'Transferencia'
+          "
+          viewBox="0 0 24 24"
+        >
+          <path d="M4 7h16v10H4z"/>
+          <path d="M4 10h16"/>
+          <path d="M8 15h3"/>
+        </svg>
+      </span>
+
+      <div class="method-info">
+        <strong>{{ normalizarMetodo(item.metodo) }}</strong>
+        <small>{{ item.cantidad }} pago(s) · {{ item.porcentaje | number:'1.0-1' }}%</small>
       </div>
 
-      <div class="method-list">
-        <div class="method-row" *ngFor="let item of resumenMetodosPago(); let i = index">
-          <span class="dot" [style.background]="colorMetodo(i)"></span>
+      <strong class="method-amount">S/ {{ item.monto | number:'1.2-2' }}</strong>
+    </div>
 
-          <div>
-            <strong>{{ item.metodo }}</strong>
-            <small>{{ item.cantidad }} pago(s) · {{ item.porcentaje | number:'1.0-1' }}%</small>
-          </div>
-
-          <strong>S/ {{ item.monto | number:'1.2-2' }}</strong>
-        </div>
-
-        <div *ngIf="resumenMetodosPago().length === 0" class="empty-box">
-          No hay pagos registrados.
-        </div>
+    <div *ngIf="resumenMetodosPago().length === 0" class="empty-box">
+      No hay pagos registrados.
+    </div>
       </div>
     </article>
   </section>
 
-  <section class="stats-grid secondary">
-    <article class="stat-card small">
-      <div class="stat-card__icon home">🏠</div>
-      <div class="stat-card__content">
-        <span>Suministros</span>
-        <strong>{{ totalSuministros() }}</strong>
-        <small>{{ suministrosInstalados() }} instalados</small>
-      </div>
-    </article>
+ <section class="stats-grid secondary">
 
-    <article class="stat-card small">
-      <div class="stat-card__icon pending">⏳</div>
-      <div class="stat-card__content">
-        <span>Recibos pendientes</span>
-        <strong>{{ recibosPendientes() }}</strong>
-        <small>{{ porcentajePendientes() | number:'1.0-1' }}%</small>
-      </div>
-    </article>
+  <article class="stat-card small">
+    <div class="stat-card__icon home-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 10.5 12 3l9 7.5"/>
+        <path d="M5 10v10h14V10"/>
+        <path d="M9 20v-6h6v6"/>
+      </svg>
+    </div>
 
-    <article class="stat-card small">
-      <div class="stat-card__icon success">✅</div>
-      <div class="stat-card__content">
-        <span>Recibos pagados</span>
-        <strong>{{ recibosPagados() }}</strong>
-        <small>{{ porcentajePagados() | number:'1.0-1' }}%</small>
-      </div>
-    </article>
+    <div class="stat-card__content">
+      <span>Suministros</span>
+      <strong>{{ totalSuministros() }}</strong>
+      <small>{{ suministrosInstalados() }} instalados</small>
+    </div>
+  </article>
 
-    <article class="stat-card small">
-      <div class="stat-card__icon config">⚙️</div>
-      <div class="stat-card__content">
-        <span>Tarifas activas</span>
-        <strong>{{ tarifasActivas() }}</strong>
-        <small>Promedio S/ {{ tarifaPromedio() | number:'1.2-2' }}</small>
-      </div>
-    </article>
-  </section>
+  <article class="stat-card small">
+    <div class="stat-card__icon pending-icon">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7v5l3 2"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Recibos pendientes</span>
+      <strong>{{ recibosPendientes() }}</strong>
+      <small>{{ porcentajePendientes() | number:'1.0-1' }}%</small>
+    </div>
+  </article>
+
+  <article class="stat-card small">
+    <div class="stat-card__icon success-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M20 6 9 17l-5-5"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Recibos pagados</span>
+      <strong>{{ recibosPagados() }}</strong>
+      <small>{{ porcentajePagados() | number:'1.0-1' }}%</small>
+    </div>
+  </article>
+
+  <article class="stat-card small">
+    <div class="stat-card__icon config-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+        <path d="M19.4 15a1.8 1.8 0 0 0 .36 2l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.8 1.8 0 0 0-2-.36 1.8 1.8 0 0 0-1 1.63V21a2 2 0 0 1-4 0v-.09a1.8 1.8 0 0 0-1-1.63 1.8 1.8 0 0 0-2 .36l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.8 1.8 0 0 0 .36-2 1.8 1.8 0 0 0-1.63-1H3a2 2 0 0 1 0-4h.09a1.8 1.8 0 0 0 1.63-1 1.8 1.8 0 0 0-.36-2l-.06-.06A2 2 0 0 1 7.13 3.9l.06.06a1.8 1.8 0 0 0 2 .36A1.8 1.8 0 0 0 10.2 2.7V2a2 2 0 0 1 4 0v.09a1.8 1.8 0 0 0 1 1.63 1.8 1.8 0 0 0 2-.36l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.8 1.8 0 0 0-.36 2 1.8 1.8 0 0 0 1.63 1H21a2 2 0 0 1 0 4h-.09a1.8 1.8 0 0 0-1.51 1z"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Tarifas activas</span>
+      <strong>{{ tarifasActivas() }}</strong>
+      <small>Promedio S/ {{ tarifaPromedio() | number:'1.2-2' }}</small>
+    </div>
+  </article>
+
+</section>
 
   <section class="content-grid">
     <article class="table-card wide">

@@ -13,4 +13,7 @@ public interface PagoRepository extends JpaRepository<Pago, Integer> {
     Optional<Pago> findByReciboId(Integer reciboId);
 
     List<Pago> findByReciboSuministroCodigoSuministro(String codigoSuministro);
+
+    List<Pago> findByEstadoPagoOrderByFechaPagoDesc(String estadoPago);
+    boolean existsByCodigoOperacionIgnoreCaseAndEstadoPagoIn(String codigoOperacion, List<String> estados);
 }

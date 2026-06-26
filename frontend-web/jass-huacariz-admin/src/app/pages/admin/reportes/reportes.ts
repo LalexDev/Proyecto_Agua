@@ -240,7 +240,7 @@ export class Reportes implements OnInit {
     const mapa = new Map<string, { cantidad: number; monto: number }>();
 
     for (const pago of this.pagos as any[]) {
-      const metodo = String(pago.metodoPago || pago.metodo || 'No especificado');
+      const metodo = this.normalizarMetodo(pago.metodoPago);
       const actual = mapa.get(metodo) || { cantidad: 0, monto: 0 };
 
       actual.cantidad += 1;
@@ -344,7 +344,7 @@ export class Reportes implements OnInit {
     const fechaArchivo = new Date().toISOString().slice(0, 10);
 
     const resumen = [
-      ['JASS HUACARIZ - REPORTE GENERAL'],
+      ['AGUA POTABLE HUACARIZ - REPORTE GENERAL'],
       [`Fecha de emisión: ${new Date().toLocaleString('es-PE')}`],
       [],
       ['RESUMEN PRINCIPAL'],
@@ -410,7 +410,7 @@ export class Reportes implements OnInit {
     XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detalleClientes), 'Clientes');
     XLSX.utils.book_append_sheet(workbook, this.crearHojaDetalle(detalleTarifas), 'Tarifas');
 
-    XLSX.writeFile(workbook, `reporte_general_jass_huacariz_${fechaArchivo}.xlsx`);
+    XLSX.writeFile(workbook, `reporte_general_agua_potable_huacariz_${fechaArchivo}.xlsx`);
   }
 
   imprimirReporte(): void {
@@ -456,7 +456,7 @@ export class Reportes implements OnInit {
       <html lang="es">
       <head>
         <meta charset="UTF-8">
-        <title>Reporte general - JASS Huacariz</title>
+        <title>Reporte general - Agua Potable Huacariz</title>
         <style>
           * { box-sizing: border-box; }
 
@@ -596,7 +596,7 @@ export class Reportes implements OnInit {
           <div class="brand">
             <div class="logo">💧</div>
             <div>
-              <h1>JASS Huacariz</h1>
+              <h1>Agua Potable Huacariz</h1>
               <p>Reporte general del sistema de agua potable</p>
               <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
             </div>
@@ -794,5 +794,17 @@ export class Reportes implements OnInit {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+
+  normalizarMetodo(metodo: string): string {
+  const valor = String(metodo || '').trim().toLowerCase();
+
+  if (valor === 'yape') return 'Yape';
+  if (valor === 'plin') return 'Plin';
+  if (valor === 'efectivo' || valor === 'pagoefectivo') return 'Efectivo';
+  if (valor === 'transferencia') return 'Transferencia';
+
+    return metodo || 'Sin método';
   }
 }

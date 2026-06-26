@@ -1,0 +1,169 @@
+<section class="pending-panel">
+  <div class="pending-header">
+    <div>
+      <span class="page-kicker small">CONTROL DE LECTURAS</span>
+      <h3>Historial de usuarios sin lectura</h3>
+      <p>
+        Consulta los suministros activos que aún no tienen lectura registrada por mes y año.
+      </p>
+    </div>
+
+    <div class="pending-actions">
+      <button type="button" class="btn-secondary" (click)="exportarPendientesExcel()">
+        <svg viewBox="0 0 24 24">
+          <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+          <path d="M14 3v6h6"/>
+          <path d="M9 13l4 4"/>
+          <path d="M13 13l-4 4"/>
+        </svg>
+        Exportar Excel
+      </button>
+
+      <button type="button" class="btn-secondary" (click)="imprimirPendientes()">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 9V3h12v6"/>
+          <path d="M6 18h12v3H6z"/>
+          <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+        </svg>
+        Imprimir PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="pending-filter">
+    <select [(ngModel)]="filtroPendienteMes">
+      <option [ngValue]="1">Enero</option>
+      <option [ngValue]="2">Febrero</option>
+      <option [ngValue]="3">Marzo</option>
+      <option [ngValue]="4">Abril</option>
+      <option [ngValue]="5">Mayo</option>
+      <option [ngValue]="6">Junio</option>
+      <option [ngValue]="7">Julio</option>
+      <option [ngValue]="8">Agosto</option>
+      <option [ngValue]="9">Septiembre</option>
+      <option [ngValue]="10">Octubre</option>
+      <option [ngValue]="11">Noviembre</option>
+      <option [ngValue]="12">Diciembre</option>
+    </select>
+
+    <input
+      type="number"
+      placeholder="Año"
+      [(ngModel)]="filtroPendienteAnio"
+    >
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="buscarPendientesLectura()"
+        [disabled]="cargandoPendientes"
+      >
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="M20 20l-3.5-3.5"/>
+        </svg>
+        {{ cargandoPendientes ? 'Buscando...' : 'Buscar' }}
+      </button>
+  </div>
+
+  <div *ngIf="errorPendientes" class="alert alert-error">
+    {{ errorPendientes }}
+  </div>
+
+  <div *ngIf="exitoPendientes" class="alert alert-info">
+    {{ exitoPendientes }}
+  </div>
+
+  <div class="pending-stats">
+    <article>
+      <span>Total sin lectura</span>
+      <strong>{{ totalSinLectura() }}</strong>
+    </article>
+
+    <article>
+      <span>Instalados</span>
+      <strong>{{ pendientesInstalados() }}</strong>
+    </article>
+
+    <article>
+      <span>Pendientes instalación</span>
+      <strong>{{ pendientesPorInstalar() }}</strong>
+    </article>
+  </div>
+
+  <div class="pending-search">
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        type="text"
+        placeholder="Buscar por cliente, DNI, suministro, dirección o sector..."
+        [(ngModel)]="busquedaPendientes"
+        (input)="aplicarFiltroPendientes()"
+      >
+    </div>
+
+    <button type="button" class="btn-secondary" (click)="limpiarFiltroPendientes()">
+        <svg viewBox="0 0 24 24">
+        <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+        <path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17z"/>
+      </svg>
+        Limpiar
+      </button>
+  </div>
+
+  <div class="table-responsive">
+    <table class="pending-table">
+      <thead>
+        <tr>
+          <th>Suministro</th>
+          <th>Cliente</th>
+          <th>DNI</th>
+          <th>Periodo</th>
+          <th>Dirección</th>
+          <th>Sector</th>
+          <th>Instalación</th>
+          <th>Lectura anterior</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let item of pendientesFiltrados">
+          <td>
+            <strong>{{ item.codigoSuministro }}</strong>
+            <small>{{ item.aliasSuministro || '-' }}</small>
+          </td>
+
+          <td>
+            <strong>{{ item.nombreCliente }}</strong>
+          </td>
+
+          <td>{{ item.dniCliente || '-' }}</td>
+
+          <td>{{ nombreMes(item.mes) }} {{ item.anio }}</td>
+
+          <td>
+            <strong>{{ item.direccionSuministro || '-' }}</strong>
+            <small>{{ item.referencia || '-' }}</small>
+          </td>
+
+          <td>{{ item.sector || '-' }}</td>
+
+          <td>
+            <span class="status-badge" [ngClass]="estadoInstalacionClase(item.estadoInstalacion)">
+              {{ estadoInstalacionTexto(item.estadoInstalacion) }}
+            </span>
+          </td>
+
+          <td>
+            <strong>{{ item.lecturaAnterior | number:'1.2-3' }} m³</strong>
+          </td>
+        </tr>
+
+        <tr *ngIf="pendientesFiltrados.length === 0 && !cargandoPendientes">
+          <td colspan="8" class="empty-state">
+            No hay usuarios sin lectura para el periodo seleccionado.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

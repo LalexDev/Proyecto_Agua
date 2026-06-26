@@ -352,7 +352,7 @@ export class QrSuministro implements OnInit {
             <div class="brand-left">
               <div class="logo">💧</div>
               <div>
-                <h1>JASS Huacariz</h1>
+                <h1>Agua Potable Huacariz</h1>
                 <p class="subtitle">Ficha de identificación de suministro</p>
               </div>
             </div>
@@ -394,7 +394,7 @@ export class QrSuministro implements OnInit {
           </div>
 
           <div class="footer">
-            Este código identifica únicamente el suministro registrado en el sistema JASS Huacariz.
+            Este código identifica únicamente el suministro registrado en el sistema Agua Potable Huacariz.
             Debe colocarse en un lugar visible para facilitar el registro mensual de lectura.
           </div>
         </div>

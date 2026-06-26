@@ -3,19 +3,31 @@
     <div class="page-header__content">
       <span class="page-kicker">PORTAL CLIENTE / PAGO</span>
       <h2>Pagar recibo</h2>
-      <p>Registra el pago de tu recibo mediante canales digitales autorizados.</p>
+      <p>Envía tu comprobante para validación. Agua potable Huacariz confirmará el pago antes de marcarlo como pagado.</p>
     </div>
 
     <div class="page-header__actions">
       <button type="button" class="btn-secondary" (click)="volver()">
+        <svg viewBox="0 0 24 24">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
         Regresar
       </button>
 
       <button type="button" class="btn-secondary" (click)="imprimirRecibo()" [disabled]="!recibo">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 9V3h12v6"/>
+          <path d="M6 18h12v3H6z"/>
+          <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+        </svg>
         Imprimir recibo
       </button>
 
       <button type="button" class="btn-primary" (click)="cargarRecibo()" [disabled]="cargando">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
+          <path d="M21 3v6h-6"/>
+        </svg>
         {{ cargando ? 'Actualizando...' : 'Actualizar' }}
       </button>
     </div>
@@ -50,50 +62,10 @@
       <div class="hero-kpi">
         <span>Total a pagar</span>
         <strong>S/ {{ item.total | number:'1.2-2' }}</strong>
-        <small>{{ puedePagar() ? 'Pendiente de pago' : 'Recibo cancelado' }}</small>
+        <small>
+          {{ item.estadoRecibo === 'PAGO_EN_REVISION' ? 'Pago enviado para revisión' : (puedePagar() ? 'Pendiente de validación' : 'Recibo cancelado') }}
+        </small>
       </div>
-    </section>
-
-    <section class="stats-grid">
-      <article class="stat-card featured">
-        <div class="stat-icon">▤</div>
-        <div>
-          <span>Recibo</span>
-          <strong>{{ item.codigoRecibo }}</strong>
-          <small>{{ periodo(item) }}</small>
-        </div>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-icon water">💧</div>
-        <div>
-          <span>Consumo</span>
-          <strong>{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
-          <small>Consumo facturado</small>
-        </div>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-icon money">S/</div>
-        <div>
-          <span>Cargos adicionales</span>
-          <strong>S/ {{ totalCargos() | number:'1.2-2' }}</strong>
-          <small>Mantenimiento, lector, otros y mora</small>
-        </div>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-icon success">✓</div>
-        <div>
-          <span>Estado</span>
-          <strong>
-            <span class="badge" [ngClass]="estadoClase(item.estadoRecibo)">
-              {{ item.estadoRecibo || 'PENDIENTE' }}
-            </span>
-          </strong>
-          <small>Estado actual</small>
-        </div>
-      </article>
     </section>
 
     <section class="payment-grid">
@@ -101,17 +73,32 @@
         <div class="section-title">
           <div>
             <span class="tag">Método de pago</span>
-            <h3>Selecciona cómo pagaste</h3>
+            <h3>Enviar pago para validación</h3>
           </div>
         </div>
 
-        <div *ngIf="!puedePagar()" class="already-paid">
-          <div class="paid-icon">✓</div>
-          <h3>Este recibo ya fue pagado</h3>
-          <p>No es necesario registrar un nuevo pago para este recibo.</p>
+        <div *ngIf="item.estadoRecibo === 'PAGO_EN_REVISION'" class="already-paid">
+          <div class="paid-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 8v5l3 2"/>
+              <circle cx="12" cy="12" r="9"/>
+            </svg>
+          </div>
+          <h3>Pago en revisión</h3>
+          <p>Tu comprobante fue enviado. Agua potable Huacariz verificará la operación y confirmará el pago.</p>
         </div>
 
-        <ng-container *ngIf="puedePagar()">
+        <div *ngIf="item.estadoRecibo === 'PAGADO'" class="already-paid">
+          <div class="paid-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </div>
+          <h3>Este recibo ya fue pagado</h3>
+          <p>No es necesario registrar un nuevo pago.</p>
+        </div>
+
+        <ng-container *ngIf="puedePagar() && item.estadoRecibo !== 'PAGO_EN_REVISION'">
           <div class="method-grid">
             <button
               type="button"
@@ -120,7 +107,21 @@
               [class.active]="pago.metodoPago === metodo.codigo"
               (click)="seleccionarMetodo(metodo.codigo)"
             >
-              <span>{{ metodo.icono }}</span>
+              <span class="method-logo">
+                <img *ngIf="(metodo.nombre || '').toLowerCase().includes('yape')" src="assets/img/pagos/yape.png" alt="Yape">
+                <img *ngIf="(metodo.nombre || '').toLowerCase().includes('plin')" src="assets/img/pagos/plin.png" alt="Plin">
+                <img *ngIf="(metodo.nombre || '').toLowerCase().includes('transfer')" src="assets/img/pagos/transferencia.png" alt="Transferencia">
+
+                <svg *ngIf="
+                  !(metodo.nombre || '').toLowerCase().includes('yape') &&
+                  !(metodo.nombre || '').toLowerCase().includes('plin') &&
+                  !(metodo.nombre || '').toLowerCase().includes('transfer')
+                " viewBox="0 0 24 24">
+                  <path d="M4 7h16v10H4z"/>
+                  <path d="M4 10h16"/>
+                  <path d="M8 15h4"/>
+                </svg>
+              </span>
 
               <div>
                 <strong>{{ metodo.nombre }}</strong>
@@ -128,6 +129,44 @@
               </div>
             </button>
           </div>
+
+          <div class="canal-pago-box" *ngIf="canalSeleccionado() as canal">
+              <div class="canal-pago-header">
+                <span class="tag">Canal autorizado</span>
+                <strong>{{ canal.metodoPago }}</strong>
+              </div>
+
+              <div class="canal-pago-grid">
+                <div>
+                  <span>Titular</span>
+                  <strong>{{ canal.titular }}</strong>
+                </div>
+
+                <div *ngIf="canal.numero">
+                  <span>Número</span>
+                  <strong>{{ canal.numero }}</strong>
+                </div>
+
+                <div *ngIf="canal.banco">
+                  <span>Banco</span>
+                  <strong>{{ canal.banco }}</strong>
+                </div>
+
+                <div *ngIf="canal.cuenta">
+                  <span>Cuenta</span>
+                  <strong>{{ canal.cuenta }}</strong>
+                </div>
+
+                <div *ngIf="canal.cci">
+                  <span>CCI</span>
+                  <strong>{{ canal.cci }}</strong>
+                </div>
+              </div>
+
+              <p *ngIf="canal.descripcion">
+                {{ canal.descripcion }}
+              </p>
+            </div>
 
           <div class="form-card">
             <label>
@@ -139,12 +178,37 @@
               >
             </label>
 
-            <div class="selected-method" *ngIf="metodoSeleccionado() as metodo">
-              <span>{{ metodo.icono }}</span>
-              <div>
-                <strong>{{ metodo.nombre }}</strong>
-                <small>{{ metodo.descripcion }}</small>
+              <div class="upload-box">
+                <div class="upload-title">
+                  <span>Captura del comprobante</span>
+                  <small>Sube una imagen clara del pago realizado.</small>
+                </div>
+
+                <label class="upload-area">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    (change)="seleccionarComprobante($event)"
+                  >
+
+                  <span class="upload-icon">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 16V4"/>
+                      <path d="M6 10l6-6 6 6"/>
+                      <path d="M4 20h16"/>
+                    </svg>
+                  </span>
+
+                  <div>
+                    <strong>{{ comprobanteArchivo ? comprobanteArchivo.name : 'Seleccionar comprobante' }}</strong>
+                    <small>JPG, PNG o WEBP · máximo 3 MB</small>
+                  </div>
+                </label>
               </div>
+
+            <div class="comprobante-preview" *ngIf="comprobantePreview">
+              <span>Vista previa</span>
+              <img [src]="comprobantePreview" alt="Comprobante de pago">
             </div>
 
             <button
@@ -153,7 +217,11 @@
               (click)="confirmarPago()"
               [disabled]="procesando"
             >
-              {{ procesando ? 'Registrando pago...' : 'Confirmar pago' }}
+              <svg viewBox="0 0 24 24">
+                <path d="M12 19V5"/>
+                <path d="M5 12l7-7 7 7"/>
+              </svg>
+              {{ procesando ? 'Enviando a revisión...' : 'Enviar pago para validación' }}
             </button>
           </div>
         </ng-container>
@@ -202,19 +270,8 @@
         <div class="notice-box">
           <strong>Importante</strong>
           <p>
-            El pago en efectivo se registra únicamente en la municipalidad de Huacariz.
-            Como cliente, registra aquí pagos realizados por canales digitales o autorizados.
+            Este registro no confirma el pago automáticamente. Agua Potable Huacariz validará el código de operación antes de marcar el recibo como pagado.
           </p>
-        </div>
-
-        <div class="summary-actions">
-          <a class="btn-secondary" [routerLink]="['/cliente/detalle-recibo', item.id]">
-            Ver detalle completo
-          </a>
-
-          <button type="button" class="btn-secondary" (click)="imprimirRecibo()">
-            Imprimir recibo
-          </button>
         </div>
       </article>
     </section>

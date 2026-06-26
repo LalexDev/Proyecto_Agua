@@ -29,6 +29,12 @@ export interface ReciboResponse {
   fechaEmision: string;
   fechaVencimiento: string;
 
+  telefonoCliente?: string;
+  telefono?: string;
+  celularCliente?: string;
+  celular?: string;
+
+
   codigoBarras?: string;
 }
 

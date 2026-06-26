@@ -20,4 +20,5 @@ public class PagoResponse {
     private BigDecimal monto;
     private String estadoPago;
     private LocalDateTime fechaPago;
+    private String comprobanteUrl;
 }

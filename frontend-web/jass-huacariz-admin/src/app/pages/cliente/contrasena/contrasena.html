@@ -8,27 +8,31 @@
 
     <div class="page-header__actions">
       <button type="button" class="btn-secondary" (click)="volver()">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 12H5" />
+          <path d="M12 19l-7-7 7-7" />
+        </svg>
         Regresar
       </button>
 
       <button type="button" class="btn-primary" (click)="cambiarPassword()" [disabled]="cargando">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
         {{ cargando ? 'Guardando...' : 'Guardar cambios' }}
       </button>
     </div>
   </section>
 
-  <div *ngIf="error" class="alert alert-error">
-    {{ error }}
-  </div>
 
-  <div *ngIf="exito" class="alert alert-success">
-    {{ exito }}
-  </div>
 
   <section class="hero-card">
     <div class="hero-user">
       <div class="hero-avatar">
-        {{ iniciales() }}
+        <svg viewBox="0 0 24 24">
+          <rect x="5" y="11" width="14" height="10" rx="2" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </svg>
       </div>
 
       <div>
@@ -37,9 +41,18 @@
         <p>{{ codigoUsuario() }}</p>
 
         <div class="hero-meta">
-          <span>Acceso protegido</span>
-          <span>Portal cliente</span>
-          <span>JASS Huacariz</span>
+          <span>
+            <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>
+            Acceso protegido
+          </span>
+          <span>
+            <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z" /><path d="M8 9h8M8 13h6" /></svg>
+            Portal cliente
+          </span>
+          <span>
+            <svg viewBox="0 0 24 24"><path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z" /></svg>
+            Agua Potable Huacariz
+          </span>
         </div>
       </div>
     </div>
@@ -63,8 +76,14 @@
       <form class="password-form" (ngSubmit)="cambiarPassword()">
         <label>
           Contraseña actual
-
           <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24">
+                <rect x="5" y="11" width="14" height="10" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+            </span>
+
             <input
               [type]="mostrarActual ? 'text' : 'password'"
               [(ngModel)]="form.passwordActual"
@@ -74,6 +93,16 @@
             >
 
             <button type="button" (click)="mostrarActual = !mostrarActual">
+              <svg *ngIf="!mostrarActual" viewBox="0 0 24 24">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg *ngIf="mostrarActual" viewBox="0 0 24 24">
+                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a20.1 20.1 0 0 1 5.06-5.94" />
+                <path d="M9.9 4.24A10.8 10.8 0 0 1 12 4c7 0 11 8 11 8a19.7 19.7 0 0 1-3.17 4.17" />
+                <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24" />
+                <path d="M1 1l22 22" />
+              </svg>
               {{ mostrarActual ? 'Ocultar' : 'Ver' }}
             </button>
           </div>
@@ -81,8 +110,14 @@
 
         <label>
           Nueva contraseña
-
           <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 3v18" />
+                <path d="M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6" />
+              </svg>
+            </span>
+
             <input
               [type]="mostrarNueva ? 'text' : 'password'"
               [(ngModel)]="form.nuevaPassword"
@@ -92,6 +127,16 @@
             >
 
             <button type="button" (click)="mostrarNueva = !mostrarNueva">
+              <svg *ngIf="!mostrarNueva" viewBox="0 0 24 24">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg *ngIf="mostrarNueva" viewBox="0 0 24 24">
+                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a20.1 20.1 0 0 1 5.06-5.94" />
+                <path d="M9.9 4.24A10.8 10.8 0 0 1 12 4c7 0 11 8 11 8a19.7 19.7 0 0 1-3.17 4.17" />
+                <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24" />
+                <path d="M1 1l22 22" />
+              </svg>
               {{ mostrarNueva ? 'Ocultar' : 'Ver' }}
             </button>
           </div>
@@ -99,8 +144,13 @@
 
         <label>
           Confirmar nueva contraseña
-
           <div class="input-wrap">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            </span>
+
             <input
               [type]="mostrarConfirmar ? 'text' : 'password'"
               [(ngModel)]="form.confirmarPassword"
@@ -110,6 +160,16 @@
             >
 
             <button type="button" (click)="mostrarConfirmar = !mostrarConfirmar">
+              <svg *ngIf="!mostrarConfirmar" viewBox="0 0 24 24">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg *ngIf="mostrarConfirmar" viewBox="0 0 24 24">
+                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a20.1 20.1 0 0 1 5.06-5.94" />
+                <path d="M9.9 4.24A10.8 10.8 0 0 1 12 4c7 0 11 8 11 8a19.7 19.7 0 0 1-3.17 4.17" />
+                <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24" />
+                <path d="M1 1l22 22" />
+              </svg>
               {{ mostrarConfirmar ? 'Ocultar' : 'Ver' }}
             </button>
           </div>
@@ -130,12 +190,26 @@
           </div>
         </div>
 
+          <div *ngIf="exito" class="alert alert-success">
+            {{ exito }}
+          </div>
+
+            <div *ngIf="error" class="alert alert-error">
+              {{ error }}
+            </div>
+
         <div class="form-actions">
           <button type="button" class="btn-secondary" (click)="limpiarFormulario()" [disabled]="cargando">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" />
+            </svg>
             Limpiar
           </button>
 
           <button type="submit" class="btn-primary" [disabled]="cargando">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
             {{ cargando ? 'Actualizando...' : 'Cambiar contraseña' }}
           </button>
         </div>
@@ -152,7 +226,9 @@
 
       <div class="tips-list">
         <div>
-          <span class="tip-icon">1</span>
+          <span class="tip-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2v20" /><path d="M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6" /></svg>
+          </span>
           <div>
             <strong>Usa mínimo 6 caracteres</strong>
             <small>Mientras más larga sea la contraseña, mayor seguridad tendrá.</small>
@@ -160,7 +236,9 @@
         </div>
 
         <div>
-          <span class="tip-icon">2</span>
+          <span class="tip-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16" /><path d="M7 12h10" /><path d="M10 17h4" /></svg>
+          </span>
           <div>
             <strong>Combina letras y números</strong>
             <small>Agrega mayúsculas, minúsculas y números para mejorar la protección.</small>
@@ -168,7 +246,9 @@
         </div>
 
         <div>
-          <span class="tip-icon">3</span>
+          <span class="tip-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+          </span>
           <div>
             <strong>No compartas tu contraseña</strong>
             <small>Evita enviarla por WhatsApp, mensajes o anotarla en lugares visibles.</small>
@@ -176,7 +256,9 @@
         </div>
 
         <div>
-          <span class="tip-icon">4</span>
+          <span class="tip-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></svg>
+          </span>
           <div>
             <strong>Cambia tu clave si sospechas acceso externo</strong>
             <small>Actualízala si otra persona conoce tus credenciales.</small>
@@ -188,7 +270,7 @@
         <strong>Importante</strong>
         <p>
           Después de cambiar tu contraseña, úsala en el siguiente inicio de sesión.
-          Si olvidas tu acceso, comunícate con el administrador de JASS Huacariz.
+          Si olvidas tu acceso, comunícate con el administrador de Agua Potable Huacariz.
         </p>
       </div>
     </article>

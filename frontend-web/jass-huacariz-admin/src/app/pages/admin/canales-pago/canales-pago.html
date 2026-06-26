@@ -1,0 +1,157 @@
+<div class="canales-page">
+  <section class="page-header">
+    <div class="page-header__content">
+      <span class="page-kicker">ADMINISTRACIÓN / PAGOS</span>
+      <h2>Canales de pago</h2>
+      <p>Administra los números de Yape, Plin, cuentas bancarias, CCI y datos que verá el cliente al pagar.</p>
+    </div>
+
+    <div class="page-header__actions">
+      <button type="button" class="btn-primary btn-icon" (click)="cargarCanales()" [disabled]="cargando">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 2v6h-6"/>
+          <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/>
+          <path d="M3 22v-6h6"/>
+          <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/>
+        </svg>
+        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="exito" class="alert alert-success">{{ exito }}</div>
+  <div *ngIf="cargando" class="alert alert-info">Cargando canales de pago...</div>
+
+  <section class="channels-grid">
+    <article class="channel-card" *ngFor="let canal of canales">
+      <div class="channel-top">
+        <div class="channel-icon" [ngClass]="normalizarMetodo(canal.metodoPago).toLowerCase()">
+          <img *ngIf="normalizarMetodo(canal.metodoPago) === 'Yape'" src="assets/img/pagos/yape.png" alt="Yape">
+          <img *ngIf="normalizarMetodo(canal.metodoPago) === 'Plin'" src="assets/img/pagos/plin.png" alt="Plin">
+          <img *ngIf="normalizarMetodo(canal.metodoPago) === 'Transferencia'" src="assets/img/pagos/transferencia.png" alt="Transferencia">
+
+          <svg
+            *ngIf="
+              normalizarMetodo(canal.metodoPago) !== 'Yape' &&
+              normalizarMetodo(canal.metodoPago) !== 'Plin' &&
+              normalizarMetodo(canal.metodoPago) !== 'Transferencia'
+            "
+            viewBox="0 0 24 24"
+          >
+            <path d="M4 7h16v10H4z"/>
+            <path d="M4 10h16"/>
+            <path d="M8 15h4"/>
+          </svg>
+        </div>
+
+        <span class="status-badge" [ngClass]="estadoClase(canal)">
+          {{ estadoTexto(canal) }}
+        </span>
+      </div>
+
+      <div class="channel-body">
+        <span class="page-kicker small">{{ normalizarMetodo(canal.metodoPago) }}</span>
+        <h3>{{ canal.titular }}</h3>
+        <p>{{ canal.descripcion || 'Sin descripción registrada.' }}</p>
+      </div>
+
+      <div class="channel-data">
+        <div *ngIf="canal.numero">
+          <span>Número</span>
+          <strong>{{ canal.numero }}</strong>
+        </div>
+
+        <div *ngIf="canal.banco">
+          <span>Banco</span>
+          <strong>{{ canal.banco }}</strong>
+        </div>
+
+        <div *ngIf="canal.cuenta">
+          <span>Cuenta</span>
+          <strong>{{ canal.cuenta }}</strong>
+        </div>
+
+        <div *ngIf="canal.cci">
+          <span>CCI</span>
+          <strong>{{ canal.cci }}</strong>
+        </div>
+      </div>
+
+      <button type="button" class="btn-primary full btn-icon" (click)="editar(canal)">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25z"/>
+          <path d="M14.06 4.94l3.75 3.75"/>
+        </svg>
+        Editar canal
+      </button>
+    </article>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="canalEditando">
+    <div class="edit-modal">
+      <div class="edit-modal__header">
+        <div>
+          <span class="tag">Editar canal</span>
+          <h3>{{ normalizarMetodo(canalEditando.metodoPago) }}</h3>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarEditor()">
+          ✕
+        </button>
+      </div>
+
+      <div class="edit-form">
+        <label>
+          Titular
+          <input type="text" [(ngModel)]="canalEditando.titular">
+        </label>
+
+        <label>
+          Número / celular
+          <input type="text" [(ngModel)]="canalEditando.numero">
+        </label>
+
+        <label>
+          Banco
+          <input type="text" [(ngModel)]="canalEditando.banco">
+        </label>
+
+        <label>
+          Cuenta
+          <input type="text" [(ngModel)]="canalEditando.cuenta">
+        </label>
+
+        <label>
+          CCI
+          <input type="text" [(ngModel)]="canalEditando.cci">
+        </label>
+
+        <label>
+          URL QR
+          <input type="text" [(ngModel)]="canalEditando.qrUrl">
+        </label>
+
+        <label class="full">
+          Descripción
+          <textarea rows="3" [(ngModel)]="canalEditando.descripcion"></textarea>
+        </label>
+
+        <label class="switch-row full">
+          <span>Canal activo</span>
+          <input type="checkbox" [(ngModel)]="canalEditando.estado">
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarEditor()" [disabled]="guardando">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="guardar()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

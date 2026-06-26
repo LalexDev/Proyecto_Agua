@@ -55,12 +55,19 @@ export class Recibos implements OnInit {
       )
       .subscribe({
         next: (data) => {
-          this.recibos = data || [];
-          this.aplicarFiltros();
-          this.exito = 'Recibos actualizados correctamente.';
-          this.cdr.detectChanges();
-        },
-        error: () => {
+            this.recibos = data || [];
+            this.aplicarFiltros();
+
+            this.exito = 'Recibos actualizados correctamente.';
+
+            setTimeout(() => {
+              this.exito = '';
+              this.cdr.detectChanges();
+            }, 2000);
+
+            this.cdr.detectChanges();
+          },
+                  error: () => {
           this.error = 'No se pudieron cargar los recibos. Verifica el backend y tu sesión ADMIN.';
           this.exito = '';
           this.recibos = [];
@@ -306,4 +313,62 @@ export class Recibos implements OnInit {
 
     return meses[mes - 1] || 'Mes inválido';
   }
+
+
+  enviarWhatsApp(recibo: any): void {
+  const telefono = this.obtenerTelefonoCliente(recibo);
+
+  if (!telefono) {
+    this.error = 'Este cliente no tiene teléfono registrado para enviar WhatsApp.';
+    this.exito = '';
+    return;
+  }
+
+  const enlacePortal = 'https://qnsdd0d9-4200.brs.devtunnels.ms/cliente/mis-recibos';
+
+  const mensaje = `💧 *AGUA POTABLE HUACARIZ - NOTIFICACIÓN DE RECIBO*
+
+Estimado(a) *${recibo.nombreCliente || 'usuario'}*:
+
+Le informamos que su recibo de agua potable correspondiente a *${this.periodo(recibo)}* ya fue generado.
+
+📄 Código de recibo: *${recibo.codigoRecibo || '-'}*
+🏠 Suministro: *${recibo.codigoSuministro || '-'}*
+💰 Total a pagar: *S/ ${Number(recibo.total || 0).toFixed(2)}*
+📅 Fecha de vencimiento: *${recibo.fechaVencimiento || '-'}*
+
+⚠️ Por favor realice su pago dentro del plazo establecido de 15 días para evitar mora o restricciones del servicio.
+
+🔗 Consulte su recibo aquí:
+${enlacePortal}
+
+*AGUA POTABLE HUACARIZ*
+Servicio de Agua Potable`;
+
+  const url = `https://wa.me/51${telefono}?text=${encodeURIComponent(mensaje)}`;
+
+  window.open(url, '_blank');
+}
+
+obtenerTelefonoCliente(recibo: any): string {
+  const telefono = String(
+    recibo.telefonoCliente ||
+    recibo.telefono ||
+    recibo.celularCliente ||
+    recibo.celular ||
+    ''
+  ).replace(/\D/g, '');
+
+  if (telefono.length === 9) {
+    return telefono;
+  }
+
+  if (telefono.length > 9) {
+    return telefono.slice(-9);
+  }
+
+  return '';
+}
+
+
 }

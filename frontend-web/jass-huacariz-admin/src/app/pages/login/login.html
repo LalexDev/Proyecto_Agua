@@ -10,16 +10,13 @@
       </div>
 
       <div>
-        <h1>JASS Huacariz</h1>
+        <h1>AGUA POTABLE HUACARIZ</h1>
         <p>Junta Administradora de Servicios de Saneamiento</p>
       </div>
     </div>
 
     <nav class="public-nav">
-      <a href="#inicio">Inicio</a>
-      <a href="#servicios">Servicios</a>
-      <a href="#transparencia">Transparencia</a>
-      <a href="#ayuda">Ayuda</a>
+     
     </nav>
 
     <button type="button" class="header-login-btn" (click)="abrirLogin()">
@@ -96,7 +93,7 @@
         </svg>
       </div>
 
-      <h3>AGUA POTABLE HUACARIZ SAN ANTONIO</h3>
+      <h3>AGUA POTABLE HUACARIZ</h3>
       <p>Tu servicio de agua en línea</p>
 
       <button type="button" class="portal-main-btn" (click)="abrirLogin()">
@@ -227,9 +224,17 @@
 
   <div class="login-modal-backdrop" *ngIf="mostrarLogin" (click)="cerrarLogin()">
     <section class="login-modal" (click)="$event.stopPropagation()">
-      <button type="button" class="close-modal" (click)="cerrarLogin()">
-        ×
-      </button>
+    <button
+      type="button"
+      class="close-modal"
+      (click)="cerrarLogin()"
+      title="Cerrar"
+    >
+      <svg viewBox="0 0 24 24">
+        <path d="M18 6L6 18"/>
+        <path d="M6 6L18 18"/>
+      </svg>
+    </button>
 
       <div class="modal-brand">
         <div class="modal-icon">
@@ -251,7 +256,7 @@
           id="codigoUsuario"
           type="text"
           [(ngModel)]="codigoUsuario"
-          placeholder="Ejemplo: ADMIN001, 12345678, LECTOR001"
+          placeholder="Ingrese su DNI o Código de Usuario"
           autocomplete="username"
         >
       </div>
@@ -268,8 +273,23 @@
             (keyup.enter)="iniciarSesion()"
           >
 
-          <button type="button" (click)="alternarPassword()">
-            {{ mostrarPassword ? 'Ocultar' : 'Ver' }}
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="alternarPassword()"
+            [title]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            <svg *ngIf="!mostrarPassword" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+
+            <svg *ngIf="mostrarPassword" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 3l18 18"></path>
+              <path d="M10.58 10.58A2 2 0 0 0 13.42 13.42"></path>
+              <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a21.8 21.8 0 0 1-5.17 5.54"></path>
+              <path d="M6.1 6.1A21.8 21.8 0 0 0 1 12s4 7 11 7a10.94 10.94 0 0 0 4.12-.81"></path>
+            </svg>
           </button>
         </div>
       </div>
@@ -293,12 +313,12 @@
             <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
           </svg>
         </span>
-        Plataforma protegida para usuarios autorizados de JASS Huacariz.
+        Plataforma protegida para usuarios autorizados de Agua Potable Huacariz.
       </div>
 
       <div class="test-users">
-        <strong>Usuarios de prueba</strong>
-        <p>Cliente: 12345678 / tu nueva contraseña</p>
+        <strong>Bienvenidos</strong>
+        <p>Protegemos su privacidad</p>
       </div>
     </section>
   </div>

@@ -29,6 +29,9 @@ public class Pago {
     @Column(name = "codigo_operacion", length = 80)
     private String codigoOperacion;
 
+    @Column(name = "comprobante_url", length = 255)
+    private String comprobanteUrl;
+
     @Column(name = "monto", nullable = false, precision = 10, scale = 2)
     private BigDecimal monto;
 
@@ -37,4 +40,5 @@ public class Pago {
 
     @Column(name = "fecha_pago", nullable = false)
     private LocalDateTime fechaPago;
+    
 }

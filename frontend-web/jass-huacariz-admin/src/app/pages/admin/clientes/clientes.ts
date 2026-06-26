@@ -338,6 +338,9 @@ export class Clientes implements OnInit {
     this.mostrarDetalle = true;
     this.error = '';
     this.exito = '';
+
+    this.clienteDetalle = cliente;
+    this.mostrarDetalle = true;
   }
 
   cerrarDetalle(): void {
@@ -347,6 +350,8 @@ export class Clientes implements OnInit {
 
   abrirEditarCliente(cliente: ClienteResponse): void {
     this.clienteEditando = cliente;
+    this.mostrarDetalle = false;
+    this.clienteDetalle = null;
 
     this.formEditarCliente = {
       dni: cliente.dni || '',
@@ -781,7 +786,7 @@ export class Clientes implements OnInit {
         </head>
         <body>
           <table>
-            <tr><td class="titulo" colspan="10">JASS HUACARIZ - CLIENTES Y SUMINISTROS</td></tr>
+            <tr><td class="titulo" colspan="10">AGUA POTABLE HUACARIZ - CLIENTES Y SUMINISTROS</td></tr>
             <tr><td colspan="10">Fecha de exportación: ${new Date().toLocaleString('es-PE')}</td></tr>
             <tr>
               <th>DNI</th>
@@ -809,7 +814,7 @@ export class Clientes implements OnInit {
     const link = document.createElement('a');
 
     link.href = url;
-    link.download = `clientes_suministros_jass_huacariz_${fecha}.xls`;
+    link.download = `clientes_suministros_agua_potable_huacariz_${fecha}.xls`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -867,7 +872,7 @@ export class Clientes implements OnInit {
       <html lang="es">
       <head>
         <meta charset="UTF-8">
-        <title>Clientes y suministros - JASS Huacariz</title>
+        <title>Clientes y suministros - Agua potable Huacariz</title>
         <style>
           body {
             font-family: Arial, Helvetica, sans-serif;
@@ -942,7 +947,7 @@ export class Clientes implements OnInit {
       <body>
         <div class="header">
           <div>
-            <h1>JASS Huacariz</h1>
+            <h1>Agua Potable Huacariz</h1>
             <p>Reporte de clientes y suministros</p>
             <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
           </div>

@@ -231,7 +231,7 @@ export class HistorialLecturas implements OnInit {
   }
 
   exportarExcel(): void {
-    const titulo = 'JASS HUACARIZ - HISTORIAL DE LECTURAS';
+    const titulo = 'AGUA POTABLE HUACARIZ - HISTORIAL DE LECTURAS';
     const periodo = this.periodoHistorialTexto();
     const fecha = new Date().toLocaleString('es-PE');
 
@@ -443,7 +443,7 @@ export class HistorialLecturas implements OnInit {
   }
 
   exportarPendientesExcel(): void {
-    const titulo = 'JASS HUACARIZ - SUMINISTROS SIN LECTURA';
+    const titulo = 'AGUA POTABLE HUACARIZ - SUMINISTROS SIN LECTURA';
     const periodo = `${this.nombreMes(Number(this.filtroPendienteMes))} ${this.filtroPendienteAnio}`;
     const fecha = new Date().toLocaleString('es-PE');
 
@@ -915,7 +915,7 @@ export class HistorialLecturas implements OnInit {
             <div class="brand">
               <div class="logo">💧</div>
               <div>
-                <h1>JASS HUACARIZ</h1>
+                <h1>AGUA POTABLE HUACARIZ</h1>
                 <p>Servicio de agua potable · Sistema de Gestión de Agua</p>
                 <p>Cajamarca, Perú</p>
               </div>
@@ -976,7 +976,7 @@ export class HistorialLecturas implements OnInit {
           <div class="footer">
             <div>
               <strong>Observación:</strong>
-              Documento generado por el sistema de gestión de agua JASS Huacariz.
+              Documento generado por el sistema de gestión de agua Agua Potable Huacariz.
             </div>
 
             <div>
@@ -1274,7 +1274,7 @@ export class HistorialLecturas implements OnInit {
             <div class="brand">
               <div class="logo">⚠️</div>
               <div>
-                <h1>JASS HUACARIZ</h1>
+                <h1>AGUA POTABLE HUACARIZ</h1>
                 <p>Reporte de suministros sin lectura registrada</p>
                 <p>Cajamarca, Perú · Sistema de Gestión de Agua</p>
               </div>

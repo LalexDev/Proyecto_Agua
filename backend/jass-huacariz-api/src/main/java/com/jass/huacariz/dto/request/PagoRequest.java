@@ -11,5 +11,6 @@ public class PagoRequest {
     @NotBlank(message = "El método de pago es obligatorio")
     private String metodoPago;
 
+    @NotBlank(message = "El código de operación es obligatorio")
     private String codigoOperacion;
 }

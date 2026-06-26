@@ -7,31 +7,39 @@
     </div>
 
     <div class="page-header__actions">
-      <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+      <button type="button" class="btn-secondary btn-icon" (click)="limpiarFiltros()">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+          <path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17z"/>
+        </svg>
         Limpiar filtros
       </button>
 
-      <button type="button" class="btn-primary" (click)="cargarPagos()" [disabled]="cargando">
+      <button type="button" class="btn-primary btn-icon" (click)="cargarPagos()" [disabled]="cargando">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 2v6h-6"/>
+          <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/>
+          <path d="M3 22v-6h6"/>
+          <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/>
+        </svg>
         {{ cargando ? 'Actualizando...' : 'Actualizar' }}
       </button>
     </div>
   </section>
 
-  <div *ngIf="error" class="alert alert-error">
-    {{ error }}
-  </div>
-
-  <div *ngIf="exito" class="alert alert-success">
-    {{ exito }}
-  </div>
-
-  <div *ngIf="cargando" class="alert alert-info">
-    Cargando pagos...
-  </div>
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="exito" class="alert alert-success">{{ exito }}</div>
+  <div *ngIf="cargando" class="alert alert-info">Cargando pagos...</div>
 
   <section class="stats-grid">
     <article class="stat-card featured">
-      <div class="stat-card__icon">💳</div>
+      <div class="stat-card__icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 7h16v10H4z"/>
+          <path d="M4 10h16"/>
+          <path d="M8 15h3"/>
+        </svg>
+      </div>
       <div class="stat-card__content">
         <span>Total pagos</span>
         <strong>{{ totalPagos() }}</strong>
@@ -40,7 +48,12 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon money">💰</div>
+      <div class="stat-card__icon money">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3v18"/>
+          <path d="M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6"/>
+        </svg>
+      </div>
       <div class="stat-card__content">
         <span>Monto recaudado</span>
         <strong class="money-text">S/ {{ montoTotalPagado() | number:'1.2-2' }}</strong>
@@ -49,7 +62,14 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon calendar">📅</div>
+      <div class="stat-card__icon calendar">
+        <svg viewBox="0 0 24 24">
+          <path d="M7 3v4"/>
+          <path d="M17 3v4"/>
+          <path d="M4 7h16"/>
+          <rect x="4" y="5" width="16" height="16" rx="2"/>
+        </svg>
+      </div>
       <div class="stat-card__content">
         <span>Pagos del mes</span>
         <strong>{{ pagosDelMes() }}</strong>
@@ -58,7 +78,16 @@
     </article>
 
     <article class="stat-card">
-      <div class="stat-card__icon bank">🏦</div>
+      <div class="stat-card__icon bank">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 7h16"/>
+          <path d="M6 7l6-4 6 4"/>
+          <path d="M7 10v7"/>
+          <path d="M12 10v7"/>
+          <path d="M17 10v7"/>
+          <path d="M5 20h14"/>
+        </svg>
+      </div>
       <div class="stat-card__content">
         <span>Método principal</span>
         <strong class="method-text">{{ metodoMasUsado() }}</strong>
@@ -77,11 +106,30 @@
       </p>
 
       <div class="legend-list">
-        <div class="legend-item" *ngFor="let item of resumenMetodos(); let i = index">
-          <span class="dot" [style.background]="colorMetodo(i)"></span>
+        <div class="legend-item method-item" *ngFor="let item of resumenMetodos(); let i = index">
+          <span class="method-logo" [ngClass]="normalizarMetodo(item.metodo).toLowerCase()">
+            <img *ngIf="normalizarMetodo(item.metodo) === 'Yape'" src="assets/img/pagos/yape.png" alt="Yape">
+            <img *ngIf="normalizarMetodo(item.metodo) === 'Plin'" src="assets/img/pagos/plin.png" alt="Plin">
+            <img *ngIf="normalizarMetodo(item.metodo) === 'Efectivo'" src="assets/img/pagos/efectivo.png" alt="Efectivo">
+            <img *ngIf="normalizarMetodo(item.metodo) === 'Transferencia'" src="assets/img/pagos/transferencia.png" alt="Transferencia">
+
+            <svg
+              *ngIf="
+                normalizarMetodo(item.metodo) !== 'Yape' &&
+                normalizarMetodo(item.metodo) !== 'Plin' &&
+                normalizarMetodo(item.metodo) !== 'Efectivo' &&
+                normalizarMetodo(item.metodo) !== 'Transferencia'
+              "
+              viewBox="0 0 24 24"
+            >
+              <path d="M4 7h16v10H4z"/>
+              <path d="M4 10h16"/>
+              <path d="M8 15h3"/>
+            </svg>
+          </span>
 
           <div>
-            <strong>{{ item.metodo }}</strong>
+            <strong>{{ normalizarMetodo(item.metodo) }}</strong>
             <small>
               {{ item.cantidad }} pago(s) ·
               {{ item.porcentaje | number:'1.0-1' }}% ·
@@ -125,13 +173,17 @@
       <span>⌕</span>
       <input
         type="text"
-        placeholder="Buscar por recibo, método, operación, monto o fecha..."
+        placeholder="Buscar por recibo, método, operación, estado, monto o fecha..."
         [(ngModel)]="busqueda"
         (input)="filtrarPagos()"
       >
     </div>
 
-    <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+    <button type="button" class="btn-secondary btn-icon" (click)="limpiarFiltros()">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+        <path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17z"/>
+      </svg>
       Limpiar
     </button>
   </section>
@@ -153,8 +205,11 @@
             <th>Recibo</th>
             <th>Método de pago</th>
             <th>Código operación</th>
+            <th>Comprobante</th>
             <th>Monto</th>
             <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
 
@@ -167,7 +222,7 @@
 
             <td>
               <span class="method-chip">
-                {{ pago.metodoPago }}
+                {{ normalizarMetodo(pago.metodoPago) }}
               </span>
             </td>
 
@@ -178,14 +233,71 @@
             </td>
 
             <td>
+              <button
+                *ngIf="pago.comprobanteUrl"
+                type="button"
+                class="btn-secondary btn-icon"
+                (click)="verComprobante(pago)"
+              >
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 5h16v14H4z"/>
+                  <path d="M8 13l2.5-3 3 4 2-2.5L20 17"/>
+                  <circle cx="8" cy="8" r="1.5"/>
+                </svg>
+                Ver
+              </button>
+
+              <span *ngIf="!pago.comprobanteUrl" class="operation-code">
+                Sin captura
+              </span>
+            </td>
+
+            <td>
               <strong>S/ {{ pago.monto | number:'1.2-2' }}</strong>
             </td>
 
             <td>{{ fechaPagoTexto(pago) }}</td>
+
+            <td>
+              <span
+                class="estado-chip"
+                [ngClass]="{
+                  'revision': pago.estadoPago === 'PAGO_EN_REVISION',
+                  'confirmado': pago.estadoPago === 'PAGADO_CONFIRMADO',
+                  'pagado': pago.estadoPago === 'PAGADO',
+                  'rechazado': pago.estadoPago === 'RECHAZADO'
+                }"
+              >
+                {{ pago.estadoPago }}
+              </span>
+            </td>
+
+            <td>
+              <div class="actions-cell" *ngIf="pago.estadoPago === 'PAGO_EN_REVISION'">
+                <button class="btn-primary btn-icon" type="button" (click)="aprobarPago(pago.id)">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                  Aprobar
+                </button>
+
+                <button class="btn-secondary btn-icon" type="button" (click)="rechazarPago(pago.id)">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M18 6 6 18"/>
+                    <path d="M6 6l12 12"/>
+                  </svg>
+                  Rechazar
+                </button>
+              </div>
+
+              <span *ngIf="pago.estadoPago !== 'PAGO_EN_REVISION'" class="operation-code">
+                Sin acciones
+              </span>
+            </td>
           </tr>
 
           <tr *ngIf="!cargando && pagosFiltrados.length === 0">
-            <td colspan="5" class="empty-state">
+            <td colspan="8" class="empty-state">
               No hay pagos registrados con los filtros seleccionados.
             </td>
           </tr>
@@ -193,4 +305,38 @@
       </table>
     </div>
   </section>
+
+  <div class="modal-backdrop" *ngIf="comprobanteSeleccionado">
+    <div class="comprobante-modal">
+      <div class="comprobante-modal__header">
+        <div>
+          <span class="tag">Comprobante</span>
+          <h3>Captura enviada por el cliente</h3>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarComprobante()">
+          ✕
+        </button>
+      </div>
+
+      <div class="comprobante-view">
+        <img [src]="comprobanteSeleccionado" alt="Comprobante de pago">
+      </div>
+
+      <div class="modal-actions">
+        <a
+          class="btn-primary"
+          [href]="comprobanteSeleccionado"
+          target="_blank"
+          rel="noopener"
+        >
+          Abrir imagen
+        </a>
+
+        <button type="button" class="btn-secondary" (click)="cerrarComprobante()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

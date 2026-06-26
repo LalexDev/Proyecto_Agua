@@ -117,10 +117,21 @@ export class ClientePortal {
     );
   }
 
-  pagarMiRecibo(idRecibo: number, data: PagoRequest): Observable<PagoResponse> {
+  pagarMiRecibo(
+    idRecibo: number,
+    metodoPago: string,
+    codigoOperacion: string,
+    comprobante: File
+  ): Observable<PagoResponse> {
+    const formData = new FormData();
+
+    formData.append('metodoPago', metodoPago);
+    formData.append('codigoOperacion', codigoOperacion);
+    formData.append('comprobante', comprobante);
+
     return this.http.patch<PagoResponse>(
       `${this.apiUrl}/me/recibos/${idRecibo}/pagar`,
-      data
+      formData
     );
   }
 

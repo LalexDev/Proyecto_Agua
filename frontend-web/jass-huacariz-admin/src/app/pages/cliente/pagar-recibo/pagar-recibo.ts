@@ -12,6 +12,11 @@ import {
 
 import { imprimirReciboJass } from '../../../core/utils/recibo-print';
 
+import {
+  CanalPago,
+  CanalPagoResponse
+} from '../../../core/services/canal-pago';
+
 interface MetodoPagoCliente {
   codigo: string;
   nombre: string;
@@ -30,6 +35,10 @@ export class PagarRecibo implements OnInit {
 
   recibo: ReciboClienteResponse | null = null;
   recibos: ReciboClienteResponse[] = [];
+  canalesPago: CanalPagoResponse[] = [];
+
+  comprobanteArchivo: File | null = null;
+  comprobantePreview = '';
 
   cargando = false;
   procesando = false;
@@ -55,18 +64,7 @@ export class PagarRecibo implements OnInit {
       descripcion: 'Realiza una transferencia y registra el código de operación.',
       icono: 'T'
     },
-    {
-      codigo: 'BANCA_MOVIL',
-      nombre: 'Banca móvil',
-      descripcion: 'Pago realizado desde la app o web de tu banco.',
-      icono: 'B'
-    },
-    {
-      codigo: 'AGENTE_AUTORIZADO',
-      nombre: 'Agente autorizado',
-      descripcion: 'Pago realizado por canal autorizado no presencial.',
-      icono: 'A'
-    }
+
   ];
 
   pago: PagoRequest = {
@@ -78,10 +76,13 @@ export class PagarRecibo implements OnInit {
     private route: ActivatedRoute,
     private location: Location,
     private clientePortal: ClientePortal,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private canalPagoService: CanalPago,
+    
   ) {}
 
   ngOnInit(): void {
+    this.cargarCanalesPago();
     this.route.paramMap.subscribe((params) => {
       this.idRecibo = Number(params.get('id') || 0);
       this.cargarRecibo();
@@ -142,6 +143,39 @@ export class PagarRecibo implements OnInit {
     return this.metodosPago.find((item) => item.codigo === this.pago.metodoPago) || null;
   }
 
+  seleccionarComprobante(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+
+    if (!archivo) {
+      return;
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
+      this.error = 'Solo se permiten imágenes JPG, PNG o WEBP.';
+      this.comprobanteArchivo = null;
+      this.comprobantePreview = '';
+      input.value = '';
+      return;
+    }
+
+    if (archivo.size > 3 * 1024 * 1024) {
+      this.error = 'La imagen no debe superar los 3 MB.';
+      this.comprobanteArchivo = null;
+      this.comprobantePreview = '';
+      input.value = '';
+      return;
+    }
+
+    if (this.comprobantePreview) {
+      URL.revokeObjectURL(this.comprobantePreview);
+    }
+
+    this.comprobanteArchivo = archivo;
+    this.comprobantePreview = URL.createObjectURL(archivo);
+    this.error = '';
+  }
+
   confirmarPago(): void {
     if (!this.recibo) {
       this.error = 'No hay recibo seleccionado.';
@@ -149,7 +183,7 @@ export class PagarRecibo implements OnInit {
     }
 
     if (!this.puedePagar()) {
-      this.error = 'Este recibo ya se encuentra pagado.';
+      this.error = 'Este recibo ya se encuentra pagado o está en revisión.';
       return;
     }
 
@@ -168,16 +202,21 @@ export class PagarRecibo implements OnInit {
       return;
     }
 
+    if (!this.comprobanteArchivo) {
+      this.error = 'Debe subir una captura del comprobante.';
+      return;
+    }
+
     this.procesando = true;
     this.error = '';
     this.exito = '';
 
-    const payload: PagoRequest = {
-      metodoPago: this.pago.metodoPago.trim(),
-      codigoOperacion: this.pago.codigoOperacion.trim()
-    };
-
-    this.clientePortal.pagarMiRecibo(this.recibo.id, payload)
+    this.clientePortal.pagarMiRecibo(
+      this.recibo.id,
+      this.pago.metodoPago.trim(),
+      this.pago.codigoOperacion.trim(),
+      this.comprobanteArchivo
+    )
       .pipe(
         finalize(() => {
           this.procesando = false;
@@ -185,15 +224,22 @@ export class PagarRecibo implements OnInit {
         })
       )
       .subscribe({
-        next: (response) => {
-          this.exito = `Pago registrado correctamente. Recibo: ${response.codigoRecibo}`;
+        next: () => {
+          this.exito = 'Tu pago fue enviado para revisión. Agua Potable Huacariz confirmará el pago cuando valide la operación.';
           this.pago.codigoOperacion = '';
+          this.comprobanteArchivo = null;
+
+          if (this.comprobantePreview) {
+            URL.revokeObjectURL(this.comprobantePreview);
+          }
+
+          this.comprobantePreview = '';
           this.cargarRecibo();
         },
         error: (err) => {
           this.error = err?.error?.error ||
             err?.error?.mensaje ||
-            'No se pudo registrar el pago. Verifica el código de operación.';
+            'No se pudo enviar el pago. Verifica el código de operación y la captura.';
           this.cdr.detectChanges();
         }
       });
@@ -216,7 +262,9 @@ export class PagarRecibo implements OnInit {
       return false;
     }
 
-    return String(this.recibo.estadoRecibo || '').toUpperCase() !== 'PAGADO';
+    const estado = String(this.recibo.estadoRecibo || '').toUpperCase();
+
+    return estado !== 'PAGADO' && estado !== 'PAGO_EN_REVISION';
   }
 
   totalCargos(): number {
@@ -239,6 +287,10 @@ export class PagarRecibo implements OnInit {
 
     if (valor === 'vencido') {
       return 'vencido';
+    }
+
+    if (valor === 'pago_en_revision') {
+      return 'revision';
     }
 
     return 'pendiente';
@@ -267,5 +319,27 @@ export class PagarRecibo implements OnInit {
     }
 
     return String(fecha).split('T')[0] || fecha;
+  }
+
+
+  cargarCanalesPago(): void {
+    this.canalPagoService.listarActivos().subscribe({
+      next: (data) => {
+        this.canalesPago = data || [];
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.canalesPago = [];
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  canalSeleccionado(): CanalPagoResponse | null {
+    const metodo = String(this.pago.metodoPago || '').toUpperCase();
+
+    return this.canalesPago.find((item) => {
+      return String(item.metodoPago || '').toUpperCase() === metodo;
+    }) || null;
   }
 }

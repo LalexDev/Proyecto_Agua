@@ -7,18 +7,46 @@
     </div>
 
     <div class="page-header__actions">
-      <button type="button" class="btn-secondary" (click)="exportarExcel()">
-        Exportar Excel
-      </button>
 
-      <button type="button" class="btn-secondary" (click)="imprimirReporte()">
-        Imprimir PDF
-      </button>
+  <!-- EXPORTAR EXCEL -->
+  <button type="button" class="btn-secondary" (click)="exportarExcel()">
+    <svg viewBox="0 0 24 24">
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+      <path d="M14 3v6h6"/>
+      <path d="M9 13l4 4"/>
+      <path d="M13 13l-4 4"/>
+    </svg>
+    Exportar Excel
+  </button>
 
-      <button type="button" class="btn-primary" (click)="cargarHistorial()" [disabled]="cargando">
-        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
-      </button>
-    </div>
+  <!-- IMPRIMIR PDF -->
+    <button type="button" class="btn-secondary" (click)="imprimirReporte()">
+      <svg viewBox="0 0 24 24">
+        <path d="M6 9V3h12v6"/>
+        <path d="M6 18h12v3H6z"/>
+        <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+      </svg>
+      Imprimir PDF
+    </button>
+
+    <!-- ACTUALIZAR -->
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="cargarHistorial()"
+      [disabled]="cargando"
+    >
+           <svg viewBox="0 0 24 24">
+        <path d="M21 2v6h-6"/>
+        <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/>
+        <path d="M3 22v-6h6"/>
+        <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/>
+      </svg>
+
+      {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+    </button>
+
+  </div>
   </section>
 
   <div *ngIf="error" class="alert alert-error">
@@ -29,43 +57,80 @@
     Cargando historial de lecturas...
   </div>
 
-  <section class="stats-grid">
-    <article class="stat-card featured">
-      <div class="stat-card__icon">📚</div>
-      <div class="stat-card__content">
-        <span>Lecturas</span>
-        <strong>{{ totalLecturas() }}</strong>
-        <small>Registros encontrados</small>
-      </div>
-    </article>
+ <section class="stats-grid">
 
-    <article class="stat-card">
-      <div class="stat-card__icon water">💧</div>
-      <div class="stat-card__content">
-        <span>Consumo total</span>
-        <strong class="money-text">{{ totalConsumo() | number:'1.2-3' }} m³</strong>
-        <small>Según filtros aplicados</small>
-      </div>
-    </article>
+  <!-- TOTAL LECTURAS -->
+  <article class="stat-card featured">
+    <div class="stat-card__icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M9 3h6"/>
+        <path d="M10 7h4"/>
+        <rect x="6" y="2" width="12" height="20" rx="2"/>
+        <path d="M9 14h6"/>
+        <path d="M9 18h4"/>
+      </svg>
+    </div>
 
-    <article class="stat-card">
-      <div class="stat-card__icon money">💰</div>
-      <div class="stat-card__content">
-        <span>Total emitido</span>
-        <strong class="money-text">S/ {{ totalEmitido() | number:'1.2-2' }}</strong>
-        <small>Importe de recibos</small>
-      </div>
-    </article>
+    <div class="stat-card__content">
+      <span>Lecturas</span>
+      <strong>{{ totalLecturas() }}</strong>
+      <small>Registros encontrados</small>
+    </div>
+  </article>
 
-    <article class="stat-card warning-card">
-      <div class="stat-card__icon pending-icon">⚠️</div>
-      <div class="stat-card__content">
-        <span>Sin lectura</span>
-        <strong>{{ totalSinLectura() }}</strong>
-        <small>{{ nombreMes(filtroPendienteMes) }} {{ filtroPendienteAnio }}</small>
-      </div>
-    </article>
-  </section>
+  <!-- CONSUMO TOTAL -->
+  <article class="stat-card">
+    <div class="stat-card__icon water">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2C12 2 6 9 6 13a6 6 0 0 0 12 0c0-4-6-11-6-11z"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Consumo total</span>
+      <strong class="money-text">
+        {{ totalConsumo() | number:'1.2-3' }} m³
+      </strong>
+      <small>Según filtros aplicados</small>
+    </div>
+  </article>
+
+  <!-- TOTAL EMITIDO -->
+  <article class="stat-card">
+    <div class="stat-card__icon money">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3v18"/>
+        <path d="M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Total emitido</span>
+      <strong class="money-text">
+        S/ {{ totalEmitido() | number:'1.2-2' }}
+      </strong>
+      <small>Importe de recibos</small>
+    </div>
+  </article>
+
+  <!-- SIN LECTURA -->
+  <article class="stat-card warning-card">
+    <div class="stat-card__icon warning">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 9v4"/>
+        <path d="M12 17h.01"/>
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Sin lectura</span>
+      <strong>{{ totalSinLectura() }}</strong>
+      <small>{{ nombreMes(filtroPendienteMes) }} {{ filtroPendienteAnio }}</small>
+    </div>
+  </article>
+
+</section>
 
   <section class="summary-panel">
     <div class="summary-info">
@@ -185,6 +250,9 @@
     >
 
     <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+      </svg>
       Limpiar
     </button>
   </section>
@@ -284,17 +352,36 @@
               </span>
             </td>
 
-            <td>
-              <div class="actions-cell">
-                <button type="button" class="table-action" (click)="abrirDetalleLectura(item)">
-                  Ver detalle
-                </button>
+          <td>
+            <div class="actions-cell">
 
-                <button type="button" class="table-action" (click)="imprimirReciboLectura(item)">
-                  Imprimir recibo
-                </button>
-              </div>
-            </td>
+              <button
+                type="button"
+                class="btn-ver"
+                (click)="abrirDetalleLectura(item)"
+              >
+                <svg viewBox="0 0 24 24">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>Ver Detalle</span>
+              </button>
+
+              <button
+                type="button"
+                class="btn-print"
+                (click)="imprimirReciboLectura(item)"
+              >
+                <svg viewBox="0 0 24 24">
+                  <path d="M6 9V3h12v6"/>
+                  <path d="M6 18h12v3H6z"/>
+                  <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+                </svg>
+                <span>Imprimir</span>
+              </button>
+
+            </div>
+          </td>
           </tr>
 
           <tr *ngIf="lecturasFiltradas.length === 0 && !cargando">
@@ -320,18 +407,59 @@
           ✕
         </button>
       </div>
+        <div class="detail-hero lectura-hero">
 
-      <div class="detail-hero">
-        <div>
-          <span>Suministro</span>
-          <strong>{{ lecturaSeleccionada.codigoSuministro }}</strong>
-          <small>{{ lecturaSeleccionada.aliasSuministro || lecturaSeleccionada.direccionSuministro || '-' }}</small>
+          <div class="hero-info">
+            <div class="hero-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 3h6"/>
+                <path d="M10 7h4"/>
+                <rect x="6" y="2" width="12" height="20" rx="2"/>
+                <path d="M9 14h6"/>
+                <path d="M9 18h4"/>
+              </svg>
+            </div>
+
+            <div>
+              <span>Suministro</span>
+              <strong>{{ lecturaSeleccionada.codigoSuministro }}</strong>
+              <small>
+                {{ lecturaSeleccionada.aliasSuministro || lecturaSeleccionada.direccionSuministro || '-' }}
+              </small>
+            </div>
+          </div>
+
+         <span
+              class="status-badge premium-status"
+              [ngClass]="estadoClase(lecturaSeleccionada.estadoRecibo)"
+            >
+
+              <!-- PAGADO -->
+              <svg *ngIf="lecturaSeleccionada.estadoRecibo === 'PAGADO'"
+                  viewBox="0 0 24 24">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+
+              <!-- PENDIENTE -->
+              <svg *ngIf="lecturaSeleccionada.estadoRecibo === 'PENDIENTE'"
+                  viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 7v5l3 2"/>
+              </svg>
+
+              <!-- VENCIDO -->
+              <svg *ngIf="lecturaSeleccionada.estadoRecibo === 'VENCIDO'"
+                  viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 8v5"/>
+                <path d="M12 16h.01"/>
+              </svg>
+
+              {{ lecturaSeleccionada.estadoRecibo }}
+
+            </span>
+
         </div>
-
-        <span class="status-badge" [ngClass]="estadoClase(lecturaSeleccionada.estadoRecibo)">
-          {{ lecturaSeleccionada.estadoRecibo || 'PENDIENTE' }}
-        </span>
-      </div>
 
       <div class="payment-summary">
         <div>
@@ -385,237 +513,36 @@
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn-secondary" (click)="cerrarDetalleLectura()">
-          Cerrar
-        </button>
 
-        <button type="button" class="btn-primary" (click)="imprimirReciboLectura(lecturaSeleccionada)">
-          Imprimir recibo
-        </button>
-      </div>
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="cerrarDetalleLectura()"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M18 6L6 18"/>
+              <path d="M6 6l12 12"/>
+            </svg>
+
+            Cerrar
+          </button>
+
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="imprimirReciboLectura(lecturaSeleccionada)"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M6 9V3h12v6"/>
+              <path d="M6 18h12v3H6z"/>
+              <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+            </svg>
+
+            Imprimir recibo
+          </button>
+
+        </div>
     </div>
   </div>
-
-  <div class="modal-backdrop" *ngIf="pendienteSeleccionado">
-    <div class="payment-modal">
-      <div class="payment-modal__header">
-        <div>
-          <span class="tag">Detalle sin lectura</span>
-          <h3>{{ pendienteSeleccionado.codigoSuministro }}</h3>
-          <p>{{ nombreMes(pendienteSeleccionado.mes) }} {{ pendienteSeleccionado.anio }}</p>
-        </div>
-
-        <button type="button" class="close-btn" (click)="cerrarDetallePendiente()">
-          ✕
-        </button>
-      </div>
-
-      <div class="detail-hero warning-hero">
-        <div>
-          <span>Cliente pendiente de lectura</span>
-          <strong>{{ pendienteSeleccionado.nombreCliente }}</strong>
-          <small>DNI: {{ pendienteSeleccionado.dniCliente || '-' }}</small>
-        </div>
-
-        <span class="status-badge" [ngClass]="estadoInstalacionClase(pendienteSeleccionado.estadoInstalacion)">
-          {{ estadoInstalacionTexto(pendienteSeleccionado.estadoInstalacion) }}
-        </span>
-      </div>
-
-      <div class="payment-summary">
-        <div>
-          <span>Suministro</span>
-          <strong>{{ pendienteSeleccionado.codigoSuministro }}</strong>
-        </div>
-
-        <div>
-          <span>Alias</span>
-          <strong>{{ pendienteSeleccionado.aliasSuministro || '-' }}</strong>
-        </div>
-
-        <div>
-          <span>Sector</span>
-          <strong>{{ pendienteSeleccionado.sector || '-' }}</strong>
-        </div>
-      </div>
-
-      <div class="payment-summary">
-        <div>
-          <span>Dirección</span>
-          <strong>{{ pendienteSeleccionado.direccionSuministro || '-' }}</strong>
-        </div>
-
-        <div>
-          <span>Referencia</span>
-          <strong>{{ pendienteSeleccionado.referencia || '-' }}</strong>
-        </div>
-
-        <div>
-          <span>Lectura anterior</span>
-          <strong>{{ pendienteSeleccionado.lecturaAnterior | number:'1.2-3' }} m³</strong>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" class="btn-secondary" (click)="cerrarDetallePendiente()">
-          Cerrar
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-    <section class="pending-panel">
-    <div class="pending-header">
-      <div>
-        <span class="page-kicker small">CONTROL DE LECTURAS</span>
-        <h3>Usuarios sin lectura registrada</h3>
-        <p>
-          Filtra por mes y año para ver los suministros activos que todavía no tienen lectura registrada.
-        </p>
-      </div>
-
-      <div class="pending-actions">
-        <button type="button" class="btn-secondary" (click)="exportarPendientesExcel()">
-          Exportar pendientes
-        </button>
-
-        <button type="button" class="btn-secondary" (click)="imprimirPendientes()">
-          Imprimir pendientes
-        </button>
-      </div>
-    </div>
-
-    <div class="pending-filter">
-      <select [(ngModel)]="filtroPendienteMes">
-        <option [ngValue]="1">Enero</option>
-        <option [ngValue]="2">Febrero</option>
-        <option [ngValue]="3">Marzo</option>
-        <option [ngValue]="4">Abril</option>
-        <option [ngValue]="5">Mayo</option>
-        <option [ngValue]="6">Junio</option>
-        <option [ngValue]="7">Julio</option>
-        <option [ngValue]="8">Agosto</option>
-        <option [ngValue]="9">Septiembre</option>
-        <option [ngValue]="10">Octubre</option>
-        <option [ngValue]="11">Noviembre</option>
-        <option [ngValue]="12">Diciembre</option>
-      </select>
-
-      <input
-        type="number"
-        placeholder="Año"
-        [(ngModel)]="filtroPendienteAnio"
-      >
-
-      <button type="button" class="btn-primary" (click)="buscarPendientesLectura()" [disabled]="cargandoPendientes">
-        {{ cargandoPendientes ? 'Buscando...' : 'Buscar pendientes' }}
-      </button>
-    </div>
-
-    <div *ngIf="errorPendientes" class="alert alert-error">
-      {{ errorPendientes }}
-    </div>
-
-    <div *ngIf="exitoPendientes" class="alert alert-info">
-      {{ exitoPendientes }}
-    </div>
-
-    <div class="pending-stats">
-      <article>
-        <span>Total sin lectura</span>
-        <strong>{{ totalSinLectura() }}</strong>
-      </article>
-
-      <article>
-        <span>Instalados</span>
-        <strong>{{ pendientesInstalados() }}</strong>
-      </article>
-
-      <article>
-        <span>Pendientes instalación</span>
-        <strong>{{ pendientesPorInstalar() }}</strong>
-      </article>
-    </div>
-
-    <div class="pending-search">
-      <div class="search-box">
-        <span>⌕</span>
-        <input
-          type="text"
-          placeholder="Buscar pendiente por cliente, DNI, suministro, dirección, sector..."
-          [(ngModel)]="busquedaPendientes"
-          (input)="aplicarFiltroPendientes()"
-        >
-      </div>
-
-      <button type="button" class="btn-secondary" (click)="limpiarFiltroPendientes()">
-        Limpiar búsqueda
-      </button>
-    </div>
-
-    <div class="table-responsive">
-      <table class="pending-table">
-        <thead>
-          <tr>
-            <th>Suministro</th>
-            <th>Cliente</th>
-            <th>Periodo</th>
-            <th>Dirección</th>
-            <th>Sector</th>
-            <th>Instalación</th>
-            <th>Lectura anterior</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr *ngFor="let item of pendientesFiltrados">
-            <td>
-              <strong>{{ item.codigoSuministro }}</strong>
-              <small>{{ item.aliasSuministro || '-' }}</small>
-            </td>
-
-            <td>
-              <strong>{{ item.nombreCliente }}</strong>
-              <small>DNI: {{ item.dniCliente || '-' }}</small>
-            </td>
-
-            <td>{{ nombreMes(item.mes) }} {{ item.anio }}</td>
-
-            <td>
-              <strong>{{ item.direccionSuministro || '-' }}</strong>
-              <small>{{ item.referencia || '-' }}</small>
-            </td>
-
-            <td>{{ item.sector || '-' }}</td>
-
-            <td>
-              <span class="status-badge" [ngClass]="estadoInstalacionClase(item.estadoInstalacion)">
-                {{ estadoInstalacionTexto(item.estadoInstalacion) }}
-              </span>
-            </td>
-
-            <td>
-              <strong>{{ item.lecturaAnterior | number:'1.2-3' }} m³</strong>
-            </td>
-
-            <td>
-              <button type="button" class="table-action" (click)="abrirDetallePendiente(item)">
-                Ver detalle
-              </button>
-            </td>
-          </tr>
-
-          <tr *ngIf="pendientesFiltrados.length === 0 && !cargandoPendientes">
-            <td colspan="8" class="empty-state">
-              No hay suministros pendientes de lectura para el periodo seleccionado.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-  
 
 </div>

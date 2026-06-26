@@ -27,6 +27,9 @@ export class Sectores implements OnInit {
   error = '';
   exito = '';
 
+  mostrarConfirmacion = false;
+  sectorSeleccionado: SectorResponse | null = null;
+
   mostrarFormulario = false;
   editando = false;
   sectorEditando: SectorResponse | null = null;
@@ -177,34 +180,8 @@ export class Sectores implements OnInit {
   }
 
   cambiarEstado(sector: SectorResponse): void {
-    const nuevoEstado = !sector.estado;
-
-    const confirmar = confirm(
-      nuevoEstado
-        ? `¿Deseas activar el sector ${sector.nombre}?`
-        : `¿Deseas desactivar el sector ${sector.nombre}?`
-    );
-
-    if (!confirmar) {
-      return;
-    }
-
-    this.error = '';
-    this.exito = '';
-
-    this.clienteService.cambiarEstadoSector(sector.id, nuevoEstado).subscribe({
-      next: () => {
-        this.exito = nuevoEstado
-          ? 'Sector activado correctamente.'
-          : 'Sector desactivado correctamente.';
-
-        this.cargarSectores();
-      },
-      error: (err) => {
-        this.error = err?.error?.error || err?.error?.mensaje || 'No se pudo cambiar el estado del sector.';
-        this.cdr.detectChanges();
-      }
-    });
+    this.sectorSeleccionado = sector;
+    this.mostrarConfirmacion = true;
   }
 
   totalSectores(): number {
@@ -233,5 +210,72 @@ export class Sectores implements OnInit {
       descripcion: '',
       estado: true
     };
+  }
+
+
+
+
+  
+  cerrarConfirmacion(): void {
+  this.mostrarConfirmacion = false;
+  this.sectorSeleccionado = null;
+  }
+
+  confirmarCambioEstado(): void {
+    if (!this.sectorSeleccionado) {
+      return;
+    }
+
+    const sector = this.sectorSeleccionado;
+    const nuevoEstado = !sector.estado;
+
+    this.error = '';
+    this.exito = '';
+
+    this.clienteService.cambiarEstadoSector(sector.id, nuevoEstado).subscribe({
+      next: () => {
+        this.exito = nuevoEstado
+          ? 'Sector activado correctamente.'
+          : 'Sector desactivado correctamente.';
+
+        this.cerrarConfirmacion();
+        this.cargarSectores();
+      },
+      error: (err) => {
+        this.error = err?.error?.error || err?.error?.mensaje || 'No se pudo cambiar el estado del sector.';
+        this.cerrarConfirmacion();
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  tituloConfirmacion(): string {
+    if (!this.sectorSeleccionado) {
+      return '';
+    }
+
+    return this.sectorSeleccionado.estado
+      ? 'Desactivar sector'
+      : 'Activar sector';
+  }
+
+  mensajeConfirmacion(): string {
+    if (!this.sectorSeleccionado) {
+      return '';
+    }
+
+    return this.sectorSeleccionado.estado
+      ? `¿Deseas desactivar el sector ${this.sectorSeleccionado.nombre}? Ya no estará disponible para nuevas asignaciones.`
+      : `¿Deseas activar el sector ${this.sectorSeleccionado.nombre}? Estará disponible para asignar suministros y lecturadores.`;
+  }
+
+  textoBotonConfirmacion(): string {
+    if (!this.sectorSeleccionado) {
+      return '';
+    }
+
+    return this.sectorSeleccionado.estado
+      ? 'Desactivar sector'
+      : 'Activar sector';
   }
 }

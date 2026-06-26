@@ -1,6 +1,7 @@
 package com.jass.huacariz.dto.response;
 
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
+@Data
 public class ReciboResponse {
 
     private Integer id;
@@ -23,6 +25,7 @@ public class ReciboResponse {
 
     private String nombreCliente;
     private String dniCliente;
+    private String telefonoCliente;
 
     private Integer anio;
     private Integer mes;

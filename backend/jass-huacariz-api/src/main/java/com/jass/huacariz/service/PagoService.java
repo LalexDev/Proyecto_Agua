@@ -2,10 +2,12 @@ package com.jass.huacariz.service;
 
 import com.jass.huacariz.dto.response.PagoResponse;
 import com.jass.huacariz.entity.Pago;
+import com.jass.huacariz.entity.Recibo;
 import com.jass.huacariz.repository.PagoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.List;
 
@@ -54,9 +56,59 @@ public class PagoService {
                 .codigoRecibo(pago.getRecibo().getCodigoRecibo())
                 .metodoPago(pago.getMetodoPago())
                 .codigoOperacion(pago.getCodigoOperacion())
+                .comprobanteUrl(pago.getComprobanteUrl())
                 .monto(pago.getMonto())
                 .estadoPago(pago.getEstadoPago())
                 .fechaPago(pago.getFechaPago())
                 .build();
     }
+
+
+
+        @Transactional(readOnly = true)
+        public List<PagoResponse> listarPagosEnRevision() {
+            return pagoRepository.findByEstadoPagoOrderByFechaPagoDesc("PAGO_EN_REVISION")
+                    .stream()
+                    .map(this::convertirAResponse)
+                    .toList();
+        }
+
+        @Transactional
+        public PagoResponse aprobarPago(Integer id) {
+            Pago pago = pagoRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("No existe el pago con ID: " + id));
+
+            if (!"PAGO_EN_REVISION".equalsIgnoreCase(pago.getEstadoPago())) {
+                throw new RuntimeException("Solo se puede aprobar un pago en revisión.");
+            }
+
+            Recibo recibo = pago.getRecibo();
+
+            pago.setEstadoPago("PAGADO_CONFIRMADO");
+            recibo.setEstadoRecibo("PAGADO");
+
+            pagoRepository.save(pago);
+
+            return convertirAResponse(pago);
+        }
+
+        @Transactional
+        public PagoResponse rechazarPago(Integer id) {
+            Pago pago = pagoRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("No existe el pago con ID: " + id));
+
+            if (!"PAGO_EN_REVISION".equalsIgnoreCase(pago.getEstadoPago())) {
+                throw new RuntimeException("Solo se puede rechazar un pago en revisión.");
+            }
+
+            Recibo recibo = pago.getRecibo();
+
+            pago.setEstadoPago("RECHAZADO");
+            recibo.setEstadoRecibo("PENDIENTE");
+
+            pagoRepository.save(pago);
+
+            return convertirAResponse(pago);
+        }
+    
 }

@@ -50,6 +50,12 @@ export class AdminLayout implements OnInit {
   }
 
   cerrarMenuMovil(): void {
+    if (window.innerWidth <= 980) {
+      this.menuMovilAbierto = false;
+      document.body.classList.remove('menu-mobile-open');
+    }
+  }
+  forzarCerrarMenuMovil(): void {
     this.menuMovilAbierto = false;
     document.body.classList.remove('menu-mobile-open');
   }

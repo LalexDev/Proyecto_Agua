@@ -7,21 +7,48 @@
     </div>
 
     <div class="page-header__actions">
-      <button type="button" class="btn-secondary" (click)="exportarClientesExcel()">
+      <button type="button" class="btn-secondary btn-icon" (click)="exportarClientesExcel()">
+        <svg viewBox="0 0 24 24">
+          <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+          <path d="M14 3v6h6"/>
+          <path d="M9 13l4 4"/>
+          <path d="M13 13l-4 4"/>
+        </svg>
         Exportar Excel
       </button>
 
-      <button type="button" class="btn-secondary" (click)="imprimirClientesPdf()">
+            <button type="button" class="btn-secondary btn-icon" (click)="imprimirClientesPdf()">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 9V3h12v6"/>
+          <path d="M6 18h12v3H6z"/>
+          <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+        </svg>
         Imprimir PDF
       </button>
 
-      <button type="button" class="btn-primary" (click)="abrirFormulario()">
-        + Nuevo usuario
-      </button>
+          <button type="button" class="btn-primary" (click)="abrirFormulario()">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 5v14"/>
+            <path d="M5 12h14"/>
+          </svg>
+          Nuevo usuario
+        </button>
 
-      <button type="button" class="btn-secondary" (click)="cargarClientes()" [disabled]="cargando">
-        {{ cargando ? 'Actualizando...' : 'Actualizar' }}
-      </button>
+            <button
+          type="button"
+          class="btn-secondary btn-icon"
+          (click)="cargarClientes()"
+          [disabled]="cargando"
+        >
+                <svg viewBox="0 0 24 24">
+        <path d="M21 2v6h-6"/>
+        <path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/>
+        <path d="M3 22v-6h6"/>
+        <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/>
+      </svg>
+
+          {{ cargando ? 'Actualizando...' : 'Actualizar' }}
+        </button>
     </div>
   </section>
 
@@ -38,41 +65,65 @@
   </div>
 
   <section class="stats-grid">
-    <article class="stat-card featured">
-      <div class="stat-card__icon">👥</div>
-      <div class="stat-card__content">
-        <span>Total clientes</span>
-        <strong>{{ totalClientes() }}</strong>
-        <small>Clientes registrados</small>
-      </div>
-    </article>
 
-    <article class="stat-card">
-      <div class="stat-card__icon success">✅</div>
-      <div class="stat-card__content">
-        <span>Clientes activos</span>
-        <strong>{{ clientesActivos() }}</strong>
-        <small>Usuarios habilitados</small>
-      </div>
-    </article>
+  <article class="stat-card featured">
+    <div class="stat-card__icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0"/>
+        <path d="M4 21a8 8 0 0 1 16 0"/>
+      </svg>
+    </div>
 
-    <article class="stat-card">
-      <div class="stat-card__icon water">💧</div>
-      <div class="stat-card__content">
-        <span>Suministros</span>
-        <strong>{{ totalSuministros() }}</strong>
-        <small>Conexiones registradas</small>
-      </div>
-    </article>
+    <div class="stat-card__content">
+      <span>Total clientes</span>
+      <strong>{{ totalClientes() }}</strong>
+      <small>Clientes registrados</small>
+    </div>
+  </article>
 
-    <article class="stat-card">
-      <div class="stat-card__icon home">🏠</div>
-      <div class="stat-card__content">
-        <span>Instalados</span>
-        <strong>{{ suministrosInstalados() }}</strong>
-        <small>Suministros con consumo habilitado</small>
-      </div>
-    </article>
+  <article class="stat-card">
+    <div class="stat-card__icon success">
+      <svg viewBox="0 0 24 24">
+        <path d="M20 6L9 17l-5-5"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Clientes activos</span>
+      <strong>{{ clientesActivos() }}</strong>
+      <small>Usuarios habilitados</small>
+    </div>
+  </article>
+
+  <article class="stat-card">
+    <div class="stat-card__icon water">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2C12 2 6 9 6 13a6 6 0 0 0 12 0c0-4-6-11-6-11z"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Suministros</span>
+      <strong>{{ totalSuministros() }}</strong>
+      <small>Conexiones registradas</small>
+    </div>
+  </article>
+
+  <article class="stat-card">
+    <div class="stat-card__icon home">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 11L12 3l9 8"/>
+        <path d="M5 10v10h14V10"/>
+      </svg>
+    </div>
+
+    <div class="stat-card__content">
+      <span>Instalados</span>
+      <strong>{{ suministrosInstalados() }}</strong>
+      <small>Suministros habilitados</small>
+    </div>
+  </article>
+
   </section>
 
   <section class="summary-panel">
@@ -154,9 +205,18 @@
       <option value="BLOQUEADO">Bloqueados por cliente</option>
     </select>
 
-    <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
-      Limpiar
-    </button>
+      <button
+        type="button"
+        class="btn-secondary btn-icon"
+        (click)="limpiarFiltros()"
+      >
+               <svg viewBox="0 0 24 24">
+        <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+        <path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8L19 17z"/>
+      </svg>
+
+        Limpiar
+</button>
   </section>
 
   <section class="table-card">
@@ -199,9 +259,22 @@
                     <small>{{ suministro.aliasSuministro || suministro.direccionSuministro }}</small>
                   </div>
 
-                  <button type="button" class="qr-mini-btn" (click)="irQr(suministro)">
-                    QR
-                  </button>
+                <button
+                  type="button"
+                  class="qr-mini-btn"
+                  (click)="irQr(suministro)"
+                  title="Generar QR"
+                >
+             <svg viewBox="0 0 24 24">
+                <rect x="3" y="3" width="6" height="6" rx="1"/>
+                <rect x="15" y="3" width="6" height="6" rx="1"/>
+                <rect x="3" y="15" width="6" height="6" rx="1"/>
+                <path d="M15 15h2v2h-2z"/>
+                <path d="M19 15h2v2h-2z"/>
+                <path d="M15 19h2v2h-2z"/>
+                <path d="M19 19h2v2h-2z"/>
+              </svg>
+                </button>
                 </div>
 
                 <small *ngIf="totalSuministrosCliente(cliente) > 2">
@@ -231,26 +304,56 @@
               </span>
             </td>
 
-            <td>
-              <div class="actions-cell">
-                <button type="button" class="table-action" (click)="verDetalle(cliente)">
-                  Ver detalle
-                </button>
+           <td>
+                <div class="actions-cell actions-premium">
 
-                <button type="button" class="table-action" (click)="abrirEditarCliente(cliente)">
-                  Editar
-                </button>
+                  <button
+                    type="button"
+                    class="btn-ver-text"
+                    title="Ver detalle"
+                    (click)="verDetalle(cliente); $event.stopPropagation()"
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span>Detalle</span>
+                  </button>
 
-                <button
-                  type="button"
-                  class="table-action"
-                  [ngClass]="cliente.estado ? 'danger-soft' : 'success-soft'"
-                  (click)="abrirCambiarEstadoCliente(cliente)"
-                >
-                  {{ cliente.estado ? 'Desactivar' : 'Activar' }}
-                </button>
-              </div>
-            </td>
+                  <button
+                    type="button"
+                    class="btn-editar-text"
+                    title="Editar"
+                    (click)="abrirEditarCliente(cliente); $event.stopPropagation()"
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25z"/>
+                      <path d="M14.06 4.94l3.75 3.75"/>
+                    </svg>
+                    <span>Editar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    [ngClass]="cliente.estado ? 'btn-desactivar-text' : 'btn-activar-text'"
+                    [title]="cliente.estado ? 'Desactivar cliente' : 'Activar cliente'"
+                    (click)="abrirCambiarEstadoCliente(cliente); $event.stopPropagation()"
+                  >
+                    <svg *ngIf="cliente.estado" viewBox="0 0 24 24">
+                      <rect x="5" y="11" width="14" height="10" rx="2"/>
+                      <path d="M8 11V8a4 4 0 1 1 8 0v3"/>
+                    </svg>
+
+                    <svg *ngIf="!cliente.estado" viewBox="0 0 24 24">
+                      <rect x="5" y="11" width="14" height="10" rx="2"/>
+                      <path d="M8 11V8a4 4 0 1 1 8 0"/>
+                    </svg>
+
+                    <span>{{ cliente.estado ? 'Desactivar' : 'Activar' }}</span>
+                  </button>
+
+                </div>
+              </td>
           </tr>
 
           <tr *ngIf="!cargando && clientesFiltrados.length === 0">
@@ -289,20 +392,43 @@
       <div class="tipo-usuario-tabs">
         <button
           type="button"
+          class="tipo-tab"
           [class.active]="tipoUsuarioFormulario === 'CLIENTE'"
           (click)="cambiarTipoUsuarioFormulario('CLIENTE')"
         >
-          👤 Cliente / Usuario
-          <small>Con suministro, recibos y portal cliente</small>
+                <span class="tipo-tab-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4z"/>
+            <path d="M4 21a8 8 0 0 1 16 0"/>
+          </svg>
+        </span>
+
+          <span>
+            Cliente / Usuario
+            <small>Con suministro, recibos y portal cliente</small>
+          </span>
         </button>
 
         <button
           type="button"
+          class="tipo-tab"
           [class.active]="tipoUsuarioFormulario === 'LECTURADOR'"
           (click)="cambiarTipoUsuarioFormulario('LECTURADOR')"
         >
-          📲 Lecturador
-          <small>Escanea QR y registra lecturas</small>
+       <span class="tipo-tab-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="6" y="2" width="12" height="20" rx="2"/>
+            <path d="M9 7h6"/>
+            <path d="M9 11h6"/>
+            <path d="M9 15h4"/>
+            <circle cx="12" cy="19" r="1"/>
+          </svg>
+        </span>
+
+          <span>
+            Lecturador
+            <small>Escanea QR y registra lecturas</small>
+          </span>
         </button>
       </div>
 
@@ -530,22 +656,29 @@
           <strong>{{ totalSuministrosCliente(clienteDetalle) }}</strong>
         </div>
       </div>
-
       <div class="suministros-form-header">
         <h4 class="section-title">Suministros del cliente</h4>
 
         <div class="actions-cell">
-          <button type="button" class="table-action" (click)="abrirEditarCliente(clienteDetalle)">
+          <button type="button" class="table-action btn-with-icon" (click)="abrirEditarCliente(clienteDetalle)">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 20h4l10.5-10.5-4-4L4 16v4z"></path>
+              <path d="M13.5 6.5l4 4"></path>
+            </svg>
             Editar cliente
           </button>
 
           <button
             type="button"
-            class="table-action success-soft"
+            class="table-action success-soft btn-with-icon"
             *ngIf="clienteDetalle.estado"
             (click)="abrirAgregarSuministro(clienteDetalle)"
           >
-            + Agregar suministro
+            <svg viewBox="0 0 24 24">
+              <path d="M12 5v14"></path>
+              <path d="M5 12h14"></path>
+            </svg>
+            Agregar suministro
           </button>
         </div>
       </div>
@@ -565,38 +698,65 @@
         </div>
 
         <div class="suministro-detail-actions">
-          <button type="button" class="table-action" (click)="abrirEditarSuministro(clienteDetalle, suministro)">
+          <button type="button" class="table-action btn-with-icon" (click)="abrirEditarSuministro(clienteDetalle, suministro)">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 20h4l10.5-10.5-4-4L4 16v4z"></path>
+              <path d="M13.5 6.5l4 4"></path>
+            </svg>
             Editar
           </button>
 
-          <button type="button" class="table-action" (click)="irQr(suministro)">
+          <button type="button" class="table-action btn-with-icon" (click)="irQr(suministro)">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 3h6v6H3z"></path>
+              <path d="M15 3h6v6h-6z"></path>
+              <path d="M3 15h6v6H3z"></path>
+              <path d="M16 16h2v2h-2z"></path>
+              <path d="M20 16h1v1h-1z"></path>
+              <path d="M18 18h3v3h-3z"></path>
+              <path d="M12 12h2v2h-2z"></path>
+            </svg>
             Generar QR
           </button>
 
           <button
             type="button"
-            class="table-action success-soft"
+            class="table-action success-soft btn-with-icon"
             *ngIf="clienteDetalle.estado && !esSuministroInstalado(suministro)"
             (click)="abrirCambiarEstadoSuministro(clienteDetalle, suministro, true)"
           >
+            <svg viewBox="0 0 24 24">
+              <path d="M20 6L9 17l-5-5"></path>
+            </svg>
             Marcar instalado
           </button>
 
           <button
             type="button"
-            class="table-action danger-soft"
+            class="table-action danger-soft btn-with-icon"
             *ngIf="clienteDetalle.estado && esSuministroInstalado(suministro)"
             (click)="abrirCambiarEstadoSuministro(clienteDetalle, suministro, false)"
           >
+            <svg viewBox="0 0 24 24">
+              <path d="M6 18L18 6"></path>
+              <path d="M6 6l12 12"></path>
+            </svg>
             Suspender
           </button>
 
           <button
             type="button"
-            class="table-action danger-soft"
+            class="table-action danger-soft btn-with-icon"
             *ngIf="clienteDetalle.estado && totalSuministrosCliente(clienteDetalle) > 1"
             (click)="abrirEliminarSuministro(clienteDetalle, suministro)"
           >
+            <svg viewBox="0 0 24 24">
+              <path d="M4 7h16"></path>
+              <path d="M10 11v6"></path>
+              <path d="M14 11v6"></path>
+              <path d="M6 7l1 14h10l1-14"></path>
+              <path d="M9 7V4h6v3"></path>
+            </svg>
             Eliminar
           </button>
 
@@ -606,22 +766,10 @@
         </div>
       </div>
 
-      <div class="modal-actions">
-        <button
-          type="button"
-          class="btn-secondary"
-          [ngClass]="clienteDetalle.estado ? 'danger-soft' : 'success-soft'"
-          (click)="abrirCambiarEstadoCliente(clienteDetalle)"
-        >
-          {{ clienteDetalle.estado ? 'Desactivar cliente' : 'Activar cliente' }}
-        </button>
-
-        <button type="button" class="btn-primary" (click)="cerrarDetalle()">
-          Cerrar
-        </button>
-      </div>
     </div>
   </div>
+
+
 
   <!-- MODAL EDITAR CLIENTE -->
   <div class="modal-backdrop" *ngIf="mostrarEditarCliente && clienteEditando">
