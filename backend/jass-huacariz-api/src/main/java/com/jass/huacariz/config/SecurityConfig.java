@@ -28,13 +28,6 @@ public class SecurityConfig {
             HttpSecurity http
     ) throws Exception {
 
-
-                        // RUTAS PÚBLICAS
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/health").permitAll()
-
-                        .requestMatchers("/uploads/**").permitAll()
-
         http
                 .cors(cors ->
                         cors.configurationSource(corsConfigurationSource())
@@ -55,12 +48,24 @@ public class SecurityConfig {
                         .permitAll()
 
                         // RUTAS PÚBLICAS
-                        .requestMatchers("/api/auth/**")
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/health",
+                                "/uploads/**"
+                        )
                         .permitAll()
 
-                        .requestMatchers("/api/health")
-                        .permitAll()
-
+                        // CANALES DE PAGO ACTIVOS PARA CLIENTE Y ADMIN
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/canales-pago/activos"
+                        )
+                        .hasAnyAuthority(
+                                "CLIENTE",
+                                "ROLE_CLIENTE",
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
 
                         // PORTAL CLIENTE
                         .requestMatchers("/api/cliente/**")
@@ -85,42 +90,7 @@ public class SecurityConfig {
                         // REGISTRAR LECTURAS
                         .requestMatchers(
                                 HttpMethod.POST,
-                                "/api/lecturas"
-                        )
-                        .hasAnyAuthority(
-                                "ADMIN",
-                                "ROLE_ADMIN",
-                                "LECTURADOR",
-                                "ROLE_LECTURADOR",
-                                "LECTOR",
-                                "ROLE_LECTOR"
-                        )
-
-
-                        // ADMIN
-
-
-                        // ADMIN LECTURAS / HISTORIAL
-
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/admin/lecturas/**").hasAuthority("ADMIN")
-
-                        // ADMINISTRACIÓN
-                        .requestMatchers("/api/clientes/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/usuarios/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/sectores/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/tarifas/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/recibos/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/pagos/**").hasAuthority("ADMIN")
-
-
-                        .requestMatchers(HttpMethod.GET, "/api/canales-pago/activos").hasAnyAuthority("CLIENTE", "ADMIN")
-                        .requestMatchers("/api/canales-pago/**").hasAuthority("ADMIN")
-
-                        .anyRequest().authenticated()
-
-                        .requestMatchers(
-                                HttpMethod.POST,
+                                "/api/lecturas",
                                 "/api/lecturas/**"
                         )
                         .hasAnyAuthority(
@@ -135,6 +105,7 @@ public class SecurityConfig {
                         // CONSULTAR LECTURAS
                         .requestMatchers(
                                 HttpMethod.GET,
+                                "/api/lecturas",
                                 "/api/lecturas/**"
                         )
                         .hasAnyAuthority(
@@ -147,51 +118,29 @@ public class SecurityConfig {
                         )
 
                         // CONFIGURACIÓN DE COBRANZA
+                        .requestMatchers("/api/configuracion-cobranza/**")
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // ADMINISTRACIÓN DE CANALES DE PAGO
+                        .requestMatchers("/api/canales-pago/**")
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN"
+                        )
+
+                        // RUTAS ADMINISTRATIVAS
                         .requestMatchers(
-                                "/api/configuracion-cobranza/**"
+                                "/api/admin/**",
+                                "/api/clientes/**",
+                                "/api/usuarios/**",
+                                "/api/sectores/**",
+                                "/api/tarifas/**",
+                                "/api/recibos/**",
+                                "/api/pagos/**"
                         )
-                        .hasAnyAuthority(
-                                "ADMIN",
-                                "ROLE_ADMIN"
-                        )
-
-                        // ADMINISTRACIÓN DE CLIENTES
-                        .requestMatchers("/api/clientes/**")
-                        .hasAnyAuthority(
-                                "ADMIN",
-                                "ROLE_ADMIN"
-                        )
-
-                        // ADMINISTRACIÓN DE USUARIOS
-                        .requestMatchers("/api/usuarios/**")
-                        .hasAnyAuthority(
-                                "ADMIN",
-                                "ROLE_ADMIN"
-                        )
-
-                        // ADMINISTRACIÓN DE SECTORES
-                        .requestMatchers("/api/sectores/**")
-                        .hasAnyAuthority(
-                                "ADMIN",
-                                "ROLE_ADMIN"
-                        )
-
-                        // ADMINISTRACIÓN DE TARIFAS
-                        .requestMatchers("/api/tarifas/**")
-                        .hasAnyAuthority(
-                                "ADMIN",
-                                "ROLE_ADMIN"
-                        )
-
-                        // ADMINISTRACIÓN DE RECIBOS
-                        .requestMatchers("/api/recibos/**")
-                        .hasAnyAuthority(
-                                "ADMIN",
-                                "ROLE_ADMIN"
-                        )
-
-                        // ADMINISTRACIÓN DE PAGOS
-                        .requestMatchers("/api/pagos/**")
                         .hasAnyAuthority(
                                 "ADMIN",
                                 "ROLE_ADMIN"
@@ -200,7 +149,6 @@ public class SecurityConfig {
                         // CUALQUIER OTRA RUTA
                         .anyRequest()
                         .authenticated()
-
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,
@@ -212,40 +160,14 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration config = new CorsConfiguration();
 
-
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:4200",
-                "http://127.0.0.1:4200",
-                "https://*.devtunnels.ms"
-        ));
-
-        config.setAllowedMethods(List.of(
-                "GET",
-                "POST",
-                "PUT",
-                "PATCH",
-                "DELETE",
-                "OPTIONS"
-        ));
-
-        config.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin",
-                "X-Requested-With"
-        ));
-
-        config.setExposedHeaders(List.of(
-                "Authorization"
-        ));
-
-        config.setAllowedOrigins(
+        config.setAllowedOriginPatterns(
                 List.of(
                         "http://localhost:4200",
-                        "http://127.0.0.1:4200"
+                        "http://127.0.0.1:4200",
+                        "https://*.devtunnels.ms"
                 )
         );
 
@@ -264,7 +186,9 @@ public class SecurityConfig {
                 List.of(
                         "Authorization",
                         "Content-Type",
-                        "Accept"
+                        "Accept",
+                        "Origin",
+                        "X-Requested-With"
                 )
         );
 
@@ -274,7 +198,6 @@ public class SecurityConfig {
                         "Content-Disposition"
                 )
         );
-
 
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);

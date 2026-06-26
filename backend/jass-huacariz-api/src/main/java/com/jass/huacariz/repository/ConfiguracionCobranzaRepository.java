@@ -5,7 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface ConfiguracionCobranzaRepository extends JpaRepository<ConfiguracionCobranza, Integer> {
+public interface ConfiguracionCobranzaRepository
+        extends JpaRepository<ConfiguracionCobranza, Integer> {
 
     Optional<ConfiguracionCobranza> findTopByOrderByIdDesc();
+
+    Optional<ConfiguracionCobranza>
+    findTopByOrderByFechaActualizacionDesc();
 }
