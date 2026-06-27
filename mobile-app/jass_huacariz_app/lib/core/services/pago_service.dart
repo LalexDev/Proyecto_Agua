@@ -1,5 +1,5 @@
-import 'package:jass_huacariz_app/core/config/api_config.dart';
-import 'package:jass_huacariz_app/core/services/api_service.dart';
+import '../config/api_config.dart';
+import 'api_service.dart';
 
 class PagoService {
   final ApiService _api = ApiService();
@@ -27,45 +27,39 @@ class PagoService {
   }
 
   Map<String, dynamic> _asMap(dynamic response) {
-    if (response is Map<String, dynamic>) {
-      return response;
-    }
-
-    if (response is Map) {
-      return Map<String, dynamic>.from(response);
-    }
-
+    if (response is Map<String, dynamic>) return response;
+    if (response is Map) return Map<String, dynamic>.from(response);
     return {};
   }
 
   Future<List<Map<String, dynamic>>> listarPagos() async {
-    final response = await _api.get(ApiConfig.pagos);
-    return _asList(response);
+    return _asList(await _api.get(ApiConfig.pagos));
   }
 
   Future<List<Map<String, dynamic>>> listarPagosPorSuministro(
     String codigoSuministro,
   ) async {
-    final response = await _api.get(
-      ApiConfig.pagosPorSuministro(codigoSuministro),
+    return _asList(
+      await _api.get(
+        ApiConfig.pagosPorSuministro(codigoSuministro),
+      ),
     );
-
-    return _asList(response);
   }
 
   Future<Map<String, dynamic>> pagarMiRecibo({
     required int idRecibo,
     required String metodoPago,
     required String codigoOperacion,
+    required String comprobantePath,
   }) async {
-    final payload = {
-      'metodoPago': metodoPago.trim().toUpperCase(),
-      'codigoOperacion': codigoOperacion.trim(),
-    };
-
-    final response = await _api.post(
+    final response = await _api.patchMultipart(
       ApiConfig.pagarReciboCliente(idRecibo),
-      payload,
+      fields: {
+        'metodoPago': metodoPago.trim().toUpperCase(),
+        'codigoOperacion': codigoOperacion.trim(),
+      },
+      fileField: 'comprobante',
+      filePath: comprobantePath,
     );
 
     return _asMap(response);
@@ -76,14 +70,12 @@ class PagoService {
     required String metodoPago,
     required String codigoOperacion,
   }) async {
-    final payload = {
-      'metodoPago': metodoPago.trim().toUpperCase(),
-      'codigoOperacion': codigoOperacion.trim(),
-    };
-
-    final response = await _api.post(
+    final response = await _api.patch(
       ApiConfig.pagarReciboAdmin(idRecibo),
-      payload,
+      {
+        'metodoPago': metodoPago.trim().toUpperCase(),
+        'codigoOperacion': codigoOperacion.trim(),
+      },
     );
 
     return _asMap(response);

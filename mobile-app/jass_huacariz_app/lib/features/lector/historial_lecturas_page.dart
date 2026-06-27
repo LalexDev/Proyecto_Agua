@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/lectura_admin_service.dart';
+import '../../core/services/lectura_offline_service.dart';
+import '../../core/services/sincronizacion_lecturas_service.dart';
 import '../../shared/theme/jass_colors.dart';
 import '../../shared/widgets/admin_bottom_nav.dart';
 import '../../shared/widgets/lector_bottom_nav.dart';
@@ -20,6 +22,9 @@ class HistorialLecturasPage extends StatefulWidget {
 
 class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
   final LecturaAdminService lecturaService = LecturaAdminService();
+  final LecturaOfflineService offlineService = LecturaOfflineService();
+  final SincronizacionLecturasService sincronizacionService =
+      SincronizacionLecturasService();
   final TextEditingController buscarController = TextEditingController();
 
   List<Map<String, dynamic>> lecturas = [];
@@ -184,23 +189,59 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
       error = '';
     });
 
+    final combinadas = <Map<String, dynamic>>[];
+    String errorServidor = '';
+
     try {
-      final data = await lecturaService.listarHistorial();
-
-      if (!mounted) return;
-
-      setState(() {
-        lecturas = data;
-        cargando = false;
-      });
+      final servidor = await lecturaService.listarHistorial();
+      combinadas.addAll(servidor);
     } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        error = e.toString().replaceFirst('Exception: ', '');
-        cargando = false;
-      });
+      errorServidor = e.toString().replaceFirst('Exception: ', '');
     }
+
+    if (!widget.modoAdmin) {
+      try {
+        final locales = await offlineService.listarHistorialLocal();
+        combinadas.insertAll(0, locales);
+      } catch (_) {}
+    }
+
+    combinadas.sort((a, b) {
+      final fechaA = DateTime.tryParse(
+            '${a['fechaRegistro'] ?? a['fechaLectura'] ?? ''}',
+          ) ??
+          DateTime(2000);
+      final fechaB = DateTime.tryParse(
+            '${b['fechaRegistro'] ?? b['fechaLectura'] ?? ''}',
+          ) ??
+          DateTime(2000);
+      return fechaB.compareTo(fechaA);
+    });
+
+    if (!mounted) return;
+    setState(() {
+      lecturas = combinadas;
+      error = combinadas.isEmpty ? errorServidor : '';
+      cargando = false;
+    });
+  }
+
+  Future<void> sincronizar() async {
+    if (widget.modoAdmin) {
+      await cargarHistorial();
+      return;
+    }
+    final resultado = await sincronizacionService.sincronizarPendientes();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(resultado['mensaje']?.toString() ?? 'Sincronización finalizada.'),
+        backgroundColor: resultado['conectado'] == true
+            ? JassColors.success
+            : JassColors.warning,
+      ),
+    );
+    await cargarHistorial();
   }
 
   void _volverInicio() {
@@ -260,7 +301,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
 
     showLectorQuickMenu(
       context: context,
-      onRefresh: cargarHistorial,
+      onRefresh: sincronizar,
     );
   }
 
@@ -285,7 +326,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
             ),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: cargarHistorial,
+          onRefresh: widget.modoAdmin ? cargarHistorial : sincronizar,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(22, 20, 22, 116),
@@ -317,6 +358,11 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
                       lecturaAnterior: _lecturaAnterior(lectura),
                       lecturaActual: _lecturaActual(lectura),
                       consumo: _consumo(lectura),
+                      total: _num(lectura['total'] ?? lectura['totalRecibo'] ?? lectura['recibo']?['total']),
+                      estadoSincronizacion: _txt(
+                        lectura['estadoSincronizacion'],
+                        'SINCRONIZADA',
+                      ),
                       oscuro: oscuro,
                     );
                   }),
@@ -391,7 +437,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
             ),
           ),
           child: IconButton(
-            onPressed: cargarHistorial,
+            onPressed: sincronizar,
             icon: const Icon(
               Icons.refresh_rounded,
               color: JassColors.secondary,
@@ -520,6 +566,8 @@ class _LecturaCard extends StatelessWidget {
   final double lecturaAnterior;
   final double lecturaActual;
   final double consumo;
+  final double total;
+  final String estadoSincronizacion;
   final bool oscuro;
 
   const _LecturaCard({
@@ -531,6 +579,8 @@ class _LecturaCard extends StatelessWidget {
     required this.lecturaAnterior,
     required this.lecturaActual,
     required this.consumo,
+    required this.total,
+    required this.estadoSincronizacion,
     required this.oscuro,
   });
 
@@ -570,6 +620,7 @@ class _LecturaCard extends StatelessWidget {
                   ),
                 ),
               ),
+              _SyncBadge(estado: estadoSincronizacion),
             ],
           ),
           const SizedBox(height: 12),
@@ -637,7 +688,58 @@ class _LecturaCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'Total: S/ ${total.toStringAsFixed(2)}',
+              style: TextStyle(
+                color: oscuro ? Colors.white : JassColors.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _SyncBadge extends StatelessWidget {
+  final String estado;
+
+  const _SyncBadge({required this.estado});
+
+  @override
+  Widget build(BuildContext context) {
+    final normalizado = estado.toUpperCase();
+    final pendiente = normalizado == 'PENDIENTE' || normalizado == 'SINCRONIZANDO';
+    final error = normalizado == 'ERROR';
+    final color = error
+        ? JassColors.danger
+        : pendiente
+            ? JassColors.warning
+            : JassColors.success;
+    final texto = error
+        ? 'ERROR'
+        : pendiente
+            ? 'PENDIENTE'
+            : 'SINCRONIZADA';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Text(
+        texto,
+        style: TextStyle(
+          color: color,
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+        ),
       ),
     );
   }

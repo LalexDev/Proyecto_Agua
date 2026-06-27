@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/lecturador_service.dart';
+import '../../core/services/lectura_offline_service.dart';
 import '../../shared/theme/jass_colors.dart';
 import '../../shared/theme/jass_theme_context.dart';
 import '../../shared/widgets/admin_bottom_nav.dart';
@@ -21,6 +22,7 @@ class BuscarSuministroPage extends StatefulWidget {
 
 class _BuscarSuministroPageState extends State<BuscarSuministroPage> {
   final LecturadorService lecturadorService = LecturadorService();
+  final LecturaOfflineService lecturaOfflineService = LecturaOfflineService();
   final TextEditingController codigoController = TextEditingController();
 
   bool buscando = false;
@@ -201,8 +203,9 @@ class _BuscarSuministroPageState extends State<BuscarSuministroPage> {
     });
 
     try {
-      final data =
-          await lecturadorService.buscarSuministro(codigo);
+      final data = widget.modoAdmin
+          ? await lecturadorService.buscarSuministro(codigo)
+          : await lecturaOfflineService.buscarSuministro(codigo);
 
       if (!mounted) return;
 
@@ -240,6 +243,24 @@ class _BuscarSuministroPageState extends State<BuscarSuministroPage> {
     });
   }
 
+  String _tipoOperacion(Map<String, dynamic> data) {
+    final estado = _txt(
+      data['estadoInstalacion'],
+      'PENDIENTE_INSTALACION',
+    ).toUpperCase();
+    return estado == 'INSTALADO' ? 'LECTURA' : 'MANTENIMIENTO';
+  }
+
+  bool _permiteOperacion(Map<String, dynamic> data) {
+    if (!_activo(data)) return false;
+    final tipo = _tipoOperacion(data);
+    final value = tipo == 'LECTURA'
+        ? data['permiteRegistrarLectura']
+        : data['permiteGenerarMantenimiento'];
+    if (value is bool) return value;
+    return value?.toString().toLowerCase() == 'true' || value == 1;
+  }
+
   void irRegistrarLectura() {
     final data = suministro;
 
@@ -256,7 +277,10 @@ class _BuscarSuministroPageState extends State<BuscarSuministroPage> {
       widget.modoAdmin
           ? '/admin-registrar-lectura'
           : '/registrar-lectura',
-      arguments: data,
+      arguments: {
+        ...data,
+        'tipoOperacion': _tipoOperacion(data),
+      },
     );
   }
 
@@ -421,6 +445,11 @@ class _BuscarSuministroPageState extends State<BuscarSuministroPage> {
                     lecturaAnterior:
                         _lecturaAnterior(suministro!),
                     activo: _activo(suministro!),
+                    habilitado: _permiteOperacion(suministro!),
+                    accion: _tipoOperacion(suministro!) == 'LECTURA'
+                        ? 'Registrar lectura'
+                        : 'Generar solo mantenimiento',
+                    offline: suministro!['origenOffline'] == true,
                     onRegistrar: irRegistrarLectura,
                   ),
               ],
@@ -722,6 +751,9 @@ class _SuministroCard extends StatelessWidget {
   final String sector;
   final double lecturaAnterior;
   final bool activo;
+  final bool habilitado;
+  final bool offline;
+  final String accion;
   final VoidCallback onRegistrar;
 
   const _SuministroCard({
@@ -731,6 +763,9 @@ class _SuministroCard extends StatelessWidget {
     required this.sector,
     required this.lecturaAnterior,
     required this.activo,
+    required this.habilitado,
+    required this.offline,
+    required this.accion,
     required this.onRegistrar,
   });
 
@@ -786,6 +821,10 @@ class _SuministroCard extends StatelessWidget {
               _EstadoChip(activo: activo),
             ],
           ),
+          if (offline) ...[
+            const SizedBox(height: 10),
+            const _OfflineBadge(),
+          ],
           const SizedBox(height: 16),
           _InfoLine(
             label: 'Titular',
@@ -809,14 +848,13 @@ class _SuministroCard extends StatelessWidget {
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
-              onPressed:
-                  activo ? onRegistrar : null,
+              onPressed: habilitado ? onRegistrar : null,
               icon: const Icon(
                 Icons.edit_note_rounded,
               ),
-              label: const Text(
-                'Registrar lectura',
-                style: TextStyle(
+              label: Text(
+                accion,
+                style: const TextStyle(
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -896,6 +934,36 @@ class _InfoLine extends StatelessWidget {
                 color: primary,
                 fontWeight: FontWeight.w900,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OfflineBadge extends StatelessWidget {
+  const _OfflineBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF2D8),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.cloud_off_rounded, size: 15, color: Color(0xFF9A6500)),
+          SizedBox(width: 6),
+          Text(
+            'DATOS GUARDADOS EN EL CELULAR',
+            style: TextStyle(
+              color: Color(0xFF9A6500),
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],

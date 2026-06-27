@@ -31,4 +31,6 @@ public class LecturaRequest {
     private BigDecimal lecturaActual;
 
     private String observacion;
+
+    private String idOperacionCliente;
 }

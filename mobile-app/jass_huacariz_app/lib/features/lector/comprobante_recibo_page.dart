@@ -53,12 +53,18 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
     final recibo = args['recibo'];
 
     if (recibo is Map<String, dynamic>) {
-      comprobante = recibo;
+      comprobante = {
+        ...args,
+        ...recibo,
+      };
       return;
     }
 
     if (recibo is Map) {
-      comprobante = Map<String, dynamic>.from(recibo);
+      comprobante = {
+        ...args,
+        ...Map<String, dynamic>.from(recibo),
+      };
       return;
     }
 
@@ -378,6 +384,36 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
+              if (comprobante['origenOffline'] == true ||
+                  comprobante['montoProvisional'] == true) ...[
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF2D8),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.cloud_off_rounded,
+                        color: Color(0xFF9A6500),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Recibo provisional pendiente de sincronización. El monto oficial será confirmado por el servidor.',
+                          style: TextStyle(
+                            color: Color(0xFF9A6500),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               SizedBox(height: 18),
               _buildSuccessCard(),
               SizedBox(height: 18),

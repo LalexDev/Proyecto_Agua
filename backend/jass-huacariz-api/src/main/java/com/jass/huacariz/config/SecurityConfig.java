@@ -117,7 +117,22 @@ public class SecurityConfig {
                                 "ROLE_LECTOR"
                         )
 
-                        // CONFIGURACIÓN DE COBRANZA
+                        // TARIFAS Y CONFIGURACIÓN DE SOLO LECTURA PARA EL MODO OFFLINE
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/tarifas",
+                                "/api/configuracion-cobranza"
+                        )
+                        .hasAnyAuthority(
+                                "ADMIN",
+                                "ROLE_ADMIN",
+                                "LECTURADOR",
+                                "ROLE_LECTURADOR",
+                                "LECTOR",
+                                "ROLE_LECTOR"
+                        )
+
+                        // CAMBIOS DE CONFIGURACIÓN SOLO PARA ADMIN
                         .requestMatchers("/api/configuracion-cobranza/**")
                         .hasAnyAuthority(
                                 "ADMIN",

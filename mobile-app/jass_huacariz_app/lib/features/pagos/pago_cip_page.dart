@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../core/services/canal_pago_service.dart';
+import '../../core/services/pago_service.dart';
 import '../../shared/theme/jass_colors.dart';
 import '../../shared/theme/jass_theme_context.dart';
-
-import '../../core/services/pago_service.dart';
-import '../../core/services/recibo_service.dart';
 import '../../shared/widgets/cliente_bottom_nav.dart';
 
 class PagoCipPage extends StatefulWidget {
@@ -15,21 +17,38 @@ class PagoCipPage extends StatefulWidget {
 }
 
 class _PagoCipPageState extends State<PagoCipPage> {
-  Color get primary => context.jassTextPrimary;
-  static const Color secondary = JassColors.secondary;
-  Color get background => context.jassBackground;
-  Color get muted => context.jassTextMuted;
-  static const Color danger = JassColors.danger;
-  static const Color success = JassColors.success;
-  static const Color warning = JassColors.warning;
-
   final PagoService pagoService = PagoService();
-  final ReciboService reciboService = ReciboService();
+  final CanalPagoService canalPagoService = CanalPagoService();
   final TextEditingController codigoOperacionController =
       TextEditingController();
+  final ImagePicker imagePicker = ImagePicker();
 
-  bool cargando = false;
+  Map<String, dynamic> recibo = {};
+  List<Map<String, dynamic>> canales = [];
+
+  bool argumentosCargados = false;
+  bool cargandoCanales = false;
+  bool procesando = false;
+  String error = '';
   String metodoPago = 'YAPE';
+  XFile? comprobante;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (argumentosCargados) return;
+    argumentosCargados = true;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      recibo = args;
+    } else if (args is Map) {
+      recibo = Map<String, dynamic>.from(args);
+    }
+
+    _cargarCanales();
+  }
 
   @override
   void dispose() {
@@ -37,381 +56,301 @@ class _PagoCipPageState extends State<PagoCipPage> {
     super.dispose();
   }
 
-  Map<String, dynamic> _getRecibo(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
-
-    if (args is Map<String, dynamic>) {
-      return args;
-    }
-
-    if (args is Map) {
-      return Map<String, dynamic>.from(args);
-    }
-
-    return {};
-  }
-
-  String _texto(dynamic value, [String fallback = '-']) {
+  String _txt(dynamic value, [String fallback = '-']) {
     if (value == null) return fallback;
-
     final text = value.toString().trim();
-
     if (text.isEmpty || text == 'null') return fallback;
-
     return text;
   }
 
-  double _numero(dynamic value) {
+  double _num(dynamic value) {
     if (value is num) return value.toDouble();
-
-    return double.tryParse(value.toString()) ?? 0.0;
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
-  int _id(Map<String, dynamic> recibo) {
+  int _idRecibo() {
     final value = recibo['id'] ?? recibo['idRecibo'] ?? recibo['reciboId'];
-
     if (value is int) return value;
-    if (value is num) return value.toInt();
-
-    return int.tryParse(value.toString()) ?? 0;
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
-  String _codigoRecibo(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['codigoRecibo'] ??
-          recibo['numeroRecibo'] ??
-          recibo['codigo'] ??
-          'REC-${_id(recibo)}',
+  String _codigoRecibo() {
+    return _txt(
+      recibo['codigoRecibo'] ?? recibo['numeroRecibo'] ?? recibo['codigo'],
+      'REC-${_idRecibo()}',
     );
   }
 
-  String _codigoSuministro(Map<String, dynamic> recibo) {
-    return _texto(
+  String _codigoSuministro() {
+    return _txt(
       recibo['codigoSuministro'] ??
           recibo['suministroCodigo'] ??
-          recibo['codigoSuministroRecibo'] ??
-          recibo['numeroSuministro'] ??
-          recibo['suministro'],
-      'SIN-SUMINISTRO',
+          recibo['numeroSuministro'],
+      'SIN-CÓDIGO',
     );
   }
 
-  String _periodo(Map<String, dynamic> recibo) {
-    final mes = recibo['mes'];
-    final anio = recibo['anio'];
-
-    if (mes != null && anio != null) {
-      const meses = [
-        'Enero',
-        'Febrero',
-        'Marzo',
-        'Abril',
-        'Mayo',
-        'Junio',
-        'Julio',
-        'Agosto',
-        'Septiembre',
-        'Octubre',
-        'Noviembre',
-        'Diciembre',
-      ];
-
-      final mesNumero = int.tryParse(mes.toString()) ?? 1;
-      final index = (mesNumero - 1).clamp(0, 11);
-
-      return '${meses[index]} $anio';
-    }
-
-    return _texto(
-      recibo['periodo'] ?? recibo['mesFacturado'],
-      'Periodo no registrado',
-    );
-  }
-
-  double _total(Map<String, dynamic> recibo) {
-    return _numero(
-      recibo['total'] ??
-          recibo['montoTotal'] ??
-          recibo['importeTotal'] ??
-          recibo['totalPagar'] ??
-          0,
-    );
-  }
-
-  String _estado(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
+  String _estado() {
+    return _txt(
+      recibo['estadoRecibo'] ?? recibo['estado'],
       'PENDIENTE',
     ).toUpperCase();
   }
 
-  bool _puedePagar(Map<String, dynamic> recibo) {
-    final estado = _estado(recibo);
+  double _total() {
+    return _num(
+      recibo['total'] ??
+          recibo['montoTotal'] ??
+          recibo['importeTotal'] ??
+          recibo['totalPagar'],
+    );
+  }
+
+  String _periodo() {
+    final anio = int.tryParse('${recibo['anio'] ?? DateTime.now().year}') ??
+        DateTime.now().year;
+    final mes = int.tryParse('${recibo['mes'] ?? DateTime.now().month}') ??
+        DateTime.now().month;
+
+    const meses = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+
+    return '${meses[(mes - 1).clamp(0, 11)]} $anio';
+  }
+
+  bool _puedePagar() {
+    final estado = _estado();
     return estado == 'PENDIENTE' || estado == 'VENCIDO';
   }
 
- void _mostrarMensaje(
-  String mensaje, {
-  Color? color,
-}) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(mensaje),
-      backgroundColor:
-          color ?? Theme.of(context).colorScheme.primary,
-    ),
-  );
-}
+  List<Map<String, dynamic>> get canalesVisibles {
+    final filtrados = canales.where((canal) {
+      final metodo = _txt(canal['metodoPago'], '').toUpperCase();
+      return metodo == 'YAPE' ||
+          metodo == 'PLIN' ||
+          metodo == 'TRANSFERENCIA';
+    }).toList();
 
-  Future<Map<String, dynamic>?> _buscarReciboDelCliente(int idRecibo) async {
-    final recibos = await reciboService.listarMisRecibos();
+    if (filtrados.isNotEmpty) return filtrados;
+
+    return [
+      {
+        'metodoPago': 'YAPE',
+        'titular': 'Agua Potable Huacariz',
+        'descripcion': 'Realiza el pago y registra el número de operación.',
+        'estado': true,
+      },
+      {
+        'metodoPago': 'PLIN',
+        'titular': 'Agua Potable Huacariz',
+        'descripcion': 'Realiza el pago y registra el número de operación.',
+        'estado': true,
+      },
+      {
+        'metodoPago': 'TRANSFERENCIA',
+        'titular': 'Agua Potable Huacariz',
+        'descripcion': 'Los datos bancarios serán configurados por administración.',
+        'estado': true,
+      },
+    ];
+  }
+
+  Map<String, dynamic>? get canalSeleccionado {
+    for (final canal in canalesVisibles) {
+      if (_txt(canal['metodoPago'], '').toUpperCase() == metodoPago) {
+        return canal;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _cargarCanales() async {
+    setState(() {
+      cargandoCanales = true;
+      error = '';
+    });
 
     try {
-      return recibos.firstWhere((recibo) => _id(recibo) == idRecibo);
+      final data = await canalPagoService.listarActivos();
+      if (!mounted) return;
+
+      setState(() {
+        canales = data;
+        cargandoCanales = false;
+
+        final disponibles = canalesVisibles;
+        if (!disponibles.any(
+          (item) => _txt(item['metodoPago'], '').toUpperCase() == metodoPago,
+        )) {
+          metodoPago = _txt(disponibles.first['metodoPago'], 'YAPE')
+              .toUpperCase();
+        }
+      });
     } catch (_) {
-      return null;
+      if (!mounted) return;
+      setState(() {
+        cargandoCanales = false;
+      });
     }
   }
 
-  Future<void> registrarPago() async {
-    final recibo = _getRecibo(context);
-    final idRecibo = _id(recibo);
-    final codigoOperacion = codigoOperacionController.text.trim();
+  Future<void> _seleccionarComprobante() async {
+    final archivo = await imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+    );
 
-    if (idRecibo <= 0) {
-      _mostrarMensaje(
-        'No se encontró el recibo para pagar.',
-        color: danger,
-      );
+    if (archivo == null) return;
+
+    final extension = archivo.name.split('.').last.toLowerCase();
+    if (!{'jpg', 'jpeg', 'png', 'webp'}.contains(extension)) {
+      _mensaje('Solo se permiten imágenes JPG, PNG o WEBP.', true);
       return;
     }
 
-    if (!_puedePagar(recibo)) {
-      _mostrarMensaje(
-        'Este recibo no está pendiente de pago.',
-        color: warning,
-      );
-      return;
-    }
-
-    if (metodoPago != 'EFECTIVO' && codigoOperacion.isEmpty) {
-      _mostrarMensaje(
-        'Ingresa el código de operación.',
-        color: warning,
-      );
+    final size = await File(archivo.path).length();
+    if (size > 3 * 1024 * 1024) {
+      _mensaje('La imagen no debe superar los 3 MB.', true);
       return;
     }
 
     setState(() {
-      cargando = true;
+      comprobante = archivo;
+      error = '';
+    });
+  }
+
+  Future<void> _registrarPago() async {
+    final idRecibo = _idRecibo();
+    final codigoOperacion = codigoOperacionController.text.trim();
+
+    if (idRecibo <= 0) {
+      _mensaje('No se encontró el recibo para pagar.', true);
+      return;
+    }
+
+    if (!_puedePagar()) {
+      _mensaje('Este recibo ya fue pagado o está en revisión.', true);
+      return;
+    }
+
+    if (codigoOperacion.length < 4) {
+      _mensaje('Ingresa un código de operación válido.', true);
+      return;
+    }
+
+    if (comprobante == null) {
+      _mensaje('Selecciona la captura del comprobante.', true);
+      return;
+    }
+
+    setState(() {
+      procesando = true;
+      error = '';
     });
 
     try {
-      final reciboValidado = await _buscarReciboDelCliente(idRecibo);
-
-      if (reciboValidado == null) {
-        if (!mounted) return;
-
-        setState(() {
-          cargando = false;
-        });
-
-        _mostrarMensaje(
-          'Este recibo no pertenece a tus suministros.',
-          color: danger,
-        );
-        return;
-      }
-
       await pagoService.pagarMiRecibo(
         idRecibo: idRecibo,
         metodoPago: metodoPago,
         codigoOperacion: codigoOperacion,
+        comprobantePath: comprobante!.path,
       );
 
       if (!mounted) return;
 
-      setState(() {
-        cargando = false;
-      });
-
-      _mostrarMensaje(
-        'Pago registrado correctamente.',
-        color: success,
+      _mensaje(
+        'Pago enviado para revisión. Administración validará la operación.',
+        false,
       );
 
       Navigator.pushNamedAndRemoveUntil(
         context,
         '/recibos',
-        (route) => false,
+        (route) => route.settings.name == '/home',
       );
     } catch (e) {
       if (!mounted) return;
-
       setState(() {
-        cargando = false;
+        procesando = false;
+        error = e.toString().replaceFirst('Exception: ', '');
       });
-
-      _mostrarMensaje(
-        e.toString().replaceFirst('Exception: ', ''),
-        color: danger,
-      );
+      _mensaje(error, true);
     }
   }
 
-  void _irHome() {
-    Navigator.pushReplacementNamed(context, '/home');
-  }
-
-  void _irRecibos() {
-    Navigator.pushReplacementNamed(context, '/recibos');
-  }
-
-  void _irPerfil() {
-    Navigator.pushReplacementNamed(context, '/perfil');
-  }
-
-  void _irCambiarPassword() {
-    Navigator.pushNamed(context, '/cambiar-password');
-  }
-
-  void _volver() {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    } else {
-      _irRecibos();
+  String _assetMetodo(String metodo) {
+    switch (metodo.toUpperCase()) {
+      case 'YAPE':
+        return 'assets/images/pagos/yape.png';
+      case 'PLIN':
+        return 'assets/images/pagos/plin.png';
+      default:
+        return 'assets/images/pagos/transferencia.png';
     }
   }
 
-  // Barra inferior cliente:
-  // 0 = Inicio, 1 = Recibos, 2 = Pagar, 3 = Perfil.
-  void _goBottomCliente(int index) {
+  void _mensaje(String mensaje, bool esError) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
+      ),
+    );
+  }
+
+  void _goBottom(int index) {
     if (index == 0) {
-      _irHome();
-    }
-
-    if (index == 1) {
-      _irRecibos();
-    }
-
-    if (index == 2) return;
-
-    if (index == 3) {
-      _irPerfil();
+      Navigator.pushReplacementNamed(context, '/home');
+    } else if (index == 1) {
+      Navigator.pushReplacementNamed(context, '/recibos');
+    } else if (index == 3) {
+      Navigator.pushReplacementNamed(context, '/perfil');
     }
   }
 
-  void _abrirMenuCliente() {
-    showModalBottomSheet(
+  void _abrirMenu() {
+    showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.28),
-      isScrollControlled: true,
-      builder: (_) {
+      backgroundColor: context.jassSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: context.jassSurface,
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: context.jassBorder,
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x33000000),
-                          blurRadius: 28,
-                          offset: Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    child: GridView.count(
-                      crossAxisCount: 3,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.92,
-                      children: [
-                        ClienteMenuTile(
-                          icon: Icons.home_rounded,
-                          label: 'Inicio',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _irHome();
-                          },
-                        ),
-                        ClienteMenuTile(
-                          icon: Icons.receipt_long_rounded,
-                          label: 'Recibos',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _irRecibos();
-                          },
-                        ),
-                        ClienteMenuTile(
-                          icon: Icons.person_rounded,
-                          label: 'Perfil',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _irPerfil();
-                          },
-                        ),
-                        ClienteMenuTile(
-                          icon: Icons.lock_reset_rounded,
-                          label: 'Clave',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _irCambiarPassword();
-                          },
-                        ),
-                        ClienteMenuTile(
-                          icon: Icons.arrow_back_rounded,
-                          label: 'Volver',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _volver();
-                          },
-                        ),
-                        ClienteThemeTile(
-                          onAfterChange: () {
-                            setState(() {});
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
+                ListTile(
+                  leading: const Icon(Icons.home_rounded),
+                  title: const Text('Ir al inicio'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    Navigator.pushReplacementNamed(context, '/home');
+                  },
                 ),
-                SizedBox(width: 12),
-                InkWell(
-                  onTap: () => Navigator.pop(context),
-                  borderRadius: BorderRadius.circular(100),
-                  child: Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: JassColors.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0x33000000),
-                          blurRadius: 18,
-                          offset: Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.close_rounded,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
+                ListTile(
+                  leading: const Icon(Icons.receipt_long_rounded),
+                  title: const Text('Mis recibos'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    Navigator.pushReplacementNamed(context, '/recibos');
+                  },
                 ),
               ],
             ),
@@ -423,15 +362,13 @@ class _PagoCipPageState extends State<PagoCipPage> {
 
   @override
   Widget build(BuildContext context) {
-    final recibo = _getRecibo(context);
-
     return Scaffold(
       backgroundColor: context.jassBackground,
       extendBody: true,
       bottomNavigationBar: ClienteBottomNav(
         currentIndex: 2,
-        onTap: _goBottomCliente,
-        onPlus: _abrirMenuCliente,
+        onTap: _goBottom,
+        onPlus: _abrirMenu,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -440,14 +377,17 @@ class _PagoCipPageState extends State<PagoCipPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              SizedBox(height: 18),
-              _buildResumenRecibo(recibo),
-              SizedBox(height: 18),
-              _buildMetodoPago(),
-              SizedBox(height: 18),
-              _buildCodigoOperacion(),
-              SizedBox(height: 22),
-              _buildBotonPagar(),
+              const SizedBox(height: 18),
+              _buildHero(),
+              const SizedBox(height: 18),
+              if (!_puedePagar()) _buildEstadoBloqueado(),
+              if (_puedePagar()) ...[
+                _buildMetodos(),
+                const SizedBox(height: 18),
+                _buildCanal(),
+                const SizedBox(height: 18),
+                _buildFormulario(),
+              ],
             ],
           ),
         ),
@@ -464,23 +404,14 @@ class _PagoCipPageState extends State<PagoCipPage> {
           decoration: BoxDecoration(
             color: context.jassSurface,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: JassColors.primary.withValues(alpha: 0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            border: Border.all(color: context.jassBorder),
           ),
           child: IconButton(
-            onPressed: cargando ? null : _volver,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            onPressed: () => Navigator.maybePop(context),
+            icon: Icon(Icons.arrow_back_rounded, color: context.jassTextPrimary),
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -488,16 +419,14 @@ class _PagoCipPageState extends State<PagoCipPage> {
               Text(
                 'Portal cliente',
                 style: TextStyle(
-                  color: muted,
-                  fontSize: 13,
+                  color: context.jassTextMuted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 4),
               Text(
                 'Pagar recibo',
                 style: TextStyle(
-                  color: primary,
+                  color: context.jassTextPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
@@ -505,421 +434,404 @@ class _PagoCipPageState extends State<PagoCipPage> {
             ],
           ),
         ),
+        IconButton(
+          onPressed: cargandoCanales ? null : _cargarCanales,
+          icon: const Icon(Icons.refresh_rounded),
+        ),
       ],
     );
   }
 
-  Widget _buildResumenRecibo(Map<String, dynamic> recibo) {
-    final estado = _estado(recibo);
-    final puedePagar = _puedePagar(recibo);
-
+  Widget _buildHero() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [JassColors.primary, JassColors.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: JassColors.primary.withValues(alpha: 0.14),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: Colors.white24,
-                child: Icon(
-                  Icons.payments_rounded,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Resumen del pago',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
-          _ResumenLine(
-            label: 'Recibo',
-            value: _codigoRecibo(recibo),
-          ),
-          _ResumenLine(
-            label: 'Suministro',
-            value: _codigoSuministro(recibo),
-          ),
-          _ResumenLine(
-            label: 'Periodo',
-            value: _periodo(recibo),
-          ),
-          _ResumenLine(
-            label: 'Estado',
-            value: estado,
-          ),
-          SizedBox(height: 18),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.15),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Total a pagar',
-                  style: TextStyle(
-                    color: Color(0xFFE7F8FF),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'S/ ${_total(recibo).toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (!puedePagar) ...[
-            SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(13),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF3DF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                'Este recibo no está pendiente de pago.',
-                style: TextStyle(
-                  color: warning,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetodoPago() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: context.jassSurface,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: context.jassBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Selecciona método de pago',
+          const Text(
+            'PAGO DE AGUA POTABLE',
             style: TextStyle(
-              color: primary,
-              fontSize: 18,
+              color: Color(0xFFE7F8FF),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _codigoRecibo(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
               fontWeight: FontWeight.w900,
             ),
           ),
-          SizedBox(height: 14),
-          _MetodoPagoTile(
-            value: 'YAPE',
-            selectedValue: metodoPago,
-            icon: Icons.phone_android_rounded,
-            title: 'Yape',
-            subtitle: 'Pago por aplicativo móvil',
-            onChanged: (value) {
-              setState(() {
-                metodoPago = value;
-              });
-            },
-          ),
-          SizedBox(height: 10),
-          _MetodoPagoTile(
-            value: 'PLIN',
-            selectedValue: metodoPago,
-            icon: Icons.mobile_friendly_rounded,
-            title: 'Plin',
-            subtitle: 'Transferencia por aplicativo',
-            onChanged: (value) {
-              setState(() {
-                metodoPago = value;
-              });
-            },
-          ),
-          SizedBox(height: 10),
-          _MetodoPagoTile(
-            value: 'TRANSFERENCIA',
-            selectedValue: metodoPago,
-            icon: Icons.account_balance_rounded,
-            title: 'Transferencia',
-            subtitle: 'Pago desde banco o agente',
-            onChanged: (value) {
-              setState(() {
-                metodoPago = value;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCodigoOperacion() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: context.jassSurface,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: context.jassBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          const SizedBox(height: 5),
           Text(
-            'Código de operación',
-            style: TextStyle(
-              color: primary,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Ingresa el código que aparece en tu comprobante de pago.',
-            style: TextStyle(
-              color: muted,
-              fontSize: 13,
+            '${_periodo()} · ${_codigoSuministro()}',
+            style: const TextStyle(
+              color: Color(0xFFE7F8FF),
               fontWeight: FontWeight.w700,
-              height: 1.35,
             ),
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 18),
+          Text(
+            'Total a pagar',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: .78),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'S/ ${_total().toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEstadoBloqueado() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.jassSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.jassBorder),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            _estado() == 'PAGADO'
+                ? Icons.check_circle_rounded
+                : Icons.schedule_rounded,
+            color: _estado() == 'PAGADO'
+                ? JassColors.success
+                : JassColors.warning,
+            size: 50,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _estado() == 'PAGADO'
+                ? 'Este recibo ya fue pagado'
+                : 'Pago en revisión',
+            style: TextStyle(
+              color: context.jassTextPrimary,
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetodos() {
+    return _Panel(
+      title: 'Selecciona método de pago',
+      child: Column(
+        children: canalesVisibles.map((canal) {
+          final metodo = _txt(canal['metodoPago'], '').toUpperCase();
+          final seleccionado = metodo == metodoPago;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: InkWell(
+              onTap: () => setState(() => metodoPago = metodo),
+              borderRadius: BorderRadius.circular(18),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: seleccionado
+                      ? context.jassSelectedSurface
+                      : context.jassSurfaceAlt,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: seleccionado
+                        ? JassColors.secondary
+                        : context.jassBorder,
+                    width: seleccionado ? 1.6 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 48,
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: Image.asset(
+                        _assetMetodo(metodo),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            metodo == 'TRANSFERENCIA'
+                                ? 'Transferencia bancaria'
+                                : metodo[0] + metodo.substring(1).toLowerCase(),
+                            style: TextStyle(
+                              color: context.jassTextPrimary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            _txt(
+                              canal['descripcion'],
+                              'Paga y registra el código de operación.',
+                            ),
+                            style: TextStyle(
+                              color: context.jassTextMuted,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Radio<String>(
+                      value: metodo,
+                      groupValue: metodoPago,
+                      onChanged: (value) {
+                        if (value != null) setState(() => metodoPago = value);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCanal() {
+    final canal = canalSeleccionado;
+    if (canal == null) return const SizedBox.shrink();
+
+    final datos = <MapEntry<String, String>>[
+      MapEntry('Titular', _txt(canal['titular'], 'Agua Potable Huacariz')),
+      if (_txt(canal['numero'], '').isNotEmpty)
+        MapEntry('Número', _txt(canal['numero'])),
+      if (_txt(canal['banco'], '').isNotEmpty)
+        MapEntry('Banco', _txt(canal['banco'])),
+      if (_txt(canal['cuenta'], '').isNotEmpty)
+        MapEntry('Cuenta', _txt(canal['cuenta'])),
+      if (_txt(canal['cci'], '').isNotEmpty)
+        MapEntry('CCI', _txt(canal['cci'])),
+    ];
+
+    return _Panel(
+      title: 'Canal autorizado',
+      child: Column(
+        children: datos
+            .map(
+              (item) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 72,
+                      child: Text(
+                        item.key,
+                        style: TextStyle(
+                          color: context.jassTextMuted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        item.value,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          color: context.jassTextPrimary,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildFormulario() {
+    return _Panel(
+      title: 'Enviar comprobante',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           TextField(
             controller: codigoOperacionController,
-            textCapitalization: TextCapitalization.characters,
             decoration: InputDecoration(
-              hintText: 'Ejemplo: 123456789',
-              prefixIcon: Icon(Icons.confirmation_number_rounded),
+              labelText: 'Código / número de operación',
+              prefixIcon: const Icon(Icons.confirmation_number_outlined),
               filled: true,
               fillColor: context.jassSurfaceAlt,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
-                  color: context.jassBorder,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
-                  color: context.jassBorder,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
-                  color: secondary,
-                  width: 1.5,
-                ),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBotonPagar() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton.icon(
-        onPressed: cargando ? null : registrarPago,
-        icon: cargando
-            ? SizedBox(
-                width: 19,
-                height: 19,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: Colors.white,
-                ),
-              )
-            : Icon(Icons.check_circle_rounded),
-        label: Text(
-          cargando ? 'Registrando pago...' : 'Registrar pago',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: secondary,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: secondary.withValues(alpha: 0.55),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
+          const SizedBox(height: 14),
+          InkWell(
+            onTap: procesando ? null : _seleccionarComprobante,
             borderRadius: BorderRadius.circular(18),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResumenLine extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _ResumenLine({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 9),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Color(0xFFE7F8FF),
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.jassSurfaceAlt,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: context.jassBorder),
               ),
-            ),
-          ),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetodoPagoTile extends StatelessWidget {
-  final String value;
-  final String selectedValue;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final ValueChanged<String> onChanged;
-
-  const _MetodoPagoTile({
-    required this.value,
-    required this.selectedValue,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = value == selectedValue;
-
-    return InkWell(
-      onTap: () => onChanged(value),
-      borderRadius: BorderRadius.circular(18),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: selected ? context.jassSelectedSurface : context.jassSurfaceAlt,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? const Color(0xFF1DA1C2) : context.jassBorder,
-            width: selected ? 1.4 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: selected
-                  ? const Color(0xFF1DA1C2)
-                  : const Color(0xFF7B8794),
-              size: 28,
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: context.jassTextPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  const Icon(
+                    Icons.add_photo_alternate_outlined,
+                    color: JassColors.secondary,
+                    size: 30,
                   ),
-                  SizedBox(height: 3),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: context.jassTextMuted,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          comprobante == null
+                              ? 'Seleccionar comprobante'
+                              : comprobante!.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: context.jassTextPrimary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          'JPG, PNG o WEBP · máximo 3 MB',
+                          style: TextStyle(
+                            color: context.jassTextMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            Radio<String>(
-              value: value,
-              groupValue: selectedValue,
-              activeColor: const Color(0xFF1DA1C2),
-              onChanged: (newValue) {
-                if (newValue == null) return;
-                onChanged(newValue);
-              },
+          ),
+          if (comprobante != null) ...[
+            const SizedBox(height: 14),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Image.file(
+                File(comprobante!.path),
+                width: double.infinity,
+                height: 190,
+                fit: BoxFit.cover,
+              ),
             ),
           ],
-        ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton.icon(
+              onPressed: procesando ? null : _registrarPago,
+              icon: procesando
+                  ? const SizedBox(
+                      width: 19,
+                      height: 19,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.cloud_upload_outlined),
+              label: Text(
+                procesando
+                    ? 'Enviando a revisión...'
+                    : 'Enviar pago para validación',
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: JassColors.secondary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(17),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Panel extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _Panel({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.jassSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.jassBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: context.jassTextPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
       ),
     );
   }

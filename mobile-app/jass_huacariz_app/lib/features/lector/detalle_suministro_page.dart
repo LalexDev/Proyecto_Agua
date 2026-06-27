@@ -102,13 +102,38 @@ class _DetalleSuministroPageState extends State<DetalleSuministroPage> {
     return text == 'TRUE' || text == 'ACTIVO' || text == '1';
   }
 
+
+  String get tipoOperacion {
+    final estado = _txt(
+      suministro['estadoInstalacion'],
+      'PENDIENTE_INSTALACION',
+    ).toUpperCase();
+    return estado == 'INSTALADO' ? 'LECTURA' : 'MANTENIMIENTO';
+  }
+
+  bool get permiteOperacion {
+    if (!activo) return false;
+    final value = tipoOperacion == 'LECTURA'
+        ? suministro['permiteRegistrarLectura']
+        : suministro['permiteGenerarMantenimiento'];
+    if (value is bool) return value;
+    return value?.toString().toLowerCase() == 'true' || value == 1;
+  }
+
+  String get textoOperacion => tipoOperacion == 'LECTURA'
+      ? 'Registrar lectura'
+      : 'Generar solo mantenimiento';
+
   void _registrar() {
     Navigator.pushNamed(
       context,
       widget.modoAdmin
           ? '/admin-registrar-lectura'
           : '/registrar-lectura',
-      arguments: suministro,
+      arguments: {
+        ...suministro,
+        'tipoOperacion': tipoOperacion,
+      },
     );
   }
 
@@ -190,10 +215,10 @@ class _DetalleSuministroPageState extends State<DetalleSuministroPage> {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton.icon(
-                  onPressed: activo ? _registrar : null,
+                  onPressed: permiteOperacion ? _registrar : null,
                   icon: const Icon(Icons.edit_note_rounded),
                   label: Text(
-                    activo ? 'Registrar lectura' : 'Suministro inactivo',
+                    permiteOperacion ? textoOperacion : 'Operación no disponible',
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                   style: ElevatedButton.styleFrom(

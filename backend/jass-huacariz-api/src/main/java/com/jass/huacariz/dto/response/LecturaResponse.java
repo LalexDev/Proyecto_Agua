@@ -22,5 +22,6 @@ public class LecturaResponse {
     private BigDecimal consumoM3;
     private LocalDateTime fechaLectura;
     private String observacion;
+    private String idOperacionCliente;
     private ReciboResponse recibo;
 }

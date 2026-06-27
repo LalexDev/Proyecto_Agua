@@ -1,6 +1,13 @@
 class ApiConfig {
-  // Android Emulator hacia backend local
-  static const String baseUrl = 'http://10.0.2.2:8080/api';
+  // Emulador por defecto. Para celular/Tailscale/producción usa:
+  // flutter run --dart-define=API_BASE_URL=http://100.x.x.x:8080/api
+  // flutter build apk --dart-define=API_BASE_URL=https://api.midominio.com/api
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8080/api',
+  );
+
+  static const String health = '/health';
 
   // AUTH
   static const String login = '/auth/login';
@@ -15,12 +22,14 @@ class ApiConfig {
     return '/cliente/me/recibos/$idRecibo/pagar';
   }
 
+  // CANALES DE PAGO
+  static const String canalesPago = '/canales-pago';
+  static const String canalesPagoActivos = '/canales-pago/activos';
+
   // ADMIN CLIENTES
   static const String clientes = '/clientes';
 
-  static String clientePorId(int idCliente) {
-    return '/clientes/$idCliente';
-  }
+  static String clientePorId(int idCliente) => '/clientes/$idCliente';
 
   static String suministrosPorCliente(int idCliente) {
     return '/clientes/$idCliente/suministros';
@@ -60,23 +69,18 @@ class ApiConfig {
   // TARIFAS
   static const String tarifas = '/tarifas';
 
-  static String tarifaPorId(int idTarifa) {
-    return '/tarifas/$idTarifa';
-  }
+  static String tarifaPorId(int idTarifa) => '/tarifas/$idTarifa';
 
   static String cambiarEstadoTarifa(int idTarifa, bool estado) {
     return '/tarifas/$idTarifa/estado?estado=$estado';
   }
 
-// CONFIGURACIÓN DE COBRANZA
-static const String configuracionCobranza =
-    '/configuracion-cobranza';
+  static const String configuracionCobranza = '/configuracion-cobranza';
+
   // SECTORES
   static const String sectores = '/sectores';
 
-  static String sectorPorId(int idSector) {
-    return '/sectores/$idSector';
-  }
+  static String sectorPorId(int idSector) => '/sectores/$idSector';
 
   static String cambiarEstadoSector(int idSector, bool estado) {
     return '/sectores/$idSector/estado?estado=$estado';
@@ -94,22 +98,25 @@ static const String configuracionCobranza =
   }
 
   // LECTURADOR
-  static String buscarSuministroLecturador(String codigoSuministro) {
-    return '/lecturador/suministros/$codigoSuministro';
-  }
+static String buscarSuministroLecturador(
+  String codigoSuministro,
+) {
+  return '/lecturador/suministros/$codigoSuministro';
+}
+
+// Catálogo de suministros para el funcionamiento sin conexión
 static const String suministrosOfflineLecturador =
     '/lecturador/suministros/offline';
-  static const String registrarLectura = '/lecturas';
 
-  // ADMIN HISTORIAL LECTURAS
-  static const String historialLecturasAdmin = '/admin/lecturas/historial';
+static const String registrarLectura = '/lecturas';
 
-  // PDF RECIBOS
-  static String reciboPdfPorId(int idRecibo) {
-    return '/recibos/$idRecibo/pdf';
-  }
+static const String registrarMantenimiento =
+    '/lecturas/mantenimiento';
 
-  static String reciboPdfPorCodigo(String codigoRecibo) {
-    return '/recibos/pdf/$codigoRecibo';
-  }
+// Ruta compartida por administrador y lecturador
+static const String historialLecturas =
+    '/lecturas/historial';
+
+static const String historialLecturasAdmin =
+    historialLecturas;
 }

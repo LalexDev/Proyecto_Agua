@@ -171,6 +171,50 @@ class ApiService {
     }
   }
 
+
+  Future<dynamic> patchMultipart(
+    String endpoint, {
+    required Map<String, String> fields,
+    required String fileField,
+    required String filePath,
+    bool withAuth = true,
+  }) async {
+    try {
+      final request = http.MultipartRequest(
+        'PATCH',
+        _uri(endpoint),
+      );
+
+      request.fields.addAll(fields);
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fileField,
+          filePath,
+        ),
+      );
+
+      if (withAuth) {
+        final token = await _storage.getToken();
+        if (token != null && token.isNotEmpty) {
+          request.headers['Authorization'] = 'Bearer $token';
+        }
+      }
+
+      request.headers['Accept'] = 'application/json';
+
+      final streamed = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamed);
+
+      return _processResponse(response);
+    } on TimeoutException {
+      throw Exception(
+        'Tiempo de espera agotado. Verifica tu conexión e inténtalo nuevamente.',
+      );
+    } catch (e) {
+      throw Exception(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
   Future<dynamic> delete(String endpoint, {bool withAuth = true}) async {
     try {
       final response = await http

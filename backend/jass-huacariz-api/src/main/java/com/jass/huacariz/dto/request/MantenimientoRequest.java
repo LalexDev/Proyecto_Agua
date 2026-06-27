@@ -9,4 +9,6 @@ public class MantenimientoRequest {
     private Integer anio;
     private Integer mes;
     private String observacion;
+
+    private String idOperacionCliente;
 }

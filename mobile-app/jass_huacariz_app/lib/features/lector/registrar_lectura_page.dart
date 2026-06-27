@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../core/services/lectura_offline_service.dart';
+import '../../core/services/lecturador_service.dart';
+import '../../core/storage/secure_storage_service.dart';
 import '../../shared/theme/jass_colors.dart';
 import '../../shared/theme/jass_theme_context.dart';
-
-import '../../core/services/lecturador_service.dart';
 import '../../shared/widgets/admin_bottom_nav.dart';
 import '../../shared/widgets/lector_bottom_nav.dart';
 
@@ -21,40 +22,41 @@ class RegistrarLecturaPage extends StatefulWidget {
 }
 
 class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
-  Color get primary => context.jassTextPrimary;
-  static const Color secondary = JassColors.secondary;
-  Color get background => context.jassBackground;
-  Color get muted => context.jassTextMuted;
-
   final LecturadorService lecturadorService = LecturadorService();
+  final LecturaOfflineService offlineService = LecturaOfflineService();
+  final SecureStorageService storage = SecureStorageService();
 
   final TextEditingController lecturaController = TextEditingController();
   final TextEditingController observacionController = TextEditingController();
 
   Map<String, dynamic> suministro = {};
+  Map<String, dynamic>? reciboEstimado;
   bool cargadoArgs = false;
   bool guardando = false;
-
+  bool calculando = false;
   int anioSeleccionado = DateTime.now().year;
   int mesSeleccionado = DateTime.now().month;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (cargadoArgs) return;
     cargadoArgs = true;
 
     final args = ModalRoute.of(context)?.settings.arguments;
-
     if (args is Map<String, dynamic>) {
       suministro = args;
     } else if (args is Map) {
       suministro = Map<String, dynamic>.from(args);
     }
 
-    anioSeleccionado = DateTime.now().year;
-    mesSeleccionado = DateTime.now().month;
+    if (esMantenimiento) {
+      lecturaController.text = lecturaAnterior.toStringAsFixed(3);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _actualizarEstimado();
+    });
   }
 
   @override
@@ -67,21 +69,74 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
   String _txt(dynamic value, [String fallback = '-']) {
     if (value == null) return fallback;
     final text = value.toString().trim();
-    if (text.isEmpty || text == 'null') return fallback;
-    return text;
+    return text.isEmpty || text == 'null' ? fallback : text;
   }
 
   double _num(dynamic value) {
     if (value is num) return value.toDouble();
-    return double.tryParse(value.toString()) ?? 0.0;
+    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ?? 0;
   }
 
-  int _anioActual() => anioSeleccionado;
+  String get codigo => _txt(
+        suministro['codigoSuministro'] ??
+            suministro['suministroCodigo'] ??
+            suministro['codigo'],
+        'SIN-CÓDIGO',
+      );
 
-  int _mesActual() => mesSeleccionado;
+  String get titular => _txt(
+        suministro['nombreCliente'] ??
+            suministro['titular'] ??
+            suministro['cliente'],
+        'Usuario del servicio',
+      );
+
+  String get direccion => _txt(
+        suministro['direccionSuministro'] ?? suministro['direccion'],
+        'Dirección no registrada',
+      );
+
+  String get sector => _txt(
+        suministro['nombreSector'] ?? suministro['sector'],
+        'Sector no registrado',
+      );
+
+  double get lecturaAnterior => _num(
+        suministro['lecturaAnterior'] ??
+            suministro['ultimaLectura'] ??
+            suministro['lecturaInicial'],
+      );
+
+  String get tipoOperacion {
+    final explicito = _txt(suministro['tipoOperacion'], '').toUpperCase();
+    if (explicito == 'MANTENIMIENTO' || explicito == 'LECTURA') {
+      return explicito;
+    }
+    final estado = _txt(
+      suministro['estadoInstalacion'],
+      'PENDIENTE_INSTALACION',
+    ).toUpperCase();
+    return estado == 'INSTALADO' ? 'LECTURA' : 'MANTENIMIENTO';
+  }
+
+  bool get esMantenimiento => tipoOperacion == 'MANTENIMIENTO';
+
+  double get lecturaActualIngresada {
+    if (esMantenimiento) return lecturaAnterior;
+    return double.tryParse(
+          lecturaController.text.trim().replaceAll(',', '.'),
+        ) ??
+        lecturaAnterior;
+  }
+
+  double get consumo {
+    if (esMantenimiento) return 0;
+    final valor = lecturaActualIngresada - lecturaAnterior;
+    return valor < 0 ? 0 : valor;
+  }
 
   String _nombreMes(int mes) {
-    const meses = [
+    const nombres = [
       'Enero',
       'Febrero',
       'Marzo',
@@ -95,122 +150,141 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       'Noviembre',
       'Diciembre',
     ];
-
-    final index = (mes - 1).clamp(0, 11);
-    return meses[index];
+    return nombres[(mes - 1).clamp(0, 11)];
   }
 
-  String _codigoSuministro() {
-    return _txt(
-      suministro['codigoSuministro'] ??
-          suministro['suministroCodigo'] ??
-          suministro['codigo'] ??
-          suministro['numeroSuministro'],
-      'SIN-CÓDIGO',
-    );
+  Future<void> _actualizarEstimado() async {
+    if (widget.modoAdmin) return;
+    if (!esMantenimiento && lecturaController.text.trim().isEmpty) {
+      if (mounted) setState(() => reciboEstimado = null);
+      return;
+    }
+    if (lecturaActualIngresada < lecturaAnterior) return;
+
+    setState(() => calculando = true);
+    try {
+      final recibo = await offlineService.calcularReciboEstimado(
+        suministro: suministro,
+        tipoOperacion: tipoOperacion,
+        consumo: consumo,
+        anio: anioSeleccionado,
+        mes: mesSeleccionado,
+      );
+      if (!mounted) return;
+      setState(() {
+        reciboEstimado = recibo;
+        calculando = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        reciboEstimado = null;
+        calculando = false;
+      });
+    }
   }
 
-  String _titular() {
-    return _txt(
-      suministro['titular'] ??
-          suministro['cliente'] ??
-          suministro['nombreCliente'] ??
-          suministro['nombres'] ??
-          suministro['usuario'],
-      'Usuario del servicio',
-    );
+  bool _esErrorConexion(Object error) {
+    final text = error.toString().toLowerCase();
+    return text.contains('socket') ||
+        text.contains('network is unreachable') ||
+        text.contains('failed host lookup') ||
+        text.contains('connection refused') ||
+        text.contains('clientexception') ||
+        text.contains('tiempo de espera') ||
+        text.contains('backend esté encendido');
   }
 
-  String _direccion() {
-    return _txt(
-      suministro['direccionSuministro'] ??
-          suministro['direccion'] ??
-          suministro['direccionCliente'],
-      'Dirección no registrada',
-    );
-  }
-
-  String _sector() {
-    return _txt(
-      suministro['nombreSector'] ??
-          suministro['sector'] ??
-          suministro['sectorNombre'],
-      'Huacariz',
-    );
-  }
-
-  double _lecturaAnterior() {
-    return _num(
-      suministro['lecturaAnterior'] ??
-          suministro['ultimaLectura'] ??
-          suministro['lecturaActual'] ??
-          suministro['lecturaInicial'] ??
-          0,
-    );
-  }
-
-  double _consumoCalculado() {
-    final lecturaActual = double.tryParse(lecturaController.text.trim()) ?? 0;
-    final consumo = lecturaActual - _lecturaAnterior();
-
-    if (consumo < 0) return 0;
-
-    return consumo;
-  }
-
-  Future<void> registrarLectura() async {
-    final codigo = _codigoSuministro();
-    final lecturaActual = double.tryParse(lecturaController.text.trim());
-
+  Future<void> registrar() async {
     if (codigo == 'SIN-CÓDIGO') {
       _mensaje('No se encontró el código del suministro.', true);
       return;
     }
 
-    if (lecturaActual == null) {
-      _mensaje('Ingresa una lectura válida.', true);
+    final lecturaActual = lecturaActualIngresada;
+    if (!esMantenimiento && lecturaController.text.trim().isEmpty) {
+      _mensaje('Ingresa la lectura actual.', true);
       return;
     }
-
-    if (lecturaActual < _lecturaAnterior()) {
+    if (lecturaActual < lecturaAnterior) {
       _mensaje('La lectura actual no puede ser menor a la anterior.', true);
       return;
     }
 
-    setState(() {
-      guardando = true;
-    });
+    setState(() => guardando = true);
 
     try {
-      final response = await lecturadorService.registrarLectura(
-        codigoSuministro: codigo,
-        lecturaActual: lecturaActual,
-        anio: _anioActual(),
-        mes: _mesActual(),
-        observacion: observacionController.text.trim(),
-      );
+      Map<String, dynamic> response;
+      bool guardadoLocal = false;
+
+      if (widget.modoAdmin) {
+        response = esMantenimiento
+            ? await lecturadorService.registrarMantenimiento(
+                codigoSuministro: codigo,
+                anio: anioSeleccionado,
+                mes: mesSeleccionado,
+                observacion: observacionController.text.trim(),
+              )
+            : await lecturadorService.registrarLectura(
+                codigoSuministro: codigo,
+                lecturaActual: lecturaActual,
+                anio: anioSeleccionado,
+                mes: mesSeleccionado,
+                observacion: observacionController.text.trim(),
+              );
+      } else {
+        final modoOffline = await storage.isOfflineMode();
+        if (modoOffline) {
+          response = await _guardarLocal(lecturaActual);
+          guardadoLocal = true;
+        } else {
+          try {
+            response = esMantenimiento
+                ? await lecturadorService.registrarMantenimiento(
+                    codigoSuministro: codigo,
+                    anio: anioSeleccionado,
+                    mes: mesSeleccionado,
+                    observacion: observacionController.text.trim(),
+                  )
+                : await lecturadorService.registrarLectura(
+                    codigoSuministro: codigo,
+                    lecturaActual: lecturaActual,
+                    anio: anioSeleccionado,
+                    mes: mesSeleccionado,
+                    observacion: observacionController.text.trim(),
+                  );
+          } catch (e) {
+            if (!_esErrorConexion(e)) rethrow;
+            response = await _guardarLocal(lecturaActual);
+            guardadoLocal = true;
+          }
+        }
+      }
 
       if (!mounted) return;
-
-      setState(() {
-        guardando = false;
-      });
+      setState(() => guardando = false);
 
       final comprobante = {
         ...suministro,
         ...response,
         'codigoSuministro': response['codigoSuministro'] ?? codigo,
-        'lecturaAnterior': response['lecturaAnterior'] ?? _lecturaAnterior(),
+        'lecturaAnterior': response['lecturaAnterior'] ?? lecturaAnterior,
         'lecturaActual': response['lecturaActual'] ?? lecturaActual,
-        'consumoM3':
-            response['consumoM3'] ?? (lecturaActual - _lecturaAnterior()),
-        'observacion':
-            response['observacion'] ?? observacionController.text.trim(),
-        'anio': response['anio'] ?? _anioActual(),
-        'mes': response['mes'] ?? _mesActual(),
+        'consumoM3': response['consumoM3'] ?? consumo,
+        'anio': response['anio'] ?? anioSeleccionado,
+        'mes': response['mes'] ?? mesSeleccionado,
+        'tipoOperacion': tipoOperacion,
+        'origenOffline': response['origenOffline'] ?? guardadoLocal,
       };
 
-      _mensaje('Lectura registrada correctamente.', false);
+      _mensaje(
+        guardadoLocal
+            ? 'Guardado en el celular. Se enviará al recuperar conexión.'
+            : esMantenimiento
+                ? 'Recibo de mantenimiento generado correctamente.'
+                : 'Lectura registrada correctamente.',
+        false,
+      );
 
       Navigator.pushReplacementNamed(
         context,
@@ -221,70 +295,78 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       );
     } catch (e) {
       if (!mounted) return;
-
-      setState(() {
-        guardando = false;
-      });
-
+      setState(() => guardando = false);
       _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
     }
   }
 
-  void _mensaje(String mensaje, bool esError) {
+  Future<Map<String, dynamic>> _guardarLocal(double lecturaActual) {
+    if (esMantenimiento) {
+      return offlineService.registrarMantenimientoLocal(
+        suministro: suministro,
+        anio: anioSeleccionado,
+        mes: mesSeleccionado,
+        observacion: observacionController.text.trim(),
+      );
+    }
+    return offlineService.registrarLecturaLocal(
+      suministro: suministro,
+      lecturaActual: lecturaActual,
+      anio: anioSeleccionado,
+      mes: mesSeleccionado,
+      observacion: observacionController.text.trim(),
+    );
+  }
+
+  void _mensaje(String mensaje, bool error) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? const Color(0xFFD93025) : const Color(0xFF1F8F4D),
+        backgroundColor: error ? JassColors.danger : JassColors.success,
       ),
     );
   }
 
-  void _volverBuscar() {
-    Navigator.pushReplacementNamed(
-      context,
-      widget.modoAdmin
-          ? '/admin-buscar-suministro'
-          : '/buscar-suministro',
-    );
-  }
-
-  void _goBottomAdmin(int index) {
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/admin-dashboard');
-    } else if (index == 1) {
-      Navigator.pushReplacementNamed(context, '/admin-clientes');
-    } else if (index == 2) {
-      Navigator.pushReplacementNamed(context, '/admin-tarifas');
-    } else if (index == 3) {
-      Navigator.pushReplacementNamed(context, '/admin-recibos');
+  void _volver() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacementNamed(
+        context,
+        widget.modoAdmin
+            ? '/admin-buscar-suministro'
+            : '/buscar-suministro',
+      );
     }
   }
 
-  void _abrirMenuAdmin() {
-    showAdminQuickMenu(context: context);
+  void _goAdmin(int index) {
+    const rutas = [
+      '/admin-dashboard',
+      '/admin-clientes',
+      '/admin-tarifas',
+      '/admin-recibos',
+    ];
+    if (index >= 0 && index < rutas.length) {
+      Navigator.pushReplacementNamed(context, rutas[index]);
+    }
   }
 
-  void _goBottomLector(int index) {
-    if (index == 0) {
-      Navigator.pushReplacementNamed(context, '/lector-home');
-    } else if (index == 1) {
+  void _goLector(int index) {
+    if (index == 0) Navigator.pushReplacementNamed(context, '/lector-home');
+    if (index == 1) {
       Navigator.pushReplacementNamed(context, '/buscar-suministro');
-    } else if (index == 2) {
-      Navigator.pushNamed(context, '/qr-scanner');
-    } else if (index == 3) {
+    }
+    if (index == 2) Navigator.pushNamed(context, '/qr-scanner');
+    if (index == 3) {
       Navigator.pushReplacementNamed(context, '/historial-lecturas');
     }
   }
 
-  void _abrirMenuLector() {
-    showLectorQuickMenu(context: context);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final lecturaAnterior = _lecturaAnterior();
-    final consumo = _consumoCalculado();
+    final total = _num(reciboEstimado?['total']);
 
     return Scaffold(
       backgroundColor: context.jassBackground,
@@ -292,13 +374,13 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       bottomNavigationBar: widget.modoAdmin
           ? AdminBottomNav(
               currentIndex: -1,
-              onTap: _goBottomAdmin,
-              onPlus: _abrirMenuAdmin,
+              onTap: _goAdmin,
+              onPlus: () => showAdminQuickMenu(context: context),
             )
           : LectorBottomNav(
-              currentIndex: -1,
-              onTap: _goBottomLector,
-              onPlus: _abrirMenuLector,
+              currentIndex: 1,
+              onTap: _goLector,
+              onPlus: () => showLectorQuickMenu(context: context),
             ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -306,15 +388,197 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              SizedBox(height: 20),
-              _buildSuministroCard(),
-              SizedBox(height: 18),
-              _buildPeriodoSelector(),
-              SizedBox(height: 18),
-              _buildLecturaForm(
+              _Header(
+                title: esMantenimiento
+                    ? 'Solo mantenimiento'
+                    : 'Registrar lectura',
+                subtitle: widget.modoAdmin
+                    ? 'Panel del administrador'
+                    : 'Módulo lecturador',
+                onBack: _volver,
+              ),
+              const SizedBox(height: 18),
+              _SupplyCard(
+                codigo: codigo,
+                titular: titular,
+                direccion: direccion,
+                sector: sector,
                 lecturaAnterior: lecturaAnterior,
-                consumo: consumo,
+                mantenimiento: esMantenimiento,
+                offline: suministro['origenOffline'] == true,
+              ),
+              const SizedBox(height: 18),
+              _SectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Periodo del recibo',
+                      style: TextStyle(
+                        color: context.jassTextPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            initialValue: mesSeleccionado,
+                            decoration: _inputDecoration(context, 'Mes'),
+                            items: List.generate(
+                              12,
+                              (index) => DropdownMenuItem(
+                                value: index + 1,
+                                child: Text(_nombreMes(index + 1)),
+                              ),
+                            ),
+                            onChanged: guardando
+                                ? null
+                                : (value) {
+                                    if (value == null) return;
+                                    setState(() => mesSeleccionado = value);
+                                    _actualizarEstimado();
+                                  },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            initialValue: anioSeleccionado,
+                            decoration: _inputDecoration(context, 'Año'),
+                            items: List.generate(
+                              3,
+                              (index) {
+                                final year = DateTime.now().year - 1 + index;
+                                return DropdownMenuItem(
+                                  value: year,
+                                  child: Text('$year'),
+                                );
+                              },
+                            ),
+                            onChanged: guardando
+                                ? null
+                                : (value) {
+                                    if (value == null) return;
+                                    setState(() => anioSeleccionado = value);
+                                    _actualizarEstimado();
+                                  },
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (!esMantenimiento) ...[
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: lecturaController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        onChanged: (_) {
+                          setState(() {});
+                          _actualizarEstimado();
+                        },
+                        decoration: _inputDecoration(
+                          context,
+                          'Lectura actual del medidor',
+                          icon: Icons.speed_rounded,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _Metric(
+                              label: 'Anterior',
+                              value: '${lecturaAnterior.toStringAsFixed(3)} m³',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _Metric(
+                              label: 'Consumo',
+                              value: '${consumo.toStringAsFixed(3)} m³',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF4DD),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Text(
+                          'No se registra consumo. El recibo incluirá únicamente el cargo de mantenimiento configurado.',
+                          style: TextStyle(
+                            color: Color(0xFF8A5B00),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: observacionController,
+                      maxLines: 3,
+                      decoration: _inputDecoration(
+                        context,
+                        'Observación (opcional)',
+                        icon: Icons.note_alt_outlined,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              _AmountCard(
+                loading: calculando,
+                total: total,
+                receipt: reciboEstimado,
+                provisional: !widget.modoAdmin,
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: guardando ? null : registrar,
+                  icon: guardando
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Icon(
+                          esMantenimiento
+                              ? Icons.home_repair_service_rounded
+                              : Icons.save_outlined,
+                        ),
+                  label: Text(
+                    guardando
+                        ? 'Guardando...'
+                        : esMantenimiento
+                            ? 'Generar recibo de mantenimiento'
+                            : 'Registrar lectura y generar recibo',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: JassColors.secondary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(17),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -323,7 +587,41 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
     );
   }
 
-  Widget _buildHeader() {
+  InputDecoration _inputDecoration(
+    BuildContext context,
+    String label, {
+    IconData? icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: icon == null ? null : Icon(icon),
+      filled: true,
+      fillColor: context.jassSurfaceAlt,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(color: context.jassBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: BorderSide(color: context.jassBorder),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onBack;
+
+  const _Header({
+    required this.title,
+    required this.subtitle,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Container(
@@ -332,35 +630,29 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
           decoration: BoxDecoration(
             color: context.jassSurface,
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.jassBorder),
           ),
           child: IconButton(
-            onPressed: _volverBuscar,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            onPressed: onBack,
+            icon: Icon(Icons.arrow_back_rounded, color: context.jassTextPrimary),
           ),
         ),
-        SizedBox(width: 14),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.modoAdmin
-                    ? 'Panel del administrador'
-                    : 'Módulo lecturador',
+                subtitle,
                 style: TextStyle(
-                  color: muted,
-                  fontSize: 13,
+                  color: context.jassTextMuted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 4),
               Text(
-                'Registrar lectura',
+                title,
                 style: TextStyle(
-                  color: primary,
+                  color: context.jassTextPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
                 ),
@@ -371,17 +663,35 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       ],
     );
   }
+}
 
-  Widget _buildSuministroCard() {
+class _SupplyCard extends StatelessWidget {
+  final String codigo;
+  final String titular;
+  final String direccion;
+  final String sector;
+  final double lecturaAnterior;
+  final bool mantenimiento;
+  final bool offline;
+
+  const _SupplyCard({
+    required this.codigo,
+    required this.titular,
+    required this.direccion,
+    required this.sector,
+    required this.lecturaAnterior,
+    required this.mantenimiento,
+    required this.offline,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [JassColors.primary, JassColors.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -390,242 +700,46 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Suministro seleccionado',
-            style: TextStyle(
-              color: Color(0xFFE7F8FF),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            _codigoSuministro(),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          SizedBox(height: 12),
-          _WhiteInfo(label: 'Titular', value: _titular()),
-          _WhiteInfo(label: 'Dirección', value: _direccion()),
-          _WhiteInfo(label: 'Sector', value: _sector()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPeriodoSelector() {
-    final anioActual = DateTime.now().year;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: context.jassSurface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Periodo de lectura',
-            style: TextStyle(
-              color: primary,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<int>(
-                  value: mesSeleccionado,
-                  decoration: InputDecoration(
-                    labelText: 'Mes',
-                    filled: true,
-                    fillColor: context.jassSurfaceAlt,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
+                child: Text(
+                  codigo,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w900,
                   ),
-                  items: List.generate(12, (index) {
-                    final mes = index + 1;
-
-                    return DropdownMenuItem<int>(
-                      value: mes,
-                      child: Text(_nombreMes(mes)),
-                    );
-                  }),
-                  onChanged: (value) {
-                    if (value == null) return;
-
-                    setState(() {
-                      mesSeleccionado = value;
-                    });
-                  },
                 ),
               ),
-              SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  value: anioSeleccionado,
-                  decoration: InputDecoration(
-                    labelText: 'Año',
-                    filled: true,
-                    fillColor: context.jassSurfaceAlt,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  items: [
-                    anioActual - 1,
-                    anioActual,
-                    anioActual + 1,
-                  ].map((anio) {
-                    return DropdownMenuItem<int>(
-                      value: anio,
-                      child: Text('$anio'),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-
-                    setState(() {
-                      anioSeleccionado = value;
-                    });
-                  },
-                ),
-              ),
+              if (offline)
+                const Icon(Icons.cloud_off_rounded, color: Colors.white),
             ],
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
-            'Periodo seleccionado: ${_nombreMes(mesSeleccionado)} $anioSeleccionado',
-            style: TextStyle(
-              color: muted,
+            titular,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '$direccion · $sector',
+            style: const TextStyle(
+              color: Color(0xFFDDF6FF),
               fontWeight: FontWeight.w700,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLecturaForm({
-    required double lecturaAnterior,
-    required double consumo,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: context.jassSurface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          const SizedBox(height: 10),
           Text(
-            'Datos de lectura',
-            style: TextStyle(
-              color: primary,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _LecturaValorCard(
-                  label: 'Lectura anterior',
-                  value: lecturaAnterior.toStringAsFixed(0),
-                ),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: _LecturaValorCard(
-                  label: 'Consumo calculado',
-                  value: '${consumo.toStringAsFixed(2)} m³',
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          TextField(
-            controller: lecturaController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            onChanged: (_) {
-              setState(() {});
-            },
-            decoration: InputDecoration(
-              labelText: 'Lectura actual',
-              hintText: 'Ingrese lectura actual del medidor',
-              prefixIcon: Icon(Icons.speed_rounded),
-              filled: true,
-              fillColor: context.jassSurfaceAlt,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          SizedBox(height: 12),
-          TextField(
-            controller: observacionController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: 'Observación',
-              hintText: 'Opcional',
-              prefixIcon: Icon(Icons.note_alt_outlined),
-              filled: true,
-              fillColor: context.jassSurfaceAlt,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton.icon(
-              onPressed: guardando ? null : registrarLectura,
-              icon: guardando
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Icon(Icons.save_outlined),
-              label: Text(
-                guardando ? 'Registrando...' : 'Registrar lectura',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: secondary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
+            mantenimiento
+                ? 'Operación: solo mantenimiento'
+                : 'Lectura anterior: ${lecturaAnterior.toStringAsFixed(3)} m³',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -634,87 +748,172 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
   }
 }
 
-class _WhiteInfo extends StatelessWidget {
+class _SectionCard extends StatelessWidget {
+  final Widget child;
+
+  const _SectionCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.jassSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.jassBorder),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
   final String label;
   final String value;
 
-  const _WhiteInfo({
-    required this.label,
-    required this.value,
+  const _Metric({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: context.jassSurfaceAlt,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: context.jassTextMuted,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            style: TextStyle(
+              color: context.jassTextPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmountCard extends StatelessWidget {
+  final bool loading;
+  final double total;
+  final Map<String, dynamic>? receipt;
+  final bool provisional;
+
+  const _AmountCard({
+    required this.loading,
+    required this.total,
+    required this.receipt,
+    required this.provisional,
   });
+
+  double _num(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: context.jassSurface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.jassBorder),
+      ),
+      child: loading
+          ? const Center(child: CircularProgressIndicator())
+          : receipt == null
+              ? Text(
+                  'El monto se mostrará al ingresar una lectura válida. Para calcular sin internet, primero actualiza el catálogo.',
+                  style: TextStyle(
+                    color: context.jassTextMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      provisional ? 'Monto provisional' : 'Monto calculado',
+                      style: TextStyle(
+                        color: context.jassTextMuted,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'S/ ${total.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: context.jassTextPrimary,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _AmountLine('Agua', _num(receipt?['subtotalAgua'])),
+                    _AmountLine(
+                      'Mantenimiento',
+                      _num(receipt?['cargoMantenimiento']),
+                    ),
+                    _AmountLine('Lector', _num(receipt?['cargoLector'])),
+                    _AmountLine('Otros', _num(receipt?['cargoOtros'])),
+                    if (provisional) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'El backend confirmará el monto oficial al sincronizar.',
+                        style: TextStyle(
+                          color: JassColors.secondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+    );
+  }
+}
+
+class _AmountLine extends StatelessWidget {
+  final String label;
+  final double amount;
+
+  const _AmountLine(this.label, this.amount);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
           Expanded(
             child: Text(
               label,
               style: TextStyle(
-                color: Color(0xFFE7F8FF),
+                color: context.jassTextMuted,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LecturaValorCard extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _LecturaValorCard({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Color primary = context.jassTextPrimary;
-    final Color muted = context.jassTextMuted;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.jassSurfaceAlt,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
-      ),
-      child: Column(
-        children: [
           Text(
-            label,
-            textAlign: TextAlign.center,
+            'S/ ${amount.toStringAsFixed(2)}',
             style: TextStyle(
-              color: muted,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          SizedBox(height: 6),
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: primary,
-              fontSize: 16,
+              color: context.jassTextPrimary,
               fontWeight: FontWeight.w900,
             ),
           ),

@@ -17,4 +17,6 @@ public interface LecturaRepository extends JpaRepository<Lectura, Integer> {
     boolean existsBySuministroId(Integer suministroId);
 
     Optional<Lectura> findTopBySuministroIdOrderByAnioDescMesDesc(Integer suministroId);
+
+    Optional<Lectura> findByIdOperacionCliente(String idOperacionCliente);
 }

@@ -25,17 +25,17 @@ class LecturaAdminService {
   }
 
   Future<List<Map<String, dynamic>>> listarHistorial() async {
-    final response = await _api.get(ApiConfig.historialLecturasAdmin);
+    final response = await _api.get(ApiConfig.historialLecturas);
     return _asList(response);
   }
 
   Future<List<Map<String, dynamic>>> listarHistorialLecturas() async {
-    final response = await _api.get(ApiConfig.historialLecturasAdmin);
+    final response = await _api.get(ApiConfig.historialLecturas);
     return _asList(response);
   }
 
   Future<List<Map<String, dynamic>>> listarLecturasAdmin() async {
-    final response = await _api.get(ApiConfig.historialLecturasAdmin);
+    final response = await _api.get(ApiConfig.historialLecturas);
     return _asList(response);
   }
 }

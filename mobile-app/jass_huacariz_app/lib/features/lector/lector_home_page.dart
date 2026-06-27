@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../core/storage/secure_storage_service.dart';
+import '../../core/services/lectura_offline_service.dart';
+import '../../core/services/sincronizacion_lecturas_service.dart';
 import '../../shared/theme/jass_colors.dart';
 import '../../shared/widgets/lector_bottom_nav.dart';
 
@@ -11,15 +16,67 @@ class LectorHomePage extends StatefulWidget {
   State<LectorHomePage> createState() => _LectorHomePageState();
 }
 
-class _LectorHomePageState extends State<LectorHomePage> {
+class _LectorHomePageState extends State<LectorHomePage>
+    with WidgetsBindingObserver {
   final SecureStorageService storageService = SecureStorageService();
+  final LecturaOfflineService offlineService = LecturaOfflineService();
+  final SincronizacionLecturasService sincronizacionService =
+      SincronizacionLecturasService();
 
   String codigoUsuario = 'Lecturador';
+  int pendientes = 0;
+  int suministrosGuardados = 0;
+  bool modoOffline = false;
+  bool sincronizando = false;
+  String estadoSincronizacion = 'Preparando datos...';
+  StreamSubscription<List<ConnectivityResult>>? _conexionSubscription;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _conexionSubscription = Connectivity()
+        .onConnectivityChanged
+        .listen(_cuandoCambiaConexion);
     _cargarUsuario();
+    _prepararTrabajo();
+  }
+
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _conexionSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _sincronizarSilencioso();
+    }
+  }
+
+  Future<void> _cuandoCambiaConexion(
+    List<ConnectivityResult> resultados,
+  ) async {
+    if (resultados.any((resultado) => resultado != ConnectivityResult.none)) {
+      await _sincronizarSilencioso();
+    }
+  }
+
+  Future<void> _sincronizarSilencioso() async {
+    if (sincronizando) return;
+    final resultado = await sincronizacionService.sincronizarPendientes();
+    if (!mounted) return;
+    if (resultado['conectado'] == true) {
+      setState(() {
+        modoOffline = false;
+        estadoSincronizacion = resultado['mensaje']?.toString() ??
+            'Conexión recuperada y datos sincronizados.';
+      });
+      await _actualizarResumen();
+    }
   }
 
   Future<void> _cargarUsuario() async {
@@ -32,6 +89,81 @@ class _LectorHomePageState extends State<LectorHomePage> {
           ? usuario!.trim()
           : 'Lecturador';
     });
+  }
+
+
+  Future<void> _prepararTrabajo() async {
+    final offline = await storageService.isOfflineMode();
+    if (mounted) setState(() => modoOffline = offline);
+
+    if (!offline) {
+      try {
+        await offlineService.prepararDatosOffline();
+        await sincronizacionService.sincronizarPendientes();
+        estadoSincronizacion = 'Datos actualizados y listos para trabajar sin conexión.';
+      } catch (_) {
+        estadoSincronizacion = 'Trabajando con los datos guardados en el celular.';
+      }
+    } else {
+      estadoSincronizacion = 'Modo sin conexión activo.';
+    }
+
+    await _actualizarResumen();
+  }
+
+  Future<void> _actualizarResumen() async {
+    try {
+      final p = await offlineService.contarPendientes();
+      final s = await offlineService.contarSuministrosGuardados();
+      final offline = await storageService.isOfflineMode();
+      if (!mounted) return;
+      setState(() {
+        pendientes = p;
+        suministrosGuardados = s;
+        modoOffline = offline;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _sincronizarAhora() async {
+    if (sincronizando) return;
+    setState(() => sincronizando = true);
+    final resultado = await sincronizacionService.sincronizarPendientes();
+    if (!mounted) return;
+    setState(() {
+      sincronizando = false;
+      estadoSincronizacion = resultado['mensaje']?.toString() ?? 'Sincronización finalizada.';
+    });
+    await _actualizarResumen();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(estadoSincronizacion),
+        backgroundColor: resultado['conectado'] == true
+            ? JassColors.success
+            : JassColors.warning,
+      ),
+    );
+  }
+
+  Future<void> _actualizarCatalogo() async {
+    try {
+      await offlineService.prepararDatosOffline();
+      if (!mounted) return;
+      setState(() {
+        modoOffline = false;
+        estadoSincronizacion = 'Catálogo actualizado correctamente.';
+      });
+      await _actualizarResumen();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: JassColors.danger,
+        ),
+      );
+    }
   }
 
   void _irInicio() {
@@ -103,7 +235,7 @@ class _LectorHomePageState extends State<LectorHomePage> {
   void _abrirMenuLector() {
     showLectorQuickMenu(
       context: context,
-      onRefresh: _cargarUsuario,
+      onRefresh: _prepararTrabajo,
       onLogout: _cerrarSesion,
     );
   }
@@ -130,6 +262,8 @@ class _LectorHomePageState extends State<LectorHomePage> {
               _buildHeader(oscuro),
               const SizedBox(height: 22),
               _buildMainCard(),
+              const SizedBox(height: 18),
+              _buildSyncCard(oscuro),
               const SizedBox(height: 18),
               _buildAccessGrid(oscuro),
               const SizedBox(height: 18),
@@ -317,6 +451,105 @@ class _LectorHomePageState extends State<LectorHomePage> {
     );
   }
 
+  Widget _buildSyncCard(bool oscuro) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: oscuro ? JassColors.darkCard : JassColors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                modoOffline ? Icons.cloud_off_rounded : Icons.cloud_done_rounded,
+                color: modoOffline ? JassColors.warning : JassColors.success,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  modoOffline ? 'Trabajo sin conexión' : 'Sincronización',
+                  style: TextStyle(
+                    color: oscuro ? Colors.white : JassColors.primary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            estadoSincronizacion,
+            style: TextStyle(
+              color: oscuro ? JassColors.darkMuted : JassColors.muted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _SyncMetric(
+                  label: 'Pendientes',
+                  value: '$pendientes',
+                  oscuro: oscuro,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SyncMetric(
+                  label: 'Suministros',
+                  value: '$suministrosGuardados',
+                  oscuro: oscuro,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: sincronizando ? null : _actualizarCatalogo,
+                  icon: const Icon(Icons.download_rounded),
+                  label: const Text('Actualizar catálogo'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: sincronizando ? null : _sincronizarAhora,
+                  icon: sincronizando
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.sync_rounded),
+                  label: const Text('Sincronizar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: JassColors.secondary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAccessGrid(bool oscuro) {
     return Row(
       children: [
@@ -479,6 +712,49 @@ class _LectorHomePageState extends State<LectorHomePage> {
             number: '4',
             text: 'Confirma el recibo generado por el sistema.',
             oscuro: oscuro,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SyncMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool oscuro;
+
+  const _SyncMetric({
+    required this.label,
+    required this.value,
+    required this.oscuro,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: oscuro ? const Color(0xFF162432) : const Color(0xFFF4FAFC),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              color: oscuro ? Colors.white : JassColors.primary,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: oscuro ? JassColors.darkMuted : JassColors.muted,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),

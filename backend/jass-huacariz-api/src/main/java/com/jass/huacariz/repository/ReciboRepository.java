@@ -13,4 +13,6 @@ public interface ReciboRepository extends JpaRepository<Recibo, Integer> {
     List<Recibo> findBySuministroId(Integer suministroId);
 
     List<Recibo> findByEstadoRecibo(String estadoRecibo);
+
+    Optional<Recibo> findByLecturaId(Integer lecturaId);
 }

@@ -269,7 +269,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
       ),
       builder: (contextSheet) {
         bool guardando = false;
-        String metodoPago = 'EFECTIVO';
+        String metodoPago = 'YAPE';
 
         return StatefulBuilder(
           builder: (contextSheet, setModalState) {
@@ -349,18 +349,18 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'EFECTIVO',
-                          child: Text('Efectivo'),
-                        ),
+                      items: const [
                         DropdownMenuItem(
                           value: 'YAPE',
-                          child: Text('Yape / Plin'),
+                          child: Text('Yape'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'PLIN',
+                          child: Text('Plin'),
                         ),
                         DropdownMenuItem(
                           value: 'TRANSFERENCIA',
-                          child: Text('Transferencia'),
+                          child: Text('Transferencia bancaria'),
                         ),
                       ],
                       onChanged: (value) {
@@ -375,7 +375,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                       controller: codigoOperacionController,
                       decoration: InputDecoration(
                         labelText: 'Código de operación',
-                        hintText: 'Opcional para efectivo',
+                        hintText: 'Ejemplo: OP-123456',
                         filled: true,
                         fillColor: context.jassSurfaceAlt,
                         border: OutlineInputBorder(

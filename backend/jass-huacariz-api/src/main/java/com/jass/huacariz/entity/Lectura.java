@@ -48,4 +48,7 @@ public class Lectura {
 
     @Column(name = "observacion", length = 255)
     private String observacion;
+
+    @Column(name = "id_operacion_cliente", length = 80, unique = true)
+    private String idOperacionCliente;
 }

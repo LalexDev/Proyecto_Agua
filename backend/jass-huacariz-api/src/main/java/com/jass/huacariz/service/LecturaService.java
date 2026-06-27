@@ -41,6 +41,11 @@ public class LecturaService {
 
     @Transactional
     public LecturaResponse registrarLectura(LecturaRequest request) {
+        LecturaResponse operacionExistente = buscarOperacionExistente(request.getIdOperacionCliente());
+        if (operacionExistente != null) {
+            return operacionExistente;
+        }
+
         Suministro suministro = suministroRepository.findByCodigoSuministro(
                         request.getCodigoSuministro().trim().toUpperCase()
                 )
@@ -72,6 +77,7 @@ public class LecturaService {
                 .consumoM3(consumo)
                 .fechaLectura(LocalDateTime.now())
                 .observacion(request.getObservacion())
+                .idOperacionCliente(normalizarIdOperacion(request.getIdOperacionCliente()))
                 .build();
 
         lectura = lecturaRepository.save(lectura);
@@ -85,6 +91,11 @@ public class LecturaService {
     public LecturaResponse registrarMantenimiento(MantenimientoRequest request) {
         if (request == null) {
             throw new RuntimeException("Los datos de mantenimiento son obligatorios.");
+        }
+
+        LecturaResponse operacionExistente = buscarOperacionExistente(request.getIdOperacionCliente());
+        if (operacionExistente != null) {
+            return operacionExistente;
         }
 
         if (request.getCodigoSuministro() == null || request.getCodigoSuministro().trim().isBlank()) {
@@ -131,6 +142,7 @@ public class LecturaService {
                 .consumoM3(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
                 .fechaLectura(LocalDateTime.now())
                 .observacion(observacion)
+                .idOperacionCliente(normalizarIdOperacion(request.getIdOperacionCliente()))
                 .build();
 
         lectura = lecturaRepository.save(lectura);
@@ -145,10 +157,8 @@ public class LecturaService {
         return lecturaRepository.findAll()
                 .stream()
                 .map(lectura -> {
-                    Recibo recibo = reciboRepository.findAll()
-                            .stream()
-                            .filter(r -> r.getLectura().getId().equals(lectura.getId()))
-                            .findFirst()
+                    Recibo recibo = reciboRepository
+                            .findByLecturaId(lectura.getId())
                             .orElse(null);
 
                     return convertirAResponse(lectura, recibo);
@@ -161,10 +171,8 @@ public class LecturaService {
         return lecturaRepository.findBySuministroId(suministroId)
                 .stream()
                 .map(lectura -> {
-                    Recibo recibo = reciboRepository.findAll()
-                            .stream()
-                            .filter(r -> r.getLectura().getId().equals(lectura.getId()))
-                            .findFirst()
+                    Recibo recibo = reciboRepository
+                            .findByLecturaId(lectura.getId())
                             .orElse(null);
 
                     return convertirAResponse(lectura, recibo);
@@ -390,6 +398,27 @@ public class LecturaService {
         return "INSTALADO".equalsIgnoreCase(suministro.getEstadoInstalacion().trim());
     }
 
+    private LecturaResponse buscarOperacionExistente(String idOperacionCliente) {
+        String idNormalizado = normalizarIdOperacion(idOperacionCliente);
+        if (idNormalizado == null) {
+            return null;
+        }
+
+        return lecturaRepository.findByIdOperacionCliente(idNormalizado)
+                .map(lectura -> convertirAResponse(
+                        lectura,
+                        reciboRepository.findByLecturaId(lectura.getId()).orElse(null)
+                ))
+                .orElse(null);
+    }
+
+    private String normalizarIdOperacion(String idOperacionCliente) {
+        if (idOperacionCliente == null || idOperacionCliente.trim().isBlank()) {
+            return null;
+        }
+        return idOperacionCliente.trim();
+    }
+
     private LecturaResponse convertirAResponse(Lectura lectura, Recibo recibo) {
         return LecturaResponse.builder()
                 .id(lectura.getId())
@@ -402,6 +431,7 @@ public class LecturaService {
                 .consumoM3(lectura.getConsumoM3())
                 .fechaLectura(lectura.getFechaLectura())
                 .observacion(lectura.getObservacion())
+                .idOperacionCliente(lectura.getIdOperacionCliente())
                 .recibo(recibo != null ? convertirReciboAResponse(recibo) : null)
                 .build();
     }
