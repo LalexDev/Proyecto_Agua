@@ -215,7 +215,36 @@
     </div>
   </section>
 
-  <section class="filter-card">
+    <section class="chart-card">
+    <div class="chart-header">
+      <div>
+        <span class="page-kicker small">CONSUMO</span>
+        <h3>Mayores consumos registrados</h3>
+        <p>Top de suministros con mayor consumo según los filtros aplicados.</p>
+      </div>
+    </div>
+
+    <div class="bars-list">
+      <div class="bar-item" *ngFor="let item of topConsumos()">
+        <div class="bar-info">
+          <strong>{{ item.codigoSuministro }}</strong>
+          <span>{{ nombreCliente(item) }} · {{ nombreMes(item.mes) }} {{ item.anio }}</span>
+        </div>
+
+        <div class="bar-track">
+          <div class="bar-fill" [style.width]="anchoConsumo(item)"></div>
+        </div>
+
+        <strong class="bar-price">{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
+      </div>
+
+      <div class="empty-chart" *ngIf="topConsumos().length === 0 && !cargando">
+        No hay consumos para graficar.
+      </div>
+    </div>
+  </section>
+
+   <section class="filter-card">
     <div class="search-box">
       <span>⌕</span>
       <input
@@ -256,37 +285,6 @@
       Limpiar
     </button>
   </section>
-  
-
-    <section class="chart-card">
-    <div class="chart-header">
-      <div>
-        <span class="page-kicker small">CONSUMO</span>
-        <h3>Mayores consumos registrados</h3>
-        <p>Top de suministros con mayor consumo según los filtros aplicados.</p>
-      </div>
-    </div>
-
-    <div class="bars-list">
-      <div class="bar-item" *ngFor="let item of topConsumos()">
-        <div class="bar-info">
-          <strong>{{ item.codigoSuministro }}</strong>
-          <span>{{ nombreCliente(item) }} · {{ nombreMes(item.mes) }} {{ item.anio }}</span>
-        </div>
-
-        <div class="bar-track">
-          <div class="bar-fill" [style.width]="anchoConsumo(item)"></div>
-        </div>
-
-        <strong class="bar-price">{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
-      </div>
-
-      <div class="empty-chart" *ngIf="topConsumos().length === 0 && !cargando">
-        No hay consumos para graficar.
-      </div>
-    </div>
-  </section>
-
 
   <section class="table-card">
     <div class="table-card__header">
@@ -298,8 +296,8 @@
       <span>{{ lecturasFiltradas.length }} resultado(s)</span>
     </div>
 
-    <div class="table-responsive">
-      <table>
+    <div class="table-responsive mobile-table-wrapper">
+      <table class="mobile-card-table historial-mobile-table">
         <thead>
           <tr>
             <th>Suministro</th>
@@ -315,46 +313,51 @@
           </tr>
         </thead>
 
-        <tbody>
-          <tr *ngFor="let item of lecturasFiltradas">
-            <td>
-              <strong>{{ item.codigoSuministro }}</strong>
-              <small>{{ item.aliasSuministro || item.direccionSuministro }}</small>
-              <small>{{ item.sector }}</small>
-            </td>
+      <tbody>
+        <tr *ngFor="let item of lecturasFiltradas">
+          <td data-label="Suministro" class="suministro-mobile-cell">
+            <strong>{{ item.codigoSuministro }}</strong>
+            <small>{{ item.aliasSuministro || item.direccionSuministro }}</small>
+            <small>{{ item.sector }}</small>
+          </td>
 
-            <td>
-              <strong>{{ nombreCliente(item) }}</strong>
-              <small>DNI: {{ item.dniCliente || '-' }}</small>
-            </td>
+          <td data-label="Cliente" class="cliente-mobile-cell">
+            <strong>{{ nombreCliente(item) }}</strong>
+            <small>DNI: {{ item.dniCliente || '-' }}</small>
+          </td>
 
-            <td>{{ nombreMes(item.mes) }} {{ item.anio }}</td>
+          <td data-label="Periodo">
+            {{ nombreMes(item.mes) }} {{ item.anio }}
+          </td>
 
-            <td>{{ item.lecturaAnterior | number:'1.2-3' }} m³</td>
+          <td data-label="Lectura anterior">
+            {{ item.lecturaAnterior | number:'1.2-3' }} m³
+          </td>
 
-            <td>{{ item.lecturaActual | number:'1.2-3' }} m³</td>
+          <td data-label="Lectura actual">
+            {{ item.lecturaActual | number:'1.2-3' }} m³
+          </td>
 
-            <td>
-              <strong>{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
-            </td>
+          <td data-label="Consumo">
+            <strong>{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
+          </td>
 
-            <td>
-              <strong>{{ item.codigoRecibo || '-' }}</strong>
-            </td>
+          <td data-label="Recibo">
+            <strong>{{ item.codigoRecibo || '-' }}</strong>
+          </td>
 
-            <td>
-              <strong>S/ {{ totalItem(item) | number:'1.2-2' }}</strong>
-            </td>
+          <td data-label="Total">
+            <strong>S/ {{ totalItem(item) | number:'1.2-2' }}</strong>
+          </td>
 
-            <td>
-              <span class="status-badge" [ngClass]="estadoClase(item.estadoRecibo)">
-                {{ item.estadoRecibo || 'PENDIENTE' }}
-              </span>
-            </td>
+          <td data-label="Estado">
+            <span class="status-badge" [ngClass]="estadoClase(item.estadoRecibo)">
+              {{ item.estadoRecibo || 'PENDIENTE' }}
+            </span>
+          </td>
 
-          <td>
-            <div class="actions-cell">
-
+          <td data-label="Acciones">
+            <div class="actions-cell actions-premium">
               <button
                 type="button"
                 class="btn-ver"
@@ -379,17 +382,16 @@
                 </svg>
                 <span>Imprimir</span>
               </button>
-
             </div>
           </td>
-          </tr>
+        </tr>
 
-          <tr *ngIf="lecturasFiltradas.length === 0 && !cargando">
-            <td colspan="10" class="empty-state">
-              No hay lecturas registradas con los filtros seleccionados.
-            </td>
-          </tr>
-        </tbody>
+        <tr *ngIf="lecturasFiltradas.length === 0 && !cargando">
+          <td colspan="10" class="empty-state">
+            No hay lecturas registradas con los filtros seleccionados.
+          </td>
+        </tr>
+      </tbody>
       </table>
     </div>
   </section>

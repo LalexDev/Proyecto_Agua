@@ -312,8 +312,8 @@
       <span>{{ recibosFiltrados.length }} resultado(s)</span>
     </div>
 
-    <div class="table-wrapper">
-      <table>
+      <div class="table-wrapper mobile-table-wrapper">
+        <table class="mobile-card-table cliente-mis-recibos-mobile-table">
         <thead>
           <tr>
             <th>Recibo</th>
@@ -332,24 +332,50 @@
 
         <tbody>
           <tr *ngFor="let recibo of recibosFiltrados">
-            <td><strong>{{ recibo.codigoRecibo }}</strong></td>
-            <td>{{ recibo.codigoSuministro || '-' }}</td>
-            <td>{{ recibo.direccionSuministro || '-' }}</td>
-            <td>{{ periodo(recibo) }}</td>
-            <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
-            <td>S/ {{ recibo.subtotalAgua | number:'1.2-2' }}</td>
-            <td>S/ {{ totalCargos(recibo) | number:'1.2-2' }}</td>
-            <td><strong>S/ {{ recibo.total | number:'1.2-2' }}</strong></td>
-            <td>{{ recibo.fechaVencimiento || '-' }}</td>
+            <td data-label="Recibo" class="recibo-mobile-cell">
+              <strong>{{ recibo.codigoRecibo }}</strong>
+            </td>
 
-            <td>
+            <td data-label="Suministro">
+              {{ recibo.codigoSuministro || '-' }}
+            </td>
+
+            <td data-label="Dirección" class="direccion-mobile-cell">
+              {{ recibo.direccionSuministro || '-' }}
+            </td>
+
+            <td data-label="Periodo">
+              {{ periodo(recibo) }}
+            </td>
+
+            <td data-label="Consumo">
+              {{ recibo.consumoM3 | number:'1.2-3' }} m³
+            </td>
+
+            <td data-label="Subtotal">
+              S/ {{ recibo.subtotalAgua | number:'1.2-2' }}
+            </td>
+
+            <td data-label="Cargos">
+              S/ {{ totalCargos(recibo) | number:'1.2-2' }}
+            </td>
+
+            <td data-label="Total">
+              <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
+            </td>
+
+            <td data-label="Vencimiento">
+              {{ recibo.fechaVencimiento || '-' }}
+            </td>
+
+            <td data-label="Estado">
               <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
                 {{ recibo.estadoRecibo || 'PENDIENTE' }}
               </span>
             </td>
 
-            <td>
-              <div class="actions-cell">
+            <td data-label="Acciones">
+              <div class="actions-cell actions-premium">
                 <a class="btn-ver" [routerLink]="['/cliente/detalle-recibo', recibo.id]">
                   <svg viewBox="0 0 24 24">
                     <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
@@ -384,7 +410,9 @@
           </tr>
 
           <tr *ngIf="recibosFiltrados.length === 0 && !cargando">
-            <td colspan="11" class="empty-row">No tienes recibos para mostrar.</td>
+            <td colspan="11" class="empty-row">
+              No tienes recibos para mostrar.
+            </td>
           </tr>
         </tbody>
       </table>

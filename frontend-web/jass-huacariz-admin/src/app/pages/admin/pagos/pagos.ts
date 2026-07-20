@@ -21,12 +21,22 @@ interface MetodoResumen {
 export class Pagos implements OnInit {
   pagos: PagoResponse[] = [];
   pagosFiltrados: PagoResponse[] = [];
+  estadoFiltro = 'TODOS';
 
   cargando = false;
   error = '';
   exito = '';
   busqueda = '';
   comprobanteSeleccionado = '';
+
+  modalConfirmacionAbierto = false;
+    accionPendiente: 'aprobar' | 'rechazar' | null = null;
+    pagoPendiente: PagoResponse | null = null;
+
+    tituloConfirmacion = '';
+    mensajeConfirmacion = '';
+    textoBotonConfirmar = '';
+    claseConfirmacion = '';
 
   constructor(
     private pagoService: Pago,
@@ -37,58 +47,58 @@ export class Pagos implements OnInit {
     this.cargarPagos();
   }
 
-  cargarPagos(): void {
-    this.cargando = true;
-    this.error = '';
-    this.exito = '';
+cargarPagos(): void {
+  this.cargando = true;
+  this.error = '';
+  this.exito = '';
 
-    this.pagoService.listarPagos()
-      .pipe(
-        finalize(() => {
-          this.cargando = false;
-          this.cdr.detectChanges();
-        })
-      )
-      .subscribe({
-        next: (data) => {
-          this.pagos = data || [];
-          this.filtrarPagos();
-          this.mostrarExito('Pagos actualizados correctamente.');
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.mostrarError('No se pudieron cargar los pagos.');
-          this.exito = '';
-          this.pagos = [];
-          this.pagosFiltrados = [];
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
+  this.pagoService.listarPagos(this.estadoFiltro)
+    .pipe(
+      finalize(() => {
+        this.cargando = false;
+        this.cdr.detectChanges();
+      })
+    )
+    .subscribe({
+      next: (data) => {
+        this.pagos = data || [];
+        this.filtrarPagos();
+        this.mostrarExito('Pagos actualizados correctamente.');
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mostrarError('No se pudieron cargar los pagos.');
+        this.exito = '';
+        this.pagos = [];
+        this.pagosFiltrados = [];
+        this.cdr.detectChanges();
+      }
+    });
+}
   filtrarPagos(): void {
     const texto = this.busqueda.trim().toLowerCase();
+    const estado = this.estadoFiltro;
 
-    if (!texto) {
-      this.pagosFiltrados = [...this.pagos];
-      return;
-    }
-
-    this.pagosFiltrados = this.pagos.filter((pago: any) => {
-      return (
+    this.pagosFiltrados = this.pagos.filter((pago: PagoResponse) => {
+      const coincideTexto =
+        !texto ||
         String(pago.codigoRecibo || '').toLowerCase().includes(texto) ||
         String(pago.metodoPago || '').toLowerCase().includes(texto) ||
         String(pago.codigoOperacion || '').toLowerCase().includes(texto) ||
         String(pago.monto || '').toLowerCase().includes(texto) ||
         String(pago.estadoPago || '').toLowerCase().includes(texto) ||
-        this.fechaPagoTexto(pago).toLowerCase().includes(texto)
-        
-      );
+        this.fechaPagoTexto(pago).toLowerCase().includes(texto);
+
+      const coincideEstado =
+        estado === 'TODOS' || pago.estadoPago === estado;
+
+      return coincideTexto && coincideEstado;
     });
   }
 
   limpiarFiltros(): void {
     this.busqueda = '';
+    this.estadoFiltro = 'TODOS';
     this.filtrarPagos();
   }
 
@@ -251,58 +261,72 @@ export class Pagos implements OnInit {
     
   }
 
-  aprobarPago(id: number): void {
+  abrirConfirmacionAprobar(pago: PagoResponse): void {
+  this.modalConfirmacionAbierto = true;
+  this.accionPendiente = 'aprobar';
+  this.pagoPendiente = pago;
 
-    if (!confirm('¿Confirmar este pago?')) {
-      return;
-    }
+  this.tituloConfirmacion = 'Confirmar pago';
+  this.mensajeConfirmacion = `¿Deseas aprobar el pago del recibo ${pago.codigoRecibo}?`;
+  this.textoBotonConfirmar = 'Sí, aprobar';
+  this.claseConfirmacion = 'aprobar';
+}
 
+abrirConfirmacionRechazar(pago: PagoResponse): void {
+  this.modalConfirmacionAbierto = true;
+  this.accionPendiente = 'rechazar';
+  this.pagoPendiente = pago;
+
+  this.tituloConfirmacion = 'Rechazar pago';
+  this.mensajeConfirmacion = `¿Deseas rechazar el pago del recibo ${pago.codigoRecibo}?`;
+  this.textoBotonConfirmar = 'Sí, rechazar';
+  this.claseConfirmacion = 'rechazar';
+}
+
+cerrarModalConfirmacion(): void {
+  this.modalConfirmacionAbierto = false;
+  this.accionPendiente = null;
+  this.pagoPendiente = null;
+  this.tituloConfirmacion = '';
+  this.mensajeConfirmacion = '';
+  this.textoBotonConfirmar = '';
+  this.claseConfirmacion = '';
+}
+
+confirmarAccionPago(): void {
+  if (!this.pagoPendiente || !this.accionPendiente) {
+    return;
+  }
+
+  const id = this.pagoPendiente.id;
+
+  if (this.accionPendiente === 'aprobar') {
     this.pagoService.aprobarPago(id).subscribe({
-
       next: () => {
-
         this.mostrarExito('Pago aprobado correctamente.');
-
+        this.cerrarModalConfirmacion();
         this.cargarPagos();
-
       },
-
       error: () => {
-
         this.mostrarError('No fue posible aprobar el pago.');
-
       }
-
     });
-
+    return;
   }
-  rechazarPago(id: number): void {
 
-    if (!confirm('¿Rechazar este pago?')) {
-      return;
-    }
-
+  if (this.accionPendiente === 'rechazar') {
     this.pagoService.rechazarPago(id).subscribe({
-
       next: () => {
-
-        this.mostrarExito('Pago rechazado.');
-
+        this.mostrarExito('Pago rechazado correctamente.');
+        this.cerrarModalConfirmacion();
         this.cargarPagos();
-
       },
-
       error: () => {
-
         this.mostrarError('No fue posible rechazar el pago.');
-
       }
-
     });
-
   }
-  
-
+}
 
   verComprobante(pago: PagoResponse): void {
     if (!pago.comprobanteUrl) {
@@ -328,4 +352,8 @@ export class Pagos implements OnInit {
 
     return `https://qnsdd0d9-8080.brs.devtunnels.ms${url}`;
   }
+
+  cambiarFiltroEstado(): void {
+  this.cargarPagos();
+}
 }

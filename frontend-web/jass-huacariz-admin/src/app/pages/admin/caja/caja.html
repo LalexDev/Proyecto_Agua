@@ -1,0 +1,303 @@
+<div class="caja-page">
+  <section class="page-header">
+    <div>
+      <span class="page-kicker">CAJA / TESORERÍA</span>
+      <h2>Movimientos de caja</h2>
+      <p>Registra egresos, ingresos manuales y controla el dinero disponible de la junta.</p>
+    </div>
+
+<div class="header-actions">
+  <button type="button" class="btn-secondary btn-icon" (click)="exportarExcel()">
+    <svg viewBox="0 0 24 24">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <path d="M14 2v6h6"/>
+      <path d="M8 13h8"/>
+      <path d="M8 17h8"/>
+      <path d="M8 9h2"/>
+    </svg>
+    Exportar Excel
+  </button>
+
+  <button type="button" class="btn-secondary btn-icon" (click)="imprimir()">
+    <svg viewBox="0 0 24 24">
+      <path d="M6 9V3h12v6"/>
+      <path d="M6 18h12v3H6z"/>
+      <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+    </svg>
+    Imprimir PDF
+  </button>
+
+  <button type="button" class="btn-primary btn-icon" (click)="abrirModal()">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 5v14"/>
+      <path d="M5 12h14"/>
+    </svg>
+    Nuevo movimiento
+  </button>
+    </div>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="exito" class="alert alert-success">{{ exito }}</div>
+  <div *ngIf="cargando" class="alert alert-info">Cargando movimientos...</div>
+
+   <section class="stats-grid">
+      <article class="stat-card recaudado">
+        <span>Pagos recibidos</span>
+        <strong>S/ {{ totalRecaudadoPagosPeriodo() | number:'1.2-2' }}</strong>
+        <small>Recibos pagados del periodo</small>
+      </article>
+
+      <article class="stat-card ingreso">
+        <span>Otros ingresos</span>
+        <strong>S/ {{ totalIngresosManualesPeriodo() | number:'1.2-2' }}</strong>
+        <small>Padrón, aportes o ingresos extra</small>
+      </article>
+
+      <article class="stat-card egreso">
+        <span>Gastos / retiros</span>
+        <strong>S/ {{ totalEgresosPeriodo() | number:'1.2-2' }}</strong>
+        <small>Dinero retirado en el periodo</small>
+      </article>
+
+      <article class="stat-card saldo" [class.negativo]="saldoDisponiblePeriodo() < 0">
+        <span>Saldo del periodo</span>
+        <strong>S/ {{ saldoDisponiblePeriodo() | number:'1.2-2' }}</strong>
+        <small>Pagos + ingresos - gastos</small>
+      </article>
+    </section>
+
+
+    <section class="category-summary" *ngIf="resumenPorCategoria().length > 0">
+  <div class="category-summary__header">
+    <div>
+      <span class="page-kicker small">RESUMEN</span>
+      <h3>Resumen por categoría</h3>
+      <p>{{ textoPeriodo() }}</p>
+    </div>
+  </div>
+
+  <div class="category-grid">
+    <article class="category-card" *ngFor="let item of resumenPorCategoria()">
+      <span>{{ item.categoria }}</span>
+
+      <div>
+        <small>Ingresos</small>
+        <strong class="income">S/ {{ item.ingresos | number:'1.2-2' }}</strong>
+      </div>
+
+      <div>
+        <small>Gastos</small>
+        <strong class="expense">S/ {{ item.egresos | number:'1.2-2' }}</strong>
+      </div>
+
+      <div>
+        <small>Saldo</small>
+        <strong [class.negative]="item.saldo < 0">
+          S/ {{ item.saldo | number:'1.2-2' }}
+        </strong>
+      </div>
+    </article>
+  </div>
+</section>
+
+      <section class="filters-row caja-filters">
+        <div class="search-box">
+          <span>⌕</span>
+          <input
+            type="text"
+            placeholder="Buscar por categoría, descripción, responsable, estado o monto..."
+            [(ngModel)]="busqueda"
+            (input)="aplicarFiltros()"
+          >
+        </div>
+
+        <select [(ngModel)]="filtroAnio" (change)="aplicarFiltros()">
+          <option value="TODOS">Todos los años</option>
+          <option *ngFor="let anio of aniosDisponibles()" [value]="anio">
+            {{ anio }}
+          </option>
+        </select>
+
+        <select [(ngModel)]="filtroMes" (change)="aplicarFiltros()">
+          <option value="TODOS">Todos los meses</option>
+          <option *ngFor="let mes of meses" [value]="mes.valor">
+            {{ mes.nombre }}
+          </option>
+        </select>
+
+        <select [(ngModel)]="filtroEstado" (change)="aplicarFiltros()">
+          <option value="TODOS">Todos</option>
+          <option value="ACTIVO">Activos</option>
+          <option value="ANULADO">Anulados</option>
+        </select>
+
+        <button type="button" class="btn-secondary" (click)="limpiarFiltros()">
+          Limpiar
+        </button>
+      </section>
+
+  <section class="table-card">
+    <div class="table-header">
+      <div>
+        <span class="page-kicker small">HISTORIAL</span>
+        <h3>Movimientos registrados</h3>
+      </div>
+
+      <span>{{ movimientosFiltrados.length }} resultado(s)</span>
+    </div>
+
+    <div class="table-responsive mobile-table-wrapper">
+      <table class="mobile-card-table caja-mobile-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Categoría</th>
+            <th>Detalle</th>
+            <th>Responsable</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let movimiento of movimientosFiltrados">
+            <td data-label="Fecha">
+              {{ fechaTexto(movimiento.fechaMovimiento) }}
+            </td>
+
+            <td data-label="Tipo">
+              <span class="tipo-chip" [ngClass]="movimiento.tipoMovimiento.toLowerCase()">
+                {{ movimiento.tipoMovimiento }}
+              </span>
+            </td>
+
+            <td data-label="Categoría">
+              <strong>{{ movimiento.categoria }}</strong>
+            </td>
+
+            <td data-label="Detalle" class="detalle-mobile-cell">
+              {{ movimiento.descripcion }}
+            </td>
+
+            <td data-label="Responsable">
+              {{ movimiento.responsable || '-' }}
+            </td>
+
+            <td data-label="Monto">
+              <strong>S/ {{ movimiento.monto | number:'1.2-2' }}</strong>
+            </td>
+
+            <td data-label="Estado">
+              <span class="estado-chip" [ngClass]="movimiento.estado.toLowerCase()">
+                {{ movimiento.estado }}
+              </span>
+            </td>
+
+            <td data-label="Acciones">
+              <div class="actions-cell actions-premium">
+                <button
+                  type="button"
+                  class="btn-danger btn-icon btn-anular"
+                  *ngIf="movimiento.estado === 'ACTIVO'"
+                  (click)="anularMovimiento(movimiento)"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M18 6 6 18"/>
+                    <path d="M6 6l12 12"/>
+                  </svg>
+                  Anular
+                </button>
+
+                <span *ngIf="movimiento.estado === 'ANULADO'" class="sin-accion">
+                  Sin acciones
+                </span>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!cargando && movimientosFiltrados.length === 0">
+            <td colspan="8" class="empty-state">
+              No hay movimientos registrados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="modalAbierto">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="page-kicker small">REGISTRAR</span>
+          <h3>Nuevo movimiento de caja</h3>
+          <p>Registra otros ingresos o gastos/retiros de la junta.</p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Tipo
+            <select [(ngModel)]="formulario.tipoMovimiento">
+            <option value="EGRESO">Gasto / retiro</option>
+            <option value="INGRESO">Otro ingreso</option>
+            </select>
+        </label>
+
+        <label>
+          Categoría
+          <select [(ngModel)]="formulario.categoria">
+            <option *ngFor="let categoria of categorias" [value]="categoria">
+              {{ categoria }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Monto
+          <input type="number" min="0" step="0.01" [(ngModel)]="formulario.monto">
+        </label>
+
+        <label>
+          Responsable
+          <input type="text" placeholder="Ejemplo: Presidente de la junta" [(ngModel)]="formulario.responsable">
+        </label>
+
+        <label class="full">
+          Detalle / motivo
+          <textarea
+            rows="4"
+            placeholder="Ejemplo: Compra de tubos y accesorios para reparación..."
+            [(ngModel)]="formulario.descripcion"
+          ></textarea>
+        </label>
+      </div>
+
+        <div class="info-note" *ngIf="formulario.tipoMovimiento === 'EGRESO'">
+        <strong>Nota:</strong>
+        Los gastos/retiros reducen el saldo disponible de caja, pero no modifican el total emitido de recibos.
+        </div>
+
+        <div class="info-note ingreso-note" *ngIf="formulario.tipoMovimiento === 'INGRESO'">
+        <strong>Nota:</strong>
+        Los otros ingresos suman al saldo disponible, pero no cuentan como pago de recibo.
+        </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="cerrarModal()">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn-primary" (click)="guardarMovimiento()" [disabled]="guardando">
+          {{ guardando ? 'Guardando...' : 'Guardar movimiento' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

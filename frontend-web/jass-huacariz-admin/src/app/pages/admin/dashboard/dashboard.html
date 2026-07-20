@@ -120,40 +120,46 @@
 
   <section class="summary-layout">
     <article class="metric-card featured">
-      <div class="metric-icon">
-        <svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 21a8 8 0 0 1 16 0"></path></svg>
-      </div>
+  <div class="metric-icon">
+    <svg viewBox="0 0 24 24">
+      <path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 21a8 8 0 0 1 16 0"></path>
+    </svg>
+  </div>
 
-      <div>
-        <span>Clientes activos</span>
-        <strong>{{ clientesActivos() }}</strong>
-        <small>{{ totalClientes() }} usuarios registrados</small>
-      </div>
-    </article>
+  <div class="metric-info">
+    <span>Clientes activos</span>
+    <strong>{{ clientesActivos() }}</strong>
+    <small>{{ totalClientes() }} usuarios registrados</small>
+  </div>
+</article>
 
-    <article class="metric-card">
-      <div class="metric-icon blue">
-        <svg viewBox="0 0 24 24"><path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path></svg>
-      </div>
+<article class="metric-card">
+  <div class="metric-icon blue">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 2.5C9.2 6.2 5.5 10.6 5.5 15a6.5 6.5 0 0 0 13 0c0-4.4-3.7-8.8-6.5-12.5Z"></path>
+    </svg>
+  </div>
 
-      <div>
-        <span>Conexiones</span>
-        <strong>{{ totalSuministros() }}</strong>
-        <small>Puntos de agua registrados</small>
-      </div>
-    </article>
+  <div class="metric-info">
+    <span>Conexiones</span>
+    <strong>{{ totalSuministros() }}</strong>
+    <small>Puntos de agua registrados</small>
+  </div>
+</article>
 
-    <article class="metric-card">
-      <div class="metric-icon orange">
-        <svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3Zm3 5h4m-4 4h5m-5 4h3"></path></svg>
-      </div>
+<article class="metric-card pending-card">
+  <div class="metric-icon orange">
+    <svg viewBox="0 0 24 24">
+      <path d="M7 3h10v18l-2-1.2-2 1.2-2-1.2-2 1.2-2-1.2V3Zm3 5h4m-4 4h5m-5 4h3"></path>
+    </svg>
+  </div>
 
-      <div>
-        <span>Por cobrar</span>
-        <strong>{{ recibosPendientes() }}</strong>
-        <small>{{ porcentajePendientes() | number:'1.1-1' }}% de recibos</small>
-      </div>
-    </article>
+  <div class="metric-info">
+    <span>Por cobrar</span>
+    <strong>S/ {{ montoPorCobrar() | number:'1.2-2' }}</strong>
+    <small>{{ recibosPorCobrar() }} recibo(s) pendientes/vencidos</small>
+  </div>
+</article>
 
     <article class="income-card">
       <div class="income-head">
@@ -177,10 +183,12 @@
       <div class="progress-title">
         <div>
           <span>Estado financiero</span>
-          <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
+          <strong [class.negative-money]="saldoDisponible() < 0">
+            S/ {{ saldoDisponible() | number:'1.2-2' }}
+          </strong>
         </div>
 
-        <small>Saldo pendiente</small>
+        <small>Saldo disponible en caja</small>
       </div>
 
       <div class="progress-group">
@@ -193,7 +201,7 @@
         </div>
 
         <div class="progress-row">
-          <span>Total pagado</span>
+          <span>Pagos recibidos</span>
           <div class="bar">
             <div class="bar-fill aqua" [style.width.%]="porcentajeRecaudado()"></div>
           </div>
@@ -201,11 +209,37 @@
         </div>
 
         <div class="progress-row">
-          <span>Pendiente</span>
+          <span>Otros ingresos</span>
           <div class="bar">
-            <div class="bar-fill orange" [style.width.%]="100 - porcentajeRecaudado()"></div>
+            <div class="bar-fill green" [style.width.%]="porcentajeOtrosIngresos()"></div>
           </div>
-          <strong>S/ {{ saldoPendiente() | number:'1.2-2' }}</strong>
+          <strong>S/ {{ totalIngresosManuales() | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="progress-row">
+          <span>Gastos / retiros</span>
+          <div class="bar">
+            <div class="bar-fill red" [style.width.%]="porcentajeEgresosCaja()"></div>
+          </div>
+          <strong>S/ {{ totalEgresos() | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="progress-row">
+          <span>Saldo caja</span>
+          <div class="bar">
+            <div class="bar-fill teal" [style.width.%]="porcentajeSaldoCaja()"></div>
+          </div>
+          <strong [class.negative-money]="saldoDisponible() < 0">
+            S/ {{ saldoDisponible() | number:'1.2-2' }}
+          </strong>
+        </div>
+
+        <div class="progress-row">
+          <span>Por cobrar</span>
+          <div class="bar">
+            <div class="bar-fill orange" [style.width.%]="porcentajePorCobrarMonto()"></div>
+          </div>
+          <strong>S/ {{ montoPorCobrar() | number:'1.2-2' }}</strong>
         </div>
       </div>
     </article>
@@ -217,6 +251,29 @@
         <div>
           <span>Indicadores</span>
           <h3>Resumen de consumo</h3>
+          <div class="consumo-filters">
+            <select [(ngModel)]="anioFiltroConsumo">
+              <option *ngFor="let anio of aniosDisponibles()" [value]="anio">
+                {{ anio }}
+              </option>
+            </select>
+
+            <select [(ngModel)]="mesFiltroConsumo">
+              <option value="TODOS">Todos los meses</option>
+              <option [value]="1">Enero</option>
+              <option [value]="2">Febrero</option>
+              <option [value]="3">Marzo</option>
+              <option [value]="4">Abril</option>
+              <option [value]="5">Mayo</option>
+              <option [value]="6">Junio</option>
+              <option [value]="7">Julio</option>
+              <option [value]="8">Agosto</option>
+              <option [value]="9">Septiembre</option>
+              <option [value]="10">Octubre</option>
+              <option [value]="11">Noviembre</option>
+              <option [value]="12">Diciembre</option>
+            </select>
+          </div>
         </div>
 
         <button type="button" (click)="cargarDashboard()">Actualizar</button>
@@ -234,12 +291,12 @@
         <div class="chart-data">
           <div>
             <span>Consumo total</span>
-            <strong>{{ consumoTotal() | number:'1.2-3' }} m³</strong>
+            <strong>{{ consumoTotalFiltrado() | number:'1.2-3' }} m³</strong>
           </div>
 
           <div>
             <span>Consumo promedio</span>
-            <strong>{{ consumoPromedio() | number:'1.2-2' }} m³</strong>
+            <strong>{{ consumoPromedioFiltrado() | number:'1.2-2' }} m³</strong>
           </div>
         </div>
       </div>
@@ -255,8 +312,8 @@
         <a routerLink="/admin/recibos">Ver todos</a>
       </div>
 
-      <div class="table-wrapper">
-        <table>
+      <div class="table-wrapper mobile-table-wrapper">
+        <table class="mobile-card-table dashboard-recibos-mobile-table">
           <thead>
             <tr>
               <th>Recibo</th>
@@ -267,23 +324,37 @@
             </tr>
           </thead>
 
-          <tbody>
-            <tr *ngFor="let recibo of recibosFiltrados()">
-              <td><strong>{{ $any(recibo).codigoRecibo }}</strong></td>
-              <td>{{ $any(recibo).codigoSuministro }}</td>
-              <td>{{ periodo(recibo) }}</td>
-              <td><strong>S/ {{ $any(recibo).total | number:'1.2-2' }}</strong></td>
-              <td>
-                <span class="badge" [ngClass]="estadoClase($any(recibo).estadoRecibo)">
-                  {{ $any(recibo).estadoRecibo }}
-                </span>
-              </td>
-            </tr>
+            <tbody>
+              <tr *ngFor="let recibo of recibosFiltrados()">
+                <td data-label="Recibo" class="recibo-mobile-cell">
+                  <strong>{{ $any(recibo).codigoRecibo }}</strong>
+                </td>
 
-            <tr *ngIf="recibosFiltrados().length === 0">
-              <td colspan="5" class="empty-row">No hay recibos para mostrar.</td>
-            </tr>
-          </tbody>
+                <td data-label="Suministro">
+                  {{ $any(recibo).codigoSuministro }}
+                </td>
+
+                <td data-label="Periodo">
+                  {{ periodo(recibo) }}
+                </td>
+
+                <td data-label="Total">
+                  <strong>S/ {{ $any(recibo).total | number:'1.2-2' }}</strong>
+                </td>
+
+                <td data-label="Estado">
+                  <span class="badge" [ngClass]="estadoClase($any(recibo).estadoRecibo)">
+                    {{ $any(recibo).estadoRecibo }}
+                  </span>
+                </td>
+              </tr>
+
+              <tr *ngIf="recibosFiltrados().length === 0">
+                <td colspan="5" class="empty-row">
+                  No hay recibos para mostrar.
+                </td>
+              </tr>
+            </tbody>
         </table>
       </div>
     </article>

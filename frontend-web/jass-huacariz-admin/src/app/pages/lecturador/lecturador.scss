@@ -580,3 +580,140 @@
     grid-column: auto;
   }
 }
+
+/* =========================================================
+   RESPONSIVE PROFESIONAL LECTURADOR
+   ========================================================= */
+
+@media (max-width: 850px) {
+  .lecturador-page {
+    display: block !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .sidebar {
+    position: relative !important;
+    top: auto !important;
+    min-height: auto !important;
+    width: 100% !important;
+    padding: 18px !important;
+    border-radius: 0 0 26px 26px;
+  }
+
+  .brand {
+    margin-bottom: 16px !important;
+  }
+
+  .logo {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 16px !important;
+    font-size: 24px !important;
+  }
+
+  .brand h3 {
+    font-size: 18px !important;
+  }
+
+  .brand p {
+    font-size: 12px !important;
+  }
+
+  .menu {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .menu button,
+  .logout {
+    min-height: 48px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    justify-content: center !important;
+    text-align: center !important;
+    transform: none !important;
+  }
+
+  .logout {
+    margin-top: 12px !important;
+  }
+
+  .content {
+    padding: 14px !important;
+    gap: 16px !important;
+  }
+
+  .topbar,
+  .hero-card,
+  .search-header,
+  .section-title,
+  .receipt-header,
+  .actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .topbar h1 {
+    font-size: 1.35rem !important;
+  }
+
+  .topbar p {
+    font-size: 0.88rem !important;
+  }
+
+  .role-card {
+    width: 100% !important;
+  }
+
+  .hero-card {
+    min-height: auto !important;
+  }
+
+  .hero-info h2 {
+    font-size: 1.55rem !important;
+  }
+
+  .hero-icon {
+    display: none !important;
+  }
+
+  .search-box,
+  .info-grid,
+  .form-grid,
+  .reading-help {
+    grid-template-columns: 1fr !important;
+  }
+
+  .search-box button,
+  .actions button {
+    width: 100% !important;
+  }
+
+  .scanner-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .scanner-frame {
+    height: 230px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu {
+    grid-template-columns: 1fr !important;
+  }
+
+  .search-card,
+  .suministro-card,
+  .form-card,
+  .receipt-card {
+    padding: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  .scanner-frame {
+    height: 210px !important;
+  }
+}

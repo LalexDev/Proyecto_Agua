@@ -2,32 +2,54 @@
   <section class="page-header">
     <div class="page-header__content">
       <span class="page-kicker">PORTAL CLIENTE / PAGO</span>
+
       <h2>Pagar recibo</h2>
-      <p>Envía tu comprobante para validación. Agua potable Huacariz confirmará el pago antes de marcarlo como pagado.</p>
+
+      <p>
+        Envía tu comprobante para validación. Agua Potable Huacariz
+        confirmará el pago antes de marcarlo como pagado.
+      </p>
     </div>
 
     <div class="page-header__actions">
-      <button type="button" class="btn-secondary" (click)="volver()">
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="volver()"
+      >
         <svg viewBox="0 0 24 24">
           <path d="M15 18l-6-6 6-6"/>
         </svg>
+
         Regresar
       </button>
 
-      <button type="button" class="btn-secondary" (click)="imprimirRecibo()" [disabled]="!recibo">
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="imprimirRecibo()"
+        [disabled]="!recibo"
+      >
         <svg viewBox="0 0 24 24">
           <path d="M6 9V3h12v6"/>
           <path d="M6 18h12v3H6z"/>
           <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
         </svg>
+
         Imprimir recibo
       </button>
 
-      <button type="button" class="btn-primary" (click)="cargarRecibo()" [disabled]="cargando">
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="cargarRecibo()"
+        [disabled]="cargando"
+      >
         <svg viewBox="0 0 24 24">
           <path d="M21 12a9 9 0 1 1-2.64-6.36"/>
           <path d="M21 3v6h-6"/>
         </svg>
+
         {{ cargando ? 'Actualizando...' : 'Actualizar' }}
       </button>
     </div>
@@ -49,8 +71,12 @@
     <section class="hero-card">
       <div class="hero-content">
         <span class="tag light">Pago de agua potable</span>
+
         <h3>{{ item.codigoRecibo }}</h3>
-        <p>{{ periodo(item) }} · {{ item.codigoSuministro }}</p>
+
+        <p>
+          {{ periodo(item) }} · {{ item.codigoSuministro }}
+        </p>
 
         <div class="hero-meta">
           <span>{{ item.direccionSuministro || '-' }}</span>
@@ -61,9 +87,17 @@
 
       <div class="hero-kpi">
         <span>Total a pagar</span>
-        <strong>S/ {{ item.total | number:'1.2-2' }}</strong>
+
+        <strong>
+          S/ {{ item.total | number:'1.2-2' }}
+        </strong>
+
         <small>
-          {{ item.estadoRecibo === 'PAGO_EN_REVISION' ? 'Pago enviado para revisión' : (puedePagar() ? 'Pendiente de validación' : 'Recibo cancelado') }}
+          {{
+            item.estadoRecibo === 'PAGO_EN_REVISION'
+              ? 'Pago enviado para revisión'
+              : (puedePagar() ? 'Pendiente de validación' : 'Recibo cancelado')
+          }}
         </small>
       </div>
     </section>
@@ -77,50 +111,71 @@
           </div>
         </div>
 
-        <div *ngIf="item.estadoRecibo === 'PAGO_EN_REVISION'" class="already-paid">
+        <div
+          *ngIf="item.estadoRecibo === 'PAGO_EN_REVISION'"
+          class="already-paid"
+        >
           <div class="paid-icon">
             <svg viewBox="0 0 24 24">
               <path d="M12 8v5l3 2"/>
               <circle cx="12" cy="12" r="9"/>
             </svg>
           </div>
+
           <h3>Pago en revisión</h3>
-          <p>Tu comprobante fue enviado. Agua potable Huacariz verificará la operación y confirmará el pago.</p>
+
+          <p>
+            Tu comprobante fue enviado. Agua Potable Huacariz
+            verificará la operación y confirmará el pago.
+          </p>
         </div>
 
-        <div *ngIf="item.estadoRecibo === 'PAGADO'" class="already-paid">
+        <div
+          *ngIf="item.estadoRecibo === 'PAGADO'"
+          class="already-paid"
+        >
           <div class="paid-icon">
             <svg viewBox="0 0 24 24">
               <path d="M20 6 9 17l-5-5"/>
             </svg>
           </div>
+
           <h3>Este recibo ya fue pagado</h3>
           <p>No es necesario registrar un nuevo pago.</p>
         </div>
 
-        <ng-container *ngIf="puedePagar() && item.estadoRecibo !== 'PAGO_EN_REVISION'">
+        <ng-container
+          *ngIf="puedePagar() && item.estadoRecibo !== 'PAGO_EN_REVISION'"
+        >
           <div class="method-grid">
             <button
               type="button"
               class="method-card"
               *ngFor="let metodo of metodosPago"
-              [class.active]="pago.metodoPago === metodo.codigo"
+              [class.active]="
+                normalizarCodigoMetodo(pago.metodoPago) ===
+                normalizarCodigoMetodo(metodo.codigo)
+              "
               (click)="seleccionarMetodo(metodo.codigo)"
             >
               <span class="method-logo">
-                <img *ngIf="(metodo.nombre || '').toLowerCase().includes('yape')" src="assets/img/pagos/yape.png" alt="Yape">
-                <img *ngIf="(metodo.nombre || '').toLowerCase().includes('plin')" src="assets/img/pagos/plin.png" alt="Plin">
-                <img *ngIf="(metodo.nombre || '').toLowerCase().includes('transfer')" src="assets/img/pagos/transferencia.png" alt="Transferencia">
+                <img
+                  *ngIf="metodo.codigo === 'YAPE'"
+                  src="assets/img/pagos/yape.png"
+                  alt="Yape"
+                >
 
-                <svg *ngIf="
-                  !(metodo.nombre || '').toLowerCase().includes('yape') &&
-                  !(metodo.nombre || '').toLowerCase().includes('plin') &&
-                  !(metodo.nombre || '').toLowerCase().includes('transfer')
-                " viewBox="0 0 24 24">
-                  <path d="M4 7h16v10H4z"/>
-                  <path d="M4 10h16"/>
-                  <path d="M8 15h4"/>
-                </svg>
+                <img
+                  *ngIf="metodo.codigo === 'PLIN'"
+                  src="assets/img/pagos/plin.png"
+                  alt="Plin"
+                >
+
+                <img
+                  *ngIf="metodo.codigo === 'TRANSFERENCIA'"
+                  src="assets/img/pagos/transferencia.png"
+                  alt="Transferencia"
+                >
               </span>
 
               <div>
@@ -130,98 +185,429 @@
             </button>
           </div>
 
-          <div class="canal-pago-box" *ngIf="canalSeleccionado() as canal">
-              <div class="canal-pago-header">
-                <span class="tag">Canal autorizado</span>
-                <strong>{{ canal.metodoPago }}</strong>
+          <section class="payment-channels">
+            <div class="payment-channels__header">
+              <div>
+                <span class="tag">Canales autorizados</span>
+
+                <h4>Realiza el pago en uno de estos canales</h4>
+
+                <p>
+                  Verifica el titular y los datos antes de realizar la operación.
+                </p>
               </div>
 
-              <div class="canal-pago-grid">
-                <div>
-                  <span>Titular</span>
-                  <strong>{{ canal.titular }}</strong>
-                </div>
-
-                <div *ngIf="canal.numero">
-                  <span>Número</span>
-                  <strong>{{ canal.numero }}</strong>
-                </div>
-
-                <div *ngIf="canal.banco">
-                  <span>Banco</span>
-                  <strong>{{ canal.banco }}</strong>
-                </div>
-
-                <div *ngIf="canal.cuenta">
-                  <span>Cuenta</span>
-                  <strong>{{ canal.cuenta }}</strong>
-                </div>
-
-                <div *ngIf="canal.cci">
-                  <span>CCI</span>
-                  <strong>{{ canal.cci }}</strong>
-                </div>
-              </div>
-
-              <p *ngIf="canal.descripcion">
-                {{ canal.descripcion }}
-              </p>
+              <span class="channel-count">
+                {{ canalesDelMetodoSeleccionado().length }} disponible(s)
+              </span>
             </div>
 
+            <div
+              *ngIf="cargandoCanales"
+              class="alert alert-info"
+            >
+              Cargando canales de pago...
+            </div>
+
+            <div
+              *ngIf="errorCanales && !cargandoCanales"
+              class="no-channel-message"
+            >
+              <div>
+                <strong>No se pudieron cargar los canales</strong>
+                <p>{{ errorCanales }}</p>
+              </div>
+            </div>
+            
+
+            <div
+              class="channel-selector"
+              *ngIf="
+                !cargandoCanales &&
+                canalesDelMetodoSeleccionado().length > 1
+              "
+            >
+
+              <span class="selector-title">
+                Selecciona el canal donde realizarás el pago
+              </span>
+
+              <div class="selector-buttons">
+
+                <button
+                  type="button"
+                  *ngFor="let canal of canalesDelMetodoSeleccionado()"
+                  (click)="seleccionarCanal(canal)"
+                  [class.active]="canal.id===canalPagoElegido()?.id"
+                >
+
+                  {{ nombreCanal(canal) }}
+
+                </button>
+
+              </div>
+
+            </div>
+
+            <div
+              class="channels-client-grid"
+              *ngIf="
+                !cargandoCanales &&
+                canalesDelMetodoSeleccionado().length > 0
+              "
+            >
+              <article
+                class="client-channel-card"
+                *ngIf="canalPagoElegido() as canal">
+              
+                <div class="client-channel-main">
+                  <div class="client-channel-title">
+                    <div class="client-channel-logo">
+                      <img
+                        *ngIf="esMetodo(canal, 'YAPE')"
+                        src="assets/img/pagos/yape.png"
+                        alt="Yape"
+                      >
+
+                      <img
+                        *ngIf="esMetodo(canal, 'PLIN')"
+                        src="assets/img/pagos/plin.png"
+                        alt="Plin"
+                      >
+
+                      <img
+                        *ngIf="esMetodo(canal, 'TRANSFERENCIA')"
+                        src="assets/img/pagos/transferencia.png"
+                        alt="Transferencia"
+                      >
+                    </div>
+
+                    <div>
+                      <span>Canal de pago</span>
+                      <h5>{{ nombreCanal(canal) }}</h5>
+                    </div>
+                  </div>
+
+                  <span class="authorized-badge">
+                    Autorizado
+                  </span>
+                </div>
+
+                <div class="client-channel-content">
+                  <div class="client-channel-data">
+                    <div>
+                      <span>Titular</span>
+                      <strong>{{ canal.titular }}</strong>
+                    </div>
+
+                    <div *ngIf="canal.numero">
+                      <span>Número / celular</span>
+
+                      <strong>{{ canal.numero }}</strong>
+
+                      <button
+                        type="button"
+                        class="copy-channel-button"
+                        (click)="copiarDato(canal.numero)"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+
+                    <div *ngIf="canal.banco">
+                      <span>Banco</span>
+                      <strong>{{ canal.banco }}</strong>
+                    </div>
+
+                    <div *ngIf="canal.cuenta">
+                      <span>Número de cuenta</span>
+
+                      <strong>{{ canal.cuenta }}</strong>
+
+                      <button
+                        type="button"
+                        class="copy-channel-button"
+                        (click)="copiarDato(canal.cuenta)"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+
+                    <div *ngIf="canal.cci">
+                      <span>CCI</span>
+
+                      <strong>{{ canal.cci }}</strong>
+
+                      <button
+                        type="button"
+                        class="copy-channel-button"
+                        (click)="copiarDato(canal.cci)"
+                      >
+                        Copiar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="client-channel-qr">
+
+                      <!-- YAPE O PLIN -->
+                      <ng-container *ngIf="esBilleteraCanal(canal)">
+
+                        <ng-container *ngIf="tieneQr(canal); else sinQrBilletera">
+                          <span>Escanea para pagar</span>
+
+                          <div class="qr-image-container">
+                            <img
+                              [src]="urlQrCanal(canal.qrUrl)"
+                              [alt]="'QR de ' + nombreCanal(canal)"
+                            >
+                          </div>
+
+                          <small>
+                            Comprueba el titular antes de confirmar.
+                          </small>
+                        </ng-container>
+
+                        <ng-template #sinQrBilletera>
+                          <span>Pago por billetera</span>
+
+                          <div class="bank-logo-container">
+                            <img
+                              *ngIf="esMetodo(canal, 'YAPE')"
+                              src="assets/img/pagos/yape.png"
+                              alt="Yape"
+                            >
+
+                            <img
+                              *ngIf="esMetodo(canal, 'PLIN')"
+                              src="assets/img/pagos/plin.png"
+                              alt="Plin"
+                            >
+                          </div>
+
+                          <small>
+                            Realiza el pago usando el número mostrado.
+                          </small>
+                        </ng-template>
+                      </ng-container>
+
+                      <!-- TRANSFERENCIA -->
+                      <ng-container *ngIf="esTransferenciaCanal(canal)">
+                        <span>Transferencia bancaria</span>
+
+                        <div class="bank-logo-container">
+                          <img
+                            [src]="logoBanco(canal.banco)"
+                            [alt]="canal.banco || 'Banco'"
+                          >
+                        </div>
+
+                        <small>
+                          Realiza la transferencia utilizando la cuenta o CCI mostrados.
+                        </small>
+                      </ng-container>
+
+                    </div>
+                                    </div>
+
+                <div
+                  class="client-channel-description"
+                  *ngIf="canal.descripcion"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 10v6"></path>
+                    <path d="M12 7h.01"></path>
+                  </svg>
+
+                  <p>{{ canal.descripcion }}</p>
+                </div>
+              </article>
+            </div>
+
+            <div
+              class="no-channel-message"
+              *ngIf="
+                !cargandoCanales &&
+                !errorCanales &&
+                canalesDelMetodoSeleccionado().length === 0
+              "
+            >
+              <div class="no-channel-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 7h16v10H4z"></path>
+                  <path d="M4 10h16"></path>
+                  <path d="M8 15h4"></path>
+                </svg>
+              </div>
+
+              <div>
+                <strong>No hay canales disponibles</strong>
+
+                <p>
+                  Actualmente no existen canales activos para
+                  {{ metodoSeleccionado()?.nombre || 'este método' }}.
+                </p>
+              </div>
+            </div>
+          </section>
+
           <div class="form-card">
-            <label>
-              Código / número de operación
+
+            <section class="operation-help-compact">
+              <div class="operation-help-compact__main">
+                <div class="operation-help-compact__icon">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M9.5 9a2.7 2.7 0 0 1 5.1 1.2c0 2-2.6 2.1-2.6 4"></path>
+                    <path d="M12 18h.01"></path>
+                  </svg>
+                </div>
+
+                <div class="operation-help-compact__text">
+                  <span>Ayuda para registrar el pago</span>
+                  <strong>{{ tituloAyudaOperacion() }}</strong>
+                  <p>{{ descripcionAyudaOperacion() }}</p>
+                </div>
+
+                <button
+                  type="button"
+                  class="btn-help-toggle"
+                  (click)="alternarAyudaOperacion()"
+                >
+                  {{ ayudaOperacionAbierta ? 'Ocultar ejemplo' : 'Ver ejemplo' }}
+
+                  <svg
+                    viewBox="0 0 24 24"
+                    [class.rotated]="ayudaOperacionAbierta"
+                  >
+                    <path d="m6 9 6 6 6-6"></path>
+                  </svg>
+                </button>
+              </div>
+
+              <div
+                class="operation-help-preview"
+                *ngIf="ayudaOperacionAbierta"
+              >
+                <button
+                  type="button"
+                  class="operation-preview-button"
+                  (click)="abrirModalAyuda()"
+                >
+                  <img
+                    [src]="imagenInstruccionOperacion()"
+                    [alt]="tituloAyudaOperacion()"
+                  >
+
+                  <span class="operation-preview-overlay">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="11" cy="11" r="7"></circle>
+                      <path d="m20 20-4-4"></path>
+                      <path d="M11 8v6"></path>
+                      <path d="M8 11h6"></path>
+                    </svg>
+
+                    Ampliar imagen
+                  </span>
+                </button>
+
+                <div class="operation-help-warning">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 3 2.8 20h18.4L12 3Z"></path>
+                    <path d="M12 9v5"></path>
+                    <path d="M12 17h.01"></path>
+                  </svg>
+
+                  <p>
+                    Copia únicamente el número o código de operación señalado.
+                    No ingreses el celular, cuenta, CCI, monto ni fecha.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+
+            <label class="operation-input">
+              {{ tituloCodigoOperacion() }}
+
               <input
                 type="text"
                 [(ngModel)]="pago.codigoOperacion"
-                placeholder="Ejemplo: 984512, OP-123456, TRX-0001"
+                [placeholder]="placeholderCodigoOperacion()"
+                autocomplete="off"
+                inputmode="text"
+                maxlength="80"
               >
+
+              <small>
+                Escríbelo exactamente como aparece en tu comprobante.
+              </small>
             </label>
 
-              <div class="upload-box">
-                <div class="upload-title">
-                  <span>Captura del comprobante</span>
-                  <small>Sube una imagen clara del pago realizado.</small>
-                </div>
-
-                <label class="upload-area">
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    (change)="seleccionarComprobante($event)"
-                  >
-
-                  <span class="upload-icon">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M12 16V4"/>
-                      <path d="M6 10l6-6 6 6"/>
-                      <path d="M4 20h16"/>
-                    </svg>
-                  </span>
-
-                  <div>
-                    <strong>{{ comprobanteArchivo ? comprobanteArchivo.name : 'Seleccionar comprobante' }}</strong>
-                    <small>JPG, PNG o WEBP · máximo 3 MB</small>
-                  </div>
-                </label>
+            <div class="upload-box">
+              <div class="upload-title">
+                <span>Captura del comprobante</span>
+                <small>Sube una imagen clara del pago realizado.</small>
               </div>
 
-            <div class="comprobante-preview" *ngIf="comprobantePreview">
+              <label class="upload-area">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  (change)="seleccionarComprobante($event)"
+                >
+
+                <span class="upload-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 16V4"/>
+                    <path d="M6 10l6-6 6 6"/>
+                    <path d="M4 20h16"/>
+                  </svg>
+                </span>
+
+                <div>
+                  <strong>
+                    {{
+                      comprobanteArchivo
+                        ? comprobanteArchivo.name
+                        : 'Seleccionar comprobante'
+                    }}
+                  </strong>
+
+                  <small>JPG, PNG o WEBP · máximo 3 MB</small>
+                </div>
+              </label>
+            </div>
+
+            <div
+              class="comprobante-preview"
+              *ngIf="comprobantePreview"
+            >
               <span>Vista previa</span>
-              <img [src]="comprobantePreview" alt="Comprobante de pago">
+
+              <img
+                [src]="comprobantePreview"
+                alt="Comprobante de pago"
+              >
             </div>
 
             <button
               type="button"
               class="btn-primary full"
               (click)="confirmarPago()"
-              [disabled]="procesando"
+              [disabled]="procesando || cargandoCanales"
             >
               <svg viewBox="0 0 24 24">
                 <path d="M12 19V5"/>
                 <path d="M5 12l7-7 7 7"/>
               </svg>
-              {{ procesando ? 'Enviando a revisión...' : 'Enviar pago para validación' }}
+
+              {{
+                procesando
+                  ? 'Enviando a revisión...'
+                  : 'Enviar pago para validación'
+              }}
             </button>
           </div>
         </ng-container>
@@ -238,42 +624,116 @@
         <div class="charges-list">
           <div>
             <span>Consumo de agua</span>
-            <strong>S/ {{ item.subtotalAgua | number:'1.2-2' }}</strong>
+            <strong>
+              S/ {{ item.subtotalAgua | number:'1.2-2' }}
+            </strong>
           </div>
 
           <div>
             <span>Mantenimiento</span>
-            <strong>S/ {{ item.cargoMantenimiento | number:'1.2-2' }}</strong>
+            <strong>
+              S/ {{ item.cargoMantenimiento | number:'1.2-2' }}
+            </strong>
           </div>
 
           <div>
             <span>Cargo lector</span>
-            <strong>S/ {{ item.cargoLector | number:'1.2-2' }}</strong>
+            <strong>
+              S/ {{ item.cargoLector | number:'1.2-2' }}
+            </strong>
           </div>
 
           <div>
             <span>Otros cargos</span>
-            <strong>S/ {{ item.cargoOtros || 0 | number:'1.2-2' }}</strong>
+            <strong>
+              S/ {{ item.cargoOtros || 0 | number:'1.2-2' }}
+            </strong>
           </div>
 
           <div>
             <span>Mora</span>
-            <strong>S/ {{ item.mora | number:'1.2-2' }}</strong>
+            <strong>
+              S/ {{ item.mora | number:'1.2-2' }}
+            </strong>
           </div>
 
           <div class="total-row">
             <span>Total a pagar</span>
-            <strong>S/ {{ item.total | number:'1.2-2' }}</strong>
+
+            <strong>
+              S/ {{ item.total | number:'1.2-2' }}
+            </strong>
           </div>
         </div>
 
         <div class="notice-box">
           <strong>Importante</strong>
+
           <p>
-            Este registro no confirma el pago automáticamente. Agua Potable Huacariz validará el código de operación antes de marcar el recibo como pagado.
+            Este registro no confirma el pago automáticamente.
+            Agua Potable Huacariz validará el código de operación
+            y el comprobante antes de marcar el recibo como pagado.
           </p>
         </div>
       </article>
     </section>
   </ng-container>
+
+  <div
+    class="operation-modal-backdrop"
+    *ngIf="modalAyudaAbierto"
+    (click)="cerrarModalAyuda()"
+  >
+    <div
+      class="operation-modal"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="operation-modal__header">
+        <div>
+          <span>Ejemplo de comprobante</span>
+          <h3>¿Dónde encuentro el número de operación?</h3>
+        </div>
+
+        <button
+          type="button"
+          class="operation-modal__close"
+          (click)="cerrarModalAyuda()"
+          aria-label="Cerrar ayuda"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="operation-modal__body">
+        <img
+          [src]="imagenInstruccionOperacion()"
+          alt="Guía para ubicar el número de operación"
+        >
+      </div>
+
+      <div class="operation-modal__footer">
+        <div class="operation-modal__notice">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 10v6"></path>
+            <path d="M12 7h.01"></path>
+          </svg>
+
+          <p>
+            Busca el dato señalado con la flecha roja y escríbelo exactamente
+            como aparece en tu comprobante.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="cerrarModalAyuda()"
+        >
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

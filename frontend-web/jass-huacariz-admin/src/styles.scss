@@ -699,3 +699,753 @@ body.jass-dark-theme label {
     font-size: 24px;
   }
 }
+
+/* ===== RESPONSIVE GLOBAL PARA TODO EL SISTEMA ===== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+/* Evita que textos largos rompan tarjetas */
+h1,
+h2,
+h3,
+h4,
+p,
+span,
+small,
+strong,
+td,
+th,
+button,
+a {
+  overflow-wrap: anywhere;
+}
+
+/* Tablas: en celular mejor scroll horizontal */
+.table-responsive,
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Botones base */
+button,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.create-button,
+.action-btn {
+  max-width: 100%;
+}
+
+/* ===== TABLET ===== */
+@media (max-width: 1180px) {
+  .summary-layout,
+  .stats-grid,
+  .main-dashboard-grid,
+  .channels-grid,
+  .cards-grid,
+  .result-grid,
+  .quick-grid,
+  .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-top-card,
+  .page-header {
+    grid-template-columns: 1fr !important;
+  }
+
+  .top-actions,
+  .header-actions {
+    justify-content: flex-start !important;
+  }
+}
+
+/* ===== CELULAR ===== */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .dashboard-modern,
+  .caja-page,
+  .page-content,
+  .admin-content,
+  main {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .dashboard-top-card,
+  .page-header,
+  .table-card,
+  .chart-card,
+  .receipt-card,
+  .actions-panel,
+  .status-card,
+  .payments-card,
+  .metric-card,
+  .income-card,
+  .progress-card,
+  .stat-card,
+  .category-summary,
+  .filters-row,
+  .caja-filters {
+    border-radius: 20px !important;
+    padding: 16px !important;
+  }
+
+  .summary-layout,
+  .stats-grid,
+  .main-dashboard-grid,
+  .channels-grid,
+  .cards-grid,
+  .result-grid,
+  .quick-grid,
+  .category-grid,
+  .form-grid,
+  .filters-row,
+  .caja-filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .top-left h2,
+  .page-header h2,
+  .panel-title h3 {
+    font-size: 1.45rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .top-search {
+    width: 100% !important;
+  }
+
+  .top-actions,
+  .header-actions,
+  .modal-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .top-actions button,
+  .header-actions button,
+  .modal-actions button,
+  .create-button,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .action-btn {
+    width: 100% !important;
+    height: 48px !important;
+  }
+
+  table {
+    min-width: 760px;
+  }
+
+  .modal-card,
+  .confirm-modal {
+    width: 94vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    border-radius: 22px !important;
+  }
+}
+
+/* ===== CELULAR PEQUEÑO ===== */
+@media (max-width: 480px) {
+  .dashboard-modern,
+  .caja-page,
+  .page-content,
+  .admin-content,
+  main {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .top-left h2,
+  .page-header h2,
+  .panel-title h3 {
+    font-size: 1.25rem !important;
+  }
+
+  .metric-info strong,
+  .stat-card strong,
+  .income-card strong,
+  .progress-title strong {
+    font-size: 1.45rem !important;
+  }
+
+  .metric-info small,
+  .stat-card small,
+  .income-card small {
+    font-size: 0.76rem !important;
+  }
+}
+.table-responsive,
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  min-width: 900px;
+}
+
+/* =========================================================
+   RESPONSIVE GLOBAL PROFESIONAL
+   Aplica para ADMIN, CLIENTE y LECTURADOR
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+/* Evita que textos largos rompan tarjetas */
+h1,
+h2,
+h3,
+h4,
+p,
+span,
+small,
+strong,
+label,
+button,
+a,
+td,
+th {
+  overflow-wrap: anywhere;
+}
+
+/* Tablas con scroll horizontal */
+.table-wrapper,
+.table-responsive,
+.table-scroll,
+.table-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Inputs y botones nunca deben salirse */
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+/* Contenedores principales */
+.admin-layout,
+.cliente-shell,
+.lecturador-page,
+.dashboard-modern,
+.caja-page {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Cards generales */
+.page-header,
+.hero-card,
+.dashboard-top-card,
+.metric-card,
+.income-card,
+.progress-card,
+.chart-card,
+.receipt-card,
+.actions-panel,
+.status-card,
+.payments-card,
+.table-card,
+.stat-card,
+.category-summary,
+.filters-row,
+.caja-filters,
+.channel-card,
+.form-card,
+.search-card,
+.suministro-card {
+  min-width: 0;
+}
+
+/* Números grandes protegidos */
+.metric-card strong,
+.stat-card strong,
+.income-card strong,
+.progress-title strong,
+.chart-data strong,
+.info-box strong,
+.total-card strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1180px) {
+  .summary-layout,
+  .main-dashboard-grid,
+  .stats-grid,
+  .dashboard-grid,
+  .content-grid,
+  .detail-grid,
+  .cards-grid,
+  .channels-grid,
+  .category-grid,
+  .quick-grid,
+  .result-grid,
+  .info-grid,
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .dashboard-top-card,
+  .page-header,
+  .hero-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .top-actions,
+  .header-actions,
+  .modal-actions {
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+/* =========================================================
+   CELULAR GENERAL
+   ========================================================= */
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .page-content,
+  .content,
+  .admin-content,
+  .cliente-main .content,
+  .dashboard-modern,
+  .caja-page,
+  main {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    overflow-x: hidden !important;
+  }
+
+  .dashboard-top-card,
+  .page-header,
+  .hero-card,
+  .table-card,
+  .chart-card,
+  .receipt-card,
+  .actions-panel,
+  .status-card,
+  .payments-card,
+  .metric-card,
+  .income-card,
+  .progress-card,
+  .stat-card,
+  .category-summary,
+  .filters-row,
+  .caja-filters,
+  .channel-card,
+  .form-card,
+  .search-card,
+  .suministro-card {
+    border-radius: 20px !important;
+    padding: 16px !important;
+  }
+
+  .summary-layout,
+  .main-dashboard-grid,
+  .stats-grid,
+  .dashboard-grid,
+  .content-grid,
+  .detail-grid,
+  .cards-grid,
+  .channels-grid,
+  .category-grid,
+  .quick-grid,
+  .result-grid,
+  .info-grid,
+  .form-grid,
+  .filters-row,
+  .caja-filters,
+  .search-box,
+  .chart-data,
+  .reading-help {
+    grid-template-columns: 1fr !important;
+  }
+
+  .top-left h2,
+  .page-header h1,
+  .page-header h2,
+  .hero-card h1,
+  .hero-card h2,
+  .panel-title h3,
+  .table-header h3,
+  .modal-header h3 {
+    font-size: 1.45rem !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.3px !important;
+  }
+
+  .top-left p,
+  .page-header p,
+  .hero-card p,
+  .panel-title p,
+  .modal-header p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .top-search,
+  .search-box,
+  .filters-row input,
+  .filters-row select,
+  .caja-filters select,
+  .form-grid input,
+  .form-grid select,
+  .form-grid textarea {
+    width: 100% !important;
+  }
+
+  .top-actions,
+  .header-actions,
+  .modal-actions,
+  .actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .top-actions button,
+  .header-actions button,
+  .modal-actions button,
+  .actions button,
+  .create-button,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-scan {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .action-btn,
+  .theme-toggle,
+  .mobile-menu-button {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+  }
+
+  .top-actions .action-btn {
+    width: 100% !important;
+  }
+
+  table {
+    min-width: 760px;
+  }
+
+  th,
+  td {
+    font-size: 0.82rem !important;
+  }
+
+  .modal-card,
+  .confirm-modal {
+    width: 94vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    border-radius: 22px !important;
+  }
+
+  .donut-area {
+    grid-template-columns: 1fr !important;
+  }
+
+  .donut {
+    margin: auto;
+  }
+
+  .scanner-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .scanner-frame {
+    height: 230px !important;
+  }
+}
+
+/* =========================================================
+   CELULAR PEQUEÑO
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .page-content,
+  .content,
+  .admin-content,
+  .cliente-main .content,
+  .dashboard-modern,
+  .caja-page,
+  main {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .dashboard-top-card,
+  .page-header,
+  .hero-card,
+  .table-card,
+  .chart-card,
+  .receipt-card,
+  .actions-panel,
+  .status-card,
+  .payments-card,
+  .metric-card,
+  .income-card,
+  .progress-card,
+  .stat-card,
+  .category-summary,
+  .filters-row,
+  .caja-filters,
+  .channel-card,
+  .form-card,
+  .search-card,
+  .suministro-card {
+    border-radius: 18px !important;
+    padding: 14px !important;
+  }
+
+  .top-left h2,
+  .page-header h1,
+  .page-header h2,
+  .hero-card h1,
+  .hero-card h2,
+  .panel-title h3,
+  .table-header h3,
+  .modal-header h3 {
+    font-size: 1.25rem !important;
+  }
+
+  .metric-info strong,
+  .metric-card strong,
+  .stat-card strong,
+  .income-card strong,
+  .progress-title strong,
+  .chart-data strong,
+  .info-box.total strong {
+    font-size: 1.45rem !important;
+  }
+
+  .metric-info small,
+  .metric-card small,
+  .stat-card small,
+  .income-card small {
+    font-size: 0.74rem !important;
+  }
+
+  table {
+    min-width: 720px;
+  }
+}
+
+
+/* =========================================================
+   TABLAS EN MÓVIL: SCROLL LIMPIO
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .table-wrapper::-webkit-scrollbar,
+  .table-responsive::-webkit-scrollbar,
+  .table-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .table-wrapper::-webkit-scrollbar-thumb,
+  .table-responsive::-webkit-scrollbar-thumb,
+  .table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(37, 99, 235, 0.35);
+    border-radius: 999px;
+  }
+
+  .table-wrapper::-webkit-scrollbar-track,
+  .table-responsive::-webkit-scrollbar-track,
+  .table-scroll::-webkit-scrollbar-track {
+    background: rgba(148, 163, 184, 0.15);
+    border-radius: 999px;
+  }
+}
+
+
+/* =========================================================
+   TABLAS RESPONSIVE TIPO TARJETA PARA CELULAR
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .mobile-card-table {
+    min-width: 0 !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 14px !important;
+  }
+
+  .mobile-card-table thead {
+    display: none !important;
+  }
+
+  .mobile-card-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .mobile-card-table tr {
+    display: block !important;
+    width: 100% !important;
+    background: var(--jass-card, #ffffff) !important;
+    border: 1px solid var(--jass-border, #dbeaf2) !important;
+    border-radius: 20px !important;
+    padding: 14px !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08) !important;
+    margin-bottom: 14px !important;
+  }
+
+  .mobile-card-table td {
+    display: grid !important;
+    grid-template-columns: 115px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    align-items: center !important;
+
+    width: 100% !important;
+    padding: 10px 0 !important;
+    border-bottom: 1px solid var(--jass-border, #e5eef4) !important;
+
+    font-size: 0.9rem !important;
+    color: var(--jass-text, #092235) !important;
+  }
+
+  .mobile-card-table td:last-child {
+    border-bottom: none !important;
+  }
+
+  .mobile-card-table td::before {
+    content: attr(data-label);
+    color: var(--jass-muted, #64748b);
+    font-size: 0.78rem;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .mobile-card-table td strong {
+    font-weight: 950 !important;
+  }
+
+  .mobile-card-table .actions-cell,
+  .mobile-card-table .acciones,
+  .mobile-card-table .action-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .mobile-card-table button,
+  .mobile-card-table a {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .mobile-card-table .badge,
+  .mobile-card-table .estado-chip,
+  .mobile-card-table .tipo-chip {
+    justify-self: start !important;
+  }
+}
+
+/* Celular pequeño */
+@media (max-width: 480px) {
+  .mobile-card-table tr {
+    padding: 12px !important;
+    border-radius: 18px !important;
+  }
+
+  .mobile-card-table td {
+    grid-template-columns: 100px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .mobile-card-table td::before {
+    font-size: 0.72rem !important;
+  }
+}
+
+/* Modo oscuro */
+@media (max-width: 768px) {
+  body.jass-dark-theme .mobile-card-table tr,
+  body[data-theme='dark'] .mobile-card-table tr {
+    background: #0b1726 !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+  }
+
+  body.jass-dark-theme .mobile-card-table td,
+  body[data-theme='dark'] .mobile-card-table td {
+    color: #f8fafc !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+  }
+
+  body.jass-dark-theme .mobile-card-table td::before,
+  body[data-theme='dark'] .mobile-card-table td::before {
+    color: #94a3b8 !important;
+  }
+}

@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx-js-style';
 import { Cliente, ClienteResponse } from '../../../core/services/cliente';
 import { Recibo, ReciboResponse } from '../../../core/services/recibo';
 import { Pago, PagoResponse } from '../../../core/services/pago';
+import { MovimientoCaja, MovimientoCajaResponse } from '../../../core/services/movimiento-caja';
 
 interface ConsumoMensualDashboard {
   mes: number;
@@ -26,6 +27,10 @@ export class Dashboard implements OnInit {
   clientes: ClienteResponse[] = [];
   recibos: ReciboResponse[] = [];
   pagos: PagoResponse[] = [];
+  movimientosCaja: MovimientoCajaResponse[] = [];
+
+  anioFiltroConsumo = new Date().getFullYear();
+  mesFiltroConsumo: number | 'TODOS' = 'TODOS';
 
   cargando = false;
   error = '';
@@ -36,7 +41,8 @@ export class Dashboard implements OnInit {
     private reciboService: Recibo,
     private pagoService: Pago,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private movimientoCajaService: MovimientoCaja
   ) {}
 
   ngOnInit(): void {
@@ -50,7 +56,8 @@ export class Dashboard implements OnInit {
     forkJoin({
       clientes: this.clienteService.listarClientes(),
       recibos: this.reciboService.listarRecibos(),
-      pagos: this.pagoService.listarPagos()
+      pagos: this.pagoService.listarPagos(),
+      movimientosCaja: this.movimientoCajaService.listar()
     })
       .pipe(
         finalize(() => {
@@ -59,10 +66,11 @@ export class Dashboard implements OnInit {
         })
       )
       .subscribe({
-        next: ({ clientes, recibos, pagos }) => {
+        next: ({ clientes, recibos, pagos, movimientosCaja }) => {
           this.clientes = clientes || [];
           this.recibos = recibos || [];
           this.pagos = pagos || [];
+          this.movimientosCaja = movimientosCaja || [];
           this.cdr.detectChanges();
         },
         error: () => {
@@ -124,12 +132,90 @@ export class Dashboard implements OnInit {
       return String(recibo.estadoRecibo || '').toUpperCase() === 'VENCIDO';
     }).length;
   }
+      esPagoValido(pago: any): boolean {
+      const estado = String(pago.estadoPago || '').toUpperCase();
+
+      return estado === 'PAGADO' ||
+            estado === 'PAGADO_CONFIRMADO' ||
+            estado === 'CONFIRMADO';
+    }
 
   totalPagado(): number {
-    return this.pagos.reduce((total, pago: any) => {
-      return total + Number(pago.monto || 0);
-    }, 0);
+    return this.pagos
+      .filter((pago: any) => this.esPagoValido(pago))
+      .reduce((total, pago: any) => {
+        return total + Number(pago.monto || 0);
+      }, 0);
   }
+      montoPorCobrar(): number {
+      return this.recibos
+        .filter((recibo: any) => {
+          const estado = String(recibo.estadoRecibo || '').toUpperCase();
+          return estado === 'PENDIENTE' || estado === 'VENCIDO';
+        })
+        .reduce((total, recibo: any) => {
+          return total + Number(recibo.total || 0);
+        }, 0);
+    }
+    recibosPorCobrar(): number {
+      return this.recibos.filter((recibo: any) => {
+        const estado = String(recibo.estadoRecibo || '').toUpperCase();
+        return estado === 'PENDIENTE' || estado === 'VENCIDO';
+      }).length;
+    }
+
+    totalEgresos(): number {
+        return this.movimientosCaja
+          .filter((movimiento: any) => {
+            return String(movimiento.estado || '').toUpperCase() === 'ACTIVO' &&
+                  String(movimiento.tipoMovimiento || '').toUpperCase() === 'EGRESO';
+          })
+          .reduce((total, movimiento: any) => {
+            return total + Number(movimiento.monto || 0);
+          }, 0);
+          }
+          totalIngresosManuales(): number {
+        return this.movimientosCaja
+          .filter((movimiento: any) => {
+            return String(movimiento.estado || '').toUpperCase() === 'ACTIVO' &&
+                  String(movimiento.tipoMovimiento || '').toUpperCase() === 'INGRESO';
+          })
+          .reduce((total, movimiento: any) => {
+            return total + Number(movimiento.monto || 0);
+          }, 0);
+      }
+
+      totalIngresosCaja(): number {
+        return this.totalPagado() + this.totalIngresosManuales();
+      }
+
+    saldoDisponible(): number {
+      return this.totalIngresosCaja() - this.totalEgresos();
+    }
+
+    porcentajeOtrosIngresos(): number {
+      if (this.totalIngresosCaja() <= 0) {
+        return 0;
+      }
+
+      return Math.min(100, Math.max(0, (this.totalIngresosManuales() / this.totalIngresosCaja()) * 100));
+    }
+
+    porcentajeEgresosCaja(): number {
+      if (this.totalIngresosCaja() <= 0) {
+        return 0;
+      }
+
+      return Math.min(100, Math.max(0, (this.totalEgresos() / this.totalIngresosCaja()) * 100));
+    }
+
+    porcentajeSaldoCaja(): number {
+      if (this.totalIngresosCaja() <= 0) {
+        return 0;
+      }
+
+      return Math.min(100, Math.max(0, (this.saldoDisponible() / this.totalIngresosCaja()) * 100));
+    }
 
   totalEmitido(): number {
     return this.recibos.reduce((total, recibo: any) => {
@@ -138,9 +224,8 @@ export class Dashboard implements OnInit {
   }
 
   saldoPendiente(): number {
-    const saldo = this.totalEmitido() - this.totalPagado();
-    return saldo < 0 ? 0 : saldo;
-  }
+   return this.montoPorCobrar();
+}
 
   consumoTotal(): number {
     return this.recibos.reduce((total, recibo: any) => {
@@ -156,13 +241,20 @@ export class Dashboard implements OnInit {
     return this.consumoTotal() / this.recibos.length;
   }
 
-  porcentajeRecaudado(): number {
-    if (this.totalEmitido() <= 0) {
-      return 0;
-    }
+    porcentajeRecaudado(): number {
+      if (this.totalEmitido() <= 0) {
+        return 0;
+      }
 
-    return Math.min(100, Math.max(0, (this.totalPagado() / this.totalEmitido()) * 100));
+      return Math.min(100, Math.max(0, (this.totalPagado() / this.totalEmitido()) * 100));
+    }
+    porcentajePorCobrarMonto(): number {
+  if (this.totalEmitido() <= 0) {
+    return 0;
   }
+
+  return Math.min(100, Math.max(0, (this.montoPorCobrar() / this.totalEmitido()) * 100));
+}
 
   porcentajePendientes(): number {
     if (this.totalRecibos() === 0) {
@@ -254,7 +346,7 @@ export class Dashboard implements OnInit {
   }
 
   consumoPorMes(): ConsumoMensualDashboard[] {
-    const anioActual = new Date().getFullYear();
+    const anioActual = Number(this.anioFiltroConsumo);
 
     const meses = [
       'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
@@ -649,4 +741,44 @@ export class Dashboard implements OnInit {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
+
+
+  aniosDisponibles(): number[] {
+      const anios = this.recibos
+        .map((recibo: any) => Number(recibo.anio))
+        .filter((anio) => !isNaN(anio));
+
+      const actual = new Date().getFullYear();
+
+      return Array.from(new Set([...anios, actual]))
+        .sort((a, b) => b - a);
+    }
+
+    recibosConsumoFiltrados(): ReciboResponse[] {
+      return this.recibos.filter((recibo: any) => {
+        const coincideAnio = Number(recibo.anio) === Number(this.anioFiltroConsumo);
+
+        const coincideMes =
+          this.mesFiltroConsumo === 'TODOS' ||
+          Number(recibo.mes) === Number(this.mesFiltroConsumo);
+
+        return coincideAnio && coincideMes;
+      });
+    }
+
+    consumoTotalFiltrado(): number {
+      return this.recibosConsumoFiltrados().reduce((total, recibo: any) => {
+        return total + Number(recibo.consumoM3 || 0);
+      }, 0);
+    }
+
+    consumoPromedioFiltrado(): number {
+      const recibos = this.recibosConsumoFiltrados();
+
+      if (recibos.length === 0) {
+        return 0;
+      }
+
+      return this.consumoTotalFiltrado() / recibos.length;
+    }
 }

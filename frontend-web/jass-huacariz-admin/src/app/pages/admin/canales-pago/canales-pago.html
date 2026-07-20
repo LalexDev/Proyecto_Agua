@@ -3,7 +3,7 @@
     <div class="page-header__content">
       <span class="page-kicker">ADMINISTRACIÓN / PAGOS</span>
       <h2>Canales de pago</h2>
-      <p>Administra los números de Yape, Plin, cuentas bancarias, CCI y datos que verá el cliente al pagar.</p>
+      <p>Administra Yape, Plin, cuentas bancarias, CCI y datos que verá el cliente al pagar.</p>
     </div>
 
     <div class="page-header__actions">
@@ -16,10 +16,18 @@
         </svg>
         {{ cargando ? 'Actualizando...' : 'Actualizar' }}
       </button>
+
+      <button type="button" class="btn-primary btn-icon" (click)="nuevoCanal()">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 5v14"/>
+          <path d="M5 12h14"/>
+        </svg>
+        Nuevo canal
+      </button>
     </div>
   </section>
 
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="error && !canalEditando" class="alert alert-error">{{ error }}</div>
   <div *ngIf="exito" class="alert alert-success">{{ exito }}</div>
   <div *ngIf="cargando" class="alert alert-info">Cargando canales de pago...</div>
 
@@ -92,8 +100,10 @@
     <div class="edit-modal">
       <div class="edit-modal__header">
         <div>
-          <span class="tag">Editar canal</span>
-          <h3>{{ normalizarMetodo(canalEditando.metodoPago) }}</h3>
+          <span class="tag">{{ canalEditando.id ? 'Editar canal' : 'Nuevo canal' }}</span>
+          <h3>
+            {{ canalEditando.metodoPago ? normalizarMetodo(canalEditando.metodoPago) : 'Seleccione un método' }}
+          </h3>
         </div>
 
         <button type="button" class="close-btn" (click)="cerrarEditor()">
@@ -101,40 +111,112 @@
         </button>
       </div>
 
+      <div *ngIf="error" class="modal-alert alert-error">
+        {{ error }}
+      </div>
+
       <div class="edit-form">
         <label>
-          Titular
-          <input type="text" [(ngModel)]="canalEditando.titular">
+          Método de pago
+          <select
+            [(ngModel)]="canalEditando.metodoPago"
+            (change)="cambiarMetodoPago()"
+          >
+            <option value="">Seleccione método</option>
+            <option value="YAPE">Yape</option>
+            <option value="PLIN">Plin</option>
+            <option value="TRANSFERENCIA">Transferencia bancaria</option>
+          </select>
         </label>
 
-        <label>
-          Número / celular
-          <input type="text" [(ngModel)]="canalEditando.numero">
-        </label>
+<label>
+  Titular
+  <input
+    type="text"
+    [(ngModel)]="canalEditando.titular"
+    placeholder="Ejemplo: Agua Potable Huacariz"
+  >
+</label>
 
-        <label>
-          Banco
-          <input type="text" [(ngModel)]="canalEditando.banco">
-        </label>
+<label *ngIf="esBilletera()">
+  Número / celular
+  <input
+    type="text"
+    [(ngModel)]="canalEditando.numero"
+    placeholder="Ejemplo: 931659662"
+  >
+</label>
 
-        <label>
+<label *ngIf="esTransferencia()">
+  Banco
+  <select [(ngModel)]="canalEditando.banco">
+    <option value="">Seleccione banco</option>
+    <option value="BCP">BCP</option>
+    <option value="INTERBANK">Interbank</option>
+    <option value="BBVA">BBVA</option>
+    <option value="SCOTIABANK">Scotiabank</option>
+    <option value="BANCO DE LA NACION">Banco de la Nación</option>
+    <option value="CAJA PIURA">Caja Piura</option>
+    <option value="CAJA TRUJILLO">Caja Trujillo</option>
+    <option value="OTRO">Otro</option>
+  </select>
+</label>
+
+        <label *ngIf="esTransferencia()">
           Cuenta
-          <input type="text" [(ngModel)]="canalEditando.cuenta">
+          <input
+            type="text"
+            [(ngModel)]="canalEditando.cuenta"
+            placeholder="Número de cuenta"
+          >
         </label>
 
-        <label>
+        <label *ngIf="esTransferencia()">
           CCI
-          <input type="text" [(ngModel)]="canalEditando.cci">
+          <input
+            type="text"
+            [(ngModel)]="canalEditando.cci"
+            placeholder="Código CCI"
+          >
         </label>
 
-        <label>
-          URL QR
-          <input type="text" [(ngModel)]="canalEditando.qrUrl">
-        </label>
+        <div class="qr-upload full" *ngIf="esBilletera()">
+          <div class="qr-info">
+            <span>Imagen QR</span>
+            <small>Sube el QR de Yape o Plin.</small>
+          </div>
+
+          <label class="qr-upload-box">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              (change)="seleccionarQr($event)"
+            >
+
+            <div class="qr-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 4h6v6H4z"/>
+                <path d="M14 4h6v6h-6z"/>
+                <path d="M4 14h6v6H4z"/>
+                <path d="M14 14h2v2h-2z"/>
+                <path d="M18 14h2v6h-6v-2h4z"/>
+              </svg>
+            </div>
+
+            <div>
+              <strong>{{ qrArchivo ? qrArchivo.name : 'Seleccionar imagen QR' }}</strong>
+              <small>PNG, JPG o WEBP · máximo 3 MB</small>
+            </div>
+          </label>
+
+          <div class="qr-preview" *ngIf="qrPreview || canalEditando.qrUrl">
+            <img [src]="qrPreview || urlQr(canalEditando.qrUrl)" alt="QR de pago">
+          </div>
+        </div>
 
         <label class="full">
           Descripción
-          <textarea rows="3" [(ngModel)]="canalEditando.descripcion"></textarea>
+          <textarea rows="3" [(ngModel)]="canalEditando.descripcion" placeholder="Indicaciones para el cliente"></textarea>
         </label>
 
         <label class="switch-row full">

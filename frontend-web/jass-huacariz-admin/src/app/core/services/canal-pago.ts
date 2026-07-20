@@ -31,7 +31,40 @@ export class CanalPago {
     return this.http.get<CanalPagoResponse[]>(this.apiUrl);
   }
 
-  actualizar(id: number, data: Partial<CanalPagoResponse>): Observable<CanalPagoResponse> {
-    return this.http.put<CanalPagoResponse>(`${this.apiUrl}/${id}`, data);
-  }
+  actualizar(
+      id: number,
+      data: CanalPagoResponse,
+      qr?: File
+    ): Observable<CanalPagoResponse> {
+      const formData = new FormData();
+
+      formData.append('datos', JSON.stringify(data));
+
+      if (qr) {
+        formData.append('qr', qr);
+      }
+
+      return this.http.put<CanalPagoResponse>(
+        `${this.apiUrl}/${id}`,
+        formData
+      );
+    }
+
+    crear(
+      data: CanalPagoResponse,
+      qr?: File
+    ): Observable<CanalPagoResponse> {
+      const formData = new FormData();
+
+      formData.append('datos', JSON.stringify(data));
+
+      if (qr) {
+        formData.append('qr', qr);
+      }
+
+      return this.http.post<CanalPagoResponse>(
+        this.apiUrl,
+        formData
+      );
+    }
 }

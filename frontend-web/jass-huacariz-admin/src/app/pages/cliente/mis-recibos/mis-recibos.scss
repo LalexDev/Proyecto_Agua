@@ -521,3 +521,504 @@ tbody td strong { color: var(--text-main); font-weight: 950; }
   .btn-pagar,
   .btn-pdf { width: 100%; }
 }
+
+
+/* =========================================================
+   MIS RECIBOS - RESPONSIVE PROFESIONAL
+   ========================================================= */
+
+@media (max-width: 1180px) {
+  .mis-recibos-page .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .mis-recibos-page .dashboard-grid,
+  .mis-recibos-page .content-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .mis-recibos-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .mis-recibos-page .page-header {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .mis-recibos-page .page-header__content h2 {
+    font-size: 1.55rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .mis-recibos-page .page-header__content p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .mis-recibos-page .page-header__actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .mis-recibos-page .page-header__actions button {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+  }
+
+  .mis-recibos-page .hero-card {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    padding: 20px !important;
+    border-radius: 26px !important;
+  }
+
+  .mis-recibos-page .hero-content h3 {
+    font-size: 1.85rem !important;
+    line-height: 1.1 !important;
+    word-break: break-word !important;
+  }
+
+  .mis-recibos-page .hero-content p {
+    font-size: 0.9rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .mis-recibos-page .hero-kpi {
+    width: 100% !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .mis-recibos-page .hero-kpi strong {
+    display: block !important;
+    font-size: 1.65rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .mis-recibos-page .stats-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .mis-recibos-page .stat-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 58px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+    padding: 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .mis-recibos-page .stat-icon {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    border-radius: 16px !important;
+  }
+
+  .mis-recibos-page .stat-card > div:last-child {
+    min-width: 0 !important;
+  }
+
+  .mis-recibos-page .stat-card span {
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+  }
+
+  .mis-recibos-page .stat-card strong {
+    display: block !important;
+    font-size: 1.45rem !important;
+    line-height: 1.1 !important;
+    word-break: break-word !important;
+  }
+
+  .mis-recibos-page .stat-card small {
+    display: block !important;
+    font-size: 0.74rem !important;
+    line-height: 1.25 !important;
+  }
+}
+
+
+
+/* =========================================================
+   MIS RECIBOS - GRÁFICOS, PANELES Y FILTROS
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .mis-recibos-page .dashboard-grid,
+  .mis-recibos-page .content-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .mis-recibos-page .panel-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 18px !important;
+    border-radius: 24px !important;
+    overflow: hidden !important;
+  }
+
+  .mis-recibos-page .panel-header,
+  .mis-recibos-page .section-title {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .mis-recibos-page .panel-header h3,
+  .mis-recibos-page .section-title h3 {
+    font-size: 1.3rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .mis-recibos-page .panel-header p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .mis-recibos-page .chart-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    justify-items: center !important;
+  }
+
+  .mis-recibos-page .donut-chart {
+    width: 210px !important;
+    height: 210px !important;
+    max-width: 100% !important;
+  }
+
+  .mis-recibos-page .legend-list {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .mis-recibos-page .legend-item {
+    width: 100% !important;
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .mis-recibos-page .pending-box {
+    width: 100% !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .mis-recibos-page .pending-box strong {
+    display: block !important;
+    font-size: 1.8rem !important;
+    line-height: 1.1 !important;
+    word-break: break-word !important;
+  }
+
+  .mis-recibos-page .pending-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 16px !important;
+  }
+
+  .mis-recibos-page .pending-actions a {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+  }
+
+  .mis-recibos-page .filter-card {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .mis-recibos-page .filter-card .search-box,
+  .mis-recibos-page .filter-card select,
+  .mis-recibos-page .filter-card button {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .mis-recibos-page .filter-card input,
+  .mis-recibos-page .filter-card select {
+    width: 100% !important;
+    font-size: 16px !important;
+  }
+
+  .mis-recibos-page .filter-card button {
+    min-height: 46px !important;
+    justify-content: center !important;
+  }
+}
+
+/* =========================================================
+   MIS RECIBOS - CONSUMOS Y ACTIVIDAD RECIENTE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .mis-recibos-page .bars-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .mis-recibos-page .bar-item {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .mis-recibos-page .bar-info strong,
+  .mis-recibos-page .bar-info span,
+  .mis-recibos-page .bar-value {
+    display: block !important;
+    text-align: left !important;
+    word-break: break-word !important;
+  }
+
+  .mis-recibos-page .bar-track {
+    width: 100% !important;
+  }
+
+  .mis-recibos-page .bar-value {
+    font-size: 0.95rem !important;
+    font-weight: 950 !important;
+  }
+
+  .mis-recibos-page .recent-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .mis-recibos-page .recent-item {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .mis-recibos-page .recent-item strong,
+  .mis-recibos-page .recent-item small {
+    display: block !important;
+    word-break: break-word !important;
+  }
+
+  .mis-recibos-page .recent-item .badge {
+    justify-self: start !important;
+  }
+
+  .mis-recibos-page .recent-item > strong:last-child {
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+    text-align: left !important;
+  }
+}
+
+
+/* =========================================================
+   MIS RECIBOS - TABLA PRINCIPAL MÓVIL TIPO TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .mis-recibos-page .mobile-table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-spacing: 0 14px !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table thead {
+    display: none !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table tr {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    margin-bottom: 14px !important;
+    padding: 14px !important;
+
+    background: var(--jass-card, #ffffff) !important;
+    border: 1px solid var(--jass-border, #dbeaf2) !important;
+    border-radius: 20px !important;
+
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08) !important;
+    overflow: hidden !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 108px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+
+    padding: 10px 0 !important;
+    border-bottom: 1px solid var(--jass-border, #e5eef4) !important;
+
+    font-size: 0.9rem !important;
+    color: var(--jass-text, #092235) !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td:last-child {
+    border-bottom: none !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td::before {
+    content: attr(data-label) !important;
+
+    color: var(--jass-muted, #64748b) !important;
+    font-size: 0.76rem !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .mis-recibos-page .recibo-mobile-cell,
+  .mis-recibos-page .direccion-mobile-cell {
+    display: block !important;
+  }
+
+  .mis-recibos-page .recibo-mobile-cell::before,
+  .mis-recibos-page .direccion-mobile-cell::before {
+    display: block !important;
+    margin-bottom: 8px !important;
+  }
+
+  .mis-recibos-page .recibo-mobile-cell strong {
+    display: block !important;
+    color: var(--jass-text, #092235) !important;
+    font-size: 0.98rem !important;
+    line-height: 1.25 !important;
+    font-weight: 950 !important;
+    word-break: break-word !important;
+  }
+
+  .mis-recibos-page .direccion-mobile-cell {
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table .badge {
+    justify-self: start !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td[data-label="Total"] strong {
+    color: #0f172a !important;
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td[data-label="Acciones"] {
+    display: block !important;
+    width: 100% !important;
+    padding-top: 14px !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td[data-label="Acciones"]::before {
+    display: block !important;
+    margin-bottom: 10px !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table .actions-premium,
+  .mis-recibos-page .cliente-mis-recibos-mobile-table .actions-cell {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td[data-label="Acciones"] a,
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td[data-label="Acciones"] button {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 44px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+
+    border-radius: 14px !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+  }
+
+  .mis-recibos-page .mobile-table-wrapper::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td {
+    grid-template-columns: 96px minmax(0, 1fr) !important;
+  }
+
+  .mis-recibos-page .cliente-mis-recibos-mobile-table td::before {
+    font-size: 0.7rem !important;
+  }
+
+  .mis-recibos-page .recibo-mobile-cell strong {
+    font-size: 0.9rem !important;
+  }
+}

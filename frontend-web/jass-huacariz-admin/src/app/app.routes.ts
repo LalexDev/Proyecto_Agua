@@ -32,6 +32,7 @@ import { Sectores } from './pages/admin/sectores/sectores';
 
 import { SinLecturas } from './pages/admin/sin-lecturas/sin-lecturas';
 import { CanalesPago } from './pages/admin/canales-pago/canales-pago';
+import { Caja } from './pages/admin/caja/caja';
 
 export const routes: Routes = [
   {
@@ -61,6 +62,7 @@ export const routes: Routes = [
       { path: 'qr-suministro', component: QrSuministro },
       { path: 'historial-lecturas', component: HistorialLecturas },
       { path: 'sectores', component: Sectores },
+      { path: 'caja', component: Caja },
       { path: 'sin-lecturas', component: SinLecturas }
     ]
   },

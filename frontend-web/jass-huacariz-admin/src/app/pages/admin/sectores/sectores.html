@@ -139,7 +139,7 @@
     </div>
 
     <div class="table-responsive">
-      <table>
+      <table class="mobile-card-table">
         <thead>
           <tr>
             <th>ID</th>
@@ -150,67 +150,69 @@
           </tr>
         </thead>
 
-        <tbody>
-          <tr *ngFor="let sector of sectoresFiltrados">
-            <td>
-              <strong>{{ sector.id }}</strong>
-            </td>
+      <tbody>
+        <tr *ngFor="let sector of sectoresFiltrados">
+          <td data-label="ID">
+            <strong>{{ sector.id }}</strong>
+          </td>
 
-            <td>
-              <strong>{{ sector.nombre }}</strong>
-            </td>
+          <td data-label="Sector">
+            <strong>{{ sector.nombre }}</strong>
+          </td>
 
-            <td>{{ sector.descripcion || '-' }}</td>
+          <td data-label="Descripción">
+            {{ sector.descripcion || '-' }}
+          </td>
 
-            <td>
-              <span class="status-badge" [ngClass]="estadoClase(sector.estado)">
-                {{ estadoTexto(sector.estado) }}
-              </span>
-            </td>
+          <td data-label="Estado">
+            <span class="status-badge" [ngClass]="estadoClase(sector.estado)">
+              {{ estadoTexto(sector.estado) }}
+            </span>
+          </td>
 
-            <td>
-              <div class="actions-cell">
-                <button
-                  type="button"
-                  class="btn-editar-text"
-                  title="Editar sector"
-                  (click)="abrirEditar(sector)"
-                >
-                  <svg viewBox="0 0 24 24">
-                    <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25z"/>
-                    <path d="M14.06 4.94l3.75 3.75"/>
-                  </svg>
-                  <span>Editar</span>
-                </button>
+          <td data-label="Acciones">
+            <div class="actions-cell actions-premium">
+              <button
+                type="button"
+                class="btn-editar-text"
+                title="Editar sector"
+                (click)="abrirEditar(sector)"
+              >
+                <svg viewBox="0 0 24 24">
+                  <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25z"/>
+                  <path d="M14.06 4.94l3.75 3.75"/>
+                </svg>
+                <span>Editar</span>
+              </button>
 
-                <button
-                  type="button"
-                  [ngClass]="sector.estado ? 'btn-desactivar-text' : 'btn-activar-text'"
-                  (click)="cambiarEstado(sector)"
-                  [title]="sector.estado ? 'Desactivar sector' : 'Activar sector'"
-                >
-                  <svg *ngIf="sector.estado" viewBox="0 0 24 24">
-                    <path d="M12 3v7"/>
-                    <path d="M7.5 5.5a8 8 0 1 0 9 0"/>
-                  </svg>
+              <button
+                type="button"
+                [ngClass]="sector.estado ? 'btn-desactivar-text' : 'btn-activar-text'"
+                (click)="cambiarEstado(sector)"
+                [title]="sector.estado ? 'Desactivar sector' : 'Activar sector'"
+              >
+                <svg *ngIf="sector.estado" viewBox="0 0 24 24">
+                  <path d="M12 3v7"/>
+                  <path d="M7.5 5.5a8 8 0 1 0 9 0"/>
+                </svg>
 
-                  <svg *ngIf="!sector.estado" viewBox="0 0 24 24">
-                    <path d="M12 3v7"/>
-                    <path d="M7.5 5.5a8 8 0 1 1 9 0"/>
-                  </svg>
+                <svg *ngIf="!sector.estado" viewBox="0 0 24 24">
+                  <path d="M12 3v7"/>
+                  <path d="M7.5 5.5a8 8 0 1 1 9 0"/>
+                </svg>
 
-                  <span>{{ sector.estado ? 'Desactivar' : 'Activar' }}</span>
-                </button>
-              </div>
-            </td>
-          </tr>
+                <span>{{ sector.estado ? 'Desactivar' : 'Activar' }}</span>
+              </button>
+            </div>
+          </td>
+        </tr>
 
-          <tr *ngIf="!cargando && sectoresFiltrados.length === 0">
-            <td colspan="5" class="empty-state">
-              No hay sectores registrados con los filtros seleccionados.
-            </td>
-          </tr>
-        </tbody>
+        <tr *ngIf="!cargando && sectoresFiltrados.length === 0">
+          <td colspan="5" class="empty-state">
+            No hay sectores registrados con los filtros seleccionados.
+          </td>
+        </tr>
+      </tbody>
       </table>
     </div>
   </section>

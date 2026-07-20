@@ -110,8 +110,8 @@
       </button>
   </div>
 
-  <div class="table-responsive">
-    <table class="pending-table">
+    <div class="table-responsive mobile-table-wrapper">
+      <table class="pending-table mobile-card-table sin-lectura-mobile-table">
       <thead>
         <tr>
           <th>Suministro</th>
@@ -127,33 +127,39 @@
 
       <tbody>
         <tr *ngFor="let item of pendientesFiltrados">
-          <td>
+          <td data-label="Suministro" class="suministro-mobile-cell">
             <strong>{{ item.codigoSuministro }}</strong>
             <small>{{ item.aliasSuministro || '-' }}</small>
           </td>
 
-          <td>
+          <td data-label="Cliente" class="cliente-mobile-cell">
             <strong>{{ item.nombreCliente }}</strong>
           </td>
 
-          <td>{{ item.dniCliente || '-' }}</td>
+          <td data-label="DNI">
+            {{ item.dniCliente || '-' }}
+          </td>
 
-          <td>{{ nombreMes(item.mes) }} {{ item.anio }}</td>
+          <td data-label="Periodo">
+            {{ nombreMes(item.mes) }} {{ item.anio }}
+          </td>
 
-          <td>
+          <td data-label="Dirección" class="direccion-mobile-cell">
             <strong>{{ item.direccionSuministro || '-' }}</strong>
             <small>{{ item.referencia || '-' }}</small>
           </td>
 
-          <td>{{ item.sector || '-' }}</td>
+          <td data-label="Sector">
+            {{ item.sector || '-' }}
+          </td>
 
-          <td>
+          <td data-label="Instalación">
             <span class="status-badge" [ngClass]="estadoInstalacionClase(item.estadoInstalacion)">
               {{ estadoInstalacionTexto(item.estadoInstalacion) }}
             </span>
           </td>
 
-          <td>
+          <td data-label="Lectura anterior">
             <strong>{{ item.lecturaAnterior | number:'1.2-3' }} m³</strong>
           </td>
         </tr>

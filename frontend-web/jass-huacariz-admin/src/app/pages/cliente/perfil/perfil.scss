@@ -803,3 +803,482 @@
     min-width: 76px;
   }
 }
+
+
+/* =========================================================
+   PERFIL CLIENTE - RESPONSIVE PROFESIONAL
+   ========================================================= */
+
+@media (max-width: 1180px) {
+  .perfil-page .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .perfil-page .content-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .perfil-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .perfil-page .page-header {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .perfil-page .page-header__content h2 {
+    font-size: 1.55rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .perfil-page .page-header__content p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .perfil-page .page-header__actions {
+    width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .perfil-page .page-header__actions a,
+  .perfil-page .page-header__actions button {
+    width: 100% !important;
+    min-height: 46px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+
+    text-align: center !important;
+  }
+}
+
+
+
+/* =========================================================
+   PERFIL CLIENTE - HERO RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .perfil-page .hero-card {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+
+    padding: 20px !important;
+    border-radius: 26px !important;
+
+    overflow: hidden !important;
+  }
+
+  .perfil-page .hero-user {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 70px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+  }
+
+  .perfil-page .hero-avatar {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+
+    border-radius: 20px !important;
+  }
+
+  .perfil-page .hero-avatar svg {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .perfil-page .hero-user h3 {
+    font-size: 1.45rem !important;
+    line-height: 1.15 !important;
+    margin: 10px 0 6px !important;
+
+    word-break: break-word !important;
+  }
+
+  .perfil-page .hero-user p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+
+    word-break: break-word !important;
+  }
+
+  .perfil-page .hero-meta {
+    width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+
+    margin-top: 12px !important;
+  }
+
+  .perfil-page .hero-meta span {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    padding: 9px 12px !important;
+    border-radius: 999px !important;
+
+    text-align: center !important;
+    word-break: break-word !important;
+  }
+
+  .perfil-page .hero-kpi {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .perfil-page .hero-kpi strong {
+    display: block !important;
+
+    font-size: 1.85rem !important;
+    line-height: 1.1 !important;
+
+    word-break: break-word !important;
+  }
+
+  .perfil-page .hero-kpi small {
+    display: block !important;
+    line-height: 1.35 !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .perfil-page .hero-user {
+    grid-template-columns: 1fr !important;
+  }
+
+  .perfil-page .hero-avatar {
+    justify-self: start !important;
+  }
+}
+
+
+/* =========================================================
+   PERFIL CLIENTE - STATS Y ACCESOS RÁPIDOS
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .perfil-page .stats-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .perfil-page .stat-card {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 58px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+
+    padding: 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .perfil-page .stat-icon {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+
+    border-radius: 16px !important;
+  }
+
+  .perfil-page .stat-icon svg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .perfil-page .stat-card > div:last-child {
+    min-width: 0 !important;
+  }
+
+  .perfil-page .stat-card span {
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+  }
+
+  .perfil-page .stat-card strong {
+    display: block !important;
+
+    font-size: 1.35rem !important;
+    line-height: 1.1 !important;
+
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+  }
+
+  .perfil-page .stat-card small {
+    display: block !important;
+
+    font-size: 0.74rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .perfil-page .quick-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .perfil-page .quick-card {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+
+    padding: 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .perfil-page .quick-icon {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+
+    border-radius: 16px !important;
+  }
+
+  .perfil-page .quick-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .perfil-page .quick-card strong,
+  .perfil-page .quick-card small {
+    display: block !important;
+    word-break: break-word !important;
+  }
+
+  .perfil-page .quick-card strong {
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+  }
+
+  .perfil-page .quick-card small {
+    margin-top: 4px !important;
+    font-size: 0.8rem !important;
+    line-height: 1.35 !important;
+  }
+}
+
+
+/* =========================================================
+   PERFIL CLIENTE - DATOS Y SUMINISTROS
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .perfil-page .content-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .perfil-page .panel-card {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    padding: 18px !important;
+    border-radius: 24px !important;
+
+    overflow: hidden !important;
+  }
+
+  .perfil-page .section-title {
+    width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .perfil-page .section-title h3 {
+    font-size: 1.3rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .perfil-page .section-title .badge {
+    justify-self: start !important;
+  }
+
+  .perfil-page .data-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+
+    margin-top: 16px !important;
+  }
+
+  .perfil-page .data-list > div {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .perfil-page .data-list span {
+    display: block !important;
+    font-size: 0.78rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 6px !important;
+  }
+
+  .perfil-page .data-list strong {
+    display: block !important;
+
+    font-size: 0.98rem !important;
+    line-height: 1.3 !important;
+    font-weight: 950 !important;
+
+    word-break: break-word !important;
+  }
+
+  .perfil-page .status-summary {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+
+    margin-top: 16px !important;
+  }
+
+  .perfil-page .status-summary > div {
+    width: 100% !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .perfil-page .suministro-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+
+    margin-top: 16px !important;
+  }
+
+  .perfil-page .suministro-card {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .perfil-page .suministro-card h4 {
+    font-size: 1rem !important;
+    line-height: 1.2 !important;
+
+    word-break: break-word !important;
+  }
+
+  .perfil-page .suministro-card p,
+  .perfil-page .suministro-card small {
+    display: block !important;
+
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+  }
+
+  .perfil-page .suministro-card .badge {
+    justify-self: start !important;
+  }
+
+  .perfil-page .btn-primary.full {
+    width: 100% !important;
+    min-height: 48px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+
+    margin-top: 16px !important;
+    text-align: center !important;
+  }
+
+  .perfil-page .btn-primary.full svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+  }
+}
+
+
+/* =========================================================
+   PERFIL CLIENTE - AJUSTE CELULAR PEQUEÑO
+   ========================================================= */
+
+@media (max-width: 430px) {
+  .perfil-page .page-header,
+  .perfil-page .hero-card,
+  .perfil-page .panel-card {
+    padding: 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .perfil-page .hero-user h3 {
+    font-size: 1.3rem !important;
+  }
+
+  .perfil-page .hero-kpi strong {
+    font-size: 1.6rem !important;
+  }
+
+  .perfil-page .stat-card {
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+  }
+
+  .perfil-page .stat-icon {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+  }
+
+  .perfil-page .quick-card {
+    grid-template-columns: 50px minmax(0, 1fr) !important;
+  }
+
+  .perfil-page .quick-icon {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+  }
+}

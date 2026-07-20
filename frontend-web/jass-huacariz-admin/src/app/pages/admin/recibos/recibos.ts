@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 
 import { PagoRequest, Recibo, ReciboResponse } from '../../../core/services/recibo';
 import { imprimirReciboJass } from '../../../core/utils/recibo-print';
@@ -28,7 +28,7 @@ export class Recibos implements OnInit {
   reciboDetalle: any = null;
 
   pago: PagoRequest = {
-    metodoPago: 'PagoEfectivo',
+    metodoPago: 'Efectivo',
     codigoOperacion: ''
   };
 
@@ -117,7 +117,12 @@ export class Recibos implements OnInit {
   }
 
   abrirDetalleRecibo(recibo: ReciboResponse): void {
+    this.reciboSeleccionado = null;
+    this.pagoMultipleAbierto = false;
+    this.pagando = false;
+
     this.reciboDetalle = recibo;
+
     this.error = '';
     this.exito = '';
   }
@@ -137,10 +142,14 @@ export class Recibos implements OnInit {
       return;
     }
 
+    this.reciboDetalle = null;
+    this.pagoMultipleAbierto = false;
+    this.pagando = false;
+
     this.reciboSeleccionado = recibo;
 
     this.pago = {
-      metodoPago: 'PagoEfectivo',
+      metodoPago: 'Efectivo',
       codigoOperacion: ''
     };
 
@@ -150,9 +159,10 @@ export class Recibos implements OnInit {
 
   cerrarPago(): void {
     this.reciboSeleccionado = null;
+    this.pagando = false;
 
     this.pago = {
-      metodoPago: 'PagoEfectivo',
+      metodoPago: 'Efectivo',
       codigoOperacion: ''
     };
   }
@@ -370,5 +380,182 @@ obtenerTelefonoCliente(recibo: any): string {
   return '';
 }
 
+  idsSeleccionados: number[] = [];
+  pagoMultipleAbierto = false;
 
+  pagoMultiple: PagoRequest = {
+    metodoPago: 'Efectivo',
+    codigoOperacion: ''
+  };
+
+  esReciboSeleccionable(recibo: ReciboResponse): boolean {
+  const estado = String(recibo.estadoRecibo || '').toUpperCase();
+  return estado === 'PENDIENTE' || estado === 'VENCIDO';
+}
+
+estaSeleccionado(recibo: ReciboResponse): boolean {
+  return this.idsSeleccionados.includes(recibo.id);
+}
+
+alternarSeleccion(recibo: ReciboResponse): void {
+  if (!this.esReciboSeleccionable(recibo)) {
+    return;
+  }
+
+  if (this.estaSeleccionado(recibo)) {
+    this.idsSeleccionados = this.idsSeleccionados.filter(id => id !== recibo.id);
+  } else {
+    this.idsSeleccionados = [...this.idsSeleccionados, recibo.id];
+  }
+}
+
+seleccionarTodosFiltrados(): void {
+  const ids = this.recibosFiltrados
+    .filter(recibo => this.esReciboSeleccionable(recibo))
+    .map(recibo => recibo.id);
+
+  this.idsSeleccionados = Array.from(new Set([...this.idsSeleccionados, ...ids]));
+}
+
+limpiarSeleccion(): void {
+  this.idsSeleccionados = [];
+}
+
+recibosSeleccionados(): ReciboResponse[] {
+  return this.recibos.filter(recibo => this.idsSeleccionados.includes(recibo.id));
+}
+
+cantidadSeleccionados(): number {
+  return this.idsSeleccionados.length;
+}
+
+totalSeleccionado(): number {
+  return this.recibosSeleccionados().reduce((total, recibo) => {
+    return total + Number(recibo.total || 0);
+  }, 0);
+}
+
+abrirPagoMultiple(): void {
+  if (this.idsSeleccionados.length === 0) {
+    this.error = 'Seleccione al menos un recibo pendiente o vencido.';
+    this.exito = '';
+    return;
+  }
+
+  this.reciboDetalle = null;
+  this.reciboSeleccionado = null;
+  this.pagando = false;
+
+  this.pagoMultipleAbierto = true;
+
+  this.pagoMultiple = {
+    metodoPago: 'Efectivo',
+    codigoOperacion: ''
+  };
+
+  this.error = '';
+  this.exito = '';
+}
+
+cerrarPagoMultiple(): void {
+  this.pagoMultipleAbierto = false;
+  this.pagando = false;
+
+  this.pagoMultiple = {
+    metodoPago: 'Efectivo',
+    codigoOperacion: ''
+  };
+}
+
+confirmarPagoMultiple(): void {
+  const seleccionados = this.recibosSeleccionados();
+
+  if (seleccionados.length === 0) {
+    this.error = 'No hay recibos seleccionados para pagar.';
+    this.exito = '';
+    return;
+  }
+
+  if (!this.pagoMultiple.metodoPago || !this.pagoMultiple.metodoPago.trim()) {
+    this.error = 'Seleccione el método de pago.';
+    this.exito = '';
+    return;
+  }
+
+  const metodo = this.pagoMultiple.metodoPago.trim();
+  const codigoBase = this.pagoMultiple.codigoOperacion?.trim() || '';
+  const esEfectivo = metodo.toLowerCase() === 'efectivo';
+
+  if (!esEfectivo && !codigoBase) {
+    this.error = 'Ingrese el código de operación para Yape, Plin o Transferencia.';
+    this.exito = '';
+    return;
+  }
+
+  this.pagando = true;
+  this.error = '';
+  this.exito = '';
+
+  const marca = Date.now();
+
+  const peticiones = seleccionados.map((recibo, index) => {
+    const codigoOperacion = esEfectivo
+      ? `EFECTIVO-MASIVO-${marca}-${recibo.id}`
+      : `${codigoBase}-${recibo.codigoRecibo || recibo.id}`;
+
+    const payload: PagoRequest = {
+      metodoPago: metodo,
+      codigoOperacion
+    };
+
+    return this.reciboService.pagarRecibo(recibo.id, payload);
+  });
+
+  forkJoin(peticiones)
+    .pipe(
+      finalize(() => {
+        this.pagando = false;
+        this.cdr.detectChanges();
+      })
+    )
+    .subscribe({
+      next: () => {
+        const cantidad = seleccionados.length;
+        const total = this.totalSeleccionado();
+
+        this.exito = `Pago múltiple registrado correctamente. ${cantidad} recibo(s) por S/ ${total.toFixed(2)}.`;
+        this.cerrarPagoMultiple();
+        this.limpiarSeleccion();
+        this.cargarRecibos();
+      },
+      error: (err) => {
+        this.error = err?.error?.error || 'No se pudo registrar el pago múltiple.';
+        this.exito = '';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+
+  abrirPagoDesdeDetalle(): void {
+    if (!this.reciboDetalle) {
+      return;
+    }
+
+    const recibo = { ...this.reciboDetalle };
+
+    this.reciboDetalle = null;
+    this.pagoMultipleAbierto = false;
+    this.pagando = false;
+
+    this.reciboSeleccionado = recibo;
+
+    this.pago = {
+      metodoPago: 'Efectivo',
+      codigoOperacion: ''
+    };
+
+    this.error = '';
+    this.exito = '';
+  }
 }

@@ -391,8 +391,8 @@
         <span>{{ ultimosRecibos().length }} registro(s)</span>
       </div>
 
-      <div class="table-responsive">
-        <table>
+    <div class="table-responsive mobile-table-wrapper">
+      <table class="mobile-card-table reportes-recibos-mobile-table">
           <thead>
             <tr>
               <th>Recibo</th>
@@ -406,21 +406,27 @@
 
           <tbody>
             <tr *ngFor="let recibo of ultimosRecibos()">
-              <td>
+              <td data-label="Recibo" class="recibo-mobile-cell">
                 <strong>{{ recibo.codigoRecibo }}</strong>
               </td>
 
-              <td>{{ recibo.codigoSuministro || '-' }}</td>
+              <td data-label="Suministro">
+                {{ recibo.codigoSuministro || '-' }}
+              </td>
 
-              <td>{{ periodo(recibo) }}</td>
+              <td data-label="Periodo">
+                {{ periodo(recibo) }}
+              </td>
 
-              <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
+              <td data-label="Consumo">
+                {{ recibo.consumoM3 | number:'1.2-3' }} m³
+              </td>
 
-              <td>
+              <td data-label="Total">
                 <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
               </td>
 
-              <td>
+              <td data-label="Estado">
                 <span class="status-badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
                   {{ recibo.estadoRecibo || 'PENDIENTE' }}
                 </span>
@@ -475,8 +481,8 @@
         <span>{{ clientesConMasSuministros().length }} cliente(s)</span>
       </div>
 
-      <div class="table-responsive mini">
-        <table>
+        <div class="table-responsive mini mobile-table-wrapper">
+          <table class="mobile-card-table reportes-clientes-mobile-table">
           <thead>
             <tr>
               <th>DNI</th>
@@ -488,12 +494,19 @@
 
           <tbody>
             <tr *ngFor="let cliente of clientesConMasSuministros()">
-              <td>{{ cliente.dni }}</td>
-              <td>{{ nombreCompleto(cliente) }}</td>
-              <td>
+              <td data-label="DNI">
+                {{ cliente.dni }}
+              </td>
+
+              <td data-label="Cliente" class="cliente-mobile-cell">
+                <strong>{{ nombreCompleto(cliente) }}</strong>
+              </td>
+
+              <td data-label="Suministros">
                 <strong>{{ cliente.suministros.length || 0 }}</strong>
               </td>
-              <td>
+
+              <td data-label="Estado">
                 <span class="status-badge" [ngClass]="cliente.estado === false ? 'vencido' : 'pagado'">
                   {{ cliente.estado === false ? 'Inactivo' : 'Activo' }}
                 </span>

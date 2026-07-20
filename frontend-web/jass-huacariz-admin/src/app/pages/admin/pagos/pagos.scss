@@ -438,9 +438,22 @@
 
 .filters-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(320px, 1fr) 260px auto;
   gap: 12px;
   align-items: center;
+}
+
+.filters-row .search-box {
+  width: 100%;
+}
+
+.filters-row .btn-clear {
+  min-width: 130px;
+  width: auto;
+  height: 50px;
+  padding: 0 18px;
+  white-space: nowrap;
+  justify-content: center;
 }
 
 .search-box {
@@ -624,6 +637,19 @@ tbody td small {
   .table-card__header {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+
+  .estado-filter {
+    min-width: 0;
+  }
+
+  .filters-row .btn-clear {
+    width: 100%;
+    min-width: 0;
   }
 
   .page-header__actions {
@@ -1011,4 +1037,443 @@ tbody td small {
   gap: 12px;
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+
+.estado-filter select {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.estado-filter select option {
+  color: #0f172a;
+}
+
+.estado-filter {
+  min-width: 260px;
+}
+
+.estado-filter select {
+  height: 100%;
+  min-height: 48px;
+}
+
+.estado-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 96px;
+  padding: 9px 14px;
+
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+
+  color: #ffffff !important;
+  border: 1px solid transparent;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10);
+}
+
+/* Pago registrado / pagado normal */
+.estado-chip.pagado {
+  background: linear-gradient(135deg, #2563eb, #06b6d4) !important;
+  color: #ffffff !important;
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+/* Pago aprobado por administrador */
+.estado-chip.confirmado {
+  background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+  color: #ffffff !important;
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+/* Pago pendiente de revisión */
+.estado-chip.revision {
+  background: linear-gradient(135deg, #f59e0b, #f97316) !important;
+  color: #ffffff !important;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+/* Pago rechazado */
+.estado-chip.rechazado {
+  background: linear-gradient(135deg, #dc2626, #ef4444) !important;
+  color: #ffffff !important;
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.confirm-modal {
+  width: min(560px, 94vw);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.confirm-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.confirm-modal__header h3 {
+  margin: 8px 0 8px;
+  font-size: 1.5rem;
+  font-weight: 950;
+  color: var(--text-main);
+}
+
+.confirm-modal__header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.confirm-modal__body {
+  padding: 22px 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.confirm-resumen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.confirm-resumen div {
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.confirm-resumen span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 850;
+  margin-bottom: 4px;
+}
+
+.confirm-resumen strong {
+  color: var(--text-main);
+  font-weight: 950;
+}
+
+.confirm-note {
+  border-radius: 18px;
+  padding: 14px 16px;
+  font-weight: 800;
+  line-height: 1.45;
+  border: 1px solid transparent;
+}
+
+.confirm-note.aprobar {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+.confirm-note.rechazar {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.tag.aprobar {
+  background: rgba(34, 197, 94, 0.14);
+  color: #16a34a;
+}
+
+.tag.rechazar {
+  background: rgba(239, 68, 68, 0.14);
+  color: #dc2626;
+}
+
+.btn-primary.aprobar {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  box-shadow: 0 14px 28px rgba(34, 197, 94, 0.25);
+}
+
+.btn-primary.rechazar {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 14px 28px rgba(239, 68, 68, 0.25);
+}
+
+@media (max-width: 700px) {
+  .confirm-resumen {
+    grid-template-columns: 1fr;
+  }
+}
+
+.btn-aprobar,
+.btn-rechazar {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  min-height: 42px;
+  padding: 11px 16px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  transition: all 0.25s ease;
+}
+
+.btn-aprobar {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
+}
+
+.btn-rechazar {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.btn-aprobar:hover,
+.btn-rechazar:hover {
+  transform: translateY(-2px);
+}
+
+.btn-rechazar:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.btn-aprobar svg,
+.btn-rechazar svg,
+.btn-confirm-action svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.btn-confirm-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+:host-context(body.jass-dark-theme) .btn-rechazar {
+  background: #122a43;
+  color: #e8f3fb;
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+:host-context(body.jass-dark-theme) .btn-rechazar:hover {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+}
+
+/* =========================================================
+   PAGOS - TABLA MÓVIL TIPO TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .pagos-page .mobile-table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .pagos-page .pagos-mobile-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-spacing: 0 14px !important;
+  }
+
+  .pagos-page .pagos-mobile-table tbody,
+  .pagos-page .pagos-mobile-table tr {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .pagos-page .pagos-mobile-table tr {
+    overflow: hidden !important;
+  }
+
+  .pagos-page .pagos-mobile-table td {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 105px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .pagos-page .pagos-mobile-table td > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .pagos-page .pago-recibo-cell {
+    display: block !important;
+  }
+
+  .pagos-page .pago-recibo-cell::before {
+    display: block !important;
+    margin-bottom: 8px !important;
+  }
+
+  .pagos-page .pago-recibo-cell strong {
+    display: block !important;
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    color: var(--jass-text, #092235) !important;
+    word-break: break-word !important;
+  }
+
+  .pagos-page .pago-recibo-cell small {
+    display: block !important;
+    margin-top: 4px !important;
+    color: #64748b !important;
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+  }
+
+  .pagos-page .pagos-mobile-table .method-chip,
+  .pagos-page .pagos-mobile-table .estado-chip,
+  .pagos-page .pagos-mobile-table .operation-code {
+    justify-self: start !important;
+  }
+
+  .pagos-page .pagos-mobile-table td[data-label="Monto"] strong {
+    color: #0f172a !important;
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+  }
+
+  .pagos-page .pagos-mobile-table td[data-label="Acciones"] {
+    display: block !important;
+    width: 100% !important;
+    padding-top: 14px !important;
+  }
+
+  .pagos-page .pagos-mobile-table td[data-label="Acciones"]::before {
+    display: block !important;
+    margin-bottom: 10px !important;
+    font-size: 0.78rem !important;
+    font-weight: 950 !important;
+    color: var(--jass-muted, #64748b) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .pagos-page .pagos-mobile-table .actions-premium,
+  .pagos-page .pagos-mobile-table .actions-cell {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .pagos-page .pagos-mobile-table td[data-label="Acciones"] button,
+  .pagos-page .pagos-mobile-table .btn-comprobante {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 44px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+
+    border-radius: 14px !important;
+  }
+
+  .pagos-page .pagos-mobile-table button svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+  }
+
+  .pagos-page .pagos-mobile-table .no-actions {
+    width: 100% !important;
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    text-align: center !important;
+    font-weight: 900 !important;
+  }
+
+  .pagos-page .mobile-table-wrapper::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+/* Celular pequeño */
+@media (max-width: 480px) {
+  .pagos-page .pagos-mobile-table td {
+    grid-template-columns: 96px minmax(0, 1fr) !important;
+  }
+
+  .pagos-page .pagos-mobile-table td::before {
+    font-size: 0.7rem !important;
+  }
+
+  .pagos-page .pago-recibo-cell strong {
+    font-size: 0.9rem !important;
+  }
+
+  .pagos-page .pagos-mobile-table td[data-label="Monto"] strong {
+    font-size: 0.92rem !important;
+  }
+}
+
+/* Modo oscuro */
+@media (max-width: 768px) {
+  body.jass-dark-theme .pagos-page .pago-recibo-cell strong,
+  body[data-theme='dark'] .pagos-page .pago-recibo-cell strong,
+  body.jass-dark-theme .pagos-page .pagos-mobile-table td[data-label="Monto"] strong,
+  body[data-theme='dark'] .pagos-page .pagos-mobile-table td[data-label="Monto"] strong {
+    color: #f8fafc !important;
+  }
+
+  body.jass-dark-theme .pagos-page .pago-recibo-cell small,
+  body[data-theme='dark'] .pagos-page .pago-recibo-cell small {
+    color: #94a3b8 !important;
+  }
+
+  body.jass-dark-theme .pagos-page .pagos-mobile-table .no-actions,
+  body[data-theme='dark'] .pagos-page .pagos-mobile-table .no-actions {
+    background: #101f33 !important;
+    color: #94a3b8 !important;
+  }
 }

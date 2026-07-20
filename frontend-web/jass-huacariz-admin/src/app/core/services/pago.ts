@@ -22,9 +22,15 @@ export class Pago {
 
   constructor(private http: HttpClient) {}
 
-  listarPagos(): Observable<PagoResponse[]> {
-    return this.http.get<PagoResponse[]>(this.apiUrl);
+  listarPagos(estado?: string): Observable<PagoResponse[]> {
+  if (estado && estado !== 'TODOS') {
+    return this.http.get<PagoResponse[]>(
+      `${this.apiUrl}?estado=${estado}`
+    );
   }
+
+  return this.http.get<PagoResponse[]>(this.apiUrl);
+}
 
   buscarPorSuministro(codigoSuministro: string): Observable<PagoResponse[]> {
     return this.http.get<PagoResponse[]>(`${this.apiUrl}/suministro/${codigoSuministro}`);

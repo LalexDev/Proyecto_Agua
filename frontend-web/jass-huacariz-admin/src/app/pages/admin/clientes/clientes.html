@@ -230,7 +230,7 @@
     </div>
 
     <div class="table-responsive">
-      <table>
+     <table class="mobile-card-table">
         <thead>
           <tr>
             <th>DNI</th>
@@ -245,36 +245,39 @@
 
         <tbody>
           <tr *ngFor="let cliente of clientesFiltrados">
-            <td>
+            <td data-label="DNI">
               <strong>{{ cliente.dni }}</strong>
             </td>
 
-            <td>
+            <td data-label="Cliente" class="cliente-mobile-cell">
               <strong>{{ nombreCompleto(cliente) }}</strong>
 
               <div class="suministros-mini">
-                <div class="suministro-mini" *ngFor="let suministro of (cliente.suministros || []).slice(0, 2)">
+                <div
+                  class="suministro-mini"
+                  *ngFor="let suministro of (cliente.suministros || []).slice(0, 2)"
+                >
                   <div>
                     <span>{{ suministro.codigoSuministro }}</span>
                     <small>{{ suministro.aliasSuministro || suministro.direccionSuministro }}</small>
                   </div>
 
-                <button
-                  type="button"
-                  class="qr-mini-btn"
-                  (click)="irQr(suministro)"
-                  title="Generar QR"
-                >
-             <svg viewBox="0 0 24 24">
-                <rect x="3" y="3" width="6" height="6" rx="1"/>
-                <rect x="15" y="3" width="6" height="6" rx="1"/>
-                <rect x="3" y="15" width="6" height="6" rx="1"/>
-                <path d="M15 15h2v2h-2z"/>
-                <path d="M19 15h2v2h-2z"/>
-                <path d="M15 19h2v2h-2z"/>
-                <path d="M19 19h2v2h-2z"/>
-              </svg>
-                </button>
+                  <button
+                    type="button"
+                    class="qr-mini-btn"
+                    (click)="irQr(suministro)"
+                    title="Generar QR"
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="6" height="6" rx="1"/>
+                      <rect x="15" y="3" width="6" height="6" rx="1"/>
+                      <rect x="3" y="15" width="6" height="6" rx="1"/>
+                      <path d="M15 15h2v2h-2z"/>
+                      <path d="M19 15h2v2h-2z"/>
+                      <path d="M15 19h2v2h-2z"/>
+                      <path d="M19 19h2v2h-2z"/>
+                    </svg>
+                  </button>
                 </div>
 
                 <small *ngIf="totalSuministrosCliente(cliente) > 2">
@@ -283,77 +286,77 @@
               </div>
             </td>
 
-            <td>
+            <td data-label="Contacto">
               <div class="contact-cell">
                 <span>{{ cliente.telefono || '-' }}</span>
                 <small>{{ cliente.correo || '-' }}</small>
               </div>
             </td>
 
-            <td>{{ cliente.codigoUsuario || cliente.dni }}</td>
+            <td data-label="Usuario">
+              {{ cliente.codigoUsuario || cliente.dni }}
+            </td>
 
-            <td>
+            <td data-label="Suministros">
               <span class="count-badge">
                 {{ totalSuministrosCliente(cliente) }}
               </span>
             </td>
 
-            <td>
+            <td data-label="Estado">
               <span class="status-badge" [ngClass]="estadoClienteClase(cliente.estado)">
                 {{ estadoClienteTexto(cliente.estado) }}
               </span>
             </td>
 
-           <td>
-                <div class="actions-cell actions-premium">
+            <td data-label="Acciones">
+              <div class="actions-cell actions-premium">
+                <button
+                  type="button"
+                  class="btn-ver-text"
+                  title="Ver detalle"
+                  (click)="verDetalle(cliente); $event.stopPropagation()"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <span>Detalle</span>
+                </button>
 
-                  <button
-                    type="button"
-                    class="btn-ver-text"
-                    title="Ver detalle"
-                    (click)="verDetalle(cliente); $event.stopPropagation()"
-                  >
-                    <svg viewBox="0 0 24 24">
-                      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    <span>Detalle</span>
-                  </button>
+                <button
+                  type="button"
+                  class="btn-editar-text"
+                  title="Editar"
+                  (click)="abrirEditarCliente(cliente); $event.stopPropagation()"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25z"/>
+                    <path d="M14.06 4.94l3.75 3.75"/>
+                  </svg>
+                  <span>Editar</span>
+                </button>
 
-                  <button
-                    type="button"
-                    class="btn-editar-text"
-                    title="Editar"
-                    (click)="abrirEditarCliente(cliente); $event.stopPropagation()"
-                  >
-                    <svg viewBox="0 0 24 24">
-                      <path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25z"/>
-                      <path d="M14.06 4.94l3.75 3.75"/>
-                    </svg>
-                    <span>Editar</span>
-                  </button>
+                <button
+                  type="button"
+                  [ngClass]="cliente.estado ? 'btn-desactivar-text' : 'btn-activar-text'"
+                  [title]="cliente.estado ? 'Desactivar cliente' : 'Activar cliente'"
+                  (click)="abrirCambiarEstadoCliente(cliente); $event.stopPropagation()"
+                >
+                  <svg *ngIf="cliente.estado" viewBox="0 0 24 24">
+                    <rect x="5" y="11" width="14" height="10" rx="2"/>
+                    <path d="M8 11V8a4 4 0 1 1 8 0v3"/>
+                  </svg>
 
-                  <button
-                    type="button"
-                    [ngClass]="cliente.estado ? 'btn-desactivar-text' : 'btn-activar-text'"
-                    [title]="cliente.estado ? 'Desactivar cliente' : 'Activar cliente'"
-                    (click)="abrirCambiarEstadoCliente(cliente); $event.stopPropagation()"
-                  >
-                    <svg *ngIf="cliente.estado" viewBox="0 0 24 24">
-                      <rect x="5" y="11" width="14" height="10" rx="2"/>
-                      <path d="M8 11V8a4 4 0 1 1 8 0v3"/>
-                    </svg>
+                  <svg *ngIf="!cliente.estado" viewBox="0 0 24 24">
+                    <rect x="5" y="11" width="14" height="10" rx="2"/>
+                    <path d="M8 11V8a4 4 0 1 1 8 0"/>
+                  </svg>
 
-                    <svg *ngIf="!cliente.estado" viewBox="0 0 24 24">
-                      <rect x="5" y="11" width="14" height="10" rx="2"/>
-                      <path d="M8 11V8a4 4 0 1 1 8 0"/>
-                    </svg>
-
-                    <span>{{ cliente.estado ? 'Desactivar' : 'Activar' }}</span>
-                  </button>
-
-                </div>
-              </td>
+                  <span>{{ cliente.estado ? 'Desactivar' : 'Activar' }}</span>
+                </button>
+              </div>
+            </td>
           </tr>
 
           <tr *ngIf="!cargando && clientesFiltrados.length === 0">

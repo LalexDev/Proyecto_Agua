@@ -976,3 +976,318 @@ tbody tr:hover {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* =========================================================
+   TARIFAS - TABLA MÓVIL TIPO TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .tarifas-page .mobile-table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-spacing: 0 14px !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table tbody,
+  .tarifas-page .tarifas-mobile-table tr {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table tr {
+    overflow: hidden !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table td {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 105px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table td > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .tarifas-page .tarifa-main-cell {
+    display: block !important;
+  }
+
+  .tarifas-page .tarifa-main-cell::before {
+    display: block !important;
+    margin-bottom: 8px !important;
+  }
+
+  .tarifas-page .tarifa-main-cell strong {
+    display: block !important;
+    color: var(--jass-text, #092235) !important;
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table .status-badge {
+    justify-self: start !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table td[data-label="Precio m³"] strong {
+    color: #0f172a !important;
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table td[data-label="Acciones"] {
+    display: block !important;
+    width: 100% !important;
+    padding-top: 14px !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table td[data-label="Acciones"]::before {
+    display: block !important;
+    margin-bottom: 10px !important;
+
+    color: var(--jass-muted, #64748b) !important;
+    font-size: 0.78rem !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table .actions-premium,
+  .tarifas-page .tarifas-mobile-table .actions-cell {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table td[data-label="Acciones"] button {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 44px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+
+    border-radius: 14px !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table button svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+  }
+
+  .tarifas-page .mobile-table-wrapper::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+/* Celular pequeño */
+@media (max-width: 480px) {
+  .tarifas-page .tarifas-mobile-table td {
+    grid-template-columns: 96px minmax(0, 1fr) !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table td::before {
+    font-size: 0.7rem !important;
+  }
+
+  .tarifas-page .tarifa-main-cell strong {
+    font-size: 0.9rem !important;
+  }
+
+  .tarifas-page .tarifas-mobile-table td[data-label="Precio m³"] strong {
+    font-size: 0.92rem !important;
+  }
+}
+
+/* Modo oscuro */
+@media (max-width: 768px) {
+  body.jass-dark-theme .tarifas-page .tarifa-main-cell strong,
+  body[data-theme='dark'] .tarifas-page .tarifa-main-cell strong,
+  body.jass-dark-theme .tarifas-page .tarifas-mobile-table td[data-label="Precio m³"] strong,
+  body[data-theme='dark'] .tarifas-page .tarifas-mobile-table td[data-label="Precio m³"] strong {
+    color: #f8fafc !important;
+  }
+}
+
+
+/* =========================================================
+   TARIFAS - CONFIGURACIÓN Y MODALES RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .tarifas-page .summary-panel {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .tarifas-page .config-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .tarifas-page .config-grid label {
+    width: 100% !important;
+  }
+
+  .tarifas-page .config-grid input,
+  .tarifas-page .config-grid select {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 16px !important;
+  }
+
+  .tarifas-page .config-actions {
+    width: 100% !important;
+    margin-top: 14px !important;
+  }
+
+  .tarifas-page .config-actions button {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+  }
+
+  .tarifas-page .summary-items {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .tarifas-page .summary-items > div {
+    width: 100% !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .tarifas-page .chart-card {
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .tarifas-page .bar-item {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .tarifas-page .bar-info strong,
+  .tarifas-page .bar-info span,
+  .tarifas-page .bar-price {
+    text-align: left !important;
+    word-break: break-word !important;
+  }
+
+  .tarifas-page .bar-price {
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+  }
+
+  .tarifas-page .modal-backdrop {
+    padding: 10px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  .tarifas-page .modal-card {
+    width: calc(100vw - 20px) !important;
+    max-width: 430px !important;
+    min-width: 0 !important;
+
+    max-height: calc(100vh - 20px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    padding: 18px !important;
+    border-radius: 24px !important;
+  }
+
+  .tarifas-page .modal-card * {
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .tarifas-page .modal-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 46px !important;
+    gap: 12px !important;
+    align-items: start !important;
+    margin-bottom: 18px !important;
+  }
+
+  .tarifas-page .modal-header h3 {
+    font-size: 1.45rem !important;
+    line-height: 1.15 !important;
+    margin: 6px 0 0 !important;
+    word-break: break-word !important;
+  }
+
+  .tarifas-page .modal-header p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+    margin-top: 6px !important;
+  }
+
+  .tarifas-page .close-btn {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    border-radius: 16px !important;
+    justify-self: end !important;
+  }
+
+  .tarifas-page .form-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .tarifas-page .form-grid input,
+  .tarifas-page .form-grid select {
+    width: 100% !important;
+    font-size: 16px !important;
+  }
+
+  .tarifas-page .modal-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 18px !important;
+  }
+
+  .tarifas-page .modal-actions button {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+  }
+}

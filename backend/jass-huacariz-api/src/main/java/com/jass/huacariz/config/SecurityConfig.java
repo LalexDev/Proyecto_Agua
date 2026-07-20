@@ -154,7 +154,8 @@ public class SecurityConfig {
                                 "/api/sectores/**",
                                 "/api/tarifas/**",
                                 "/api/recibos/**",
-                                "/api/pagos/**"
+                                "/api/pagos/**",
+                                "/api/movimientos-caja/**"
                         )
                         .hasAnyAuthority(
                                 "ADMIN",

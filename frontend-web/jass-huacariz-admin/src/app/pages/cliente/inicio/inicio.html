@@ -275,8 +275,8 @@
       <a routerLink="/cliente/mis-recibos">Ver todos</a>
     </div>
 
-    <div class="table-wrapper">
-      <table>
+    <div class="table-wrapper mobile-table-wrapper">
+      <table class="mobile-card-table cliente-recibos-mobile-table">
         <thead>
           <tr>
             <th>Recibo</th>
@@ -288,24 +288,41 @@
           </tr>
         </thead>
 
-        <tbody>
-          <tr *ngFor="let recibo of ultimosRecibos()">
-            <td><strong>{{ recibo.codigoRecibo }}</strong></td>
-            <td>{{ recibo.codigoSuministro || '-' }}</td>
-            <td>{{ periodo(recibo) }}</td>
-            <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
-            <td><strong>S/ {{ recibo.total | number:'1.2-2' }}</strong></td>
-            <td>
-              <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
-                {{ recibo.estadoRecibo || 'PENDIENTE' }}
-              </span>
-            </td>
-          </tr>
+          <tbody>
+            <tr *ngFor="let recibo of ultimosRecibos()">
+              <td data-label="Recibo" class="recibo-mobile-cell">
+                <strong>{{ recibo.codigoRecibo }}</strong>
+              </td>
 
-          <tr *ngIf="ultimosRecibos().length === 0 && !cargando">
-            <td colspan="6" class="empty-row">No tienes recibos registrados.</td>
-          </tr>
-        </tbody>
+              <td data-label="Suministro">
+                {{ recibo.codigoSuministro || '-' }}
+              </td>
+
+              <td data-label="Periodo">
+                {{ periodo(recibo) }}
+              </td>
+
+              <td data-label="Consumo">
+                {{ recibo.consumoM3 | number:'1.2-3' }} m³
+              </td>
+
+              <td data-label="Total">
+                <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
+              </td>
+
+              <td data-label="Estado">
+                <span class="badge" [ngClass]="estadoClase(recibo.estadoRecibo)">
+                  {{ recibo.estadoRecibo || 'PENDIENTE' }}
+                </span>
+              </td>
+            </tr>
+
+            <tr *ngIf="ultimosRecibos().length === 0 && !cargando">
+              <td colspan="6" class="empty-row">
+                No tienes recibos registrados.
+              </td>
+            </tr>
+          </tbody>
       </table>
     </div>
   </section>

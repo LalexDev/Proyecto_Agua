@@ -1717,3 +1717,1055 @@ tbody td:last-child {
     box-shadow: 0 0 0 0 rgba(239,68,68,0);
   }
 }
+
+.check-recibo {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+.check-recibo:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.selected-payment-bar {
+  display: grid;
+  grid-template-columns: 220px 260px 1fr;
+  gap: 14px;
+  align-items: center;
+  background: linear-gradient(135deg, #0f172a, #1e3a8a);
+  border-radius: 24px;
+  padding: 18px 22px;
+  color: #ffffff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+}
+
+.selected-payment-bar div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selected-payment-bar span {
+  font-size: 0.82rem;
+  font-weight: 800;
+  opacity: 0.82;
+}
+
+.selected-payment-bar strong {
+  font-size: 1.35rem;
+  font-weight: 950;
+}
+
+.selected-payment-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.selected-list {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.selected-list div {
+  display: grid;
+  grid-template-columns: 1fr 160px 120px;
+  gap: 12px;
+  align-items: center;
+  background: var(--panel-soft);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 14px;
+}
+
+.selected-list strong {
+  color: var(--text-main);
+  font-weight: 950;
+}
+
+.selected-list span {
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.selected-list b {
+  text-align: right;
+  color: var(--text-main);
+}
+
+@media (max-width: 900px) {
+  .selected-payment-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-payment-actions {
+    justify-content: stretch;
+  }
+
+  .selected-payment-actions button {
+    width: 100%;
+  }
+
+  .selected-list div {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-list b {
+    text-align: left;
+  }
+}
+
+/* ===== FIX FINAL ACCIONES RECIBOS SIN CORTAR BOTÓN PAGAR ===== */
+
+.table-responsive {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  padding-bottom: 12px !important;
+}
+
+table {
+  min-width: 1380px !important;
+}
+
+thead th:last-child,
+tbody td:last-child {
+  min-width: 390px !important;
+  width: 390px !important;
+  max-width: 390px !important;
+}
+
+.actions-cell {
+  width: 100% !important;
+  max-width: 390px !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+
+  align-items: center !important;
+  justify-content: stretch !important;
+
+  overflow: visible !important;
+  flex-wrap: unset !important;
+}
+
+.actions-cell button {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 38px !important;
+  padding: 0 10px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+
+  border: none !important;
+  border-radius: 12px !important;
+
+  font-size: 12.5px !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+}
+
+.actions-cell button svg {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.3 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Detalle */
+.btn-ver {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+}
+
+/* Imprimir */
+.btn-print {
+  background: #f8fafc !important;
+  color: #475569 !important;
+}
+
+/* WhatsApp */
+.btn-whatsapp {
+  background: #dcfce7 !important;
+  color: #16a34a !important;
+}
+
+.btn-whatsapp:hover {
+  background: #16a34a !important;
+  color: #ffffff !important;
+}
+
+/* Pagar */
+.btn-pagar {
+  background: linear-gradient(135deg, #f97316, #ea580c) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 18px rgba(234, 88, 12, 0.25) !important;
+}
+
+.btn-pagar:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 26px rgba(234, 88, 12, 0.35) !important;
+}
+
+/* Pagado */
+.btn-pagado {
+  background: #dcfce7 !important;
+  color: #16a34a !important;
+}
+
+.btn-pagado:disabled {
+  opacity: 1 !important;
+  cursor: default !important;
+}
+
+/* Modo oscuro */
+:host-context(body.jass-dark-theme) .btn-ver {
+  background: rgba(37, 99, 235, 0.18) !important;
+  color: #93c5fd !important;
+}
+
+:host-context(body.jass-dark-theme) .btn-print {
+  background: #122a43 !important;
+  color: #e8f3fb !important;
+}
+
+:host-context(body.jass-dark-theme) .btn-whatsapp {
+  background: rgba(22, 163, 74, 0.18) !important;
+  color: #86efac !important;
+}
+
+:host-context(body.jass-dark-theme) .btn-pagar {
+  background: linear-gradient(135deg, #f97316, #ea580c) !important;
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   RECIBOS - TABLA MÓVIL TIPO TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .recibos-mobile-table .recibo-mobile-main {
+    display: block !important;
+  }
+
+  .recibos-mobile-table .recibo-mobile-main::before {
+    display: block !important;
+    margin-bottom: 8px !important;
+  }
+
+  .recibos-mobile-table .recibo-mobile-main > strong {
+    display: block !important;
+    margin-bottom: 4px !important;
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+    color: var(--jass-text, #092235) !important;
+  }
+
+  .recibos-mobile-table .recibo-mobile-main > small {
+    display: block !important;
+    color: #64748b !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+  }
+
+  .recibos-mobile-table .select-mobile-cell {
+    align-items: center !important;
+  }
+
+  .recibos-mobile-table .check-recibo {
+    width: 22px !important;
+    height: 22px !important;
+    accent-color: #2563eb !important;
+  }
+
+  .recibos-mobile-table .mini-note {
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    color: #94a3b8 !important;
+  }
+
+  .recibos-mobile-table .code-chip,
+  .recibos-mobile-table .status-badge {
+    justify-self: start !important;
+  }
+
+  .recibos-mobile-table .address-cell {
+    min-width: 0 !important;
+  }
+
+  .recibos-mobile-table .address-cell span {
+    display: block !important;
+    font-weight: 900 !important;
+    color: var(--jass-text, #092235) !important;
+    line-height: 1.25 !important;
+  }
+
+  .recibos-mobile-table .address-cell small {
+    display: block !important;
+    margin-top: 4px !important;
+    color: #64748b !important;
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+    line-height: 1.2 !important;
+  }
+
+  .recibos-mobile-table td[data-label="Total"] strong {
+    color: #0f172a !important;
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+  }
+
+  .recibos-mobile-table .actions-premium,
+  .recibos-mobile-table .actions-cell {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .recibos-mobile-table .actions-premium button,
+  .recibos-mobile-table .actions-cell button {
+    width: 100% !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+  }
+
+  .selected-payment-bar {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .selected-payment-bar > div {
+    width: 100% !important;
+  }
+
+  .selected-payment-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .selected-payment-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* Celular pequeño */
+@media (max-width: 480px) {
+  .recibos-mobile-table .recibo-mobile-main > strong {
+    font-size: 0.9rem !important;
+  }
+
+  .recibos-mobile-table td[data-label="Total"] strong {
+    font-size: 0.92rem !important;
+  }
+
+  .recibos-mobile-table .actions-premium button,
+  .recibos-mobile-table .actions-cell button {
+    min-height: 40px !important;
+  }
+}
+
+/* Modo oscuro */
+@media (max-width: 768px) {
+  body.jass-dark-theme .recibos-mobile-table .recibo-mobile-main > strong,
+  body[data-theme='dark'] .recibos-mobile-table .recibo-mobile-main > strong,
+  body.jass-dark-theme .recibos-mobile-table .address-cell span,
+  body[data-theme='dark'] .recibos-mobile-table .address-cell span,
+  body.jass-dark-theme .recibos-mobile-table td[data-label="Total"] strong,
+  body[data-theme='dark'] .recibos-mobile-table td[data-label="Total"] strong {
+    color: #f8fafc !important;
+  }
+
+  body.jass-dark-theme .recibos-mobile-table .recibo-mobile-main > small,
+  body[data-theme='dark'] .recibos-mobile-table .recibo-mobile-main > small,
+  body.jass-dark-theme .recibos-mobile-table .address-cell small,
+  body[data-theme='dark'] .recibos-mobile-table .address-cell small {
+    color: #94a3b8 !important;
+  }
+}
+
+/* =========================================================
+   FIX RECIBOS MÓVIL - BOTONES COMPLETOS EN TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .recibos-mobile-table td[data-label="Acciones"] {
+    display: block !important;
+    width: 100% !important;
+    padding-top: 14px !important;
+  }
+
+  .recibos-mobile-table td[data-label="Acciones"]::before {
+    display: block !important;
+    margin-bottom: 10px !important;
+    font-size: 0.78rem !important;
+    font-weight: 950 !important;
+    color: var(--jass-muted, #64748b) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .recibos-mobile-table td[data-label="Acciones"] .actions-cell,
+  .recibos-mobile-table td[data-label="Acciones"] .actions-premium {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .recibos-mobile-table td[data-label="Acciones"] button {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+
+    border-radius: 14px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+  }
+
+  .recibos-mobile-table td[data-label="Acciones"] button svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+  }
+
+  .recibos-mobile-table td[data-label="Acciones"] button span {
+    display: inline-block !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  .recibos-mobile-table .btn-pagado {
+    opacity: 1 !important;
+    background: #dcfce7 !important;
+    color: #15803d !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .recibos-mobile-table td[data-label="Seleccionar"] {
+    display: grid !important;
+    grid-template-columns: 115px minmax(0, 1fr) !important;
+    align-items: center !important;
+  }
+
+  .recibos-mobile-table td[data-label="Seleccionar"] .mini-note {
+    justify-self: start !important;
+    padding: 6px 10px !important;
+    border-radius: 999px !important;
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+  }
+}
+
+
+/* =========================================================
+   FIX FINAL RECIBOS MÓVIL - SIN SCROLL HORIZONTAL
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .recibos-page .mobile-table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .recibos-page .mobile-table-wrapper .recibos-mobile-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+    border-spacing: 0 14px !important;
+  }
+
+  .recibos-page .recibos-mobile-table tbody,
+  .recibos-page .recibos-mobile-table tr {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .recibos-page .recibos-mobile-table tr {
+    overflow: hidden !important;
+  }
+
+  .recibos-page .recibos-mobile-table td {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 105px minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .recibos-page .recibos-mobile-table td > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .recibos-page .recibos-mobile-table td[data-label="Acciones"] {
+    display: block !important;
+  }
+
+  .recibos-page .recibos-mobile-table td[data-label="Acciones"] .actions-cell {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .recibos-page .recibos-mobile-table td[data-label="Acciones"] button {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .recibos-page .recibos-mobile-table .address-cell span,
+  .recibos-page .recibos-mobile-table .address-cell small,
+  .recibos-page .recibos-mobile-table .recibo-mobile-main strong,
+  .recibos-page .recibos-mobile-table .recibo-mobile-main small {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+  }
+
+  .recibos-page .mobile-table-wrapper::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .recibos-page .recibos-mobile-table td {
+    grid-template-columns: 96px minmax(0, 1fr) !important;
+  }
+
+  .recibos-page .recibos-mobile-table td::before {
+    font-size: 0.7rem !important;
+  }
+}
+
+
+/* =========================================================
+   FIX DEFINITIVO MODALES RECIBOS EN CELULAR
+   Detalle + Registrar pago + Pago múltiple
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .recibos-page .modal-backdrop {
+    padding: 10px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  .recibos-page .payment-modal {
+    width: 100% !important;
+    max-width: 430px !important;
+    min-width: 0 !important;
+    max-height: calc(100vh - 20px) !important;
+
+    padding: 18px !important;
+    border-radius: 24px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .recibos-page .payment-modal * {
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Header real del modal */
+  .recibos-page .payment-modal__header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 44px !important;
+    gap: 12px !important;
+    align-items: start !important;
+    margin-bottom: 18px !important;
+  }
+
+  .recibos-page .payment-modal__header > div {
+    min-width: 0 !important;
+  }
+
+  .recibos-page .payment-modal__header .tag {
+    max-width: 100% !important;
+    margin-bottom: 8px !important;
+  }
+
+  .recibos-page .payment-modal__header h3 {
+    margin: 0 0 6px !important;
+    font-size: clamp(1.35rem, 6vw, 1.85rem) !important;
+    line-height: 1.1 !important;
+    word-break: break-word !important;
+  }
+
+  .recibos-page .payment-modal__header p {
+    margin: 0 !important;
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+  }
+
+  .recibos-page .payment-modal__header .close-btn {
+    grid-column: 2 !important;
+    grid-row: 1 / 3 !important;
+
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+
+    align-self: start !important;
+    justify-self: end !important;
+
+    border-radius: 14px !important;
+  }
+
+  /* Resumen superior */
+  .recibos-page .detail-hero {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+
+    padding: 18px !important;
+    border-radius: 22px !important;
+    margin-bottom: 18px !important;
+
+    overflow: hidden !important;
+  }
+
+  .recibos-page .detail-hero strong {
+    font-size: clamp(1.65rem, 7vw, 2.25rem) !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  .recibos-page .premium-status {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 12px 14px !important;
+    border-radius: 999px !important;
+  }
+
+  .recibos-page .amount-mini {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: clamp(1.25rem, 6vw, 1.65rem) !important;
+  }
+
+  /* Tarjetas de datos */
+  .recibos-page .payment-summary {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .recibos-page .payment-summary div,
+  .recibos-page .barcode-box {
+    width: 100% !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .recibos-page .payment-summary strong,
+  .recibos-page .barcode-box strong {
+    font-size: 0.95rem !important;
+    line-height: 1.3 !important;
+    word-break: break-word !important;
+  }
+
+  /* Métodos de pago */
+  .recibos-page .payment-methods {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin: 16px 0 !important;
+    overflow: hidden !important;
+  }
+
+  .recibos-page .payment-method {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    padding: 13px 8px !important;
+    border-radius: 18px !important;
+  }
+
+  .recibos-page .method-icon {
+    width: 58px !important;
+    height: 58px !important;
+    min-width: 58px !important;
+  }
+
+  .recibos-page .logo-icon img {
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .recibos-page .payment-method strong {
+    font-size: 0.84rem !important;
+    line-height: 1.15 !important;
+  }
+
+  /* Código operación */
+  .recibos-page .form-grid,
+  .recibos-page .payment-operation {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .recibos-page .form-grid input,
+  .recibos-page .form-grid select {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 16px !important;
+  }
+
+  .recibos-page .info-note {
+    width: 100% !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+  }
+
+  /* Botones inferiores */
+  .recibos-page .modal-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 18px !important;
+  }
+
+  .recibos-page .modal-actions button {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+  }
+
+  /* Lista de pago múltiple */
+  .recibos-page .selected-list {
+    width: 100% !important;
+    max-height: 210px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .recibos-page .selected-list div {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .recibos-page .selected-list b {
+    text-align: left !important;
+  }
+}
+
+/* Celular pequeño */
+@media (max-width: 430px) {
+  .recibos-page .payment-modal {
+    max-width: 100% !important;
+    padding: 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .recibos-page .payment-methods {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .recibos-page .payment-method {
+    padding: 12px 6px !important;
+  }
+
+  .recibos-page .method-icon {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+  }
+
+  .recibos-page .logo-icon img {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}
+
+/* Muy angosto: métodos uno por fila */
+@media (max-width: 340px) {
+  .recibos-page .payment-methods {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* =========================================================
+   FIX FINAL REAL - MODAL DETALLE RECIBO IGUAL A REGISTRAR PAGO
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .recibos-page .modal-backdrop:has(.detalle-recibo-modal) {
+    padding: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  .recibos-page .detalle-recibo-modal {
+    width: calc(100vw - 20px) !important;
+    max-width: 430px !important;
+    min-width: 0 !important;
+
+    max-height: calc(100vh - 20px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    padding: 18px !important;
+    border-radius: 24px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-modal__header {
+    width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 48px !important;
+    gap: 12px !important;
+    align-items: start !important;
+
+    margin-bottom: 18px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-modal__header > div {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-modal__header .tag {
+    margin-bottom: 10px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-modal__header h3 {
+    display: block !important;
+    width: 100% !important;
+
+    margin: 0 0 8px !important;
+
+    font-size: clamp(1.55rem, 7vw, 2rem) !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.5px !important;
+
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-modal__header p {
+    margin: 0 !important;
+    font-size: 0.92rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .close-btn {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+
+    grid-column: 2 !important;
+    grid-row: 1 / 3 !important;
+
+    justify-self: end !important;
+    align-self: start !important;
+
+    border-radius: 16px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .detail-hero {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+
+    padding: 20px 18px !important;
+    border-radius: 24px !important;
+    margin-bottom: 18px !important;
+
+    overflow: hidden !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .detail-hero span {
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .detail-hero strong {
+    font-size: clamp(2rem, 8vw, 2.55rem) !important;
+    line-height: 1.05 !important;
+    margin: 8px 0 !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .detail-hero small {
+    font-size: 0.84rem !important;
+    font-weight: 850 !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .premium-status {
+    width: 100% !important;
+    min-height: 50px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 12px 14px !important;
+    border-radius: 999px !important;
+
+    font-size: 0.95rem !important;
+    font-weight: 950 !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-summary {
+    width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+
+    margin-bottom: 12px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-summary div,
+  .recibos-page .detalle-recibo-modal .barcode-box {
+    width: 100% !important;
+    min-height: 82px !important;
+
+    padding: 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-summary span,
+  .recibos-page .detalle-recibo-modal .barcode-box span {
+    font-size: 0.86rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 7px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .payment-summary strong,
+  .recibos-page .detalle-recibo-modal .barcode-box strong {
+    font-size: 1rem !important;
+    line-height: 1.3 !important;
+    font-weight: 950 !important;
+
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .charges-title h4 {
+    font-size: 1.25rem !important;
+    margin: 20px 0 12px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .modal-actions {
+    width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+
+    margin-top: 20px !important;
+  }
+
+  .recibos-page .detalle-recibo-modal .modal-actions button {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+  }
+}
+
+
+/* =========================================================
+   FIX ESCRITORIO - NO SELECCIONABLE EN COLUMNA SEL.
+   ========================================================= */
+
+@media (min-width: 769px) {
+  .recibos-mobile-table td.select-mobile-cell {
+    text-align: center !important;
+    vertical-align: middle !important;
+  }
+
+  .recibos-mobile-table .select-mobile-cell .mini-note {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+
+    display: inline-grid !important;
+    place-items: center !important;
+
+    border-radius: 999px !important;
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+
+    font-size: 0 !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  .recibos-mobile-table .select-mobile-cell .mini-note::after {
+    content: "—";
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+  }
+
+  .recibos-mobile-table .select-mobile-cell .check-recibo {
+    margin: auto !important;
+  }
+}

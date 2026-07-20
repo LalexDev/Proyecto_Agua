@@ -1687,3 +1687,436 @@ tbody tr:hover {
     box-shadow: 0 0 0 0 rgba(239,68,68,0);
   }
 }
+
+
+/* =========================================================
+   HISTORIAL LECTURAS - TABLA MÓVIL TIPO TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .historial-page .mobile-table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .historial-page .historial-mobile-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-spacing: 0 14px !important;
+  }
+
+  .historial-page .historial-mobile-table tbody,
+  .historial-page .historial-mobile-table tr {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .historial-page .historial-mobile-table tr {
+    overflow: hidden !important;
+  }
+
+  .historial-page .historial-mobile-table td {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 112px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .historial-page .historial-mobile-table td > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .historial-page .suministro-mobile-cell,
+  .historial-page .cliente-mobile-cell {
+    display: block !important;
+  }
+
+  .historial-page .suministro-mobile-cell::before,
+  .historial-page .cliente-mobile-cell::before {
+    display: block !important;
+    margin-bottom: 8px !important;
+  }
+
+  .historial-page .suministro-mobile-cell strong,
+  .historial-page .cliente-mobile-cell strong {
+    display: block !important;
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    color: var(--jass-text, #092235) !important;
+    word-break: break-word !important;
+  }
+
+  .historial-page .suministro-mobile-cell small,
+  .historial-page .cliente-mobile-cell small {
+    display: block !important;
+    margin-top: 4px !important;
+    color: #64748b !important;
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+  }
+
+  .historial-page .historial-mobile-table .status-badge {
+    justify-self: start !important;
+  }
+
+  .historial-page .historial-mobile-table td[data-label="Consumo"] strong,
+  .historial-page .historial-mobile-table td[data-label="Total"] strong,
+  .historial-page .historial-mobile-table td[data-label="Recibo"] strong {
+    color: #0f172a !important;
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    word-break: break-word !important;
+  }
+
+  .historial-page .historial-mobile-table td[data-label="Acciones"] {
+    display: block !important;
+    width: 100% !important;
+    padding-top: 14px !important;
+  }
+
+  .historial-page .historial-mobile-table td[data-label="Acciones"]::before {
+    display: block !important;
+    margin-bottom: 10px !important;
+
+    color: var(--jass-muted, #64748b) !important;
+    font-size: 0.78rem !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .historial-page .historial-mobile-table .actions-premium,
+  .historial-page .historial-mobile-table .actions-cell {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .historial-page .historial-mobile-table td[data-label="Acciones"] button {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 44px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+
+    border-radius: 14px !important;
+  }
+
+  .historial-page .historial-mobile-table button svg {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+  }
+
+  .historial-page .mobile-table-wrapper::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .historial-page .historial-mobile-table td {
+    grid-template-columns: 98px minmax(0, 1fr) !important;
+  }
+
+  .historial-page .historial-mobile-table td::before {
+    font-size: 0.7rem !important;
+  }
+
+  .historial-page .suministro-mobile-cell strong,
+  .historial-page .cliente-mobile-cell strong {
+    font-size: 0.9rem !important;
+  }
+
+  .historial-page .historial-mobile-table td[data-label="Consumo"] strong,
+  .historial-page .historial-mobile-table td[data-label="Total"] strong,
+  .historial-page .historial-mobile-table td[data-label="Recibo"] strong {
+    font-size: 0.9rem !important;
+  }
+}
+
+
+
+/* =========================================================
+   HISTORIAL LECTURAS - MODAL DETALLE RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .historial-page .modal-backdrop {
+    padding: 10px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  .historial-page .payment-modal {
+    width: calc(100vw - 20px) !important;
+    max-width: 430px !important;
+    min-width: 0 !important;
+
+    max-height: calc(100vh - 20px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    padding: 18px !important;
+    border-radius: 24px !important;
+  }
+
+  .historial-page .payment-modal * {
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .historial-page .payment-modal__header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 46px !important;
+    gap: 12px !important;
+    align-items: start !important;
+    margin-bottom: 18px !important;
+  }
+
+  .historial-page .payment-modal__header h3 {
+    font-size: 1.45rem !important;
+    line-height: 1.15 !important;
+    margin: 6px 0 0 !important;
+
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
+  }
+
+  .historial-page .payment-modal__header p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+    margin-top: 6px !important;
+  }
+
+  .historial-page .close-btn {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    border-radius: 16px !important;
+    justify-self: end !important;
+  }
+
+  .historial-page .detail-hero {
+    width: 100% !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+
+    padding: 18px !important;
+    border-radius: 22px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .historial-page .lectura-hero .hero-info {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+
+  .historial-page .hero-icon {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    border-radius: 16px !important;
+  }
+
+  .historial-page .hero-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .historial-page .hero-info span {
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+  }
+
+  .historial-page .hero-info strong {
+    display: block !important;
+    font-size: 1.05rem !important;
+    line-height: 1.15 !important;
+    font-weight: 950 !important;
+    word-break: break-word !important;
+  }
+
+  .historial-page .hero-info small {
+    display: block !important;
+    margin-top: 4px !important;
+    font-size: 0.78rem !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+  }
+
+  .historial-page .premium-status {
+    width: 100% !important;
+    min-height: 48px !important;
+    justify-content: center !important;
+    font-size: 0.92rem !important;
+    font-weight: 950 !important;
+  }
+
+  .historial-page .payment-summary {
+    width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+
+    margin-bottom: 12px !important;
+  }
+
+  .historial-page .payment-summary div {
+    width: 100% !important;
+    min-height: 76px !important;
+
+    padding: 15px !important;
+    border-radius: 18px !important;
+  }
+
+  .historial-page .payment-summary span {
+    display: block !important;
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+    margin-bottom: 6px !important;
+  }
+
+  .historial-page .payment-summary strong {
+    display: block !important;
+    font-size: 0.98rem !important;
+    line-height: 1.3 !important;
+    font-weight: 950 !important;
+    word-break: break-word !important;
+  }
+
+  .historial-page .modal-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-top: 18px !important;
+  }
+
+  .historial-page .modal-actions button {
+    width: 100% !important;
+    min-height: 46px !important;
+    justify-content: center !important;
+  }
+}
+
+
+
+/* =========================================================
+   HISTORIAL LECTURAS - FILTROS Y GRÁFICA RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .historial-page .page-header {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .historial-page .page-header__actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .historial-page .page-header__actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .historial-page .filter-card {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .historial-page .filter-card .search-box,
+  .historial-page .filter-card select,
+  .historial-page .filter-card input,
+  .historial-page .filter-card button {
+    width: 100% !important;
+  }
+
+  .historial-page .filter-card input,
+  .historial-page .filter-card select {
+    font-size: 16px !important;
+  }
+
+  .historial-page .summary-panel {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .historial-page .donut-zone {
+    width: 100% !important;
+    display: grid !important;
+    justify-items: center !important;
+    gap: 16px !important;
+  }
+
+  .historial-page .legend-list {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .historial-page .chart-card {
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .historial-page .bar-item {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .historial-page .bar-info strong,
+  .historial-page .bar-info span,
+  .historial-page .bar-price {
+    text-align: left !important;
+    word-break: break-word !important;
+  }
+
+  .historial-page .bar-price {
+    font-size: 1rem !important;
+    font-weight: 950 !important;
+  }
+}

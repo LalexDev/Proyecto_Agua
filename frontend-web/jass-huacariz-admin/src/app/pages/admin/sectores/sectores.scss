@@ -898,3 +898,47 @@ tbody tr:hover {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+
+/* =========================================================
+   SECTORES - TABLA MÓVIL TIPO TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .mobile-card-table .actions-premium,
+  .mobile-card-table .actions-cell {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .mobile-card-table .actions-premium button,
+  .mobile-card-table .actions-cell button {
+    width: 100% !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+  }
+
+  .mobile-card-table .status-badge {
+    justify-self: start !important;
+  }
+
+  .mobile-card-table td[data-label="Descripción"] {
+    line-height: 1.35 !important;
+  }
+
+  .mobile-card-table td[data-label="Sector"] strong {
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    color: var(--jass-text, #092235) !important;
+  }
+}
+
+/* Modo oscuro */
+@media (max-width: 768px) {
+  body.jass-dark-theme .mobile-card-table td[data-label="Sector"] strong,
+  body[data-theme='dark'] .mobile-card-table td[data-label="Sector"] strong {
+    color: #f8fafc !important;
+  }
+}

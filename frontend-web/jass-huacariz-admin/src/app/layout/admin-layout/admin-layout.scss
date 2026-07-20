@@ -379,9 +379,9 @@
 }
 
 .topbar {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 9999 !important;
+  position: relative;
+  top: auto;
+  z-index: 10;
 
   min-height: 86px;
   padding: 18px 30px;
@@ -391,12 +391,17 @@
   justify-content: space-between;
   gap: 18px;
 
-  background: linear-gradient(120deg, #dbeafe, #7dd3fc, #93c5fd, #67e8f9, #dbeafe) !important;
+  background: linear-gradient(
+    120deg,
+    #dbeafe,
+    #7dd3fc,
+    #93c5fd,
+    #67e8f9,
+    #dbeafe
+  ) !important;
+
   background-size: 400% 400% !important;
   animation: topbarRgbMove 6s ease infinite !important;
-
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
 
   border-bottom: 1px solid rgba(37, 99, 235, .25);
   box-shadow: 0 12px 30px rgba(37, 99, 235, .18);
@@ -907,20 +912,3 @@
 }
 
 
-.topbar {
-  position: fixed !important;
-  top: 0 !important;
-  left: 270px !important;
-  right: 0 !important;
-  z-index: 99999 !important;
-}
-
-.page-content {
-  padding-top: 116px !important;
-}
-
-@media (max-width: 980px) {
-  .topbar {
-    left: 0 !important;
-  }
-}

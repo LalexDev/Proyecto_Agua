@@ -1450,3 +1450,134 @@ body.jass-dark-theme .lecturadores-table tbody tr:hover {
   box-shadow:
     0 15px 35px rgba(37,99,235,.45);
 }
+
+/* =========================================================
+   LECTURADORES - TABLA MÓVIL TIPO TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .mobile-card-table .lecturador-mobile-cell {
+    display: block !important;
+  }
+
+  .mobile-card-table .lecturador-mobile-cell::before {
+    display: block !important;
+    margin-bottom: 10px !important;
+  }
+
+  .mobile-card-table .person-cell {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 52px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    align-items: center !important;
+
+    padding: 12px !important;
+    border-radius: 16px !important;
+    background: #f1f8ff !important;
+    border: 1px solid #dbeafe !important;
+  }
+
+  .mobile-card-table .person-avatar {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    border-radius: 14px !important;
+
+    display: grid !important;
+    place-items: center !important;
+
+    background: linear-gradient(135deg, #2563eb, #06b6d4) !important;
+    color: #ffffff !important;
+    font-weight: 950 !important;
+    font-size: 1.1rem !important;
+  }
+
+  .mobile-card-table .person-cell strong {
+    display: block !important;
+    color: var(--jass-text, #092235) !important;
+    font-size: 0.95rem !important;
+    font-weight: 950 !important;
+    line-height: 1.2 !important;
+
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-card-table .person-cell small {
+    display: block !important;
+    margin-top: 4px !important;
+    color: #64748b !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+  }
+
+  .mobile-card-table .contact-cell span,
+  .mobile-card-table .contact-cell small {
+    display: block !important;
+  }
+
+  .mobile-card-table .user-code,
+  .mobile-card-table .sector-chip,
+  .mobile-card-table .badge {
+    justify-self: start !important;
+  }
+
+  .mobile-card-table .actions-premium,
+  .mobile-card-table .actions-cell {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .mobile-card-table .actions-premium button,
+  .mobile-card-table .actions-cell button {
+    width: 100% !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+  }
+}
+
+/* Celular pequeño */
+@media (max-width: 480px) {
+  .mobile-card-table .person-cell {
+    grid-template-columns: 46px minmax(0, 1fr) !important;
+    padding: 10px !important;
+  }
+
+  .mobile-card-table .person-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    font-size: 1rem !important;
+  }
+
+  .mobile-card-table .person-cell strong {
+    font-size: 0.88rem !important;
+  }
+
+  .mobile-card-table .person-cell small {
+    font-size: 0.72rem !important;
+  }
+}
+
+/* Modo oscuro */
+@media (max-width: 768px) {
+  body.jass-dark-theme .mobile-card-table .person-cell,
+  body[data-theme='dark'] .mobile-card-table .person-cell {
+    background: #101f33 !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+  }
+
+  body.jass-dark-theme .mobile-card-table .person-cell strong,
+  body[data-theme='dark'] .mobile-card-table .person-cell strong {
+    color: #f8fafc !important;
+  }
+
+  body.jass-dark-theme .mobile-card-table .person-cell small,
+  body[data-theme='dark'] .mobile-card-table .person-cell small {
+    color: #94a3b8 !important;
+  }
+}

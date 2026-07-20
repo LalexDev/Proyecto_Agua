@@ -796,7 +796,7 @@ tbody td strong {
 /* ===== REPORTES - DISEÑO MODERNO AZUL ===== */
 
 .reportes-page {
-  background:#ffffff !important;
+  background: transparent !important;
   border-radius: 50px;
 }
 
@@ -1156,4 +1156,485 @@ tbody td strong {
 
 :host-context(body.jass-dark-theme) .method-amount {
   color: #60a5fa !important;
+}
+
+
+/* ===== CORRECCIÓN MODO OSCURO REPORTES ===== */
+
+:host-context(body.jass-dark-theme) .reportes-page,
+:host-context(body[data-theme='dark']) .reportes-page {
+  background: transparent !important;
+}
+
+:host-context(body.jass-dark-theme) .page-header,
+:host-context(body.jass-dark-theme) .table-card,
+:host-context(body.jass-dark-theme) .summary-panel,
+:host-context(body.jass-dark-theme) .chart-card,
+:host-context(body.jass-dark-theme) .summary-card,
+:host-context(body.jass-dark-theme) .stat-card,
+:host-context(body[data-theme='dark']) .page-header,
+:host-context(body[data-theme='dark']) .table-card,
+:host-context(body[data-theme='dark']) .summary-panel,
+:host-context(body[data-theme='dark']) .chart-card,
+:host-context(body[data-theme='dark']) .summary-card,
+:host-context(body[data-theme='dark']) .stat-card {
+  background: #0b1726 !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.30) !important;
+}
+
+:host-context(body.jass-dark-theme) .progress-item,
+:host-context(body.jass-dark-theme) .summary-items div,
+:host-context(body.jass-dark-theme) .legend-item,
+:host-context(body.jass-dark-theme) .method-row,
+:host-context(body.jass-dark-theme) .payment-row,
+:host-context(body.jass-dark-theme) .empty-state,
+:host-context(body.jass-dark-theme) .empty-box,
+:host-context(body[data-theme='dark']) .progress-item,
+:host-context(body[data-theme='dark']) .summary-items div,
+:host-context(body[data-theme='dark']) .legend-item,
+:host-context(body[data-theme='dark']) .method-row,
+:host-context(body[data-theme='dark']) .payment-row,
+:host-context(body[data-theme='dark']) .empty-state,
+:host-context(body[data-theme='dark']) .empty-box {
+  background: #101f33 !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+:host-context(body.jass-dark-theme) .donut-center,
+:host-context(body[data-theme='dark']) .donut-center {
+  background: #0b1726 !important;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18) !important;
+}
+
+:host-context(body.jass-dark-theme) tbody tr:hover,
+:host-context(body[data-theme='dark']) tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08) !important;
+}
+
+
+/* =========================================================
+   REPORTES - RESPONSIVE GENERAL
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .reportes-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .reportes-page .page-header {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .reportes-page .page-header__content h2 {
+    font-size: 1.55rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .reportes-page .page-header__content p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .reportes-page .page-header__actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .reportes-page .page-header__actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .reportes-page .stats-grid,
+  .reportes-page .stats-grid.secondary {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .reportes-page .stat-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 16px !important;
+    border-radius: 22px !important;
+    display: grid !important;
+    grid-template-columns: 58px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: center !important;
+  }
+
+  .reportes-page .stat-card__icon {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    border-radius: 16px !important;
+  }
+
+  .reportes-page .stat-card__content {
+    min-width: 0 !important;
+  }
+
+  .reportes-page .stat-card__content span {
+    font-size: 0.82rem !important;
+    font-weight: 900 !important;
+  }
+
+  .reportes-page .stat-card__content strong {
+    font-size: 1.45rem !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  .reportes-page .stat-card__content .money-text {
+    font-size: 1.25rem !important;
+  }
+
+  .reportes-page .stat-card__content small {
+    font-size: 0.74rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .reportes-page .summary-panel {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+  }
+
+  .reportes-page .summary-info h3 {
+    font-size: 1.35rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .reportes-page .summary-info p {
+    font-size: 0.88rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .reportes-page .donut-zone {
+    width: 100% !important;
+    display: grid !important;
+    justify-items: center !important;
+    gap: 16px !important;
+  }
+
+  .reportes-page .summary-items {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .reportes-page .summary-items > div {
+    width: 100% !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .reportes-page .dashboard-grid,
+  .reportes-page .content-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .reportes-page .chart-card,
+  .reportes-page .table-card,
+  .reportes-page .summary-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 18px !important;
+    border-radius: 22px !important;
+    overflow: hidden !important;
+  }
+
+  .reportes-page .chart-header h3,
+  .reportes-page .table-card__header h3,
+  .reportes-page .summary-card h3 {
+    font-size: 1.25rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .reportes-page .chart-header p {
+    font-size: 0.86rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .reportes-page .chart-content {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    justify-items: center !important;
+  }
+
+  .reportes-page .legend-list {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
+
+
+
+/* =========================================================
+   REPORTES - LISTAS RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .reportes-page .method-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .reportes-page .method-row,
+  .reportes-page .premium-method {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 54px minmax(0, 1fr) !important;
+    gap: 12px !important;
+
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .reportes-page .method-logo {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    border-radius: 16px !important;
+  }
+
+  .reportes-page .method-logo img,
+  .reportes-page .method-logo svg {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .reportes-page .method-info {
+    min-width: 0 !important;
+  }
+
+  .reportes-page .method-info strong,
+  .reportes-page .method-info small {
+    display: block !important;
+    word-break: break-word !important;
+  }
+
+  .reportes-page .method-amount {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    padding-top: 8px !important;
+    text-align: right !important;
+    font-size: 1rem !important;
+  }
+
+  .reportes-page .payment-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .reportes-page .payment-row {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 50px minmax(0, 1fr) !important;
+    gap: 12px !important;
+    align-items: center !important;
+
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .reportes-page .payment-row > div:nth-child(2) {
+    min-width: 0 !important;
+  }
+
+  .reportes-page .payment-row strong,
+  .reportes-page .payment-row small {
+    display: block !important;
+    word-break: break-word !important;
+  }
+
+  .reportes-page .payment-row > span {
+    grid-column: 1 / -1 !important;
+    text-align: right !important;
+    font-weight: 950 !important;
+  }
+
+  .reportes-page .summary-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+    padding: 12px 0 !important;
+  }
+
+  .reportes-page .summary-row strong {
+    text-align: left !important;
+    word-break: break-word !important;
+  }
+}
+
+
+/* =========================================================
+   REPORTES - TABLAS MÓVILES TIPO TARJETA
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .reportes-page .mobile-table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: visible !important;
+    padding-bottom: 0 !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table,
+  .reportes-page .reportes-clientes-mobile-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-spacing: 0 14px !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table thead,
+  .reportes-page .reportes-clientes-mobile-table thead {
+    display: none !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table tbody,
+  .reportes-page .reportes-clientes-mobile-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table tr,
+  .reportes-page .reportes-clientes-mobile-table tr {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    margin-bottom: 14px !important;
+    padding: 14px !important;
+
+    background: var(--jass-card, #ffffff) !important;
+    border: 1px solid var(--jass-border, #dbeaf2) !important;
+    border-radius: 20px !important;
+
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08) !important;
+    overflow: hidden !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table td,
+  .reportes-page .reportes-clientes-mobile-table td {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+
+    display: grid !important;
+    grid-template-columns: 108px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+
+    padding: 10px 0 !important;
+    border-bottom: 1px solid var(--jass-border, #e5eef4) !important;
+
+    font-size: 0.9rem !important;
+    color: var(--jass-text, #092235) !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table td:last-child,
+  .reportes-page .reportes-clientes-mobile-table td:last-child {
+    border-bottom: none !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table td::before,
+  .reportes-page .reportes-clientes-mobile-table td::before {
+    content: attr(data-label) !important;
+
+    color: var(--jass-muted, #64748b) !important;
+    font-size: 0.76rem !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table td > *,
+  .reportes-page .reportes-clientes-mobile-table td > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .reportes-page .recibo-mobile-cell,
+  .reportes-page .cliente-mobile-cell {
+    display: block !important;
+  }
+
+  .reportes-page .recibo-mobile-cell::before,
+  .reportes-page .cliente-mobile-cell::before {
+    display: block !important;
+    margin-bottom: 8px !important;
+  }
+
+  .reportes-page .recibo-mobile-cell strong,
+  .reportes-page .cliente-mobile-cell strong {
+    display: block !important;
+
+    color: var(--jass-text, #092235) !important;
+    font-size: 0.98rem !important;
+    line-height: 1.25 !important;
+    font-weight: 950 !important;
+
+    word-break: break-word !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table .status-badge,
+  .reportes-page .reportes-clientes-mobile-table .status-badge {
+    justify-self: start !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table td[data-label="Total"] strong,
+  .reportes-page .reportes-clientes-mobile-table td[data-label="Suministros"] strong {
+    color: #0f172a !important;
+    font-size: 0.98rem !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+  }
+
+  .reportes-page .mobile-table-wrapper::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .reportes-page .reportes-recibos-mobile-table td,
+  .reportes-page .reportes-clientes-mobile-table td {
+    grid-template-columns: 96px minmax(0, 1fr) !important;
+  }
+
+  .reportes-page .reportes-recibos-mobile-table td::before,
+  .reportes-page .reportes-clientes-mobile-table td::before {
+    font-size: 0.7rem !important;
+  }
+
+  .reportes-page .recibo-mobile-cell strong,
+  .reportes-page .cliente-mobile-cell strong {
+    font-size: 0.9rem !important;
+  }
 }

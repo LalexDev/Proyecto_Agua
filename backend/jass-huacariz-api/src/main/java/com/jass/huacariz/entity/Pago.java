@@ -40,5 +40,6 @@ public class Pago {
 
     @Column(name = "fecha_pago", nullable = false)
     private LocalDateTime fechaPago;
-    
+    @Column(name = "fecha_estado_pago")
+    private LocalDateTime fechaEstadoPago;
 }

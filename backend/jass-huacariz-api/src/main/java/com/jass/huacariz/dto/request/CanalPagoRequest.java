@@ -7,6 +7,8 @@ import lombok.Setter;
 @Setter
 public class CanalPagoRequest {
 
+    private String metodoPago;
+
     private String titular;
 
     private String numero;
@@ -22,5 +24,4 @@ public class CanalPagoRequest {
     private String qrUrl;
 
     private Boolean estado;
-
 }

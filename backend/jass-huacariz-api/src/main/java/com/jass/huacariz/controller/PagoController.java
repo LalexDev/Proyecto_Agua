@@ -16,8 +16,10 @@ public class PagoController {
     private final PagoService pagoService;
 
     @GetMapping
-    public ResponseEntity<List<PagoResponse>> listarPagos() {
-        return ResponseEntity.ok(pagoService.listarPagos());
+    public ResponseEntity<List<PagoResponse>> listarPagos(
+            @RequestParam(value = "estado", required = false) String estado
+    ) {
+        return ResponseEntity.ok(pagoService.listarPagos(estado));
     }
 
     @GetMapping("/{id}")
@@ -35,7 +37,6 @@ public class PagoController {
         return ResponseEntity.ok(pagoService.listarPagosPorSuministro(codigoSuministro));
     }
 
-    
     @GetMapping("/revision")
     public ResponseEntity<List<PagoResponse>> listarPagosEnRevision() {
         return ResponseEntity.ok(pagoService.listarPagosEnRevision());
@@ -50,6 +51,4 @@ public class PagoController {
     public ResponseEntity<PagoResponse> rechazarPago(@PathVariable Integer id) {
         return ResponseEntity.ok(pagoService.rechazarPago(id));
     }
-
-        
 }

@@ -320,8 +320,8 @@
         <a routerLink="/cliente/mis-recibos">Ver todos mis recibos</a>
       </div>
 
-      <div class="table-wrapper">
-        <table>
+      <div class="table-wrapper mobile-table-wrapper">
+        <table class="mobile-card-table detalle-suministro-recibos-mobile-table">
           <thead>
             <tr>
               <th>Recibo</th>
@@ -336,81 +336,89 @@
             </tr>
           </thead>
 
-          <tbody>
-            <tr *ngFor="let recibo of recibosSuministro">
-              <td>
-                <strong>{{ recibo.codigoRecibo }}</strong>
-              </td>
+            <tbody>
+              <tr *ngFor="let recibo of recibosSuministro">
+                <td data-label="Recibo" class="recibo-mobile-cell">
+                  <strong>{{ recibo.codigoRecibo }}</strong>
+                </td>
 
-              <td>{{ periodo(recibo) }}</td>
+                <td data-label="Periodo">
+                  {{ periodo(recibo) }}
+                </td>
 
-              <td>{{ recibo.consumoM3 | number:'1.2-3' }} m³</td>
+                <td data-label="Consumo">
+                  {{ recibo.consumoM3 | number:'1.2-3' }} m³
+                </td>
 
-              <td>S/ {{ recibo.subtotalAgua | number:'1.2-2' }}</td>
+                <td data-label="Subtotal">
+                  S/ {{ recibo.subtotalAgua | number:'1.2-2' }}
+                </td>
 
-              <td>
-                S/ {{
-                  (
-                    (recibo.cargoMantenimiento || 0) +
-                    (recibo.cargoLector || 0) +
-                    (recibo.cargoOtros || 0) +
-                    (recibo.mora || 0)
-                  ) | number:'1.2-2'
-                }}
-              </td>
+                <td data-label="Cargos">
+                  S/ {{
+                    (
+                      (recibo.cargoMantenimiento || 0) +
+                      (recibo.cargoLector || 0) +
+                      (recibo.cargoOtros || 0) +
+                      (recibo.mora || 0)
+                    ) | number:'1.2-2'
+                  }}
+                </td>
 
-              <td>
-                <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
-              </td>
+                <td data-label="Total">
+                  <strong>S/ {{ recibo.total | number:'1.2-2' }}</strong>
+                </td>
 
-              <td>{{ recibo.fechaVencimiento || '-' }}</td>
+                <td data-label="Vencimiento">
+                  {{ recibo.fechaVencimiento || '-' }}
+                </td>
 
-              <td>
-                <span class="badge" [ngClass]="estadoReciboClase(recibo.estadoRecibo)">
-                  {{ recibo.estadoRecibo || 'PENDIENTE' }}
-                </span>
-              </td>
+                <td data-label="Estado">
+                  <span class="badge" [ngClass]="estadoReciboClase(recibo.estadoRecibo)">
+                    {{ recibo.estadoRecibo || 'PENDIENTE' }}
+                  </span>
+                </td>
 
-              <td>
-                <div class="actions-cell">
-                  <a class="table-action btn-ver" [routerLink]="['/cliente/detalle-recibo', recibo.id]">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                    Ver
-                  </a>
+                <td data-label="Acciones">
+                  <div class="actions-cell actions-premium">
+                    <a class="table-action btn-ver" [routerLink]="['/cliente/detalle-recibo', recibo.id]">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Ver
+                    </a>
 
-                  <a
-                    *ngIf="puedePagar(recibo)"
-                    class="table-action btn-pay"
-                    [routerLink]="['/cliente/pagar-recibo', recibo.id]"
-                  >
-                    <svg viewBox="0 0 24 24">
-                      <path d="M12 3v18"/>
-                      <path d="M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6"/>
-                    </svg>
-                    Pagar
-                  </a>
+                    <a
+                      *ngIf="puedePagar(recibo)"
+                      class="table-action btn-pay"
+                      [routerLink]="['/cliente/pagar-recibo', recibo.id]"
+                    >
+                      <svg viewBox="0 0 24 24">
+                        <path d="M12 3v18"/>
+                        <path d="M17 7H9.5a3 3 0 0 0 0 6H14a3 3 0 0 1 0 6H6"/>
+                      </svg>
+                      Pagar
+                    </a>
 
-                  <button type="button" class="table-action btn-print" (click)="imprimirRecibo(recibo)">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M6 9V3h12v6"/>
-                      <path d="M6 18h12v3H6z"/>
-                      <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
-                    </svg>
-                    PDF
-                  </button>
-                </div>
-              </td>
-            </tr>
+                    <button type="button" class="table-action btn-print" (click)="imprimirRecibo(recibo)">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M6 9V3h12v6"/>
+                        <path d="M6 18h12v3H6z"/>
+                        <path d="M6 14H4a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2"/>
+                      </svg>
+                      PDF
+                    </button>
+                  </div>
+                </td>
+              </tr>
 
-            <tr *ngIf="recibosSuministro.length === 0">
-              <td colspan="9" class="empty-row">
-                No hay recibos registrados para este suministro.
-              </td>
-            </tr>
-          </tbody>
+              <tr *ngIf="recibosSuministro.length === 0">
+                <td colspan="9" class="empty-row">
+                  No hay recibos registrados para este suministro.
+                </td>
+              </tr>
+            </tbody>
         </table>
       </div>
     </section>
