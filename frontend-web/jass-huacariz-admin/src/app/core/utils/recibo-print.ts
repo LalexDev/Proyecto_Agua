@@ -1,8 +1,8 @@
-export function imprimirReciboJass(recibo: any, historialBase: any[] = []): void {
+﻿export function imprimirReciboJass(recibo: any, historialBase: any[] = []): void {
   const ventana = window.open('', '_blank', 'width=900,height=950');
 
   if (!ventana) {
-    alert('El navegador bloqueó la ventana de impresión.');
+    alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
     return;
   }
 
@@ -369,17 +369,17 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
       <div class="receipt">
         <div class="top">
           <div class="brand">
-            <div class="logo">💧</div>
+            <div class="logo">ðŸ’§</div>
 
             <div>
               <h1>AGUA POTABLE HUACARIZ</h1>
-              <p>Servicio de agua potable · Recibo de cobranza</p>
-              <p>Cajamarca, Perú · Sistema de Gestión de Agua</p>
+              <p>Servicio de agua potable Â· Recibo de cobranza</p>
+              <p>Cajamarca, PerÃº Â· Sistema de GestiÃ³n de Agua</p>
             </div>
           </div>
 
           <div class="period">
-            <span>PERIODO DE FACTURACIÓN</span>
+            <span>PERIODO DE FACTURACIÃ“N</span>
             <strong>${textoSeguro(periodoTexto)}</strong>
           </div>
         </div>
@@ -393,13 +393,13 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
             <div class="row"><span>DNI:</span><strong>${textoSeguro(dni)}</strong></div>
             <div class="row"><span>Recibo:</span><strong>${textoSeguro(codigoRecibo)}</strong></div>
             <div class="row"><span>Suministro:</span><strong>${textoSeguro(codigoSuministro)}</strong></div>
-            <div class="row"><span>Dirección:</span><strong>${textoSeguro(direccion)}</strong></div>
+            <div class="row"><span>DirecciÃ³n:</span><strong>${textoSeguro(direccion)}</strong></div>
             <div class="row"><span>Sector:</span><strong>${textoSeguro(sector)}</strong></div>
             <div class="row"><span>Estado:</span><strong>${textoSeguro(recibo.estadoRecibo || 'PENDIENTE')}</strong></div>
           </div>
 
           <div class="box">
-            <div class="chart-title">Historial gráfico de consumo últimos 3 meses</div>
+            <div class="chart-title">Historial grÃ¡fico de consumo Ãºltimos 3 meses</div>
             ${graficoSvg}
           </div>
         </div>
@@ -412,11 +412,11 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
 
           <div class="summary-cell">
             <span>Consumo</span>
-            <strong>${numero(recibo.consumoM3 || 0).toFixed(3)} m³</strong>
+            <strong>${numero(recibo.consumoM3 || 0).toFixed(3)} mÂ³</strong>
           </div>
 
           <div class="summary-cell">
-            <span>Emisión</span>
+            <span>EmisiÃ³n</span>
             <strong>${textoSeguro(formatearFecha(recibo.fechaEmision))}</strong>
           </div>
 
@@ -435,7 +435,7 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
           <thead>
             <tr>
               <th>Concepto</th>
-              <th>Descripción</th>
+              <th>DescripciÃ³n</th>
               <th>Importe</th>
             </tr>
           </thead>
@@ -443,7 +443,7 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
           <tbody>
             <tr>
               <td>Consumo de agua</td>
-              <td>Consumo registrado: ${numero(recibo.consumoM3 || 0).toFixed(3)} m³</td>
+              <td>Consumo registrado: ${numero(recibo.consumoM3 || 0).toFixed(3)} mÂ³</td>
               <td class="amount">S/ ${subtotalAgua.toFixed(2)}</td>
             </tr>
 
@@ -478,7 +478,7 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
             <div class="notice">
               <strong>Estimado usuario:</strong>
               Cumpla con realizar sus pagos antes de la fecha de vencimiento para evitar mora,
-              suspensión del servicio o restricciones administrativas. Conserve este recibo como constancia de cobranza.
+              suspensiÃ³n del servicio o restricciones administrativas. Conserve este recibo como constancia de cobranza.
             </div>
 
             <div class="barcode-box">
@@ -515,11 +515,11 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
 
         <div class="footer">
           <div>
-            <strong>Atención:</strong> Documento emitido por el sistema de gestión de agua Agua Potable Huacariz.
+            <strong>AtenciÃ³n:</strong> Documento emitido por el sistema de gestiÃ³n de agua Agua Potable Huacariz.
           </div>
 
           <div>
-            <strong>Validación:</strong> Código de barras ${textoSeguro(codigoValidacion)}
+            <strong>ValidaciÃ³n:</strong> CÃ³digo de barras ${textoSeguro(codigoValidacion)}
           </div>
         </div>
       </div>
@@ -617,7 +617,7 @@ function nombreMes(mes: number): string {
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
 
-  return meses[mes - 1] || 'Mes inválido';
+  return meses[mes - 1] || 'Mes invÃ¡lido';
 }
 
 function formatearFecha(fecha: string): string {

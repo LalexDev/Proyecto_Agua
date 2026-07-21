@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+﻿import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
@@ -43,7 +43,7 @@ export class DetalleSuministro implements OnInit {
 
   cargarDetalle(): void {
     if (!this.codigoSuministro) {
-      this.error = 'No se recibió el código del suministro.';
+      this.error = 'No se recibiÃ³ el cÃ³digo del suministro.';
       return;
     }
 
@@ -77,7 +77,7 @@ export class DetalleSuministro implements OnInit {
             .sort((a, b) => Number(b.id) - Number(a.id));
 
           if (!this.suministro) {
-            this.error = 'No se encontró el suministro solicitado.';
+            this.error = 'No se encontrÃ³ el suministro solicitado.';
           }
 
           this.cdr.detectChanges();
@@ -368,6 +368,6 @@ export class DetalleSuministro implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes inválido';
+    return meses[mes - 1] || 'Mes invÃ¡lido';
   }
 }

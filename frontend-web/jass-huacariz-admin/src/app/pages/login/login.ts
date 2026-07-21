@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,7 +30,7 @@ export class Login {
   mostrarLogin = false;
   mostrarPassword = false;
 
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/auth/login';
+  private readonly apiUrl = '/api/auth/login';
 
   constructor(
     private http: HttpClient,
@@ -66,15 +66,15 @@ export class Login {
     this.abrirLogin();
 
     if (accion === 'recibo') {
-      this.error = 'Para consultar tus recibos, primero inicia sesión.';
+      this.error = 'Para consultar tus recibos, primero inicia sesiÃ³n.';
     }
 
     if (accion === 'pago') {
-      this.error = 'Para registrar pagos, primero inicia sesión.';
+      this.error = 'Para registrar pagos, primero inicia sesiÃ³n.';
     }
 
     if (accion === 'incidencia') {
-      this.error = 'Para reportar una incidencia, primero inicia sesión.';
+      this.error = 'Para reportar una incidencia, primero inicia sesiÃ³n.';
     }
   }
 
@@ -82,12 +82,12 @@ export class Login {
     this.error = '';
 
     if (!this.codigoUsuario.trim()) {
-      this.error = 'Ingrese su código de usuario.';
+      this.error = 'Ingrese su cÃ³digo de usuario.';
       return;
     }
 
     if (!this.password.trim()) {
-      this.error = 'Ingrese su contraseña.';
+      this.error = 'Ingrese su contraseÃ±a.';
       return;
     }
 
@@ -130,7 +130,7 @@ export class Login {
           this.cdr.detectChanges();
         },
         error: (err) => {
-          this.error = err?.error?.error || err?.error?.mensaje || 'Usuario o contraseña incorrectos.';
+          this.error = err?.error?.error || err?.error?.mensaje || 'Usuario o contraseÃ±a incorrectos.';
           this.cdr.detectChanges();
         }
       });

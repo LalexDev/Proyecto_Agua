@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
@@ -87,7 +87,7 @@ export interface CambiarPasswordRequest {
   providedIn: 'root',
 })
 export class ClientePortal {
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/cliente';
+  private readonly apiUrl = '/api/cliente';
 
   constructor(private http: HttpClient) {}
 
@@ -109,7 +109,7 @@ export class ClientePortal {
         const recibo = recibos.find((item) => Number(item.id) === Number(id));
 
         if (!recibo) {
-          throw new Error('No se encontró el recibo solicitado.');
+          throw new Error('No se encontrÃ³ el recibo solicitado.');
         }
 
         return recibo;

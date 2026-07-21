@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -265,8 +265,8 @@ export class Sectores implements OnInit {
     }
 
     return this.sectorSeleccionado.estado
-      ? `¿Deseas desactivar el sector ${this.sectorSeleccionado.nombre}? Ya no estará disponible para nuevas asignaciones.`
-      : `¿Deseas activar el sector ${this.sectorSeleccionado.nombre}? Estará disponible para asignar suministros y lecturadores.`;
+      ? `Â¿Deseas desactivar el sector ${this.sectorSeleccionado.nombre}? Ya no estarÃ¡ disponible para nuevas asignaciones.`
+      : `Â¿Deseas activar el sector ${this.sectorSeleccionado.nombre}? EstarÃ¡ disponible para asignar suministros y lecturadores.`;
   }
 
   textoBotonConfirmacion(): string {

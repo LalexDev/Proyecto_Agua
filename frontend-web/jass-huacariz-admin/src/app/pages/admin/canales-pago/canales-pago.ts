@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -72,7 +72,7 @@ export class CanalesPago implements OnInit {
       }
 
       if (!this.canalEditando.metodoPago?.trim()) {
-        this.error = 'El método de pago es obligatorio.';
+        this.error = 'El mÃ©todo de pago es obligatorio.';
         return;
       }
 
@@ -82,7 +82,7 @@ export class CanalesPago implements OnInit {
       }
 
       if (this.esBilletera() && !this.canalEditando.numero?.trim()) {
-        this.error = 'Ingrese el número de celular para Yape o Plin.';
+        this.error = 'Ingrese el nÃºmero de celular para Yape o Plin.';
         return;
       }
 
@@ -143,7 +143,7 @@ export class CanalesPago implements OnInit {
                 err?.error?.message ||
                 err?.error?.mensaje ||
                 err?.error?.error ||
-                `No se pudo guardar el canal de pago. Código HTTP: ${err?.status || 'desconocido'}`;
+                `No se pudo guardar el canal de pago. CÃ³digo HTTP: ${err?.status || 'desconocido'}`;
             }
 
             this.guardando = false;
@@ -167,7 +167,7 @@ export class CanalesPago implements OnInit {
     if (valor === 'PLIN') return 'Plin';
     if (valor === 'TRANSFERENCIA') return 'Transferencia';
 
-    return metodo || 'Sin método';
+    return metodo || 'Sin mÃ©todo';
   }
 
     nuevoCanal(): void {
@@ -199,7 +199,7 @@ export class CanalesPago implements OnInit {
       if (!archivo) return;
 
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
-        this.error = 'Solo se permiten imágenes JPG, PNG o WEBP.';
+        this.error = 'Solo se permiten imÃ¡genes JPG, PNG o WEBP.';
         return;
       }
 
@@ -216,7 +216,7 @@ export class CanalesPago implements OnInit {
     urlQr(url?: string): string {
       if (!url) return '';
       if (url.startsWith('http')) return url;
-      return `https://qnsdd0d9-8080.brs.devtunnels.ms${url}`;
+      return `${url}`;
     }
 
     esBilletera(): boolean {

@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+﻿import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -63,21 +63,21 @@ export class PagarRecibo implements OnInit {
       codigo: 'YAPE',
       nombre: 'Yape',
       descripcion:
-        'Paga desde tu aplicación Yape y registra el número de operación.',
+        'Paga desde tu aplicaciÃ³n Yape y registra el nÃºmero de operaciÃ³n.',
       icono: 'Y'
     },
     {
       codigo: 'PLIN',
       nombre: 'Plin',
       descripcion:
-        'Paga desde tu aplicación bancaria con Plin.',
+        'Paga desde tu aplicaciÃ³n bancaria con Plin.',
       icono: 'P'
     },
     {
       codigo: 'TRANSFERENCIA',
       nombre: 'Transferencia bancaria',
       descripcion:
-        'Realiza una transferencia y registra el código de operación.',
+        'Realiza una transferencia y registra el cÃ³digo de operaciÃ³n.',
       icono: 'T'
     }
   ];
@@ -106,7 +106,7 @@ export class PagarRecibo implements OnInit {
 
   cargarRecibo(): void {
     if (!this.idRecibo) {
-      this.error = 'No se recibió el ID del recibo.';
+      this.error = 'No se recibiÃ³ el ID del recibo.';
       return;
     }
 
@@ -306,19 +306,19 @@ export class PagarRecibo implements OnInit {
 
     if (metodo === 'YAPE') {
       return canal.numero
-        ? `Yape · ${canal.numero}`
+        ? `Yape Â· ${canal.numero}`
         : 'Yape';
     }
 
     if (metodo === 'PLIN') {
       return canal.numero
-        ? `Plin · ${canal.numero}`
+        ? `Plin Â· ${canal.numero}`
         : 'Plin';
     }
 
     if (metodo === 'TRANSFERENCIA') {
       return canal.banco
-        ? `Transferencia · ${canal.banco}`
+        ? `Transferencia Â· ${canal.banco}`
         : 'Transferencia bancaria';
     }
 
@@ -381,7 +381,7 @@ export class PagarRecibo implements OnInit {
       ? valor
       : `/${valor}`;
 
-    return `https://qnsdd0d9-8080.brs.devtunnels.ms${ruta}`;
+    return `${ruta}`;
   }
 
   logoBanco(banco?: string): string {
@@ -498,11 +498,11 @@ export class PagarRecibo implements OnInit {
       );
 
     if (metodo === 'YAPE') {
-      return 'Ubica el N.° de operación en Yape';
+      return 'Ubica el N.Â° de operaciÃ³n en Yape';
     }
 
     if (metodo === 'PLIN') {
-      return 'Ubica el número de operación en Plin';
+      return 'Ubica el nÃºmero de operaciÃ³n en Plin';
     }
 
     if (metodo === 'TRANSFERENCIA') {
@@ -510,11 +510,11 @@ export class PagarRecibo implements OnInit {
         this.canalPagoElegido()?.banco;
 
       return banco
-        ? `Ubica el número de operación en ${banco}`
-        : 'Ubica el número de operación bancaria';
+        ? `Ubica el nÃºmero de operaciÃ³n en ${banco}`
+        : 'Ubica el nÃºmero de operaciÃ³n bancaria';
     }
 
-    return 'Ubica el código de operación';
+    return 'Ubica el cÃ³digo de operaciÃ³n';
   }
 
   descripcionAyudaOperacion(): string {
@@ -524,18 +524,18 @@ export class PagarRecibo implements OnInit {
       );
 
     if (metodo === 'YAPE') {
-      return 'Abre el detalle del pago y copia únicamente el dato que aparece junto a “Nro. de operación”.';
+      return 'Abre el detalle del pago y copia Ãºnicamente el dato que aparece junto a â€œNro. de operaciÃ³nâ€.';
     }
 
     if (metodo === 'PLIN') {
-      return 'Abre el comprobante y copia el número de operación o transacción mostrado.';
+      return 'Abre el comprobante y copia el nÃºmero de operaciÃ³n o transacciÃ³n mostrado.';
     }
 
     if (metodo === 'TRANSFERENCIA') {
-      return 'Abre la constancia del banco y copia el dato que aparece como número de operación, transacción o constancia.';
+      return 'Abre la constancia del banco y copia el dato que aparece como nÃºmero de operaciÃ³n, transacciÃ³n o constancia.';
     }
 
-    return 'Copia exactamente el código que aparece en tu comprobante.';
+    return 'Copia exactamente el cÃ³digo que aparece en tu comprobante.';
   }
     tituloCodigoOperacion(): string {
     const metodo =
@@ -544,18 +544,18 @@ export class PagarRecibo implements OnInit {
       );
 
     if (metodo === 'YAPE') {
-      return 'N.° de operación de Yape';
+      return 'N.Â° de operaciÃ³n de Yape';
     }
 
     if (metodo === 'PLIN') {
-      return 'N.° de operación de Plin';
+      return 'N.Â° de operaciÃ³n de Plin';
     }
 
     if (metodo === 'TRANSFERENCIA') {
-      return 'Número de operación bancaria';
+      return 'NÃºmero de operaciÃ³n bancaria';
     }
 
-    return 'Código / número de operación';
+    return 'CÃ³digo / nÃºmero de operaciÃ³n';
   }
 
   placeholderCodigoOperacion(): string {
@@ -576,7 +576,7 @@ export class PagarRecibo implements OnInit {
       return 'Ejemplo: 4309301 u OP-123456';
     }
 
-    return 'Ingrese el código de operación';
+    return 'Ingrese el cÃ³digo de operaciÃ³n';
   }
 
   alternarAyudaOperacion(): void {
@@ -615,7 +615,7 @@ export class PagarRecibo implements OnInit {
       )
     ) {
       this.error =
-        'Solo se permiten imágenes JPG, PNG o WEBP.';
+        'Solo se permiten imÃ¡genes JPG, PNG o WEBP.';
 
       this.comprobanteArchivo = null;
       this.limpiarPreviewComprobante();
@@ -657,7 +657,7 @@ export class PagarRecibo implements OnInit {
 
     if (!this.puedePagar()) {
       this.error =
-        'Este recibo ya se encuentra pagado o está en revisión.';
+        'Este recibo ya se encuentra pagado o estÃ¡ en revisiÃ³n.';
       return;
     }
 
@@ -665,7 +665,7 @@ export class PagarRecibo implements OnInit {
       !this.pago.metodoPago?.trim()
     ) {
       this.error =
-        'Seleccione un método de pago.';
+        'Seleccione un mÃ©todo de pago.';
       return;
     }
 
@@ -674,13 +674,13 @@ export class PagarRecibo implements OnInit {
         .length === 0
     ) {
       this.error =
-        'No existe un canal activo para el método seleccionado.';
+        'No existe un canal activo para el mÃ©todo seleccionado.';
       return;
     }
 
     if (!this.canalPagoElegido()) {
       this.error =
-        'Seleccione el canal donde realizará el pago.';
+        'Seleccione el canal donde realizarÃ¡ el pago.';
       return;
     }
 
@@ -691,13 +691,13 @@ export class PagarRecibo implements OnInit {
 
     if (!codigoOperacion) {
       this.error =
-        'Ingrese el código o número de operación.';
+        'Ingrese el cÃ³digo o nÃºmero de operaciÃ³n.';
       return;
     }
 
     if (codigoOperacion.length < 4) {
       this.error =
-        'El código de operación debe tener al menos 4 caracteres.';
+        'El cÃ³digo de operaciÃ³n debe tener al menos 4 caracteres.';
       return;
     }
 
@@ -728,7 +728,7 @@ export class PagarRecibo implements OnInit {
       .subscribe({
         next: () => {
           this.exito =
-            'Tu pago fue enviado para revisión. Agua Potable Huacariz confirmará el pago cuando valide la operación.';
+            'Tu pago fue enviado para revisiÃ³n. Agua Potable Huacariz confirmarÃ¡ el pago cuando valide la operaciÃ³n.';
 
           this.pago.codigoOperacion = '';
           this.comprobanteArchivo = null;
@@ -751,7 +751,7 @@ export class PagarRecibo implements OnInit {
             err?.error?.error ||
             err?.error?.mensaje ||
             err?.error?.message ||
-            'No se pudo enviar el pago. Verifica el código de operación y la captura.';
+            'No se pudo enviar el pago. Verifica el cÃ³digo de operaciÃ³n y la captura.';
 
           this.cdr.detectChanges();
         }
@@ -865,7 +865,7 @@ export class PagarRecibo implements OnInit {
     ];
 
     return meses[mes - 1] ||
-      'Mes inválido';
+      'Mes invÃ¡lido';
   }
 
   fechaCorta(fecha?: string): string {

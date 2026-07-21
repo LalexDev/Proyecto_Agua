@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -58,7 +58,7 @@ export interface PagoResponse {
   providedIn: 'root',
 })
 export class Recibo {
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/recibos';
+  private readonly apiUrl = '/api/recibos';
 
   constructor(private http: HttpClient) {}
 

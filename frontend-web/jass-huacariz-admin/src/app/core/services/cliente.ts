@@ -1,4 +1,4 @@
-
+﻿
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -91,9 +91,9 @@ export interface SectorRequest {
   providedIn: 'root',
 })
 export class Cliente {
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/clientes';
-  private readonly usuariosUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/usuarios';
-  private readonly sectoresUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/sectores';
+  private readonly apiUrl = '/api/clientes';
+  private readonly usuariosUrl = '/api/usuarios';
+  private readonly sectoresUrl = '/api/sectores';
 
   constructor(private http: HttpClient) {}
 

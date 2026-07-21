@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
@@ -68,7 +68,7 @@ export class Recibos implements OnInit {
             this.cdr.detectChanges();
           },
                   error: () => {
-          this.error = 'No se pudieron cargar los recibos. Verifica el backend y tu sesión ADMIN.';
+          this.error = 'No se pudieron cargar los recibos. Verifica el backend y tu sesiÃ³n ADMIN.';
           this.exito = '';
           this.recibos = [];
           this.recibosFiltrados = [];
@@ -173,7 +173,7 @@ export class Recibos implements OnInit {
     }
 
     if (!this.pago.metodoPago || !this.pago.metodoPago.trim()) {
-      this.error = 'Seleccione o ingrese el método de pago.';
+      this.error = 'Seleccione o ingrese el mÃ©todo de pago.';
       this.exito = '';
       return;
     }
@@ -321,7 +321,7 @@ export class Recibos implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes inválido';
+    return meses[mes - 1] || 'Mes invÃ¡lido';
   }
 
 
@@ -329,27 +329,27 @@ export class Recibos implements OnInit {
   const telefono = this.obtenerTelefonoCliente(recibo);
 
   if (!telefono) {
-    this.error = 'Este cliente no tiene teléfono registrado para enviar WhatsApp.';
+    this.error = 'Este cliente no tiene telÃ©fono registrado para enviar WhatsApp.';
     this.exito = '';
     return;
   }
 
   const enlacePortal = 'https://qnsdd0d9-4200.brs.devtunnels.ms/cliente/mis-recibos';
 
-  const mensaje = `💧 *AGUA POTABLE HUACARIZ - NOTIFICACIÓN DE RECIBO*
+  const mensaje = `ðŸ’§ *AGUA POTABLE HUACARIZ - NOTIFICACIÃ“N DE RECIBO*
 
 Estimado(a) *${recibo.nombreCliente || 'usuario'}*:
 
 Le informamos que su recibo de agua potable correspondiente a *${this.periodo(recibo)}* ya fue generado.
 
-📄 Código de recibo: *${recibo.codigoRecibo || '-'}*
-🏠 Suministro: *${recibo.codigoSuministro || '-'}*
-💰 Total a pagar: *S/ ${Number(recibo.total || 0).toFixed(2)}*
-📅 Fecha de vencimiento: *${recibo.fechaVencimiento || '-'}*
+ðŸ“„ CÃ³digo de recibo: *${recibo.codigoRecibo || '-'}*
+ðŸ  Suministro: *${recibo.codigoSuministro || '-'}*
+ðŸ’° Total a pagar: *S/ ${Number(recibo.total || 0).toFixed(2)}*
+ðŸ“… Fecha de vencimiento: *${recibo.fechaVencimiento || '-'}*
 
-⚠️ Por favor realice su pago dentro del plazo establecido de 15 días para evitar mora o restricciones del servicio.
+âš ï¸ Por favor realice su pago dentro del plazo establecido de 15 dÃ­as para evitar mora o restricciones del servicio.
 
-🔗 Consulte su recibo aquí:
+ðŸ”— Consulte su recibo aquÃ­:
 ${enlacePortal}
 
 *AGUA POTABLE HUACARIZ*
@@ -477,7 +477,7 @@ confirmarPagoMultiple(): void {
   }
 
   if (!this.pagoMultiple.metodoPago || !this.pagoMultiple.metodoPago.trim()) {
-    this.error = 'Seleccione el método de pago.';
+    this.error = 'Seleccione el mÃ©todo de pago.';
     this.exito = '';
     return;
   }
@@ -487,7 +487,7 @@ confirmarPagoMultiple(): void {
   const esEfectivo = metodo.toLowerCase() === 'efectivo';
 
   if (!esEfectivo && !codigoBase) {
-    this.error = 'Ingrese el código de operación para Yape, Plin o Transferencia.';
+    this.error = 'Ingrese el cÃ³digo de operaciÃ³n para Yape, Plin o Transferencia.';
     this.exito = '';
     return;
   }
@@ -523,13 +523,13 @@ confirmarPagoMultiple(): void {
         const cantidad = seleccionados.length;
         const total = this.totalSeleccionado();
 
-        this.exito = `Pago múltiple registrado correctamente. ${cantidad} recibo(s) por S/ ${total.toFixed(2)}.`;
+        this.exito = `Pago mÃºltiple registrado correctamente. ${cantidad} recibo(s) por S/ ${total.toFixed(2)}.`;
         this.cerrarPagoMultiple();
         this.limpiarSeleccion();
         this.cargarRecibos();
       },
       error: (err) => {
-        this.error = err?.error?.error || 'No se pudo registrar el pago múltiple.';
+        this.error = err?.error?.error || 'No se pudo registrar el pago mÃºltiple.';
         this.exito = '';
         this.cdr.detectChanges();
       }

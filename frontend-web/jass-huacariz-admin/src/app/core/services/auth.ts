@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Token } from './token';
@@ -21,7 +21,7 @@ export interface LoginResponse {
   providedIn: 'root',
 })
 export class Auth {
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/auth';
+  private readonly apiUrl = '/api/auth';
 
   constructor(
     private http: HttpClient,

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
@@ -164,7 +164,7 @@ limpiarFiltros(): void {
 
   guardarMovimiento(): void {
     if (!this.formulario.categoria?.trim()) {
-      this.error = 'Seleccione una categoría.';
+      this.error = 'Seleccione una categorÃ­a.';
       return;
     }
 
@@ -219,7 +219,7 @@ limpiarFiltros(): void {
   }
 
   anularMovimiento(movimiento: MovimientoCajaResponse): void {
-    if (!confirm(`¿Anular el movimiento de S/ ${Number(movimiento.monto).toFixed(2)}?`)) {
+    if (!confirm(`Â¿Anular el movimiento de S/ ${Number(movimiento.monto).toFixed(2)}?`)) {
       return;
     }
 
@@ -296,10 +296,10 @@ exportarExcel(): void {
   const resumenCategoria = this.resumenPorCategoria();
 
   const filas: any[][] = [
-    ['AGUA POTABLE HUACARIZ - REPORTE DE CAJA / TESORERÍA'],
-    ['Sistema de gestión de agua potable - Control financiero de ingresos y gastos'],
+    ['AGUA POTABLE HUACARIZ - REPORTE DE CAJA / TESORERÃA'],
+    ['Sistema de gestiÃ³n de agua potable - Control financiero de ingresos y gastos'],
     [`Periodo/Filtro: ${periodo}`],
-    [`Fecha de exportación: ${fechaEmision}`],
+    [`Fecha de exportaciÃ³n: ${fechaEmision}`],
     [],
     ['RESUMEN FINANCIERO'],
     ['Concepto', 'Monto S/'],
@@ -309,8 +309,8 @@ exportarExcel(): void {
     ['Gastos / retiros', this.totalEgresosPeriodo()],
     ['Saldo del periodo', this.saldoDisponiblePeriodo()],
     [],
-    ['RESUMEN POR CATEGORÍA'],
-    ['Categoría', 'Ingresos S/', 'Gastos S/', 'Saldo S/'],
+    ['RESUMEN POR CATEGORÃA'],
+    ['CategorÃ­a', 'Ingresos S/', 'Gastos S/', 'Saldo S/'],
     ...resumenCategoria.map((item) => [
       item.categoria,
       item.ingresos,
@@ -319,7 +319,7 @@ exportarExcel(): void {
     ]),
     [],
     ['DETALLE DE MOVIMIENTOS'],
-    ['N°', 'Fecha', 'Tipo', 'Categoría', 'Detalle', 'Responsable', 'Monto S/', 'Estado'],
+    ['NÂ°', 'Fecha', 'Tipo', 'CategorÃ­a', 'Detalle', 'Responsable', 'Monto S/', 'Estado'],
     ...movimientos.map((m, index) => [
       index + 1,
       this.fechaTexto(m.fechaMovimiento),
@@ -394,7 +394,7 @@ exportarExcel(): void {
     }
   }
 
-  // Título principal
+  // TÃ­tulo principal
   ws['A1'].s = {
     font: {
       name: 'Calibri',
@@ -463,7 +463,7 @@ exportarExcel(): void {
     }
   });
 
-  const detalleHeaderRow = filas.findIndex((fila) => fila[0] === 'N°');
+  const detalleHeaderRow = filas.findIndex((fila) => fila[0] === 'NÂ°');
 
   const headerRows = [6, 14];
 
@@ -543,7 +543,7 @@ exportarExcel(): void {
     }
   }
 
-  // Formato moneda en columnas numéricas
+  // Formato moneda en columnas numÃ©ricas
   for (let r = 0; r <= rango.e.r; r++) {
     ['B', 'C', 'D', 'G'].forEach((col) => {
       const ref = `${col}${r + 1}`;
@@ -634,7 +634,7 @@ imprimir(): void {
   const ventana = window.open('', '_blank', 'width=1200,height=850');
 
   if (!ventana) {
-    alert('El navegador bloqueó la ventana de impresión.');
+    alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
     return;
   }
 
@@ -895,12 +895,12 @@ imprimir(): void {
       <div class="report">
         <div class="hero">
           <h1>AGUA POTABLE HUACARIZ - REPORTE DE CAJA</h1>
-          <p>Sistema de gestión de agua potable - Tesorería y control financiero</p>
+          <p>Sistema de gestiÃ³n de agua potable - TesorerÃ­a y control financiero</p>
         </div>
 
         <div class="meta">
           <div>Periodo: ${periodo}</div>
-          <div>Fecha de emisión: ${fecha}</div>
+          <div>Fecha de emisiÃ³n: ${fecha}</div>
         </div>
 
         <div class="content">
@@ -928,10 +928,10 @@ imprimir(): void {
             </div>
           </div>
 
-          <h2 class="section-title">Resumen por categoría</h2>
+          <h2 class="section-title">Resumen por categorÃ­a</h2>
 
           <div class="category-grid">
-            ${resumenCategoria || '<p>No hay categorías para mostrar.</p>'}
+            ${resumenCategoria || '<p>No hay categorÃ­as para mostrar.</p>'}
           </div>
 
           <h2 class="section-title">Detalle de movimientos</h2>
@@ -939,10 +939,10 @@ imprimir(): void {
           <table>
             <thead>
               <tr>
-                <th>N°</th>
+                <th>NÂ°</th>
                 <th>Fecha</th>
                 <th>Tipo</th>
-                <th>Categoría</th>
+                <th>CategorÃ­a</th>
                 <th>Detalle</th>
                 <th>Responsable</th>
                 <th>Monto</th>
@@ -1021,11 +1021,11 @@ nombreMes(valor: number | 'TODOS'): string {
     return 'Todos los meses';
   }
 
-  return this.meses.find((mes) => mes.valor === Number(valor))?.nombre || 'Mes inválido';
+  return this.meses.find((mes) => mes.valor === Number(valor))?.nombre || 'Mes invÃ¡lido';
 }
 
 textoPeriodo(): string {
-  const anio = this.filtroAnio === 'TODOS' ? 'Todos los años' : String(this.filtroAnio);
+  const anio = this.filtroAnio === 'TODOS' ? 'Todos los aÃ±os' : String(this.filtroAnio);
   const mes = this.nombreMes(this.filtroMes);
 
   return `${mes} - ${anio}`;
@@ -1075,7 +1075,7 @@ resumenPorCategoria(): { categoria: string; ingresos: number; egresos: number; s
   const resumen: Record<string, { ingresos: number; egresos: number }> = {};
 
   this.movimientosActivosPeriodo().forEach((m) => {
-    const categoria = m.categoria || 'SIN CATEGORÍA';
+    const categoria = m.categoria || 'SIN CATEGORÃA';
 
     if (!resumen[categoria]) {
       resumen[categoria] = {

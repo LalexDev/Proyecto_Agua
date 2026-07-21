@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -41,12 +41,12 @@ export class SinLecturas implements OnInit {
     this.exitoPendientes = '';
 
     if (!this.filtroPendienteAnio || Number(this.filtroPendienteAnio) < 2024) {
-      this.errorPendientes = 'Ingrese un año válido.';
+      this.errorPendientes = 'Ingrese un aÃ±o vÃ¡lido.';
       return;
     }
 
     if (!this.filtroPendienteMes || Number(this.filtroPendienteMes) < 1 || Number(this.filtroPendienteMes) > 12) {
-      this.errorPendientes = 'Seleccione un mes válido.';
+      this.errorPendientes = 'Seleccione un mes vÃ¡lido.';
       return;
     }
 
@@ -106,15 +106,15 @@ export class SinLecturas implements OnInit {
   exportarPendientesExcel(): void {
     const data = [
       [
-        'N°',
+        'NÂ°',
         'Suministro',
         'Cliente',
         'DNI',
         'Periodo',
-        'Dirección',
+        'DirecciÃ³n',
         'Referencia',
         'Sector',
-        'Estado instalación',
+        'Estado instalaciÃ³n',
         'Lectura anterior'
       ],
       ...this.pendientesFiltrados.map((item: any, index) => [
@@ -159,7 +159,7 @@ export class SinLecturas implements OnInit {
     const ventana = window.open('', '_blank', 'width=1100,height=850');
 
     if (!ventana) {
-      alert('El navegador bloqueó la ventana de impresión.');
+      alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
       return;
     }
 
@@ -175,7 +175,7 @@ export class SinLecturas implements OnInit {
         <td>${this.textoSeguro(item.direccionSuministro || '-')}</td>
         <td>${this.textoSeguro(item.sector || '-')}</td>
         <td>${this.textoSeguro(this.estadoInstalacionTexto(item.estadoInstalacion))}</td>
-        <td>${Number(item.lecturaAnterior || 0).toFixed(3)} m³</td>
+        <td>${Number(item.lecturaAnterior || 0).toFixed(3)} mÂ³</td>
       </tr>
     `).join('');
 
@@ -204,14 +204,14 @@ export class SinLecturas implements OnInit {
         <table>
           <thead>
             <tr>
-              <th>N°</th>
+              <th>NÂ°</th>
               <th>Suministro</th>
               <th>Cliente</th>
               <th>DNI</th>
               <th>Periodo</th>
-              <th>Dirección</th>
+              <th>DirecciÃ³n</th>
               <th>Sector</th>
-              <th>Instalación</th>
+              <th>InstalaciÃ³n</th>
               <th>Lectura anterior</th>
             </tr>
           </thead>
@@ -252,7 +252,7 @@ export class SinLecturas implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes inválido';
+    return meses[mes - 1] || 'Mes invÃ¡lido';
   }
 
   estadoInstalacionTexto(estado?: string): string {
@@ -266,7 +266,7 @@ export class SinLecturas implements OnInit {
       return 'Suspendido';
     }
 
-    return 'Pendiente de instalación';
+    return 'Pendiente de instalaciÃ³n';
   }
 
   estadoInstalacionClase(estado?: string): string {

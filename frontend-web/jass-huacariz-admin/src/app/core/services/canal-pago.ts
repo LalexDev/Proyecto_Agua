@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -19,7 +19,7 @@ export interface CanalPagoResponse {
   providedIn: 'root',
 })
 export class CanalPago {
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/canales-pago';
+  private readonly apiUrl = '/api/canales-pago';
 
   constructor(private http: HttpClient) {}
 

@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+﻿import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
@@ -42,7 +42,7 @@ export class DetalleRecibo implements OnInit {
 
   cargarDetalle(): void {
     if (!this.idRecibo) {
-      this.error = 'No se recibió el ID del recibo.';
+      this.error = 'No se recibiÃ³ el ID del recibo.';
       return;
     }
 
@@ -190,7 +190,7 @@ export class DetalleRecibo implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes inválido';
+    return meses[mes - 1] || 'Mes invÃ¡lido';
   }
 
   fechaCorta(fecha?: string): string {

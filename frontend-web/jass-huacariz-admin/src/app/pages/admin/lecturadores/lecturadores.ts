@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -237,7 +237,7 @@ export class Lecturadores implements OnInit {
 
   private validarFormulario(): boolean {
     if (!this.form.dni || this.form.dni.trim().length !== 8) {
-      this.error = 'Ingrese un DNI válido de 8 dígitos.';
+      this.error = 'Ingrese un DNI vÃ¡lido de 8 dÃ­gitos.';
       return false;
     }
 
@@ -257,12 +257,12 @@ export class Lecturadores implements OnInit {
     }
 
     if (!this.modoEdicion && (!this.form.password.trim() || this.form.password.trim().length < 6)) {
-      this.error = 'Ingrese una contraseña inicial de mínimo 6 caracteres.';
+      this.error = 'Ingrese una contraseÃ±a inicial de mÃ­nimo 6 caracteres.';
       return false;
     }
 
     if (this.modoEdicion && this.form.password.trim() && this.form.password.trim().length < 6) {
-      this.error = 'La nueva contraseña debe tener mínimo 6 caracteres.';
+      this.error = 'La nueva contraseÃ±a debe tener mÃ­nimo 6 caracteres.';
       return false;
     }
 
@@ -356,12 +356,12 @@ export class Lecturadores implements OnInit {
     const nombre = this.nombreCompleto(this.lecturadorSeleccionado);
 
     if (this.accionConfirmacion === 'ELIMINAR') {
-      return `¿Deseas eliminar al lecturador ${nombre}? También se eliminará su usuario de acceso.`;
+      return `Â¿Deseas eliminar al lecturador ${nombre}? TambiÃ©n se eliminarÃ¡ su usuario de acceso.`;
     }
 
     return this.lecturadorSeleccionado.estado
-      ? `¿Deseas inactivar al lecturador ${nombre}? No podrá iniciar sesión.`
-      : `¿Deseas activar al lecturador ${nombre}? Podrá iniciar sesión nuevamente.`;
+      ? `Â¿Deseas inactivar al lecturador ${nombre}? No podrÃ¡ iniciar sesiÃ³n.`
+      : `Â¿Deseas activar al lecturador ${nombre}? PodrÃ¡ iniciar sesiÃ³n nuevamente.`;
   }
 
   textoBotonConfirmacion(): string {

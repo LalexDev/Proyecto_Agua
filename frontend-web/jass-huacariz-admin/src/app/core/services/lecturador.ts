@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -77,8 +77,8 @@ export interface LecturaResponse {
   providedIn: 'root',
 })
 export class Lecturador {
-  private readonly apiLecturador = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/lecturador';
-  private readonly apiLecturas = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/lecturas';
+  private readonly apiLecturador = '/api/lecturador';
+  private readonly apiLecturas = '/api/lecturas';
 
   constructor(private http: HttpClient) {}
 

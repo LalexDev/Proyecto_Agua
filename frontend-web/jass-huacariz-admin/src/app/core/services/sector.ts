@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -13,7 +13,7 @@ export interface SectorResponse {
   providedIn: 'root',
 })
 export class Sector {
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/sectores';
+  private readonly apiUrl = '/api/sectores';
 
   constructor(private http: HttpClient) {}
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -33,7 +33,7 @@ export interface ResumenCajaResponse {
   providedIn: 'root',
 })
 export class MovimientoCaja {
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/movimientos-caja';
+  private readonly apiUrl = '/api/movimientos-caja';
 
   constructor(private http: HttpClient) {}
 

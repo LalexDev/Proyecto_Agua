@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
@@ -59,7 +59,7 @@ export class Inicio implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar la información del cliente.';
+          this.error = 'No se pudo cargar la informaciÃ³n del cliente.';
           this.perfil = null;
           this.suministros = [];
           this.recibos = [];
@@ -328,6 +328,6 @@ export class Inicio implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes inválido';
+    return meses[mes - 1] || 'Mes invÃ¡lido';
   }
 }

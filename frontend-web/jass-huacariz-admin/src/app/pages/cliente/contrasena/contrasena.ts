@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+﻿import { CommonModule, Location } from '@angular/common';
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -44,32 +44,32 @@ export class Contrasena {
     this.exito = '';
 
     if (!this.form.passwordActual.trim()) {
-      this.error = 'Ingrese su contraseña actual.';
+      this.error = 'Ingrese su contraseÃ±a actual.';
       return;
     }
 
     if (!this.form.nuevaPassword.trim()) {
-      this.error = 'Ingrese la nueva contraseña.';
+      this.error = 'Ingrese la nueva contraseÃ±a.';
       return;
     }
 
     if (this.form.nuevaPassword.length < 6) {
-      this.error = 'La nueva contraseña debe tener como mínimo 6 caracteres.';
+      this.error = 'La nueva contraseÃ±a debe tener como mÃ­nimo 6 caracteres.';
       return;
     }
 
     if (!this.form.confirmarPassword.trim()) {
-      this.error = 'Confirme la nueva contraseña.';
+      this.error = 'Confirme la nueva contraseÃ±a.';
       return;
     }
 
     if (this.form.nuevaPassword !== this.form.confirmarPassword) {
-      this.error = 'La nueva contraseña y la confirmación no coinciden.';
+      this.error = 'La nueva contraseÃ±a y la confirmaciÃ³n no coinciden.';
       return;
     }
 
     if (this.form.passwordActual === this.form.nuevaPassword) {
-      this.error = 'La nueva contraseña debe ser diferente a la actual.';
+      this.error = 'La nueva contraseÃ±a debe ser diferente a la actual.';
       return;
     }
 
@@ -90,7 +90,7 @@ export class Contrasena {
       )
       .subscribe({
         next: (response) => {
-          this.exito = response?.mensaje || 'Contraseña actualizada correctamente.';
+          this.exito = response?.mensaje || 'ContraseÃ±a actualizada correctamente.';
           this.limpiarFormulario();
           this.cdr.detectChanges();
         },
@@ -98,7 +98,7 @@ export class Contrasena {
           this.error =
             err?.error?.mensaje ||
             err?.error?.error ||
-            'No se pudo cambiar la contraseña. Verifique su contraseña actual.';
+            'No se pudo cambiar la contraseÃ±a. Verifique su contraseÃ±a actual.';
           this.cdr.detectChanges();
         }
       });
@@ -137,7 +137,7 @@ export class Contrasena {
     }
 
     if (score < 40) {
-      return 'Débil';
+      return 'DÃ©bil';
     }
 
     if (score < 75) {

@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+﻿import { Routes } from '@angular/router';
 import { HistorialLecturas } from './pages/admin/historial-lecturas/historial-lecturas';
 import { Login } from './pages/login/login';
 

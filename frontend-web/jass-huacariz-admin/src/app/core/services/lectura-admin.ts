@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -53,7 +53,7 @@ export interface LecturaPendiente {
   providedIn: 'root'
 })
 export class LecturaAdmin {
-  private readonly apiUrl = 'https://qnsdd0d9-8080.brs.devtunnels.ms/api/admin/lecturas';
+  private readonly apiUrl = '/api/admin/lecturas';
 
   constructor(private http: HttpClient) {}
 
@@ -67,4 +67,5 @@ export class LecturaAdmin {
     );
   }
 }
+
 

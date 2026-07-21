@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -237,7 +237,7 @@ cargarPagos(): void {
   if (valor === 'efectivo' || valor === 'pagoefectivo') return 'Efectivo';
   if (valor === 'transferencia') return 'Transferencia';
 
-    return metodo || 'Sin método';
+    return metodo || 'Sin mÃ©todo';
   }
 
 
@@ -267,8 +267,8 @@ cargarPagos(): void {
   this.pagoPendiente = pago;
 
   this.tituloConfirmacion = 'Confirmar pago';
-  this.mensajeConfirmacion = `¿Deseas aprobar el pago del recibo ${pago.codigoRecibo}?`;
-  this.textoBotonConfirmar = 'Sí, aprobar';
+  this.mensajeConfirmacion = `Â¿Deseas aprobar el pago del recibo ${pago.codigoRecibo}?`;
+  this.textoBotonConfirmar = 'SÃ­, aprobar';
   this.claseConfirmacion = 'aprobar';
 }
 
@@ -278,8 +278,8 @@ abrirConfirmacionRechazar(pago: PagoResponse): void {
   this.pagoPendiente = pago;
 
   this.tituloConfirmacion = 'Rechazar pago';
-  this.mensajeConfirmacion = `¿Deseas rechazar el pago del recibo ${pago.codigoRecibo}?`;
-  this.textoBotonConfirmar = 'Sí, rechazar';
+  this.mensajeConfirmacion = `Â¿Deseas rechazar el pago del recibo ${pago.codigoRecibo}?`;
+  this.textoBotonConfirmar = 'SÃ­, rechazar';
   this.claseConfirmacion = 'rechazar';
 }
 
@@ -350,7 +350,7 @@ confirmarAccionPago(): void {
       return url;
     }
 
-    return `https://qnsdd0d9-8080.brs.devtunnels.ms${url}`;
+    return `${url}`;
   }
 
   cambiarFiltroEstado(): void {
