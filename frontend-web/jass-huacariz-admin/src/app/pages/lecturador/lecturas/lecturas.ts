@@ -127,11 +127,13 @@ export class LecturasLecturador implements OnInit, OnDestroy {
         next: (data) => {
           this.suministro = data;
 
+          const lecturaBase = Number(data.lecturaAnterior ?? data.lecturaInicial ?? 0);
+
           this.lecturaForm = {
             codigoSuministro: data.codigoSuministro,
             anio: new Date().getFullYear(),
             mes: new Date().getMonth() + 1,
-            lecturaActual: Number(data.lecturaInicial || 0),
+            lecturaActual: lecturaBase,
             observacion: 'Lectura mensual registrada'
           };
 
@@ -520,7 +522,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
   }
 
   lecturaAnterior(): number {
-    return Number(this.suministro?.lecturaInicial || 0);
+    return Number(this.suministro?.lecturaAnterior ?? this.suministro?.lecturaInicial ?? 0);
   }
 
   lecturaActual(): number {

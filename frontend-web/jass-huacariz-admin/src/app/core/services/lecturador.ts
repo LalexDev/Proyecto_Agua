@@ -17,6 +17,10 @@ export interface SuministroLecturadorResponse {
   permiteGenerarMantenimiento?: boolean;
   mensajeEstado?: string;
 
+  lecturaAnterior?: number;
+  anioUltimaLectura?: number | null;
+  mesUltimaLectura?: number | null;
+
   nombreCliente?: string;
   dniCliente?: string;
 }
