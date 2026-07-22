@@ -1484,3 +1484,57 @@ button:disabled {
     background-size: 400% 400% !important;
   }
 }
+
+
+.meter-change-box {
+  border: 1px dashed rgba(21, 147, 199, 0.45);
+  background: rgba(21, 147, 199, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: #1593c7;
+}
+
+.meter-change-box small {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.meter-change-alert {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  line-height: 1.45;
+}
+
+.dark-mode .meter-change-box {
+  background: rgba(21, 147, 199, 0.12);
+  border-color: rgba(125, 211, 252, 0.35);
+}
+
+.dark-mode .check-row {
+  color: #e5e7eb;
+}
+
+.dark-mode .meter-change-alert {
+  background: rgba(154, 52, 18, 0.25);
+  border-color: rgba(251, 146, 60, 0.35);
+  color: #fed7aa;
+}

@@ -32,5 +32,12 @@ public class LecturaRequest {
 
     private String observacion;
 
+    private Boolean cambioMedidor = false;
+
+    @DecimalMin(value = "0.000", message = "La lectura inicial del nuevo medidor no puede ser negativa")
+    private BigDecimal lecturaInicialNuevoMedidor;
+
+    private String observacionCambioMedidor;
+
     private String idOperacionCliente;
 }

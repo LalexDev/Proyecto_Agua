@@ -31,6 +31,10 @@ export interface LecturaRequest {
   mes: number;
   lecturaActual: number;
   observacion: string;
+
+  cambioMedidor?: boolean;
+  lecturaInicialNuevoMedidor?: number | null;
+  observacionCambioMedidor?: string;
 }
 
 export interface MantenimientoRequest {
@@ -74,6 +78,12 @@ export interface LecturaResponse {
   consumoM3: number;
   fechaLectura: string;
   observacion: string;
+
+  cambioMedidor?: boolean;
+  lecturaInicialNuevoMedidor?: number | null;
+  observacionCambioMedidor?: string;
+  consumoInusual?: boolean;
+
   recibo: ReciboGeneradoResponse;
 }
 

@@ -278,6 +278,45 @@
           >
         </div>
 
+        <div class="form-group full meter-change-box">
+          <label class="check-row">
+            <input
+              type="checkbox"
+              [(ngModel)]="lecturaForm.cambioMedidor"
+            >
+            <span>Cambio de medidor</span>
+          </label>
+
+          <small>
+            Marcar solo si el medidor físico fue cambiado y la nueva lectura empieza desde otro valor.
+          </small>
+        </div>
+
+        <div class="form-group" *ngIf="lecturaForm.cambioMedidor">
+          <label>Lectura inicial del nuevo medidor</label>
+          <input
+            type="number"
+            step="0.001"
+            [(ngModel)]="lecturaForm.lecturaInicialNuevoMedidor"
+            placeholder="Ejemplo: 0.000"
+          >
+        </div>
+
+        <div class="form-group full" *ngIf="lecturaForm.cambioMedidor">
+          <label>Observación del cambio de medidor</label>
+          <input
+            type="text"
+            [(ngModel)]="lecturaForm.observacionCambioMedidor"
+            placeholder="Ejemplo: Medidor anterior dañado, se instaló nuevo medidor."
+          >
+        </div>
+
+        <div class="form-group full" *ngIf="lecturaForm.cambioMedidor">
+          <div class="meter-change-alert">
+            <strong>Importante:</strong>
+            El código del suministro no cambia. El sistema calculará el consumo desde la lectura inicial del nuevo medidor.
+          </div>
+        </div>
         <div class="form-group full">
           <label>Observación</label>
           <input

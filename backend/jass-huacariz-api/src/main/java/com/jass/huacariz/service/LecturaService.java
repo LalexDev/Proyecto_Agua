@@ -38,6 +38,7 @@ public class LecturaService {
     private static final Integer CONFIGURACION_COBRANZA_ID = 1;
     private static final BigDecimal MORA_INICIAL = new BigDecimal("0.00");
     private static final BigDecimal CONSUMO_MINIMO_COBRABLE = new BigDecimal("1.000");
+    private static final BigDecimal LIMITE_CONSUMO_INUSUAL = new BigDecimal("100.000");
 
     @Transactional
     public LecturaResponse registrarLectura(LecturaRequest request) {
@@ -60,13 +61,50 @@ public class LecturaService {
         BigDecimal lecturaAnterior = obtenerLecturaAnterior(suministro);
         BigDecimal lecturaActual = request.getLecturaActual().setScale(3, RoundingMode.HALF_UP);
 
-        if (lecturaActual.compareTo(lecturaAnterior) < 0) {
-            throw new RuntimeException("La lectura actual no puede ser menor a la lectura anterior.");
+        boolean esCambioMedidor = Boolean.TRUE.equals(request.getCambioMedidor());
+
+        BigDecimal lecturaBaseParaConsumo;
+
+        if (esCambioMedidor) {
+            if (request.getLecturaInicialNuevoMedidor() == null) {
+                throw new RuntimeException("Debe ingresar la lectura inicial del nuevo medidor.");
+            }
+
+            BigDecimal lecturaInicialNuevoMedidor = request.getLecturaInicialNuevoMedidor()
+                    .setScale(3, RoundingMode.HALF_UP);
+
+            if (lecturaInicialNuevoMedidor.compareTo(BigDecimal.ZERO) < 0) {
+                throw new RuntimeException("La lectura inicial del nuevo medidor no puede ser negativa.");
+            }
+
+            if (lecturaActual.compareTo(lecturaInicialNuevoMedidor) < 0) {
+                throw new RuntimeException("La lectura actual no puede ser menor a la lectura inicial del nuevo medidor.");
+            }
+
+            String observacionCambio = request.getObservacionCambioMedidor();
+
+            if (observacionCambio == null || observacionCambio.trim().isBlank()) {
+                throw new RuntimeException("Debe ingresar una observación por el cambio de medidor.");
+            }
+
+            lecturaBaseParaConsumo = lecturaInicialNuevoMedidor;
+        } else {
+            if (lecturaActual.compareTo(lecturaAnterior) < 0) {
+                throw new RuntimeException("La lectura actual no puede ser menor a la lectura anterior. Si hubo cambio de medidor, marque la opción Cambio de medidor.");
+            }
+
+            lecturaBaseParaConsumo = lecturaAnterior;
         }
 
         BigDecimal consumo = lecturaActual
-                .subtract(lecturaAnterior)
+                .subtract(lecturaBaseParaConsumo)
                 .setScale(3, RoundingMode.HALF_UP);
+
+        if (consumo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("El consumo calculado no puede ser negativo.");
+        }
+
+        boolean consumoInusual = consumo.compareTo(LIMITE_CONSUMO_INUSUAL) > 0;
 
         Lectura lectura = Lectura.builder()
                 .suministro(suministro)
@@ -77,6 +115,18 @@ public class LecturaService {
                 .consumoM3(consumo)
                 .fechaLectura(LocalDateTime.now())
                 .observacion(request.getObservacion())
+                .cambioMedidor(esCambioMedidor)
+                .lecturaInicialNuevoMedidor(
+                        esCambioMedidor
+                                ? request.getLecturaInicialNuevoMedidor().setScale(3, RoundingMode.HALF_UP)
+                                : null
+                )
+                .observacionCambioMedidor(
+                        esCambioMedidor
+                                ? request.getObservacionCambioMedidor().trim()
+                                : null
+                )
+                .consumoInusual(consumoInusual)
                 .idOperacionCliente(normalizarIdOperacion(request.getIdOperacionCliente()))
                 .build();
 
@@ -431,6 +481,10 @@ public class LecturaService {
                 .consumoM3(lectura.getConsumoM3())
                 .fechaLectura(lectura.getFechaLectura())
                 .observacion(lectura.getObservacion())
+                .cambioMedidor(lectura.getCambioMedidor())
+                .lecturaInicialNuevoMedidor(lectura.getLecturaInicialNuevoMedidor())
+                .observacionCambioMedidor(lectura.getObservacionCambioMedidor())
+                .consumoInusual(lectura.getConsumoInusual())
                 .idOperacionCliente(lectura.getIdOperacionCliente())
                 .recibo(recibo != null ? convertirReciboAResponse(recibo) : null)
                 .build();

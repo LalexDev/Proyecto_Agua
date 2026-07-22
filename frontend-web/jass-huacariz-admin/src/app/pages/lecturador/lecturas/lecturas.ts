@@ -134,7 +134,10 @@ export class LecturasLecturador implements OnInit, OnDestroy {
             anio: new Date().getFullYear(),
             mes: new Date().getMonth() + 1,
             lecturaActual: lecturaBase,
-            observacion: 'Lectura mensual registrada'
+            observacion: 'Lectura mensual registrada',
+            cambioMedidor: false,
+            lecturaInicialNuevoMedidor: null,
+            observacionCambioMedidor: ''
           };
 
           this.mantenimientoForm = {
@@ -207,9 +210,40 @@ export class LecturasLecturador implements OnInit, OnDestroy {
       return;
     }
 
-    if (Number(this.lecturaForm.lecturaActual) < this.lecturaAnterior()) {
-      this.error = 'La lectura actual no puede ser menor a la lectura anterior.';
+    const esCambioMedidor = Boolean(this.lecturaForm.cambioMedidor);
+    const lecturaActual = Number(this.lecturaForm.lecturaActual);
+    const lecturaAnterior = this.lecturaAnterior();
+
+    if (!esCambioMedidor && lecturaActual < lecturaAnterior) {
+      this.error = 'La lectura actual no puede ser menor a la lectura anterior. Si se cambió el medidor, marque la opción Cambio de medidor.';
       return;
+    }
+
+    if (esCambioMedidor) {
+      if (
+        this.lecturaForm.lecturaInicialNuevoMedidor === null ||
+        this.lecturaForm.lecturaInicialNuevoMedidor === undefined
+      ) {
+        this.error = 'Ingrese la lectura inicial del nuevo medidor.';
+        return;
+      }
+
+      const lecturaInicialNuevoMedidor = Number(this.lecturaForm.lecturaInicialNuevoMedidor);
+
+      if (lecturaInicialNuevoMedidor < 0) {
+        this.error = 'La lectura inicial del nuevo medidor no puede ser negativa.';
+        return;
+      }
+
+      if (lecturaActual < lecturaInicialNuevoMedidor) {
+        this.error = 'La lectura actual no puede ser menor a la lectura inicial del nuevo medidor.';
+        return;
+      }
+
+      if (!this.lecturaForm.observacionCambioMedidor?.trim()) {
+        this.error = 'Ingrese una observación por el cambio de medidor.';
+        return;
+      }
     }
 
     this.registrando = true;
@@ -219,7 +253,14 @@ export class LecturasLecturador implements OnInit, OnDestroy {
       anio: Number(this.lecturaForm.anio),
       mes: Number(this.lecturaForm.mes),
       lecturaActual: Number(this.lecturaForm.lecturaActual),
-      observacion: this.lecturaForm.observacion?.trim() || 'Lectura mensual registrada'
+      observacion: this.lecturaForm.observacion?.trim() || 'Lectura mensual registrada',
+      cambioMedidor: esCambioMedidor,
+      lecturaInicialNuevoMedidor: esCambioMedidor
+        ? Number(this.lecturaForm.lecturaInicialNuevoMedidor)
+        : null,
+      observacionCambioMedidor: esCambioMedidor
+        ? this.lecturaForm.observacionCambioMedidor?.trim()
+        : ''
     };
 
     this.lecturadorService.registrarLectura(payload)
@@ -306,6 +347,10 @@ export class LecturasLecturador implements OnInit, OnDestroy {
 
     this.lecturaForm.lecturaActual = this.lecturaAnterior();
     this.lecturaForm.observacion = 'Consumo cero registrado. Lectura igual a la anterior.';
+
+    this.lecturaForm.cambioMedidor = false;
+    this.lecturaForm.lecturaInicialNuevoMedidor = null;
+    this.lecturaForm.observacionCambioMedidor = '';
 
     this.exito = 'Consumo cero preparado. Ahora puedes registrar la lectura y generar el recibo.';
     this.error = '';
@@ -529,8 +574,16 @@ export class LecturasLecturador implements OnInit, OnDestroy {
     return Number(this.lecturaForm.lecturaActual || 0);
   }
 
+  lecturaBaseConsumo(): number {
+    if (this.lecturaForm.cambioMedidor) {
+      return Number(this.lecturaForm.lecturaInicialNuevoMedidor ?? 0);
+    }
+
+    return this.lecturaAnterior();
+  }
+
   consumoEstimado(): number {
-    const consumo = this.lecturaActual() - this.lecturaAnterior();
+    const consumo = this.lecturaActual() - this.lecturaBaseConsumo();
     return consumo > 0 ? consumo : 0;
   }
 
@@ -539,11 +592,21 @@ export class LecturasLecturador implements OnInit, OnDestroy {
       return 'neutral';
     }
 
-    if (this.lecturaActual() < this.lecturaAnterior()) {
+    if (this.lecturaForm.cambioMedidor) {
+      const lecturaInicialNuevo = Number(this.lecturaForm.lecturaInicialNuevoMedidor ?? 0);
+
+      if (this.lecturaActual() < lecturaInicialNuevo) {
+        return 'error';
+      }
+    } else if (this.lecturaActual() < this.lecturaAnterior()) {
       return 'error';
     }
 
     if (this.consumoEstimado() === 0) {
+      return 'warning';
+    }
+
+    if (this.consumoEstimado() > 100) {
       return 'warning';
     }
 

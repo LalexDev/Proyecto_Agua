@@ -46,9 +46,23 @@ public class Lectura {
     @Column(name = "fecha_lectura", nullable = false)
     private LocalDateTime fechaLectura;
 
-    @Column(name = "observacion", length = 255)
-    private String observacion;
+        @Column(name = "observacion", length = 255)
+        private String observacion;
 
-    @Column(name = "id_operacion_cliente", length = 80, unique = true)
-    private String idOperacionCliente;
+        @Builder.Default
+        @Column(name = "cambio_medidor", nullable = false)
+        private Boolean cambioMedidor = false;
+
+        @Column(name = "lectura_inicial_nuevo_medidor", precision = 10, scale = 3)
+        private BigDecimal lecturaInicialNuevoMedidor;
+
+        @Column(name = "observacion_cambio_medidor", length = 255)
+        private String observacionCambioMedidor;
+
+        @Builder.Default
+        @Column(name = "consumo_inusual", nullable = false)
+        private Boolean consumoInusual = false;
+
+        @Column(name = "id_operacion_cliente", length = 80, unique = true)
+        private String idOperacionCliente;
 }
