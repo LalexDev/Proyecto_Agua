@@ -5,7 +5,7 @@
 >
   <div
     class="sidebar-backdrop"
-    *ngIf="menuMovilAbierto"
+    *ngIf="menuMovilAbierto && !debeCambiarPassword()"
     (click)="cerrarMenuMovil()"
   ></div>
 
@@ -42,7 +42,7 @@
       </div>
     </div>
 
-    <nav class="menu">
+    <nav class="menu" *ngIf="!debeCambiarPassword()"  >
       <a
         routerLink="/cliente/inicio"
         routerLinkActive="active"
@@ -125,15 +125,29 @@
 
   <main class="cliente-main">
     <header class="topbar">
-      <button type="button" class="mobile-menu-button" (click)="abrirCerrarMenuMovil()">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+    <button
+      *ngIf="!debeCambiarPassword()"
+      type="button"
+      class="mobile-menu-button"
+      (click)="abrirCerrarMenuMovil()"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
 
       <div class="topbar-title">
-        <h2>Sistema de Gestión de Agua</h2>
-        <p>Consulta tus suministros, recibos, pagos y datos personales.</p>
+        <h2>
+          {{ debeCambiarPassword() ? 'Cambio obligatorio de contraseña' : 'Sistema de Gestión de Agua' }}
+        </h2>
+
+        <p>
+          {{
+            debeCambiarPassword()
+              ? 'Por seguridad, actualiza tu contraseña temporal para continuar.'
+              : 'Consulta tus suministros, recibos, pagos y datos personales.'
+          }}
+        </p>
       </div>
 
       <div class="topbar-actions">

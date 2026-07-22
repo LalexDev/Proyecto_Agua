@@ -151,4 +151,8 @@ export class ClienteLayout implements OnInit {
 
     this.router.navigate(['/login']);
   }
+
+  debeCambiarPassword(): boolean {
+    return localStorage.getItem('debeCambiarPassword') === 'true';
+  }
 }
