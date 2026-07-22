@@ -107,13 +107,20 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
         }
 
         .logo {
-          width: 42px;
-          height: 42px;
-          border: 1px solid #b7d8e3;
-          border-radius: 8px;
+          width: 44px;
+          height: 44px;
+          border-radius: 10px;
           display: grid;
           place-items: center;
-          font-size: 24px;
+          background: linear-gradient(135deg, #22c1dc 0%, #2f6df6 100%);
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+          overflow: hidden;
+        }
+
+        .logo svg {
+          width: 26px;
+          height: 26px;
+          display: block;
         }
 
         .brand h1 {
@@ -399,7 +406,9 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
       <div class="receipt">
         <div class="top">
           <div class="brand">
-            <div class="logo">●</div>
+            <div class="logo">
+              ${generarLogoAguaSvg()}
+            </div>
 
             <div>
               <h1>AGUA POTABLE HUACARIZ</h1>
@@ -677,6 +686,25 @@ function generarCodigoBarrasSvg(valor: string): string {
       <text x="${anchoTotal / 2}" y="46" text-anchor="middle" font-size="7" fill="#0f2f3d">
         ${textoSeguro(textoCodigo)}
       </text>
+    </svg>
+  `;
+}
+
+function generarLogoAguaSvg(): string {
+  return `
+    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M32 8
+           C32 8, 18 24, 18 35
+           C18 45.5, 24.7 54, 32 54
+           C39.3 54, 46 45.5, 46 35
+           C46 24, 32 8, 32 8Z"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
     </svg>
   `;
 }
