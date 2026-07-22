@@ -1,5 +1,6 @@
 ﻿import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { SessionTimeoutService } from './core/services/session-timeout.service';
 
 @Component({
   selector: 'app-root',
@@ -9,5 +10,8 @@ import { RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly title = signal('jass-huacariz-admin');
-}
 
+  constructor(private sessionTimeoutService: SessionTimeoutService) {
+    this.sessionTimeoutService.iniciar();
+  }
+}
