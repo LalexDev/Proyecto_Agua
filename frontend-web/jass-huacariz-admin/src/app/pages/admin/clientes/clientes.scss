@@ -2129,3 +2129,97 @@ tbody tr:hover {
     color: #67e8f9 !important;
   }
 }
+
+.reset-password-modal {
+  max-width: 520px;
+}
+
+.reset-password-body,
+.reset-password-success {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 20px;
+  padding: 18px;
+  margin: 18px 0;
+}
+
+.reset-password-icon,
+.success-icon {
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+}
+
+.reset-password-icon {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.success-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.reset-password-icon svg,
+.success-icon svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.reset-password-body span {
+  display: block;
+  color: #64748b;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.reset-password-body strong {
+  display: block;
+  color: #0f2f44;
+  font-size: 1.6rem;
+  font-weight: 950;
+  margin-bottom: 6px;
+}
+
+.reset-password-body small {
+  display: block;
+  color: #64748b;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.reset-password-success pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: inherit;
+  color: #0f2f44;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+body.jass-dark-theme .reset-password-body,
+body.jass-dark-theme .reset-password-success {
+  background: #101f33;
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+body.jass-dark-theme .reset-password-body strong,
+body.jass-dark-theme .reset-password-success pre {
+  color: #f8fafc;
+}
+
+body.jass-dark-theme .reset-password-body span,
+body.jass-dark-theme .reset-password-body small {
+  color: #94a3b8;
+}

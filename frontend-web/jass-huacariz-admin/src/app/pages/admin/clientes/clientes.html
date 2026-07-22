@@ -1045,5 +1045,101 @@
         </button>
       </div>
     </div>
+  </div>  
+
+    <!-- MODAL CONFIRMAR RESTABLECER CONTRASEÑA -->
+  <div class="modal-backdrop" *ngIf="modalResetPasswordVisible && clienteResetPassword">
+    <div class="modal-card confirm reset-password-modal">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Seguridad</span>
+          <h3>Restablecer contraseña</h3>
+          <p>
+            ¿Deseas restablecer la contraseña de
+            <strong>{{ nombreClienteReset() }}</strong>?
+          </p>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarModalResetPassword()">
+          ✕
+        </button>
+      </div>
+
+      <div class="reset-password-body">
+        <div class="reset-password-icon">
+          <svg viewBox="0 0 24 24">
+            <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+            <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+          </svg>
+        </div>
+
+        <div>
+          <span>Contraseña temporal</span>
+          <strong>cliente123</strong>
+          <small>El cliente deberá cambiarla obligatoriamente al iniciar sesión.</small>
+        </div>
+      </div>
+
+      <div *ngIf="errorResetPassword" class="alert alert-error modal-alert">
+        {{ errorResetPassword }}
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="cerrarModalResetPassword()"
+          [disabled]="restableciendoPasswordId !== null"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="confirmarRestablecerPassword()"
+          [disabled]="restableciendoPasswordId !== null"
+        >
+          {{
+            restableciendoPasswordId !== null
+              ? 'Restableciendo...'
+              : 'Sí, restablecer'
+          }}
+        </button>
+      </div>
+    </div>
   </div>
+
+  <!-- MODAL RESULTADO RESTABLECER CONTRASEÑA -->
+  <div class="modal-backdrop" *ngIf="modalResetResultadoVisible">
+    <div class="modal-card confirm reset-password-modal">
+      <div class="modal-header">
+        <div>
+          <span class="tag">Proceso completado</span>
+          <h3>{{ resultadoResetPasswordTitulo }}</h3>
+        </div>
+
+        <button type="button" class="close-btn" (click)="cerrarModalResultadoReset()">
+          ✕
+        </button>
+      </div>
+
+      <div class="reset-password-success">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+        </div>
+
+        <pre>{{ resultadoResetPasswordMensaje }}</pre>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-primary" (click)="cerrarModalResultadoReset()">
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
