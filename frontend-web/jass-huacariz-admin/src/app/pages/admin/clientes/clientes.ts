@@ -64,6 +64,11 @@ export class Clientes implements OnInit {
   mostrarEditarSuministro = false;
   mostrarAgregarSuministro = false;
 
+  mensajeResetPassword = '';
+  errorResetPassword = '';
+  passwordTemporalReset = '';
+  restableciendoPasswordId: number | null = null;
+
   clienteDetalle: ClienteResponse | null = null;
   clienteEditando: ClienteResponse | null = null;
   clienteSuministroEditando: ClienteResponse | null = null;
@@ -1196,5 +1201,59 @@ export class Clientes implements OnInit {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+
+    restablecerPassword(cliente: any): void {
+    const nombreCliente =
+      cliente?.nombreCompleto ||
+      `${cliente?.nombres || ''} ${cliente?.apellidos || ''}`.trim() ||
+      cliente?.dni ||
+      'cliente';
+
+    const confirmar = confirm(
+      `¿Deseas restablecer la contraseña de ${nombreCliente}?\n\n` +
+        `La contraseña temporal será: cliente123\n` +
+        `El cliente deberá cambiarla al iniciar sesión.`
+    );
+
+    if (!confirmar) {
+      return;
+    }
+
+    this.mensajeResetPassword = '';
+    this.errorResetPassword = '';
+    this.passwordTemporalReset = '';
+    this.restableciendoPasswordId = cliente.id;
+
+    this.clienteService
+      .restablecerPasswordCliente(cliente.id)
+      .pipe(
+        finalize(() => {
+          this.restableciendoPasswordId = null;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.passwordTemporalReset = response?.passwordTemporal || 'cliente123';
+          this.mensajeResetPassword =
+            response?.mensaje ||
+            'Contraseña restablecida correctamente.';
+
+          alert(
+            `Contraseña restablecida correctamente.\n\n` +
+              `Cliente: ${nombreCliente}\n` +
+              `Contraseña temporal: ${this.passwordTemporalReset}\n\n` +
+              `El cliente deberá cambiarla al iniciar sesión.`
+          );
+        },
+        error: (error) => {
+          console.error(error);
+          this.errorResetPassword =
+            error?.error?.mensaje ||
+            error?.error?.error ||
+            'No se pudo restablecer la contraseña del cliente.';
+        }
+      });
   }
 }

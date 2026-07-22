@@ -219,6 +219,17 @@
 </button>
   </section>
 
+    <div *ngIf="mensajeResetPassword" class="alert alert-info">
+      {{ mensajeResetPassword }}
+      <br />
+      Contraseña temporal:
+      <strong>{{ passwordTemporalReset }}</strong>
+    </div>
+
+    <div *ngIf="errorResetPassword" class="alert alert-error">
+      {{ errorResetPassword }}
+    </div>
+
   <section class="table-card">
     <div class="table-card__header">
       <div>
@@ -336,6 +347,23 @@
                   </svg>
                   <span>Editar</span>
                 </button>
+                
+                <button
+                  type="button"
+                  class="btn-reset-password"
+                  title="Restablecer contraseña"
+                  (click)="restablecerPassword(cliente); $event.stopPropagation()"
+                  [disabled]="restableciendoPasswordId === cliente.id"
+                >
+                  <span>
+                    {{
+                      restableciendoPasswordId === cliente.id
+                        ? 'Restableciendo...'
+                        : 'Restablecer contraseña'
+                    }}
+                  </span>
+                </button>
+
 
                 <button
                   type="button"

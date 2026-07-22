@@ -31,6 +31,11 @@ export interface ClienteResponse {
   suministros: SuministroResponse[];
 }
 
+export interface ResetPasswordClienteResponse {
+  mensaje: string;
+  passwordTemporal: string;
+}
+
 export interface SuministroRequest {
   idSector: number;
   direccionSuministro: string;
@@ -116,6 +121,12 @@ export class Cliente {
     );
   }
 
+  restablecerPasswordCliente(clienteId: number) {
+    return this.http.patch<ResetPasswordClienteResponse>(
+      `${this.apiUrl}/${clienteId}/reset-password`,
+      {}
+    );
+  }
 
   listarClientes(): Observable<ClienteResponse[]> {
     return this.http.get<ClienteResponse[]>(this.apiUrl);
