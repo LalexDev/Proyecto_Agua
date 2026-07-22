@@ -20,6 +20,21 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
   const total = numero(recibo.total || recibo.totalRecibo || 0);
   const cargos = mantenimiento + lector + otros + mora;
 
+  const cambioMedidor = Boolean(recibo.cambioMedidor);
+  const consumoInusual = Boolean(recibo.consumoInusual);
+  const lecturaInicialNuevoMedidor = recibo.lecturaInicialNuevoMedidor !== null &&
+    recibo.lecturaInicialNuevoMedidor !== undefined
+      ? numero(recibo.lecturaInicialNuevoMedidor)
+      : null;
+
+  const observacionCambioMedidor = texto(recibo.observacionCambioMedidor || '');
+  const avisoLecturaHtml = generarAvisoLecturaHtml(
+    cambioMedidor,
+    consumoInusual,
+    lecturaInicialNuevoMedidor,
+    observacionCambioMedidor
+  );
+
   const codigoRecibo = texto(recibo.codigoRecibo || '-');
   const codigoSuministro = texto(recibo.codigoSuministro || '-');
 
@@ -254,6 +269,21 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
           margin-bottom: 3px;
         }
 
+        .reading-note {
+          border: 1px solid #f4b183;
+          background: #fff7ed;
+          color: #7c2d12;
+          padding: 6px 7px;
+          margin-bottom: 7px;
+          font-size: 9.5px;
+          line-height: 1.25;
+        }
+
+        .reading-note strong {
+          display: block;
+          margin-bottom: 3px;
+        }
+
         .barcode-box {
           border: 1px solid #b7d8e3;
           margin-top: 7px;
@@ -431,6 +461,8 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
           </div>
         </div>
 
+        ${avisoLecturaHtml}
+
         <table>
           <thead>
             <tr>
@@ -532,6 +564,44 @@ function generarHtmlReciboCompacto(recibo: any, historialBase: any[] = []): stri
     </html>
   `;
 }
+
+  function generarAvisoLecturaHtml(
+    cambioMedidor: boolean,
+    consumoInusual: boolean,
+    lecturaInicialNuevoMedidor: number | null,
+    observacionCambioMedidor: string
+  ): string {
+    if (!cambioMedidor && !consumoInusual) {
+      return '';
+    }
+
+    const partes: string[] = [];
+
+    if (cambioMedidor) {
+      partes.push(
+        `Cambio de medidor. Lectura inicial del nuevo medidor: ${
+          lecturaInicialNuevoMedidor !== null ? lecturaInicialNuevoMedidor.toFixed(3) : '0.000'
+        } m³.`
+      );
+
+      if (observacionCambioMedidor) {
+        partes.push(`Motivo: ${textoSeguro(observacionCambioMedidor)}.`);
+      }
+
+      partes.push('El código del suministro se mantiene igual.');
+    }
+
+    if (consumoInusual) {
+      partes.push('Consumo inusual detectado. Se recomienda verificar la lectura registrada.');
+    }
+
+    return `
+      <div class="reading-note">
+        <strong>Observación de lectura:</strong>
+        ${partes.map((item) => `<div>${item}</div>`).join('')}
+      </div>
+    `;
+  }
 
 function generarGraficoConsumoSvgCompacto(reciboActual: any, historialBase: any[]): string {
   const codigo = texto(reciboActual.codigoSuministro || '').toUpperCase();

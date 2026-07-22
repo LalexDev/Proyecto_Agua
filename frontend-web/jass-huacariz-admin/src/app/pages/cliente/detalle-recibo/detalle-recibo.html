@@ -99,6 +99,45 @@
       </article>
     </section>
 
+    <section
+      class="reading-alert-card"
+      *ngIf="item.cambioMedidor || item.consumoInusual"
+    >
+      <div class="reading-alert-header">
+        <span>Observación de lectura</span>
+        <strong>Información importante del consumo</strong>
+      </div>
+
+      <div class="reading-alert-grid">
+        <div *ngIf="item.cambioMedidor">
+          <span>Cambio de medidor</span>
+          <strong>Sí</strong>
+        </div>
+
+        <div *ngIf="item.cambioMedidor">
+          <span>Lectura inicial del nuevo medidor</span>
+          <strong>{{ item.lecturaInicialNuevoMedidor | number:'1.2-3' }} m³</strong>
+        </div>
+
+        <div *ngIf="item.consumoInusual">
+          <span>Consumo inusual</span>
+          <strong>Revisar lectura</strong>
+        </div>
+      </div>
+
+      <p *ngIf="item.cambioMedidor">
+        El código del suministro no cambia. El consumo fue calculado desde la lectura inicial del nuevo medidor.
+      </p>
+
+      <p *ngIf="item.observacionCambioMedidor">
+        <strong>Motivo:</strong> {{ item.observacionCambioMedidor }}
+      </p>
+
+      <p *ngIf="item.consumoInusual">
+        <strong>Aviso:</strong> Se detectó un consumo superior al límite normal. Se recomienda verificar la lectura registrada.
+      </p>
+    </section>
+
     <section class="detail-grid">
       <article class="panel-card">
         <div class="section-title">
@@ -263,6 +302,26 @@
               <span>Total</span>
               <strong>S/ {{ item.total | number:'1.2-2' }}</strong>
             </div>
+          </div>
+
+          <div
+            class="receipt-reading-note"
+            *ngIf="item.cambioMedidor || item.consumoInusual"
+          >
+            <strong>Observación de lectura:</strong>
+
+            <span *ngIf="item.cambioMedidor">
+              Cambio de medidor. Lectura inicial del nuevo medidor:
+              {{ item.lecturaInicialNuevoMedidor | number:'1.2-3' }} m³.
+            </span>
+
+            <span *ngIf="item.observacionCambioMedidor">
+              Motivo: {{ item.observacionCambioMedidor }}.
+            </span>
+
+            <span *ngIf="item.consumoInusual">
+              Consumo inusual detectado. Se recomienda verificar la lectura.
+            </span>
           </div>
 
           <div class="receipt-table">

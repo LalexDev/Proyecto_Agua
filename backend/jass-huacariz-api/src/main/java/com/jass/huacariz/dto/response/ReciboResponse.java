@@ -31,6 +31,10 @@ public class ReciboResponse {
     private Integer mes;
 
     private BigDecimal consumoM3;
+    private Boolean cambioMedidor;
+    private BigDecimal lecturaInicialNuevoMedidor;
+    private String observacionCambioMedidor;
+    private Boolean consumoInusual;
     private BigDecimal subtotalAgua;
     private BigDecimal cargoMantenimiento;
     private BigDecimal cargoLector;

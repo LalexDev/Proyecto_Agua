@@ -18,6 +18,12 @@ export interface ReciboResponse {
   mes: number;
 
   consumoM3: number;
+
+  cambioMedidor?: boolean;
+  lecturaInicialNuevoMedidor?: number | null;
+  observacionCambioMedidor?: string | null;
+  consumoInusual?: boolean;
+
   subtotalAgua: number;
   cargoMantenimiento: number;
   cargoLector: number;
