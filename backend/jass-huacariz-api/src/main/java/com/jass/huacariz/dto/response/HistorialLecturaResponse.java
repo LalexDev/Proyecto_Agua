@@ -23,6 +23,11 @@ public class HistorialLecturaResponse {
     private String estadoRecibo;
     private LocalDateTime fechaRegistro;
 
+    private Boolean cambioMedidor;
+    private BigDecimal lecturaInicialNuevoMedidor;
+    private String observacionCambioMedidor;
+    private Boolean consumoInusual;
+
     private BigDecimal subtotalAgua;
     private BigDecimal cargoMantenimiento;
     private BigDecimal cargoLector;
@@ -53,6 +58,10 @@ public class HistorialLecturaResponse {
             BigDecimal totalRecibo,
             String estadoRecibo,
             LocalDateTime fechaRegistro,
+            Boolean cambioMedidor,
+            BigDecimal lecturaInicialNuevoMedidor,
+            String observacionCambioMedidor,
+            Boolean consumoInusual,
             BigDecimal subtotalAgua,
             BigDecimal cargoMantenimiento,
             BigDecimal cargoLector,
@@ -79,6 +88,10 @@ public class HistorialLecturaResponse {
         this.totalRecibo = totalRecibo;
         this.estadoRecibo = estadoRecibo;
         this.fechaRegistro = fechaRegistro;
+        this.cambioMedidor = cambioMedidor;
+        this.lecturaInicialNuevoMedidor = lecturaInicialNuevoMedidor;
+        this.observacionCambioMedidor = observacionCambioMedidor;
+        this.consumoInusual = consumoInusual;
         this.subtotalAgua = subtotalAgua;
         this.cargoMantenimiento = cargoMantenimiento;
         this.cargoLector = cargoLector;
@@ -164,4 +177,19 @@ public class HistorialLecturaResponse {
 
     public String getCodigoBarras() { return codigoBarras; }
     public void setCodigoBarras(String codigoBarras) { this.codigoBarras = codigoBarras; }
+    public Boolean getCambioMedidor() { return cambioMedidor; }
+    public void setCambioMedidor(Boolean cambioMedidor) { this.cambioMedidor = cambioMedidor; }
+
+    public BigDecimal getLecturaInicialNuevoMedidor() { return lecturaInicialNuevoMedidor; }
+    public void setLecturaInicialNuevoMedidor(BigDecimal lecturaInicialNuevoMedidor) {
+        this.lecturaInicialNuevoMedidor = lecturaInicialNuevoMedidor;
+    }
+
+    public String getObservacionCambioMedidor() { return observacionCambioMedidor; }
+    public void setObservacionCambioMedidor(String observacionCambioMedidor) {
+        this.observacionCambioMedidor = observacionCambioMedidor;
+    }
+
+    public Boolean getConsumoInusual() { return consumoInusual; }
+    public void setConsumoInusual(Boolean consumoInusual) { this.consumoInusual = consumoInusual; }
 }

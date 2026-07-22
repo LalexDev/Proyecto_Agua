@@ -92,6 +92,11 @@ public class AdminLecturaRepository {
                 recibo != null ? recibo.getEstadoRecibo() : "PENDIENTE",
                 lectura.getFechaLectura(),
 
+                lectura.getCambioMedidor(),
+                lectura.getLecturaInicialNuevoMedidor(),
+                lectura.getObservacionCambioMedidor(),
+                lectura.getConsumoInusual(),
+
                 recibo != null ? recibo.getSubtotalAgua() : java.math.BigDecimal.ZERO,
                 recibo != null ? recibo.getCargoMantenimiento() : java.math.BigDecimal.ZERO,
                 recibo != null ? recibo.getCargoLector() : java.math.BigDecimal.ZERO,

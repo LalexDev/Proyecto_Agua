@@ -340,6 +340,16 @@
 
           <td data-label="Consumo">
             <strong>{{ item.consumoM3 | number:'1.2-3' }} m³</strong>
+
+            <div class="meter-flags">
+              <span class="meter-flag flag-change" *ngIf="item.cambioMedidor">
+                Cambio de medidor
+              </span>
+
+              <span class="meter-flag flag-warning" *ngIf="item.consumoInusual">
+                Consumo inusual
+              </span>
+            </div>
           </td>
 
           <td data-label="Recibo">
@@ -495,6 +505,39 @@
           <span>Consumo</span>
           <strong>{{ lecturaSeleccionada.consumoM3 | number:'1.2-3' }} m³</strong>
         </div>
+      </div>
+
+      <div
+        class="meter-detail-card"
+        *ngIf="lecturaSeleccionada.cambioMedidor || lecturaSeleccionada.consumoInusual"
+      >
+        <div class="meter-detail-title">
+          <strong>Alertas de lectura</strong>
+        </div>
+
+        <div class="meter-detail-grid">
+          <div *ngIf="lecturaSeleccionada.cambioMedidor">
+            <span>Cambio de medidor</span>
+            <strong>Sí</strong>
+          </div>
+
+          <div *ngIf="lecturaSeleccionada.cambioMedidor">
+            <span>Lectura inicial nuevo medidor</span>
+            <strong>
+              {{ lecturaSeleccionada.lecturaInicialNuevoMedidor | number:'1.2-3' }} m³
+            </strong>
+          </div>
+
+          <div *ngIf="lecturaSeleccionada.consumoInusual">
+            <span>Consumo inusual</span>
+            <strong>Sí, revisar lectura</strong>
+          </div>
+        </div>
+
+        <p *ngIf="lecturaSeleccionada.observacionCambioMedidor">
+          <strong>Observación:</strong>
+          {{ lecturaSeleccionada.observacionCambioMedidor }}
+        </p>
       </div>
 
       <div class="payment-summary">

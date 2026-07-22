@@ -27,6 +27,10 @@ export interface HistorialLectura {
   mora?: number;
   estadoRecibo: string;
   fechaRegistro: string;
+  cambioMedidor?: boolean;
+  lecturaInicialNuevoMedidor?: number | null;
+  observacionCambioMedidor?: string | null;
+  consumoInusual?: boolean;
   fechaLectura?: string;
   fechaEmision?: string;
   fechaVencimiento?: string;
