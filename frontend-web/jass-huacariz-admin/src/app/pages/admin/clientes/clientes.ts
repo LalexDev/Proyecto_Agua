@@ -1217,76 +1217,80 @@ export class Clientes implements OnInit {
   this.modalResetPasswordVisible = true;
 }
 
-cerrarModalResetPassword(): void {
-  if (this.restableciendoPasswordId !== null) {
+confirmarRestablecerPassword(): void {
+  const cliente = this.clienteResetPassword;
+
+  if (!cliente?.id) {
+    this.errorResetPassword = 'No se pudo identificar al cliente.';
+    this.cdr.detectChanges();
     return;
   }
 
-  this.modalResetPasswordVisible = false;
-  this.clienteResetPassword = null;
+  const nombreCliente =
+    cliente?.nombreCompleto ||
+    `${cliente?.nombres || ''} ${cliente?.apellidos || ''}`.trim() ||
+    cliente?.dni ||
+    'cliente';
+
+  this.mensajeResetPassword = '';
+  this.errorResetPassword = '';
+  this.passwordTemporalReset = '';
+  this.restableciendoPasswordId = cliente.id;
+  this.cdr.detectChanges();
+
+  this.clienteService
+    .restablecerPasswordCliente(cliente.id)
+    .pipe(
+      finalize(() => {
+        this.restableciendoPasswordId = null;
+        this.cdr.detectChanges();
+      })
+    )
+    .subscribe({
+      next: (response) => {
+        const passwordTemporal = response?.passwordTemporal || 'cliente123';
+
+        this.passwordTemporalReset = passwordTemporal;
+
+        this.modalResetPasswordVisible = false;
+
+        this.resultadoResetPasswordTitulo =
+          'Contraseña restablecida correctamente';
+
+        this.resultadoResetPasswordMensaje =
+          `Cliente: ${nombreCliente}\n` +
+          `Contraseña temporal: ${passwordTemporal}\n\n` +
+          `El cliente deberá cambiarla al iniciar sesión.`;
+
+        this.modalResetResultadoVisible = true;
+
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error(error);
+
+        this.errorResetPassword =
+          error?.error?.mensaje ||
+          error?.error?.error ||
+          'No se pudo restablecer la contraseña del cliente.';
+
+        this.cdr.detectChanges();
+      }
+    });
 }
 
-confirmarRestablecerPassword(): void {
-      const cliente = this.clienteResetPassword;
-
-      if (!cliente?.id) {
-        this.errorResetPassword = 'No se pudo identificar al cliente.';
+    cerrarModalResetPassword(): void {
+      if (this.restableciendoPasswordId !== null) {
         return;
       }
 
-      const nombreCliente =
-        cliente?.nombreCompleto ||
-        `${cliente?.nombres || ''} ${cliente?.apellidos || ''}`.trim() ||
-        cliente?.dni ||
-        'cliente';
-
-      this.mensajeResetPassword = '';
-      this.errorResetPassword = '';
-      this.passwordTemporalReset = '';
-      this.restableciendoPasswordId = cliente.id;
-
-      this.clienteService
-        .restablecerPasswordCliente(cliente.id)
-        .pipe(
-          finalize(() => {
-            this.restableciendoPasswordId = null;
-          })
-        )
-        .subscribe({
-          next: (response) => {
-            this.passwordTemporalReset = response?.passwordTemporal || 'cliente123';
-            this.mensajeResetPassword =
-              response?.mensaje ||
-              'Contraseña restablecida correctamente.';
-
-            this.modalResetPasswordVisible = false;
-
-            this.resultadoResetPasswordTitulo =
-              'Contraseña restablecida correctamente';
-
-            this.resultadoResetPasswordMensaje =
-              `Cliente: ${nombreCliente}\n` +
-              `Contraseña temporal: ${this.passwordTemporalReset}\n\n` +
-              `El cliente deberá cambiarla al iniciar sesión.`;
-
-            this.modalResetResultadoVisible = true;
-          },
-          error: (error) => {
-            console.error(error);
-
-            this.errorResetPassword =
-              error?.error?.mensaje ||
-              error?.error?.error ||
-              'No se pudo restablecer la contraseña del cliente.';
-          }
-        });
-    }
-
-    cerrarModalResultadoReset(): void {
-      this.modalResetResultadoVisible = false;
-      this.resultadoResetPasswordTitulo = '';
-      this.resultadoResetPasswordMensaje = '';
+      this.modalResetPasswordVisible = false;
       this.clienteResetPassword = null;
+      this.errorResetPassword = '';
+      this.mensajeResetPassword = '';
+      this.passwordTemporalReset = '';
+
+      this.cdr.detectChanges();
     }
 
     nombreClienteReset(): string {
@@ -1298,6 +1302,18 @@ confirmarRestablecerPassword(): void {
         cliente?.dni ||
         'cliente'
       );
+    }
+
+        cerrarModalResultadoReset(): void {
+      this.modalResetResultadoVisible = false;
+      this.resultadoResetPasswordTitulo = '';
+      this.resultadoResetPasswordMensaje = '';
+      this.clienteResetPassword = null;
+      this.errorResetPassword = '';
+      this.mensajeResetPassword = '';
+      this.passwordTemporalReset = '';
+
+      this.cdr.detectChanges();
     }
 
 }
