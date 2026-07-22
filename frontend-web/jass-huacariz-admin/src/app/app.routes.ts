@@ -34,6 +34,8 @@ import { SinLecturas } from './pages/admin/sin-lecturas/sin-lecturas';
 import { CanalesPago } from './pages/admin/canales-pago/canales-pago';
 import { Caja } from './pages/admin/caja/caja';
 
+import { passwordObligatorioGuard } from './core/guards/password-obligatorio-guard';
+
 export const routes: Routes = [
   {
     path: '',
@@ -68,10 +70,11 @@ export const routes: Routes = [
   },
   {
     path: 'cliente',
-    component: ClienteLayout,
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['CLIENTE'] },
-    children: [
+      component: ClienteLayout,
+      canActivate: [authGuard, roleGuard],
+      canActivateChild: [passwordObligatorioGuard],
+      data: { roles: ['CLIENTE'] },
+      children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
       { path: 'inicio', component: Inicio },
       { path: 'mis-suministros', component: MisSuministros },

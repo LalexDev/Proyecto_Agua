@@ -38,6 +38,7 @@ public class AuthService {
                 .tipoToken("Bearer")
                 .codigoUsuario(usuario.getCodigoUsuario())
                 .rol(usuario.getRol().getNombre())
+                .debeCambiarPassword(Boolean.TRUE.equals(usuario.getDebeCambiarPassword()))
                 .expiracion(jwtService.getExpiration())
                 .mensaje("Login exitoso")
                 .build();

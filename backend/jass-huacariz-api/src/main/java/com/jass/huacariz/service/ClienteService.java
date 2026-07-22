@@ -60,6 +60,7 @@ public class ClienteService {
                 .passwordHash(passwordEncoder.encode(PASSWORD_INICIAL_CLIENTE))
                 .rol(rolCliente)
                 .estado(true)
+                .debeCambiarPassword(true)
                 .fechaCreacion(LocalDateTime.now())
                 .build();
 
@@ -351,6 +352,24 @@ public class ClienteService {
         suministro = suministroRepository.save(suministro);
 
         return convertirSuministroAResponse(suministro);
+    }
+
+    @Transactional
+    public String restablecerPasswordCliente(Integer clienteId) {
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new RuntimeException("No existe el cliente con ID: " + clienteId));
+
+        Usuario usuario = cliente.getUsuario();
+
+        if (usuario == null) {
+            throw new RuntimeException("El cliente no tiene usuario asociado.");
+        }
+
+        usuario.setPasswordHash(passwordEncoder.encode(PASSWORD_INICIAL_CLIENTE));
+        usuario.setDebeCambiarPassword(true);
+        usuarioRepository.save(usuario);
+
+        return PASSWORD_INICIAL_CLIENTE;
     }
 
     private Suministro crearSuministroParaCliente(Cliente cliente, SuministroRequest request) {

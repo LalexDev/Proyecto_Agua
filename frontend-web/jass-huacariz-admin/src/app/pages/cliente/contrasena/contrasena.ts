@@ -2,6 +2,7 @@
 import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { Router } from '@angular/router';
 
 import {
   CambiarPasswordRequest,
@@ -32,7 +33,8 @@ export class Contrasena {
   constructor(
     private clientePortal: ClientePortal,
     private location: Location,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   volver(): void {
@@ -91,8 +93,15 @@ export class Contrasena {
       .subscribe({
         next: (response) => {
           this.exito = response?.mensaje || 'Contraseña actualizada correctamente.';
+
+          localStorage.setItem('debeCambiarPassword', 'false');
+
           this.limpiarFormulario();
           this.cdr.detectChanges();
+
+          setTimeout(() => {
+            this.router.navigate(['/cliente/inicio']);
+          }, 1000);
         },
         error: (err) => {
           this.error =
@@ -185,4 +194,9 @@ export class Contrasena {
 
     return nombre.substring(0, 1).toUpperCase();
   }
+
+  cambioObligatorio(): boolean {
+    return localStorage.getItem('debeCambiarPassword') === 'true';
+  }
+
 }

@@ -12,6 +12,8 @@ interface LoginResponse {
   rol: string;
   expiracion: number;
   mensaje: string;
+
+  debeCambiarPassword?: boolean;
 }
 
 @Component({
@@ -116,10 +118,19 @@ export class Login {
           localStorage.setItem('role', rol);
           localStorage.setItem('expiracion', String(response.expiracion));
 
+          localStorage.setItem(
+            'debeCambiarPassword',
+            String(Boolean(response.debeCambiarPassword))
+          );
+
           if (rol === 'ADMIN') {
             this.router.navigate(['/admin/dashboard']);
           } else if (rol === 'CLIENTE') {
-            this.router.navigate(['/cliente/inicio']);
+            if (Boolean(response.debeCambiarPassword)) {
+              this.router.navigate(['/cliente/contrasena']);
+            } else {
+              this.router.navigate(['/cliente/inicio']);
+            }
           } else if (rol === 'LECTURADOR') {
             this.router.navigate(['/lecturador/lecturas']);
           } else {

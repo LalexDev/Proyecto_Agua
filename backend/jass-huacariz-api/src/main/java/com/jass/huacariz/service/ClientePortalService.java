@@ -225,6 +225,7 @@ private String guardarComprobante(MultipartFile archivo) {
         }
 
         usuario.setPasswordHash(passwordEncoder.encode(request.getNuevaPassword()));
+        usuario.setDebeCambiarPassword(false);
 
         return "Contraseña actualizada correctamente.";
     }

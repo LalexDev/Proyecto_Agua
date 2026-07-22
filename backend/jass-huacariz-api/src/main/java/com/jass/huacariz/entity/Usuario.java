@@ -31,6 +31,10 @@ public class Usuario {
     @Column(name = "estado", nullable = false)
     private Boolean estado = true;
 
+    @Builder.Default
+    @Column(name = "debe_cambiar_password", nullable = false)
+    private Boolean debeCambiarPassword = false;
+
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 }

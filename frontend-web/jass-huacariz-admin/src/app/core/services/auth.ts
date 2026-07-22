@@ -15,6 +15,7 @@ export interface LoginResponse {
   rol: string;
   expiracion: number;
   mensaje: string;
+  debeCambiarPassword?: boolean;
 }
 
 @Injectable({
@@ -31,11 +32,12 @@ export class Auth {
   login(data: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, data).pipe(
       tap(response => {
-        this.tokenService.guardarSesion(
-          response.token,
-          response.rol,
-          response.codigoUsuario
-        );
+      this.tokenService.guardarSesion(
+        response.token,
+        response.rol,
+        response.codigoUsuario,
+        Boolean(response.debeCambiarPassword)
+      );
       })
     );
   }

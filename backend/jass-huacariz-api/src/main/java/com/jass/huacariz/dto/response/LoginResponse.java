@@ -13,6 +13,7 @@ public class LoginResponse {
     private String tipoToken;
     private String codigoUsuario;
     private String rol;
+    private Boolean debeCambiarPassword;
     private Long expiracion;
     private String mensaje;
 }
