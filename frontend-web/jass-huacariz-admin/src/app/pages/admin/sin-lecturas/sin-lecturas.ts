@@ -41,12 +41,12 @@ export class SinLecturas implements OnInit {
     this.exitoPendientes = '';
 
     if (!this.filtroPendienteAnio || Number(this.filtroPendienteAnio) < 2024) {
-      this.errorPendientes = 'Ingrese un aÃ±o vÃ¡lido.';
+      this.errorPendientes = 'Ingrese un año válido.';
       return;
     }
 
     if (!this.filtroPendienteMes || Number(this.filtroPendienteMes) < 1 || Number(this.filtroPendienteMes) > 12) {
-      this.errorPendientes = 'Seleccione un mes vÃ¡lido.';
+      this.errorPendientes = 'Seleccione un mes válido.';
       return;
     }
 
@@ -106,15 +106,15 @@ export class SinLecturas implements OnInit {
   exportarPendientesExcel(): void {
     const data = [
       [
-        'NÂ°',
+        'N°',
         'Suministro',
         'Cliente',
         'DNI',
         'Periodo',
-        'DirecciÃ³n',
+        'Dirección',
         'Referencia',
         'Sector',
-        'Estado instalaciÃ³n',
+        'Estado instalación',
         'Lectura anterior'
       ],
       ...this.pendientesFiltrados.map((item: any, index) => [
@@ -159,7 +159,7 @@ export class SinLecturas implements OnInit {
     const ventana = window.open('', '_blank', 'width=1100,height=850');
 
     if (!ventana) {
-      alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
+      alert('El navegador bloqueó la ventana de impresión.');
       return;
     }
 
@@ -175,7 +175,7 @@ export class SinLecturas implements OnInit {
         <td>${this.textoSeguro(item.direccionSuministro || '-')}</td>
         <td>${this.textoSeguro(item.sector || '-')}</td>
         <td>${this.textoSeguro(this.estadoInstalacionTexto(item.estadoInstalacion))}</td>
-        <td>${Number(item.lecturaAnterior || 0).toFixed(3)} mÂ³</td>
+        <td>${Number(item.lecturaAnterior || 0).toFixed(3)} m³</td>
       </tr>
     `).join('');
 
@@ -204,14 +204,14 @@ export class SinLecturas implements OnInit {
         <table>
           <thead>
             <tr>
-              <th>NÂ°</th>
+              <th>N°</th>
               <th>Suministro</th>
               <th>Cliente</th>
               <th>DNI</th>
               <th>Periodo</th>
-              <th>DirecciÃ³n</th>
+              <th>Dirección</th>
               <th>Sector</th>
-              <th>InstalaciÃ³n</th>
+              <th>Instalación</th>
               <th>Lectura anterior</th>
             </tr>
           </thead>
@@ -252,7 +252,7 @@ export class SinLecturas implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes invÃ¡lido';
+    return meses[mes - 1] || 'Mes inválido';
   }
 
   estadoInstalacionTexto(estado?: string): string {
@@ -266,7 +266,7 @@ export class SinLecturas implements OnInit {
       return 'Suspendido';
     }
 
-    return 'Pendiente de instalaciÃ³n';
+    return 'Pendiente de instalación';
   }
 
   estadoInstalacionClase(estado?: string): string {

@@ -66,15 +66,15 @@ export class Login {
     this.abrirLogin();
 
     if (accion === 'recibo') {
-      this.error = 'Para consultar tus recibos, primero inicia sesiÃ³n.';
+      this.error = 'Para consultar tus recibos, primero inicia sesión.';
     }
 
     if (accion === 'pago') {
-      this.error = 'Para registrar pagos, primero inicia sesiÃ³n.';
+      this.error = 'Para registrar pagos, primero inicia sesión.';
     }
 
     if (accion === 'incidencia') {
-      this.error = 'Para reportar una incidencia, primero inicia sesiÃ³n.';
+      this.error = 'Para reportar una incidencia, primero inicia sesión.';
     }
   }
 
@@ -82,12 +82,12 @@ export class Login {
     this.error = '';
 
     if (!this.codigoUsuario.trim()) {
-      this.error = 'Ingrese su cÃ³digo de usuario.';
+      this.error = 'Ingrese su código de usuario.';
       return;
     }
 
     if (!this.password.trim()) {
-      this.error = 'Ingrese su contraseÃ±a.';
+      this.error = 'Ingrese su contraseña.';
       return;
     }
 
@@ -130,7 +130,7 @@ export class Login {
           this.cdr.detectChanges();
         },
         error: (err) => {
-          this.error = err?.error?.error || err?.error?.mensaje || 'Usuario o contraseÃ±a incorrectos.';
+          this.error = err?.error?.error || err?.error?.mensaje || 'Usuario o contraseña incorrectos.';
           this.cdr.detectChanges();
         }
       });

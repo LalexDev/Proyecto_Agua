@@ -42,7 +42,7 @@ export class DetalleRecibo implements OnInit {
 
   cargarDetalle(): void {
     if (!this.idRecibo) {
-      this.error = 'No se recibiÃ³ el ID del recibo.';
+      this.error = 'No se recibió el ID del recibo.';
       return;
     }
 
@@ -190,7 +190,7 @@ export class DetalleRecibo implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes invÃ¡lido';
+    return meses[mes - 1] || 'Mes inválido';
   }
 
   fechaCorta(fecha?: string): string {

@@ -349,6 +349,6 @@ export class MisSuministros implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes invÃ¡lido';
+    return meses[mes - 1] || 'Mes inválido';
   }
 }

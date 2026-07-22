@@ -59,7 +59,7 @@ export class Inicio implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar la informaciÃ³n del cliente.';
+          this.error = 'No se pudo cargar la información del cliente.';
           this.perfil = null;
           this.suministros = [];
           this.recibos = [];
@@ -328,6 +328,6 @@ export class Inicio implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes invÃ¡lido';
+    return meses[mes - 1] || 'Mes inválido';
   }
 }

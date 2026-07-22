@@ -135,7 +135,7 @@ export class Clientes implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudieron cargar los clientes. Verifica el backend y tu sesiÃ³n ADMIN.';
+          this.error = 'No se pudieron cargar los clientes. Verifica el backend y tu sesión ADMIN.';
           this.clientes = [];
           this.clientesFiltrados = [];
           this.cdr.detectChanges();
@@ -262,7 +262,7 @@ export class Clientes implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.exito = 'Cliente registrado correctamente. Sus suministros iniciaron como pendientes de instalaciÃ³n.';
+          this.exito = 'Cliente registrado correctamente. Sus suministros iniciaron como pendientes de instalación.';
           this.mostrarFormulario = false;
           this.nuevoCliente = this.crearClienteVacio();
           this.cargarClientes();
@@ -385,12 +385,12 @@ export class Clientes implements OnInit {
     this.exito = '';
 
     if (!this.clienteEditando) {
-      this.error = 'No se seleccionÃ³ ningÃºn cliente para editar.';
+      this.error = 'No se seleccionó ningún cliente para editar.';
       return;
     }
 
     if (!this.formEditarCliente.dni || this.formEditarCliente.dni.trim().length !== 8) {
-      this.error = 'Ingrese un DNI vÃ¡lido de 8 dÃ­gitos.';
+      this.error = 'Ingrese un DNI válido de 8 dígitos.';
       return;
     }
 
@@ -462,7 +462,7 @@ export class Clientes implements OnInit {
     this.exito = '';
 
     if (!this.clienteSuministroEditando) {
-      this.error = 'No se seleccionÃ³ ningÃºn cliente.';
+      this.error = 'No se seleccionó ningún cliente.';
       return;
     }
 
@@ -489,7 +489,7 @@ export class Clientes implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.exito = 'Nuevo suministro agregado correctamente. IniciÃ³ como pendiente/suspendido.';
+          this.exito = 'Nuevo suministro agregado correctamente. Inició como pendiente/suspendido.';
           this.cerrarAgregarSuministro();
           this.cerrarDetalle();
           this.cargarClientes();
@@ -530,7 +530,7 @@ export class Clientes implements OnInit {
     this.exito = '';
 
     if (!this.clienteSuministroEditando || !this.suministroEditando) {
-      this.error = 'No se seleccionÃ³ ningÃºn suministro.';
+      this.error = 'No se seleccionó ningún suministro.';
       return;
     }
 
@@ -579,7 +579,7 @@ export class Clientes implements OnInit {
       cliente,
       suministro,
       titulo: 'Eliminar suministro',
-      mensaje: `Â¿Deseas eliminar el suministro ${suministro.codigoSuministro}? Solo se eliminarÃ¡ si no tiene lecturas ni recibos registrados. Si ya tiene historial, el sistema solicitarÃ¡ suspenderlo.`,
+      mensaje: `¿Deseas eliminar el suministro ${suministro.codigoSuministro}? Solo se eliminará si no tiene lecturas ni recibos registrados. Si ya tiene historial, el sistema solicitará suspenderlo.`,
       textoBoton: 'Eliminar suministro'
     };
   }
@@ -593,8 +593,8 @@ export class Clientes implements OnInit {
       estadoNuevo,
       titulo: estadoNuevo ? 'Activar cliente' : 'Desactivar cliente',
       mensaje: estadoNuevo
-        ? `Â¿Deseas activar a ${this.nombreCompleto(cliente)}? Se habilitarÃ¡ su usuario y sus suministros conservarÃ¡n su estado de instalaciÃ³n.`
-        : `Â¿Deseas desactivar a ${this.nombreCompleto(cliente)}? Se bloquearÃ¡ su usuario y TODOS sus suministros.`,
+        ? `¿Deseas activar a ${this.nombreCompleto(cliente)}? Se habilitará su usuario y sus suministros conservarán su estado de instalación.`
+        : `¿Deseas desactivar a ${this.nombreCompleto(cliente)}? Se bloqueará su usuario y TODOS sus suministros.`,
       textoBoton: estadoNuevo ? 'Activar cliente' : 'Desactivar cliente'
     };
   }
@@ -611,8 +611,8 @@ export class Clientes implements OnInit {
       estadoNuevo,
       titulo: estadoNuevo ? 'Marcar suministro instalado' : 'Suspender suministro',
       mensaje: estadoNuevo
-        ? `Â¿Confirmas que el suministro ${suministro.codigoSuministro} ya fue instalado? El lecturador podrÃ¡ registrar consumo.`
-        : `Â¿Deseas suspender el suministro ${suministro.codigoSuministro}? El lecturador ya no registrarÃ¡ consumo, solo podrÃ¡ generar mantenimiento.`,
+        ? `¿Confirmas que el suministro ${suministro.codigoSuministro} ya fue instalado? El lecturador podrá registrar consumo.`
+        : `¿Deseas suspender el suministro ${suministro.codigoSuministro}? El lecturador ya no registrará consumo, solo podrá generar mantenimiento.`,
       textoBoton: estadoNuevo ? 'Marcar instalado' : 'Suspender'
     };
   }
@@ -644,7 +644,7 @@ export class Clientes implements OnInit {
           next: () => {
             this.exito = accion.estadoNuevo
               ? 'Cliente activado correctamente.'
-              : 'Cliente desactivado correctamente. TambiÃ©n se bloquearon sus suministros.';
+              : 'Cliente desactivado correctamente. También se bloquearon sus suministros.';
 
             this.accionPendiente = null;
             this.cerrarDetalle();
@@ -675,7 +675,7 @@ export class Clientes implements OnInit {
           next: () => {
             this.exito = accion.estadoNuevo
               ? 'Suministro marcado como instalado correctamente.'
-              : 'Suministro suspendido correctamente. Ahora solo permitirÃ¡ mantenimiento.';
+              : 'Suministro suspendido correctamente. Ahora solo permitirá mantenimiento.';
 
             this.accionPendiente = null;
             this.cerrarDetalle();
@@ -787,17 +787,17 @@ export class Clientes implements OnInit {
         <body>
           <table>
             <tr><td class="titulo" colspan="10">AGUA POTABLE HUACARIZ - CLIENTES Y SUMINISTROS</td></tr>
-            <tr><td colspan="10">Fecha de exportaciÃ³n: ${new Date().toLocaleString('es-PE')}</td></tr>
+            <tr><td colspan="10">Fecha de exportación: ${new Date().toLocaleString('es-PE')}</td></tr>
             <tr>
               <th>DNI</th>
               <th>Cliente</th>
-              <th>TelÃ©fono</th>
+              <th>Teléfono</th>
               <th>Correo</th>
               <th>Usuario</th>
               <th>Estado cliente</th>
-              <th>CÃ³digo suministro</th>
+              <th>Código suministro</th>
               <th>Alias</th>
-              <th>DirecciÃ³n</th>
+              <th>Dirección</th>
               <th>Estado suministro</th>
             </tr>
             ${filas}
@@ -862,7 +862,7 @@ export class Clientes implements OnInit {
     const ventana = window.open('', '_blank', 'width=1200,height=800');
 
     if (!ventana) {
-      alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
+      alert('El navegador bloqueó la ventana de impresión.');
       return;
     }
 
@@ -949,9 +949,9 @@ export class Clientes implements OnInit {
           <div>
             <h1>Agua Potable Huacariz</h1>
             <p>Reporte de clientes y suministros</p>
-            <p>Fecha de emisiÃ³n: ${new Date().toLocaleString('es-PE')}</p>
+            <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
           </div>
-          <strong>AdministraciÃ³n</strong>
+          <strong>Administración</strong>
         </div>
 
         <table>
@@ -959,12 +959,12 @@ export class Clientes implements OnInit {
             <tr>
               <th>DNI</th>
               <th>Cliente</th>
-              <th>TelÃ©fono</th>
+              <th>Teléfono</th>
               <th>Correo</th>
               <th>Estado cliente</th>
-              <th>CÃ³digo suministro</th>
+              <th>Código suministro</th>
               <th>Alias</th>
-              <th>DirecciÃ³n</th>
+              <th>Dirección</th>
               <th>Estado suministro</th>
             </tr>
           </thead>
@@ -1072,7 +1072,7 @@ export class Clientes implements OnInit {
 
   private validarFormularioCliente(): boolean {
     if (!this.nuevoCliente.dni || this.nuevoCliente.dni.trim().length !== 8) {
-      this.error = 'Ingrese un DNI vÃ¡lido de 8 dÃ­gitos.';
+      this.error = 'Ingrese un DNI válido de 8 dígitos.';
       return false;
     }
 
@@ -1107,7 +1107,7 @@ export class Clientes implements OnInit {
     }
 
     if (!suministro.direccionSuministro || !suministro.direccionSuministro.trim()) {
-      this.error = 'Ingrese la direcciÃ³n del suministro.';
+      this.error = 'Ingrese la dirección del suministro.';
       return false;
     }
 
@@ -1126,7 +1126,7 @@ export class Clientes implements OnInit {
 
   private validarLecturador(): boolean {
     if (!this.nuevoLecturador.dni || this.nuevoLecturador.dni.trim().length !== 8) {
-      this.error = 'Ingrese un DNI vÃ¡lido de 8 dÃ­gitos para el lecturador.';
+      this.error = 'Ingrese un DNI válido de 8 dígitos para el lecturador.';
       return false;
     }
 
@@ -1146,7 +1146,7 @@ export class Clientes implements OnInit {
     }
 
     if (!this.nuevoLecturador.password.trim() || this.nuevoLecturador.password.trim().length < 6) {
-      this.error = 'Ingrese una contraseÃ±a inicial de mÃ­nimo 6 caracteres.';
+      this.error = 'Ingrese una contraseña inicial de mínimo 6 caracteres.';
       return false;
     }
 

@@ -82,7 +82,7 @@ export class Tarifas implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudieron cargar las tarifas. Verifica el backend y tu sesiÃ³n ADMIN.';
+          this.error = 'No se pudieron cargar las tarifas. Verifica el backend y tu sesión ADMIN.';
           this.tarifas = [];
           this.cdr.detectChanges();
         }
@@ -157,11 +157,11 @@ export class Tarifas implements OnInit {
             moraBase: Number(data.moraBase || 0)
           };
 
-          this.exito = 'ConfiguraciÃ³n de cobranza actualizada correctamente.';
+          this.exito = 'Configuración de cobranza actualizada correctamente.';
           this.cdr.detectChanges();
         },
         error: (err) => {
-          this.error = err?.error?.error || 'No se pudo guardar la configuraciÃ³n de cobranza.';
+          this.error = err?.error?.error || 'No se pudo guardar la configuración de cobranza.';
           this.cdr.detectChanges();
         }
       });
@@ -261,8 +261,8 @@ export class Tarifas implements OnInit {
       estadoNuevo,
       titulo: estadoNuevo ? 'Activar tarifa' : 'Desactivar tarifa',
       mensaje: estadoNuevo
-        ? `Â¿Deseas activar la tarifa "${tarifa.nombreTarifa}"?`
-        : `Â¿Deseas desactivar la tarifa "${tarifa.nombreTarifa}"? Ya no se usarÃ¡ para nuevos cÃ¡lculos.`,
+        ? `¿Deseas activar la tarifa "${tarifa.nombreTarifa}"?`
+        : `¿Deseas desactivar la tarifa "${tarifa.nombreTarifa}"? Ya no se usará para nuevos cálculos.`,
       textoBoton: estadoNuevo ? 'Activar' : 'Desactivar'
     };
   }
@@ -272,7 +272,7 @@ export class Tarifas implements OnInit {
       tipo: 'ELIMINAR',
       tarifa,
       titulo: 'Eliminar tarifa',
-      mensaje: `Â¿Deseas eliminar la tarifa "${tarifa.nombreTarifa}"? Se marcarÃ¡ como inactiva para no afectar recibos histÃ³ricos.`,
+      mensaje: `¿Deseas eliminar la tarifa "${tarifa.nombreTarifa}"? Se marcará como inactiva para no afectar recibos históricos.`,
       textoBoton: 'Eliminar'
     };
   }
@@ -390,18 +390,18 @@ export class Tarifas implements OnInit {
 
   rangoConsumo(tarifa: TarifaResponse): string {
     if (tarifa.consumoHasta === null || tarifa.consumoHasta === undefined) {
-      return `${tarifa.consumoDesde} mÂ³ a mÃ¡s`;
+      return `${tarifa.consumoDesde} m³ a más`;
     }
 
-    return `${tarifa.consumoDesde} mÂ³ - ${tarifa.consumoHasta} mÂ³`;
+    return `${tarifa.consumoDesde} m³ - ${tarifa.consumoHasta} m³`;
   }
 
   consumoHastaTexto(tarifa: TarifaResponse): string {
     if (tarifa.consumoHasta === null || tarifa.consumoHasta === undefined) {
-      return 'A mÃ¡s';
+      return 'A más';
     }
 
-    return `${tarifa.consumoHasta} mÂ³`;
+    return `${tarifa.consumoHasta} m³`;
   }
 
   totalCargosConfigurados(): number {
@@ -433,7 +433,7 @@ export class Tarifas implements OnInit {
     }
 
     if (Number(this.tarifaForm.precioM3) <= 0) {
-      this.error = 'El precio por mÂ³ debe ser mayor a cero.';
+      this.error = 'El precio por m³ debe ser mayor a cero.';
       return false;
     }
 
@@ -457,7 +457,7 @@ export class Tarifas implements OnInit {
     }
 
     if (Number(this.configuracionForm.diasVencimiento) <= 0) {
-      this.error = 'Los dÃ­as de vencimiento deben ser mayor a cero.';
+      this.error = 'Los días de vencimiento deben ser mayor a cero.';
       return false;
     }
 

@@ -67,7 +67,7 @@ export class Reportes implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudieron cargar los reportes. Verifica el backend y tu sesiÃ³n ADMIN.';
+          this.error = 'No se pudieron cargar los reportes. Verifica el backend y tu sesión ADMIN.';
           this.cdr.detectChanges();
         }
       });
@@ -337,7 +337,7 @@ export class Reportes implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes invÃ¡lido';
+    return meses[mes - 1] || 'Mes inválido';
   }
 
   exportarExcel(): void {
@@ -345,7 +345,7 @@ export class Reportes implements OnInit {
 
     const resumen = [
       ['AGUA POTABLE HUACARIZ - REPORTE GENERAL'],
-      [`Fecha de emisiÃ³n: ${new Date().toLocaleString('es-PE')}`],
+      [`Fecha de emisión: ${new Date().toLocaleString('es-PE')}`],
       [],
       ['RESUMEN PRINCIPAL'],
       ['Indicador', 'Valor', '', 'Indicador', 'Valor'],
@@ -354,16 +354,16 @@ export class Reportes implements OnInit {
       ['Total recibos', this.totalRecibos(), '', 'Recibos pendientes', this.recibosPendientes()],
       ['Recibos pagados', this.recibosPagados(), '', 'Recibos vencidos', this.recibosVencidos()],
       ['Total emitido', Number(this.totalEmitido().toFixed(2)), '', 'Total recaudado', Number(this.totalRecaudado().toFixed(2))],
-      ['Saldo pendiente', Number(this.saldoPendiente().toFixed(2)), '', 'Consumo total mÂ³', Number(this.consumoTotal().toFixed(3))],
-      ['Tarifas activas', this.tarifasActivas(), '', 'Precio promedio mÂ³', Number(this.tarifaPromedio().toFixed(2))]
+      ['Saldo pendiente', Number(this.saldoPendiente().toFixed(2)), '', 'Consumo total m³', Number(this.consumoTotal().toFixed(3))],
+      ['Tarifas activas', this.tarifasActivas(), '', 'Precio promedio m³', Number(this.tarifaPromedio().toFixed(2))]
     ];
 
     const detalleRecibos = this.recibos.map((recibo: any) => ({
-      'CÃ³digo recibo': recibo.codigoRecibo || '',
+      'Código recibo': recibo.codigoRecibo || '',
       'Suministro': recibo.codigoSuministro || '',
-      'DirecciÃ³n': recibo.direccionSuministro || '',
+      'Dirección': recibo.direccionSuministro || '',
       'Periodo': `${this.nombreMes(Number(recibo.mes))} ${recibo.anio}`,
-      'Consumo mÂ³': Number(recibo.consumoM3 || 0),
+      'Consumo m³': Number(recibo.consumoM3 || 0),
       'Subtotal agua': Number(recibo.subtotalAgua || 0),
       'Mantenimiento': Number(recibo.cargoMantenimiento || 0),
       'Cargo lector': Number(recibo.cargoLector || 0),
@@ -371,14 +371,14 @@ export class Reportes implements OnInit {
       'Mora': Number(recibo.mora || 0),
       'Total': Number(recibo.total || 0),
       'Estado': recibo.estadoRecibo || '',
-      'EmisiÃ³n': recibo.fechaEmision || '',
+      'Emisión': recibo.fechaEmision || '',
       'Vencimiento': recibo.fechaVencimiento || ''
     }));
 
     const detallePagos = this.pagos.map((pago: any) => ({
-      'CÃ³digo recibo': pago.codigoRecibo || pago.reciboCodigo || '',
-      'MÃ©todo': pago.metodoPago || pago.metodo || '',
-      'CÃ³digo operaciÃ³n': pago.codigoOperacion || pago.operacion || '',
+      'Código recibo': pago.codigoRecibo || pago.reciboCodigo || '',
+      'Método': pago.metodoPago || pago.metodo || '',
+      'Código operación': pago.codigoOperacion || pago.operacion || '',
       'Monto': Number(pago.monto || 0),
       'Estado': pago.estadoPago || '',
       'Fecha pago': pago.fechaPago || pago.fechaRegistro || pago.fecha || ''
@@ -387,7 +387,7 @@ export class Reportes implements OnInit {
     const detalleClientes = this.clientes.map((cliente: any) => ({
       'DNI': cliente.dni || '',
       'Cliente': this.nombreCompleto(cliente),
-      'TelÃ©fono': cliente.telefono || '',
+      'Teléfono': cliente.telefono || '',
       'Correo': cliente.correo || '',
       'Usuario': cliente.codigoUsuario || cliente.usuario || '',
       'Suministros': cliente.suministros?.length || 0,
@@ -396,9 +396,9 @@ export class Reportes implements OnInit {
 
     const detalleTarifas = this.tarifas.map((tarifa: any) => ({
       'Nombre': tarifa.nombreTarifa || tarifa.nombre || '',
-      'Desde mÂ³': Number(tarifa.consumoDesde || 0),
-      'Hasta mÂ³': tarifa.consumoHasta ?? 'A mÃ¡s',
-      'Precio mÂ³': Number(tarifa.precioM3 || 0),
+      'Desde m³': Number(tarifa.consumoDesde || 0),
+      'Hasta m³': tarifa.consumoHasta ?? 'A más',
+      'Precio m³': Number(tarifa.precioM3 || 0),
       'Estado': tarifa.estado === false ? 'Inactiva' : 'Activa'
     }));
 
@@ -419,7 +419,7 @@ export class Reportes implements OnInit {
         <td>${this.textoSeguro(recibo.codigoRecibo || '-')}</td>
         <td>${this.textoSeguro(recibo.codigoSuministro || '-')}</td>
         <td>${this.periodo(recibo)}</td>
-        <td>${Number(recibo.consumoM3 || 0).toFixed(3)} mÂ³</td>
+        <td>${Number(recibo.consumoM3 || 0).toFixed(3)} m³</td>
         <td>S/ ${Number(recibo.total || 0).toFixed(2)}</td>
         <td>${this.textoSeguro(recibo.estadoRecibo || '-')}</td>
       </tr>
@@ -446,7 +446,7 @@ export class Reportes implements OnInit {
     const ventana = window.open('', '_blank', 'width=1200,height=850');
 
     if (!ventana) {
-      alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
+      alert('El navegador bloqueó la ventana de impresión.');
       return;
     }
 
@@ -594,15 +594,15 @@ export class Reportes implements OnInit {
       <body>
         <div class="header">
           <div class="brand">
-            <div class="logo">ðŸ’§</div>
+            <div class="logo">💧</div>
             <div>
               <h1>Agua Potable Huacariz</h1>
               <p>Reporte general del sistema de agua potable</p>
-              <p>Fecha de emisiÃ³n: ${new Date().toLocaleString('es-PE')}</p>
+              <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
             </div>
           </div>
 
-          <strong>AdministraciÃ³n</strong>
+          <strong>Administración</strong>
         </div>
 
         <div class="summary">
@@ -612,11 +612,11 @@ export class Reportes implements OnInit {
           <div class="card"><span>Total recaudado</span><strong>S/ ${this.totalRecaudado().toFixed(2)}</strong></div>
           <div class="card"><span>Pendientes</span><strong>${this.recibosPendientes()}</strong></div>
           <div class="card"><span>Pagados</span><strong>${this.recibosPagados()}</strong></div>
-          <div class="card"><span>Consumo total</span><strong>${this.consumoTotal().toFixed(3)} mÂ³</strong></div>
-          <div class="card"><span>Consumo promedio</span><strong>${this.consumoPromedio().toFixed(3)} mÂ³</strong></div>
+          <div class="card"><span>Consumo total</span><strong>${this.consumoTotal().toFixed(3)} m³</strong></div>
+          <div class="card"><span>Consumo promedio</span><strong>${this.consumoPromedio().toFixed(3)} m³</strong></div>
         </div>
 
-        <h2>Ãšltimos recibos</h2>
+        <h2>Últimos recibos</h2>
         <table>
           <thead>
             <tr>
@@ -633,12 +633,12 @@ export class Reportes implements OnInit {
           </tbody>
         </table>
 
-        <h2>Ãšltimos pagos</h2>
+        <h2>Últimos pagos</h2>
         <table>
           <thead>
             <tr>
               <th>Recibo</th>
-              <th>MÃ©todo</th>
+              <th>Método</th>
               <th>Monto</th>
               <th>Fecha</th>
             </tr>
@@ -648,7 +648,7 @@ export class Reportes implements OnInit {
           </tbody>
         </table>
 
-        <h2>Clientes con mÃ¡s suministros</h2>
+        <h2>Clientes con más suministros</h2>
         <table>
           <thead>
             <tr>
@@ -805,6 +805,6 @@ export class Reportes implements OnInit {
   if (valor === 'efectivo' || valor === 'pagoefectivo') return 'Efectivo';
   if (valor === 'transferencia') return 'Transferencia';
 
-    return metodo || 'Sin mÃ©todo';
+    return metodo || 'Sin método';
   }
 }

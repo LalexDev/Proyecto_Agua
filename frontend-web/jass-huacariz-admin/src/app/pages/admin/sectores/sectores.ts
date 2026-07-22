@@ -265,8 +265,8 @@ export class Sectores implements OnInit {
     }
 
     return this.sectorSeleccionado.estado
-      ? `Â¿Deseas desactivar el sector ${this.sectorSeleccionado.nombre}? Ya no estarÃ¡ disponible para nuevas asignaciones.`
-      : `Â¿Deseas activar el sector ${this.sectorSeleccionado.nombre}? EstarÃ¡ disponible para asignar suministros y lecturadores.`;
+      ? `¿Deseas desactivar el sector ${this.sectorSeleccionado.nombre}? Ya no estará disponible para nuevas asignaciones.`
+      : `¿Deseas activar el sector ${this.sectorSeleccionado.nombre}? Estará disponible para asignar suministros y lecturadores.`;
   }
 
   textoBotonConfirmacion(): string {

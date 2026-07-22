@@ -74,7 +74,7 @@ export class Dashboard implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar el dashboard. Verifica el backend y tu sesiÃ³n ADMIN.';
+          this.error = 'No se pudo cargar el dashboard. Verifica el backend y tu sesión ADMIN.';
           this.cdr.detectChanges();
         }
       });
@@ -403,7 +403,7 @@ export class Dashboard implements OnInit {
     const filas = [
       ['JASS Huacariz'],
       ['Resumen del Dashboard Administrativo'],
-      [`Fecha de emisiÃ³n: ${new Date().toLocaleString('es-PE')}`],
+      [`Fecha de emisión: ${new Date().toLocaleString('es-PE')}`],
       [],
       ['INDICADORES PRINCIPALES'],
       ['Indicador', 'Valor', '', 'Indicador', 'Valor'],
@@ -411,15 +411,15 @@ export class Dashboard implements OnInit {
       ['Total recibos', this.totalRecibos(), '', 'Recibos pendientes', this.recibosPendientes()],
       ['Recibos pagados', this.recibosPagados(), '', 'Recibos vencidos', this.recibosVencidos()],
       ['Total emitido', `S/ ${this.totalEmitido().toFixed(2)}`, '', 'Total pagado', `S/ ${this.totalPagado().toFixed(2)}`],
-      ['Saldo pendiente', `S/ ${this.saldoPendiente().toFixed(2)}`, '', 'Consumo promedio', `${this.consumoPromedio().toFixed(3)} mÂ³`],
+      ['Saldo pendiente', `S/ ${this.saldoPendiente().toFixed(2)}`, '', 'Consumo promedio', `${this.consumoPromedio().toFixed(3)} m³`],
       [],
-      ['ÃšLTIMOS RECIBOS'],
+      ['ÚLTIMOS RECIBOS'],
       ['Recibo', 'Suministro', 'Periodo', 'Consumo', 'Total', 'Estado'],
       ...this.ultimosRecibos().map((recibo: any) => [
         recibo.codigoRecibo || '-',
         recibo.codigoSuministro || '-',
         `${this.nombreMes(Number(recibo.mes))} ${recibo.anio}`,
-        `${Number(recibo.consumoM3 || 0).toFixed(3)} mÂ³`,
+        `${Number(recibo.consumoM3 || 0).toFixed(3)} m³`,
         `S/ ${Number(recibo.total || 0).toFixed(2)}`,
         recibo.estadoRecibo || '-'
       ])
@@ -469,7 +469,7 @@ export class Dashboard implements OnInit {
         <td>${this.textoSeguro(recibo.codigoRecibo || '-')}</td>
         <td>${this.textoSeguro(recibo.codigoSuministro || '-')}</td>
         <td>${this.nombreMes(Number(recibo.mes))} ${recibo.anio}</td>
-        <td>${Number(recibo.consumoM3 || 0).toFixed(3)} mÂ³</td>
+        <td>${Number(recibo.consumoM3 || 0).toFixed(3)} m³</td>
         <td>S/ ${Number(recibo.total || 0).toFixed(2)}</td>
         <td>${this.textoSeguro(recibo.estadoRecibo || '-')}</td>
       </tr>
@@ -478,7 +478,7 @@ export class Dashboard implements OnInit {
     const ventana = window.open('', '_blank', 'width=1100,height=800');
 
     if (!ventana) {
-      alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
+      alert('El navegador bloqueó la ventana de impresión.');
       return;
     }
 
@@ -598,15 +598,15 @@ export class Dashboard implements OnInit {
       <body>
         <div class="header">
           <div class="brand">
-            <div class="logo">ðŸ’§</div>
+            <div class="logo">💧</div>
             <div>
               <h1>Agua Potable Huacariz</h1>
               <p>Resumen del Dashboard Administrativo</p>
-              <p>Fecha de emisiÃ³n: ${new Date().toLocaleString('es-PE')}</p>
+              <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
             </div>
           </div>
           <div>
-            <strong>AdministraciÃ³n</strong>
+            <strong>Administración</strong>
           </div>
         </div>
 
@@ -617,11 +617,11 @@ export class Dashboard implements OnInit {
           <div class="card"><span>Total pagado</span><strong>S/ ${this.totalPagado().toFixed(2)}</strong></div>
           <div class="card"><span>Total emitido</span><strong>S/ ${this.totalEmitido().toFixed(2)}</strong></div>
           <div class="card"><span>Saldo pendiente</span><strong>S/ ${this.saldoPendiente().toFixed(2)}</strong></div>
-          <div class="card"><span>Consumo total</span><strong>${this.consumoTotal().toFixed(3)} mÂ³</strong></div>
-          <div class="card"><span>Consumo promedio</span><strong>${this.consumoPromedio().toFixed(3)} mÂ³</strong></div>
+          <div class="card"><span>Consumo total</span><strong>${this.consumoTotal().toFixed(3)} m³</strong></div>
+          <div class="card"><span>Consumo promedio</span><strong>${this.consumoPromedio().toFixed(3)} m³</strong></div>
         </div>
 
-        <h2>Ãšltimos recibos generados</h2>
+        <h2>Últimos recibos generados</h2>
         <table>
           <thead>
             <tr>
@@ -657,7 +657,7 @@ export class Dashboard implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes invÃ¡lido';
+    return meses[mes - 1] || 'Mes inválido';
   }
 
   private aplicarEstiloRango(

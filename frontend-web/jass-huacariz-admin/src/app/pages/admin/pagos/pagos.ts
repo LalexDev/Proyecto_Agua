@@ -237,7 +237,7 @@ cargarPagos(): void {
   if (valor === 'efectivo' || valor === 'pagoefectivo') return 'Efectivo';
   if (valor === 'transferencia') return 'Transferencia';
 
-    return metodo || 'Sin mÃ©todo';
+    return metodo || 'Sin método';
   }
 
 
@@ -267,8 +267,8 @@ cargarPagos(): void {
   this.pagoPendiente = pago;
 
   this.tituloConfirmacion = 'Confirmar pago';
-  this.mensajeConfirmacion = `Â¿Deseas aprobar el pago del recibo ${pago.codigoRecibo}?`;
-  this.textoBotonConfirmar = 'SÃ­, aprobar';
+  this.mensajeConfirmacion = `¿Deseas aprobar el pago del recibo ${pago.codigoRecibo}?`;
+  this.textoBotonConfirmar = 'Sí, aprobar';
   this.claseConfirmacion = 'aprobar';
 }
 
@@ -278,8 +278,8 @@ abrirConfirmacionRechazar(pago: PagoResponse): void {
   this.pagoPendiente = pago;
 
   this.tituloConfirmacion = 'Rechazar pago';
-  this.mensajeConfirmacion = `Â¿Deseas rechazar el pago del recibo ${pago.codigoRecibo}?`;
-  this.textoBotonConfirmar = 'SÃ­, rechazar';
+  this.mensajeConfirmacion = `¿Deseas rechazar el pago del recibo ${pago.codigoRecibo}?`;
+  this.textoBotonConfirmar = 'Sí, rechazar';
   this.claseConfirmacion = 'rechazar';
 }
 

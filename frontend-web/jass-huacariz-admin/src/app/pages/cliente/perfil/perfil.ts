@@ -57,7 +57,7 @@ export class Perfil implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar la informaciÃ³n de tu perfil.';
+          this.error = 'No se pudo cargar la información de tu perfil.';
           this.perfil = null;
           this.suministros = [];
           this.recibos = [];

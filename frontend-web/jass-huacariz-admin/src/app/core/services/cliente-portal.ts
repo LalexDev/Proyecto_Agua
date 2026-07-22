@@ -115,7 +115,7 @@ export class ClientePortal {
         const recibo = recibos.find((item) => Number(item.id) === Number(id));
 
         if (!recibo) {
-          throw new Error('No se encontrÃ³ el recibo solicitado.');
+          throw new Error('No se encontró el recibo solicitado.');
         }
 
         return recibo;

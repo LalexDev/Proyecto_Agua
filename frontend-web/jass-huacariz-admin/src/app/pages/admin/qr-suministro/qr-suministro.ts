@@ -50,7 +50,7 @@ export class QrSuministro implements OnInit {
     const codigo = this.codigoSuministro.trim().toUpperCase();
 
     if (!codigo) {
-      this.error = 'Ingrese el cÃ³digo del suministro.';
+      this.error = 'Ingrese el código del suministro.';
       return;
     }
 
@@ -67,9 +67,9 @@ export class QrSuministro implements OnInit {
         }
       });
 
-      this.exito = 'CÃ³digo QR generado correctamente.';
+      this.exito = 'Código QR generado correctamente.';
     } catch {
-      this.error = 'No se pudo generar el cÃ³digo QR.';
+      this.error = 'No se pudo generar el código QR.';
     }
   }
 
@@ -91,15 +91,15 @@ export class QrSuministro implements OnInit {
     const codigo = this.codigoSuministro.trim().toUpperCase();
 
     if (!codigo) {
-      this.error = 'Primero ingrese o genere un cÃ³digo de suministro.';
+      this.error = 'Primero ingrese o genere un código de suministro.';
       return;
     }
 
     try {
       await navigator.clipboard.writeText(codigo);
-      this.exito = 'CÃ³digo copiado al portapapeles.';
+      this.exito = 'Código copiado al portapapeles.';
     } catch {
-      this.error = 'No se pudo copiar el cÃ³digo. Copia manualmente el cÃ³digo del suministro.';
+      this.error = 'No se pudo copiar el código. Copia manualmente el código del suministro.';
     }
   }
 
@@ -108,7 +108,7 @@ export class QrSuministro implements OnInit {
     this.exito = '';
 
     if (!this.qrDataUrl) {
-      this.error = 'Primero genere el cÃ³digo QR.';
+      this.error = 'Primero genere el código QR.';
       return;
     }
 
@@ -127,7 +127,7 @@ export class QrSuministro implements OnInit {
     this.exito = '';
 
     if (!this.qrDataUrl) {
-      this.error = 'Primero genere el cÃ³digo QR.';
+      this.error = 'Primero genere el código QR.';
       return;
     }
 
@@ -140,7 +140,7 @@ export class QrSuministro implements OnInit {
     const ventana = window.open('', '_blank', 'width=760,height=850');
 
     if (!ventana) {
-      this.error = 'El navegador bloqueÃ³ la ventana de impresiÃ³n.';
+      this.error = 'El navegador bloqueó la ventana de impresión.';
       return;
     }
 
@@ -350,10 +350,10 @@ export class QrSuministro implements OnInit {
         <div class="sheet">
           <div class="brand">
             <div class="brand-left">
-              <div class="logo">ðŸ’§</div>
+              <div class="logo">💧</div>
               <div>
                 <h1>Agua Potable Huacariz</h1>
-                <p class="subtitle">Ficha de identificaciÃ³n de suministro</p>
+                <p class="subtitle">Ficha de identificación de suministro</p>
               </div>
             </div>
 
@@ -361,7 +361,7 @@ export class QrSuministro implements OnInit {
           </div>
 
           <div class="qr-section">
-            <h2>CÃ³digo de suministro</h2>
+            <h2>Código de suministro</h2>
 
             <div class="qr-box">
               <img src="${this.qrDataUrl}" alt="QR suministro">
@@ -383,7 +383,7 @@ export class QrSuministro implements OnInit {
             </div>
 
             <div class="row">
-              <span>DirecciÃ³n</span>
+              <span>Dirección</span>
               <strong>${direccion}</strong>
             </div>
 
@@ -394,7 +394,7 @@ export class QrSuministro implements OnInit {
           </div>
 
           <div class="footer">
-            Este cÃ³digo identifica Ãºnicamente el suministro registrado en el sistema Agua Potable Huacariz.
+            Este código identifica únicamente el suministro registrado en el sistema Agua Potable Huacariz.
             Debe colocarse en un lugar visible para facilitar el registro mensual de lectura.
           </div>
         </div>

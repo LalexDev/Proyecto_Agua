@@ -109,7 +109,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
     const codigo = this.codigoBusqueda.trim().toUpperCase();
 
     if (!codigo) {
-      this.error = 'Ingrese o escanee el cÃ³digo del suministro.';
+      this.error = 'Ingrese o escanee el código del suministro.';
       return;
     }
 
@@ -144,7 +144,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
             codigoSuministro: data.codigoSuministro,
             anio: new Date().getFullYear(),
             mes: new Date().getMonth() + 1,
-            observacion: 'Recibo generado por mantenimiento. Suministro pendiente de instalaciÃ³n.'
+            observacion: 'Recibo generado por mantenimiento. Suministro pendiente de instalación.'
           };
 
           if (this.puedeRegistrarLectura()) {
@@ -169,7 +169,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
           }, 250);
         },
         error: (err) => {
-          this.error = err?.error?.error || err?.error?.mensaje || 'No se encontrÃ³ el suministro.';
+          this.error = err?.error?.error || err?.error?.mensaje || 'No se encontró el suministro.';
           this.cdr.detectChanges();
         }
       });
@@ -191,12 +191,12 @@ export class LecturasLecturador implements OnInit, OnDestroy {
     }
 
     if (!this.lecturaForm.anio || this.lecturaForm.anio < 2024) {
-      this.error = 'Ingrese un aÃ±o vÃ¡lido.';
+      this.error = 'Ingrese un año válido.';
       return;
     }
 
     if (!this.lecturaForm.mes || this.lecturaForm.mes < 1 || this.lecturaForm.mes > 12) {
-      this.error = 'Ingrese un mes vÃ¡lido entre 1 y 12.';
+      this.error = 'Ingrese un mes válido entre 1 y 12.';
       return;
     }
 
@@ -300,12 +300,12 @@ export class LecturasLecturador implements OnInit, OnDestroy {
     }
 
     if (!this.mantenimientoForm.anio || this.mantenimientoForm.anio < 2024) {
-      this.error = 'Ingrese un aÃ±o vÃ¡lido.';
+      this.error = 'Ingrese un año válido.';
       return;
     }
 
     if (!this.mantenimientoForm.mes || this.mantenimientoForm.mes < 1 || this.mantenimientoForm.mes > 12) {
-      this.error = 'Ingrese un mes vÃ¡lido entre 1 y 12.';
+      this.error = 'Ingrese un mes válido entre 1 y 12.';
       return;
     }
 
@@ -316,7 +316,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
       anio: Number(this.mantenimientoForm.anio),
       mes: Number(this.mantenimientoForm.mes),
       observacion: this.mantenimientoForm.observacion?.trim()
-        || 'Recibo generado por mantenimiento. Suministro pendiente de instalaciÃ³n.'
+        || 'Recibo generado por mantenimiento. Suministro pendiente de instalación.'
     };
 
     this.lecturadorService.registrarMantenimiento(payload)
@@ -367,7 +367,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
     }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      this.error = 'Tu navegador no permite acceso a la cÃ¡mara.';
+      this.error = 'Tu navegador no permite acceso a la cámara.';
       return;
     }
 
@@ -379,7 +379,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
         const camaras = await Html5Qrcode.getCameras();
 
         if (!camaras || camaras.length === 0) {
-          this.error = 'No se encontrÃ³ ninguna cÃ¡mara disponible.';
+          this.error = 'No se encontró ninguna cámara disponible.';
           this.escaneando = false;
           this.cdr.detectChanges();
           return;
@@ -420,14 +420,14 @@ export class LecturasLecturador implements OnInit, OnDestroy {
             const codigo = this.normalizarCodigoQr(decodedText);
 
             if (!codigo) {
-              this.error = 'El QR escaneado no contiene un cÃ³digo vÃ¡lido.';
+              this.error = 'El QR escaneado no contiene un código válido.';
               this.qrProcesado = false;
               this.cdr.detectChanges();
               return;
             }
 
             this.codigoBusqueda = codigo;
-            this.exito = 'QR detectado correctamente. Deteniendo cÃ¡mara y buscando suministro...';
+            this.exito = 'QR detectado correctamente. Deteniendo cámara y buscando suministro...';
             this.cdr.detectChanges();
 
             await this.detenerEscaneo();
@@ -439,7 +439,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
           () => {}
         );
       } catch {
-        this.error = 'No se pudo iniciar la cÃ¡mara. Verifique permisos del navegador.';
+        this.error = 'No se pudo iniciar la cámara. Verifique permisos del navegador.';
         this.escaneando = false;
         this.qrScanner = null;
         this.cdr.detectChanges();
@@ -533,7 +533,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
       return 'Inactivo';
     }
 
-    return 'Pendiente de instalaciÃ³n';
+    return 'Pendiente de instalación';
   }
 
   estadoInstalacionClase(estado?: string): string {
@@ -556,11 +556,11 @@ export class LecturasLecturador implements OnInit, OnDestroy {
     }
 
     if (this.suministro.estado === false) {
-      return 'El suministro estÃ¡ inactivo. No se permite registrar lectura ni generar recibo. Comunicar al administrador.';
+      return 'El suministro está inactivo. No se permite registrar lectura ni generar recibo. Comunicar al administrador.';
     }
 
     if (this.estadoOperativo() === 'PENDIENTE') {
-      return 'Este suministro aÃºn no estÃ¡ instalado. Puede generar recibo por mantenimiento hasta que administraciÃ³n lo marque como instalado.';
+      return 'Este suministro aún no está instalado. Puede generar recibo por mantenimiento hasta que administración lo marque como instalado.';
     }
 
     return 'Suministro instalado y activo. Puede registrar la lectura actual del medidor.';
@@ -619,7 +619,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] ?? 'Mes invÃ¡lido';
+    return meses[mes - 1] ?? 'Mes inválido';
   }
 
   nombreUsuarioSuministro(suministro: SuministroLecturadorResponse | null = this.suministro): string {
@@ -752,7 +752,7 @@ export class LecturasLecturador implements OnInit, OnDestroy {
       codigoSuministro: '',
       anio: new Date().getFullYear(),
       mes: new Date().getMonth() + 1,
-      observacion: 'Recibo generado por mantenimiento. Suministro pendiente de instalaciÃ³n.'
+      observacion: 'Recibo generado por mantenimiento. Suministro pendiente de instalación.'
     };
   }
 }

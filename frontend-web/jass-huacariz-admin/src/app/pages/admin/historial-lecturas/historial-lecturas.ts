@@ -71,7 +71,7 @@ export class HistorialLecturas implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.error = 'No se pudo cargar el historial de lecturas. Verifica el backend y tu sesiÃ³n ADMIN.';
+          this.error = 'No se pudo cargar el historial de lecturas. Verifica el backend y tu sesión ADMIN.';
           this.lecturas = [];
           this.lecturasFiltradas = [];
           this.cdr.detectChanges();
@@ -84,12 +84,12 @@ export class HistorialLecturas implements OnInit {
     this.exitoPendientes = '';
 
     if (!this.filtroPendienteAnio || Number(this.filtroPendienteAnio) < 2024) {
-      this.errorPendientes = 'Ingrese un aÃ±o vÃ¡lido para consultar pendientes.';
+      this.errorPendientes = 'Ingrese un año válido para consultar pendientes.';
       return;
     }
 
     if (!this.filtroPendienteMes || Number(this.filtroPendienteMes) < 1 || Number(this.filtroPendienteMes) > 12) {
-      this.errorPendientes = 'Seleccione un mes vÃ¡lido para consultar pendientes.';
+      this.errorPendientes = 'Seleccione un mes válido para consultar pendientes.';
       return;
     }
 
@@ -117,7 +117,7 @@ export class HistorialLecturas implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          this.errorPendientes = 'No se pudieron consultar los suministros sin lectura. Verifica el backend y tu sesiÃ³n ADMIN.';
+          this.errorPendientes = 'No se pudieron consultar los suministros sin lectura. Verifica el backend y tu sesión ADMIN.';
           this.exitoPendientes = '';
           this.pendientesLectura = [];
           this.pendientesFiltrados = [];
@@ -237,16 +237,16 @@ export class HistorialLecturas implements OnInit {
 
     const data: any[][] = [
       [titulo],
-      ['Sistema de gestiÃ³n de agua potable - Control de lecturas y consumos'],
+      ['Sistema de gestión de agua potable - Control de lecturas y consumos'],
       [`Periodo/Filtro: ${periodo}`],
-      [`Fecha de exportaciÃ³n: ${fecha}`],
+      [`Fecha de exportación: ${fecha}`],
       [],
       ['RESUMEN GENERAL'],
-      ['Lecturas registradas', this.totalLecturas(), 'Consumo total (mÂ³)', this.totalConsumo(), 'Consumo promedio (mÂ³)', this.consumoPromedio()],
+      ['Lecturas registradas', this.totalLecturas(), 'Consumo total (m³)', this.totalConsumo(), 'Consumo promedio (m³)', this.consumoPromedio()],
       ['Total emitido (S/)', this.totalEmitido(), 'Recibos pagados', this.totalPagados(), 'Recibos pendientes', this.totalPendientes()],
       [],
       [
-        'NÂ°',
+        'N°',
         'Suministro',
         'Cliente',
         'DNI',
@@ -254,8 +254,8 @@ export class HistorialLecturas implements OnInit {
         'Periodo',
         'Lectura anterior',
         'Lectura actual',
-        'Consumo mÂ³',
-        'CÃ³digo recibo',
+        'Consumo m³',
+        'Código recibo',
         'Total S/',
         'Estado',
         'Fecha registro'
@@ -451,23 +451,23 @@ export class HistorialLecturas implements OnInit {
       [titulo],
       ['Control de usuarios/suministros sin lectura registrada por periodo'],
       [`Periodo consultado: ${periodo}`],
-      [`Fecha de exportaciÃ³n: ${fecha}`],
+      [`Fecha de exportación: ${fecha}`],
       [],
       ['RESUMEN DE PENDIENTES'],
-      ['Total sin lectura', this.totalSinLectura(), 'Instalados', this.pendientesInstalados(), 'Pendientes de instalaciÃ³n', this.pendientesPorInstalar()],
+      ['Total sin lectura', this.totalSinLectura(), 'Instalados', this.pendientesInstalados(), 'Pendientes de instalación', this.pendientesPorInstalar()],
       [],
       [
-        'NÂ°',
+        'N°',
         'Suministro',
         'Cliente',
         'DNI',
         'Alias',
-        'DirecciÃ³n',
+        'Dirección',
         'Referencia',
         'Sector',
         'Periodo',
         'Estado',
-        'InstalaciÃ³n',
+        'Instalación',
         'Lectura anterior'
       ]
     ];
@@ -632,7 +632,7 @@ export class HistorialLecturas implements OnInit {
     const ventana = window.open('', '_blank', 'width=1200,height=850');
 
     if (!ventana) {
-      alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
+      alert('El navegador bloqueó la ventana de impresión.');
       return;
     }
 
@@ -649,9 +649,9 @@ export class HistorialLecturas implements OnInit {
         </td>
         <td>${this.textoSeguro(item.sector || '-')}</td>
         <td>${this.textoSeguro(this.nombreMes(Number(item.mes)))} ${this.textoSeguro(item.anio)}</td>
-        <td>${Number(item.lecturaAnterior || 0).toFixed(3)} mÂ³</td>
-        <td>${Number(item.lecturaActual || 0).toFixed(3)} mÂ³</td>
-        <td><strong>${Number(item.consumoM3 || 0).toFixed(3)} mÂ³</strong></td>
+        <td>${Number(item.lecturaAnterior || 0).toFixed(3)} m³</td>
+        <td>${Number(item.lecturaActual || 0).toFixed(3)} m³</td>
+        <td><strong>${Number(item.consumoM3 || 0).toFixed(3)} m³</strong></td>
         <td>${this.textoSeguro(item.codigoRecibo || '-')}</td>
         <td><strong>S/ ${this.totalItem(item).toFixed(2)}</strong></td>
         <td><span class="badge ${this.estadoClase(item.estadoRecibo)}">${this.textoSeguro(item.estadoRecibo || 'PENDIENTE')}</span></td>
@@ -913,11 +913,11 @@ export class HistorialLecturas implements OnInit {
         <div class="sheet">
           <div class="header">
             <div class="brand">
-              <div class="logo">ðŸ’§</div>
+              <div class="logo">💧</div>
               <div>
                 <h1>AGUA POTABLE HUACARIZ</h1>
-                <p>Servicio de agua potable Â· Sistema de GestiÃ³n de Agua</p>
-                <p>Cajamarca, PerÃº</p>
+                <p>Servicio de agua potable  -  Sistema de Gestión de Agua</p>
+                <p>Cajamarca, Perú</p>
               </div>
             </div>
 
@@ -935,7 +935,7 @@ export class HistorialLecturas implements OnInit {
 
             <div class="box">
               <span>Consumo total</span>
-              <strong>${this.totalConsumo().toFixed(3)} mÂ³</strong>
+              <strong>${this.totalConsumo().toFixed(3)} m³</strong>
             </div>
 
             <div class="box">
@@ -945,7 +945,7 @@ export class HistorialLecturas implements OnInit {
 
             <div class="box">
               <span>Consumo promedio</span>
-              <strong>${this.consumoPromedio().toFixed(3)} mÂ³</strong>
+              <strong>${this.consumoPromedio().toFixed(3)} m³</strong>
             </div>
           </div>
 
@@ -954,7 +954,7 @@ export class HistorialLecturas implements OnInit {
           <table>
             <thead>
               <tr>
-                <th>NÂ°</th>
+                <th>N°</th>
                 <th>Suministro</th>
                 <th>Cliente</th>
                 <th>Sector</th>
@@ -975,12 +975,12 @@ export class HistorialLecturas implements OnInit {
 
           <div class="footer">
             <div>
-              <strong>ObservaciÃ³n:</strong>
-              Documento generado por el sistema de gestiÃ³n de agua Agua Potable Huacariz.
+              <strong>Observación:</strong>
+              Documento generado por el sistema de gestión de agua Agua Potable Huacariz.
             </div>
 
             <div>
-              <strong>Fecha de emisiÃ³n:</strong>
+              <strong>Fecha de emisión:</strong>
               ${this.textoSeguro(new Date().toLocaleString('es-PE'))}
             </div>
           </div>
@@ -1001,7 +1001,7 @@ export class HistorialLecturas implements OnInit {
     const ventana = window.open('', '_blank', 'width=1100,height=850');
 
     if (!ventana) {
-      alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
+      alert('El navegador bloqueó la ventana de impresión.');
       return;
     }
 
@@ -1024,7 +1024,7 @@ export class HistorialLecturas implements OnInit {
         </td>
         <td>${this.textoSeguro(item.sector || '-')}</td>
         <td><span class="badge ${this.estadoInstalacionClase(item.estadoInstalacion)}">${this.textoSeguro(this.estadoInstalacionTexto(item.estadoInstalacion))}</span></td>
-        <td><strong>${Number(item.lecturaAnterior || 0).toFixed(3)} mÂ³</strong></td>
+        <td><strong>${Number(item.lecturaAnterior || 0).toFixed(3)} m³</strong></td>
       </tr>
     `).join('');
 
@@ -1272,11 +1272,11 @@ export class HistorialLecturas implements OnInit {
         <div class="sheet">
           <div class="header">
             <div class="brand">
-              <div class="logo">âš ï¸</div>
+              <div class="logo">⚠️</div>
               <div>
                 <h1>AGUA POTABLE HUACARIZ</h1>
                 <p>Reporte de suministros sin lectura registrada</p>
-                <p>Cajamarca, PerÃº Â· Sistema de GestiÃ³n de Agua</p>
+                <p>Cajamarca, Perú  -  Sistema de Gestión de Agua</p>
               </div>
             </div>
 
@@ -1298,7 +1298,7 @@ export class HistorialLecturas implements OnInit {
             </div>
 
             <div class="box">
-              <span>Pendientes instalaciÃ³n</span>
+              <span>Pendientes instalación</span>
               <strong>${this.pendientesPorInstalar()}</strong>
             </div>
           </div>
@@ -1308,12 +1308,12 @@ export class HistorialLecturas implements OnInit {
           <table>
             <thead>
               <tr>
-                <th>NÂ°</th>
+                <th>N°</th>
                 <th>Suministro</th>
                 <th>Cliente</th>
-                <th>DirecciÃ³n / Referencia</th>
+                <th>Dirección / Referencia</th>
                 <th>Sector</th>
-                <th>InstalaciÃ³n</th>
+                <th>Instalación</th>
                 <th>Lectura anterior</th>
               </tr>
             </thead>
@@ -1325,12 +1325,12 @@ export class HistorialLecturas implements OnInit {
 
           <div class="footer">
             <div>
-              <strong>ObservaciÃ³n:</strong>
+              <strong>Observación:</strong>
               Este reporte muestra suministros activos que no registran lectura en el periodo consultado.
             </div>
 
             <div>
-              <strong>Fecha de emisiÃ³n:</strong>
+              <strong>Fecha de emisión:</strong>
               ${this.textoSeguro(new Date().toLocaleString('es-PE'))}
             </div>
           </div>
@@ -1353,7 +1353,7 @@ export class HistorialLecturas implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes invÃ¡lido';
+    return meses[mes - 1] || 'Mes inválido';
   }
 
   nombreCliente(item: any): string {
@@ -1524,7 +1524,7 @@ export class HistorialLecturas implements OnInit {
       return 'Suspendido';
     }
 
-    return 'Pendiente de instalaciÃ³n';
+    return 'Pendiente de instalación';
   }
 
   estadoInstalacionClase(estado?: string): string {
@@ -1543,9 +1543,9 @@ export class HistorialLecturas implements OnInit {
 
   periodoHistorialTexto(): string {
     const mes = this.filtroMes ? this.nombreMes(Number(this.filtroMes)) : 'Todos los meses';
-    const anio = this.filtroAnio ? String(this.filtroAnio) : 'Todos los aÃ±os';
+    const anio = this.filtroAnio ? String(this.filtroAnio) : 'Todos los años';
 
-    return `${mes} Â· ${anio}`;
+    return `${mes}  -  ${anio}`;
   }
 
   nombreArchivoPeriodo(): string {

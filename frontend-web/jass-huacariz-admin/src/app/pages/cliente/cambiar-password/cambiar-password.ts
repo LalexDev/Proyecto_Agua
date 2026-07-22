@@ -38,16 +38,16 @@ export class CambiarPassword {
     }
 
     if (!this.passwordValida) {
-      this.mensajeError = 'La nueva contraseÃ±a debe tener al menos 6 caracteres.';
+      this.mensajeError = 'La nueva contraseña debe tener al menos 6 caracteres.';
       return;
     }
 
     if (!this.passwordCoincide) {
-      this.mensajeError = 'La nueva contraseÃ±a y la confirmaciÃ³n no coinciden.';
+      this.mensajeError = 'La nueva contraseña y la confirmación no coinciden.';
       return;
     }
 
-    this.mensajeExito = 'ContraseÃ±a actualizada correctamente.';
+    this.mensajeExito = 'Contraseña actualizada correctamente.';
     this.passwordActual = '';
     this.nuevaPassword = '';
     this.confirmarPassword = '';

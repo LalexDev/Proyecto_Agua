@@ -267,7 +267,7 @@ export class MisRecibos implements OnInit {
         <td>${this.textoSeguro(recibo.codigoSuministro || '-')}</td>
         <td>${this.textoSeguro(recibo.direccionSuministro || '-')}</td>
         <td>${this.periodo(recibo)}</td>
-        <td>${Number(recibo.consumoM3 || 0).toFixed(3)} mÂ³</td>
+        <td>${Number(recibo.consumoM3 || 0).toFixed(3)} m³</td>
         <td>S/ ${Number(recibo.total || 0).toFixed(2)}</td>
         <td>${this.textoSeguro(recibo.fechaVencimiento || '-')}</td>
         <td>${this.textoSeguro(recibo.estadoRecibo || 'PENDIENTE')}</td>
@@ -277,7 +277,7 @@ export class MisRecibos implements OnInit {
     const ventana = window.open('', '_blank', 'width=1200,height=850');
 
     if (!ventana) {
-      alert('El navegador bloqueÃ³ la ventana de impresiÃ³n.');
+      alert('El navegador bloqueó la ventana de impresión.');
       return;
     }
 
@@ -417,11 +417,11 @@ export class MisRecibos implements OnInit {
       <body>
         <div class="header">
           <div class="brand">
-            <div class="logo">ðŸ’§</div>
+            <div class="logo">💧</div>
             <div>
               <h1>Agua Potable Huacariz</h1>
               <p>Reporte de recibos del cliente</p>
-              <p>Fecha de emisiÃ³n: ${new Date().toLocaleString('es-PE')}</p>
+              <p>Fecha de emisión: ${new Date().toLocaleString('es-PE')}</p>
             </div>
           </div>
 
@@ -440,7 +440,7 @@ export class MisRecibos implements OnInit {
             <tr>
               <th>Recibo</th>
               <th>Suministro</th>
-              <th>DirecciÃ³n</th>
+              <th>Dirección</th>
               <th>Periodo</th>
               <th>Consumo</th>
               <th>Total</th>
@@ -466,13 +466,13 @@ export class MisRecibos implements OnInit {
 
   exportarExcel(): void {
     const data = this.recibosFiltrados.map((recibo) => ({
-      'CÃ³digo recibo': recibo.codigoRecibo || '',
+      'Código recibo': recibo.codigoRecibo || '',
       'Suministro': recibo.codigoSuministro || '',
-      'DirecciÃ³n': recibo.direccionSuministro || '',
+      'Dirección': recibo.direccionSuministro || '',
       'Alias': recibo.aliasSuministro || '',
       'Sector': recibo.sector || '',
       'Periodo': this.periodo(recibo),
-      'Consumo mÂ³': Number(recibo.consumoM3 || 0),
+      'Consumo m³': Number(recibo.consumoM3 || 0),
       'Subtotal agua': Number(recibo.subtotalAgua || 0),
       'Mantenimiento': Number(recibo.cargoMantenimiento || 0),
       'Cargo lector': Number(recibo.cargoLector || 0),
@@ -480,9 +480,9 @@ export class MisRecibos implements OnInit {
       'Mora': Number(recibo.mora || 0),
       'Total': Number(recibo.total || 0),
       'Estado': recibo.estadoRecibo || '',
-      'EmisiÃ³n': recibo.fechaEmision || '',
+      'Emisión': recibo.fechaEmision || '',
       'Vencimiento': recibo.fechaVencimiento || '',
-      'CÃ³digo barras': recibo.codigoBarras || ''
+      'Código barras': recibo.codigoBarras || ''
     }));
 
     const worksheet: any = XLSX.utils.json_to_sheet(data.length ? data : [{ Mensaje: 'No hay recibos para exportar' }]);
@@ -539,7 +539,7 @@ export class MisRecibos implements OnInit {
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
 
-    return meses[mes - 1] || 'Mes invÃ¡lido';
+    return meses[mes - 1] || 'Mes inválido';
   }
 
   private textoSeguro(value: unknown): string {
