@@ -1,1 +1,25 @@
+
 <router-outlet></router-outlet>
+
+<div class="session-modal-backdrop" *ngIf="modalSesionExpiradaVisible">
+  <div class="session-modal">
+    <div class="session-modal-icon">
+      <span>⏱</span>
+    </div>
+
+    <h2>Sesión finalizada</h2>
+
+    <p>
+      Tu sesión se cerró automáticamente por inactividad para proteger la seguridad del sistema.
+    </p>
+
+    <div class="session-modal-info">
+      <strong>Tiempo de inactividad:</strong>
+      <span>10 minutos</span>
+    </div>
+
+    <button type="button" (click)="cerrarModalSesionExpirada()">
+      Entendido, volver al login
+    </button>
+  </div>
+</div>

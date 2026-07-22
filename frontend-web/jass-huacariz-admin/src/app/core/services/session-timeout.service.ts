@@ -1,6 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +17,9 @@ export class SessionTimeoutService {
     'scroll',
     'touchstart'
   ];
+
+  private sesionExpiradaSubject = new Subject<void>();
+  sesionExpirada$ = this.sesionExpiradaSubject.asObservable();
 
   constructor(
     private router: Router,
@@ -82,8 +85,6 @@ export class SessionTimeoutService {
 
     sessionStorage.clear();
 
-    alert('Tu sesión se cerró por inactividad.');
-
-    this.router.navigate(['/login']);
+    this.sesionExpiradaSubject.next();
   }
 }

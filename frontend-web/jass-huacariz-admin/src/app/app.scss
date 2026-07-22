@@ -1,0 +1,111 @@
+.session-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(2, 17, 30, 0.72);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.session-modal {
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 34px 30px;
+  text-align: center;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+  animation: sessionModalIn 0.25s ease-out;
+}
+
+.session-modal-icon {
+  width: 78px;
+  height: 78px;
+  margin: 0 auto 18px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #1593c7, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16px 34px rgba(21, 147, 199, 0.35);
+}
+
+.session-modal-icon span {
+  font-size: 36px;
+}
+
+.session-modal h2 {
+  margin: 0 0 12px;
+  color: #0f3454;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.session-modal p {
+  margin: 0;
+  color: #5b6b82;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.session-modal-info {
+  margin: 22px 0;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #eaf7fc;
+  color: #0f617e;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.session-modal button {
+  width: 100%;
+  border: none;
+  border-radius: 18px;
+  padding: 15px 18px;
+  background: linear-gradient(135deg, #1593c7, #2563eb);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.session-modal button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(37, 99, 235, 0.32);
+}
+
+@keyframes sessionModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 520px) {
+  .session-modal {
+    padding: 28px 22px;
+    border-radius: 24px;
+  }
+
+  .session-modal h2 {
+    font-size: 24px;
+  }
+
+  .session-modal-info {
+    flex-direction: column;
+    text-align: left;
+  }
+}
