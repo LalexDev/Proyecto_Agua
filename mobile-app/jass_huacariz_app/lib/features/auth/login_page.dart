@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/theme/jass_colors.dart';
-import '../../shared/theme/jass_theme_context.dart';
-
 import '../../core/services/auth_service.dart';
 import '../../core/storage/secure_storage_service.dart';
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,20 +13,23 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  Color get primary => context.jassTextPrimary;
   static const Color secondary = JassColors.secondary;
 
-  final TextEditingController usuarioController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController usuarioController =
+      TextEditingController();
+  final TextEditingController passwordController =
+      TextEditingController();
 
   final AuthService authService = AuthService();
-  final SecureStorageService storageService = SecureStorageService();
+  final SecureStorageService storageService =
+      SecureStorageService();
 
   bool mostrarPassword = false;
   bool cargando = false;
   bool ingresandoOffline = false;
   bool verificandoSesionOffline = true;
   bool puedeIngresarOffline = false;
+  String rolSeleccionado = 'ADMINISTRADOR';
 
   String usuarioOffline = '';
   DateTime? ultimoLoginOnline;
@@ -37,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _cargarSesionOffline();
+    _prepararAcceso();
   }
 
   @override
@@ -45,6 +47,11 @@ class _LoginPageState extends State<LoginPage> {
     usuarioController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _prepararAcceso() async {
+    await authService.limpiarSesionNoPermitida();
+    await _cargarSesionOffline();
   }
 
   Future<void> _cargarSesionOffline() async {
@@ -67,19 +74,30 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  String _rutaPorRol(String? role) {
-    final rol = role?.toUpperCase().trim() ?? '';
-
-    if (rol.contains('ADMIN')) {
+  String? _rutaPorRol(String? role) {
+    if (storageService.esRolAdmin(role)) {
       return '/admin-dashboard';
     }
 
-    if (rol.contains('LECTURADOR') ||
-        rol.contains('LECTOR')) {
+    if (storageService.esRolLecturador(role)) {
       return '/lector-home';
     }
 
-    return '/home';
+    return null;
+  }
+
+  bool get esAdministradorSeleccionado =>
+      rolSeleccionado == 'ADMINISTRADOR';
+
+  bool get esLecturadorSeleccionado =>
+      rolSeleccionado == 'LECTURADOR';
+
+  void _seleccionarRol(String rol) {
+    if (procesando) return;
+
+    setState(() {
+      rolSeleccionado = rol;
+    });
   }
 
   Future<void> iniciarSesion() async {
@@ -88,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
 
     if (usuario.isEmpty || password.trim().isEmpty) {
       _mostrarMensaje(
-        'Ingresa usuario y contraseña.',
+        'Ingresa el código de usuario y la contraseña.',
         esError: true,
       );
       return;
@@ -109,13 +127,25 @@ class _LoginPageState extends State<LoginPage> {
       final role = await storageService.getUserRole();
       final ruta = _rutaPorRol(role);
 
+      if (ruta == null) {
+        await authService.logout();
+        throw Exception(
+          'Esta aplicación solo permite el acceso de '
+          'ADMINISTRADOR y LECTURADOR.',
+        );
+      }
+
       if (!mounted) return;
 
       setState(() {
         cargando = false;
       });
 
-      Navigator.pushReplacementNamed(context, ruta);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        ruta,
+        (route) => false,
+      );
     } catch (e) {
       if (!mounted) return;
 
@@ -130,9 +160,8 @@ class _LoginPageState extends State<LoginPage> {
       _mostrarMensaje(
         puedeIngresarOffline
             ? 'No se pudo iniciar en línea: $detalle '
-                'Puedes usar el modo sin conexión '
-                'guardado para el lecturador.'
-            : 'Error al iniciar sesión: $detalle',
+                'El lecturador guardado puede usar el modo sin conexión.'
+            : detalle,
         esError: true,
       );
     }
@@ -162,9 +191,10 @@ class _LoginPageState extends State<LoginPage> {
         esError: false,
       );
 
-      Navigator.pushReplacementNamed(
+      Navigator.pushNamedAndRemoveUntil(
         context,
         '/lector-home',
+        (route) => false,
       );
     } catch (e) {
       if (!mounted) return;
@@ -183,17 +213,25 @@ class _LoginPageState extends State<LoginPage> {
   String _formatearFecha(DateTime? fecha) {
     if (fecha == null) return 'No disponible';
 
-    String dos(int value) => value.toString().padLeft(2, '0');
+    String dos(int value) {
+      return value.toString().padLeft(2, '0');
+    }
 
     return '${dos(fecha.day)}/${dos(fecha.month)}/${fecha.year} '
         '${dos(fecha.hour)}:${dos(fecha.minute)}';
   }
 
-  void _mostrarMensaje(String mensaje, {required bool esError}) {
+  void _mostrarMensaje(
+    String mensaje, {
+    required bool esError,
+  }) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor: esError ? Colors.red : Colors.green,
+        backgroundColor:
+            esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -213,15 +251,17 @@ class _LoginPageState extends State<LoginPage> {
               },
             ),
           ),
-          // cambio de fondo a un degradado para mejorar contraste y visibilidad del contenido
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF061A24).withValues(alpha: 0.48),
-                    const Color(0xFF0F3D57).withValues(alpha: 0.45),
-                    const Color(0xFF1DA1C2).withValues(alpha: 0.28),
+                    const Color(0xFF061A24)
+                        .withValues(alpha: 0.60),
+                    const Color(0xFF0F3D57)
+                        .withValues(alpha: 0.52),
+                    const Color(0xFF1DA1C2)
+                        .withValues(alpha: 0.30),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -229,22 +269,24 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 18,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTopBrand(),
-                  SizedBox(height: 28),
+                  const SizedBox(height: 26),
                   _buildHeroText(),
-                  SizedBox(height: 26),
+                  const SizedBox(height: 24),
                   _buildLoginCard(),
-                  SizedBox(height: 18),
-                  Center(
+                  const SizedBox(height: 18),
+                  const Center(
                     child: Text(
-                      'Proyecto Agua · JASS Huacariz',
+                      'Acceso institucional · Agua Potable San Antonio',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -252,7 +294,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -269,31 +311,32 @@ class _LoginPageState extends State<LoginPage> {
           width: 54,
           height: 54,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.14),
+            color: Colors.white.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white24),
           ),
-          child: Icon(
+          child: const Icon(
             Icons.water_drop_outlined,
             color: Colors.white,
             size: 30,
           ),
         ),
-        SizedBox(width: 12),
-        Expanded(
+        const SizedBox(width: 12),
+        const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'JASS Huacariz',
+                'Agua Potable San Antonio',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: 21,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               SizedBox(height: 2),
               Text(
-                'Sistema Administrador de Servicios de Saneamiento',
+                'Sistema de gestión y lectura del servicio de agua',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 11,
@@ -312,19 +355,26 @@ class _LoginPageState extends State<LoginPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 8,
+          ),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12),
+            color: Colors.white.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(30),
             border: Border.all(color: Colors.white24),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.verified_user_outlined, color: Colors.white, size: 18),
+              Icon(
+                Icons.verified_user_outlined,
+                color: Colors.white,
+                size: 18,
+              ),
               SizedBox(width: 8),
               Text(
-                'Servicio público confiable y transparente',
+                'Acceso exclusivo para personal autorizado',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 11,
@@ -334,19 +384,20 @@ class _LoginPageState extends State<LoginPage> {
             ],
           ),
         ),
-        SizedBox(height: 18),
-        Text(
-          'Agua que nos une,\ncomunidad que avanza.',
+        const SizedBox(height: 18),
+        const Text(
+          'Administración y lecturas\nen un solo sistema.',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 37,
+            fontSize: 35,
             height: 1.08,
             fontWeight: FontWeight.w900,
           ),
         ),
-        SizedBox(height: 12),
-        Text(
-          'Trabajamos cada día para brindar un servicio de agua potable seguro, sostenible y cercano a las familias de Huacariz.',
+        const SizedBox(height: 12),
+        const Text(
+          'Gestiona clientes, suministros, tarifas, recibos y pagos; '
+          'registra lecturas incluso cuando no exista conexión.',
           style: TextStyle(
             color: Colors.white70,
             fontSize: 14,
@@ -354,27 +405,27 @@ class _LoginPageState extends State<LoginPage> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(height: 18),
-        Row(
+        const SizedBox(height: 18),
+        const Row(
           children: [
             Expanded(
               child: _InfoMiniCard(
-                icon: Icons.water_drop_outlined,
-                title: 'Agua segura',
+                icon: Icons.admin_panel_settings_outlined,
+                title: 'Administrador',
               ),
             ),
             SizedBox(width: 10),
             Expanded(
               child: _InfoMiniCard(
-                icon: Icons.groups_2_outlined,
-                title: 'Gestión',
+                icon: Icons.speed_outlined,
+                title: 'Lecturador',
               ),
             ),
             SizedBox(width: 10),
             Expanded(
               child: _InfoMiniCard(
-                icon: Icons.eco_outlined,
-                title: 'Cuidado',
+                icon: Icons.cloud_off_outlined,
+                title: 'Modo offline',
               ),
             ),
           ],
@@ -392,7 +443,7 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -407,50 +458,48 @@ class _LoginPageState extends State<LoginPage> {
               color: context.jassSelectedSurface,
               borderRadius: BorderRadius.circular(22),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.water_drop_outlined,
               color: secondary,
               size: 42,
             ),
           ),
-          SizedBox(height: 18),
+          const SizedBox(height: 18),
           Text(
-            'AGUA POTABLE\nHUACARIZ\nSAN ANTONIO',
+            'ACCESO DEL PERSONAL',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: primary,
+              color: context.jassTextPrimary,
               fontSize: 18,
-              height: 1.35,
               fontWeight: FontWeight.w900,
-              letterSpacing: 3,
+              letterSpacing: 2.2,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 7),
           Text(
-            'Tu servicio de agua en línea',
+            'Administrador y lecturador',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: context.jassTextMuted,
               fontSize: 13,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 20),
-
-          _label('Usuario o DNI'),
-          SizedBox(height: 8),
+          const SizedBox(height: 22),
+          _label('Código de usuario'),
+          const SizedBox(height: 8),
           TextField(
             controller: usuarioController,
             enabled: !procesando,
+            textCapitalization: TextCapitalization.characters,
             decoration: _inputDecoration(
-              hint: 'Ej. 12345678',
+              hint: 'Ingresa tu código',
               icon: Icons.person_outline,
             ),
           ),
-          SizedBox(height: 14),
-
+          const SizedBox(height: 14),
           _label('Contraseña'),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           TextField(
             controller: passwordController,
             enabled: !procesando,
@@ -477,16 +526,50 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-
-          SizedBox(height: 22),
-
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              Expanded(
+                child: _RoleAccessCard(
+                  icon: Icons.admin_panel_settings_outlined,
+                  title: 'Administrador',
+                  subtitle: 'Gestión completa del sistema',
+                  selected: esAdministradorSeleccionado,
+                  onTap: () => _seleccionarRol('ADMINISTRADOR'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _RoleAccessCard(
+                  icon: Icons.speed_outlined,
+                  title: 'Lecturador',
+                  subtitle: 'Lecturas online y offline',
+                  selected: esLecturadorSeleccionado,
+                  onTap: () => _seleccionarRol('LECTURADOR'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            esAdministradorSeleccionado
+                ? 'Modo Administrador seleccionado.'
+                : 'Modo Lecturador seleccionado.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: context.jassTextMuted,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
               onPressed: procesando ? null : iniciarSesion,
               icon: cargando
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
@@ -494,10 +577,10 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.white,
                       ),
                     )
-                  : Icon(Icons.login_rounded),
+                  : const Icon(Icons.login_rounded),
               label: Text(
-                cargando ? 'Validando datos...' : 'Ingresar al portal',
-                style: TextStyle(
+                cargando ? 'Validando datos...' : 'Ingresar al sistema',
+                style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
                 ),
@@ -511,19 +594,17 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-
           if (verificandoSesionOffline) ...[
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             LinearProgressIndicator(
               minHeight: 3,
               color: secondary,
               backgroundColor: context.jassBorder,
             ),
           ],
-
           if (!verificandoSesionOffline &&
               puedeIngresarOffline) ...[
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(14),
@@ -539,26 +620,26 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.cloud_off_rounded,
                         color: secondary,
                         size: 20,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Sesión offline disponible',
+                          'Sesión offline del lecturador',
                           style: TextStyle(
-                            color: primary,
+                            color: context.jassTextPrimary,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 7),
+                  const SizedBox(height: 7),
                   Text(
-                    'Lecturador: $usuarioOffline\n'
+                    'Usuario: $usuarioOffline\n'
                     'Último acceso en línea: '
                     '${_formatearFecha(ultimoLoginOnline)}',
                     style: TextStyle(
@@ -568,7 +649,7 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     height: 48,
@@ -577,7 +658,7 @@ class _LoginPageState extends State<LoginPage> {
                           ? null
                           : iniciarSesionOffline,
                       icon: ingresandoOffline
-                          ? SizedBox(
+                          ? const SizedBox(
                               width: 17,
                               height: 17,
                               child: CircularProgressIndicator(
@@ -585,28 +666,32 @@ class _LoginPageState extends State<LoginPage> {
                                 color: secondary,
                               ),
                             )
-                          : Icon(Icons.offline_bolt_rounded),
+                          : const Icon(
+                              Icons.offline_bolt_rounded,
+                            ),
                       label: Text(
                         ingresandoOffline
                             ? 'Ingresando...'
                             : 'Trabajar sin conexión',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: secondary,
-                        side: BorderSide(color: secondary),
+                        side: const BorderSide(
+                          color: secondary,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Disponible únicamente para el lecturador '
-                    'que inició sesión anteriormente en este celular.',
+                    'El acceso offline está disponible únicamente '
+                    'para el lecturador autenticado previamente.',
                     style: TextStyle(
                       color: context.jassTextMuted,
                       fontSize: 10.5,
@@ -617,57 +702,14 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ],
-
-          SizedBox(height: 18),
           Text(
-            '¿Qué deseas hacer hoy?',
+            'Los usuarios clientes no tienen acceso a esta aplicación.',
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: context.jassTextMuted,
-              fontSize: 12,
+              fontSize: 10.5,
               fontWeight: FontWeight.w700,
             ),
-          ),
-          SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: _AccionMiniCard(
-                  icon: Icons.receipt_long_outlined,
-                  title: 'Consultar',
-                  subtitle: 'mi recibo',
-                ),
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: _AccionMiniCard(
-                  icon: Icons.credit_card_outlined,
-                  title: 'Pagar',
-                  subtitle: 'en línea',
-                ),
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: _AccionMiniCard(
-                  icon: Icons.report_problem_outlined,
-                  title: 'Reportar',
-                  subtitle: 'incidencia',
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 16),
-          Divider(color: context.jassBorder),
-          SizedBox(height: 10),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _FooterMini(icon: Icons.access_time, text: 'Atención rápida'),
-              _FooterMini(icon: Icons.lock_outline, text: 'Pagos seguros'),
-              _FooterMini(icon: Icons.support_agent, text: 'Consulta 24/7'),
-            ],
           ),
         ],
       ),
@@ -680,7 +722,7 @@ class _LoginPageState extends State<LoginPage> {
       child: Text(
         texto,
         style: TextStyle(
-          color: primary,
+          color: context.jassTextPrimary,
           fontSize: 13,
           fontWeight: FontWeight.w800,
         ),
@@ -695,22 +737,33 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon, color: context.jassTextMuted),
+      prefixIcon: Icon(
+        icon,
+        color: context.jassTextMuted,
+      ),
       suffixIcon: suffix,
       filled: true,
       fillColor: context.jassSurfaceAlt,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 16,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: context.jassBorder),
+        borderSide: BorderSide(
+          color: context.jassBorder,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: secondary, width: 1.5),
+        borderSide: const BorderSide(
+          color: secondary,
+          width: 1.5,
+        ),
       ),
     );
   }
@@ -731,7 +784,7 @@ class _InfoMiniCard extends StatelessWidget {
       height: 84,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.22),
+        color: Colors.black.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white12),
       ),
@@ -742,7 +795,7 @@ class _InfoMiniCard extends StatelessWidget {
           const Spacer(),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -754,86 +807,74 @@ class _InfoMiniCard extends StatelessWidget {
   }
 }
 
-class _AccionMiniCard extends StatelessWidget {
+class _RoleAccessCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _AccionMiniCard({
+  const _RoleAccessCard({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 92,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.jassSurfaceAlt,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.jassBorder),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: _LoginPageState.secondary, size: 22),
-          SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: context.jassTextPrimary,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        constraints: const BoxConstraints(
+          minHeight: 105,
+        ),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected
+              ? context.jassSelectedSurface
+              : context.jassSurfaceAlt,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? JassColors.secondary : context.jassBorder,
+            width: selected ? 1.6 : 1,
           ),
-          SizedBox(height: 2),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: context.jassTextMuted,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 2),
+            Icon(
+              icon,
+              color: JassColors.secondary,
+              size: 25,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FooterMini extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _FooterMini({
-    required this.icon,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 14, color: context.jassTextMuted),
-          SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              text,
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.jassTextPrimary,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: context.jassTextMuted,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

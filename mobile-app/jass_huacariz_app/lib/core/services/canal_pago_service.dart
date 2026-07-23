@@ -17,19 +17,17 @@ class CanalPagoService {
           .toList();
     }
 
+    if (response is Map && response['content'] is List) {
+      return (response['content'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+
     return [];
   }
 
   Future<List<Map<String, dynamic>>> listarActivos() async {
     final response = await _api.get(ApiConfig.canalesPagoActivos);
-    return _asList(response)
-        .where((canal) {
-          final metodo = (canal['metodoPago'] ?? '')
-              .toString()
-              .trim()
-              .toUpperCase();
-          return metodo != 'EFECTIVO';
-        })
-        .toList();
+    return _asList(response);
   }
 }

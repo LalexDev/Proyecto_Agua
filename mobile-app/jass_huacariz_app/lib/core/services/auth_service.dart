@@ -46,7 +46,18 @@ class AuthService {
     }
 
     if (rol.isEmpty) {
-      throw Exception('El backend no devolvió el rol del usuario.');
+      throw Exception(
+        'El backend no devolvió el rol del usuario.',
+      );
+    }
+
+    if (!_storage.esRolPermitido(rol)) {
+      await _storage.clearSession();
+
+      throw Exception(
+        'Acceso no permitido. Esta aplicación es '
+        'exclusiva para ADMINISTRADOR y LECTURADOR.',
+      );
     }
 
     await _storage.saveAuthenticatedSession(
@@ -90,6 +101,10 @@ class AuthService {
     return true;
   }
 
+  Future<void> limpiarSesionNoPermitida() async {
+    await _storage.clearUnsupportedSession();
+  }
+
   Future<void> logout() async {
     await _storage.clearSession();
   }
@@ -103,7 +118,7 @@ class AuthService {
   }
 
   Future<bool> estaAutenticado() async {
-    return _storage.hasSession();
+    return _storage.hasAllowedSession();
   }
 
   Future<bool> puedeIngresarOfflineComoLecturador() async {

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../shared/theme/jass_colors.dart';
 import '../../shared/theme/jass_theme_context.dart';
 
-import '../../core/services/cliente_portal_service.dart';
 import '../../core/storage/secure_storage_service.dart';
 import '../../shared/widgets/cliente_bottom_nav.dart';
 
@@ -27,7 +26,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final TextEditingController nuevaController = TextEditingController();
   final TextEditingController confirmarController = TextEditingController();
 
-  final ClientePortalService clientePortalService = ClientePortalService();
+ 
   final SecureStorageService storageService = SecureStorageService();
 
   bool verActual = false;
@@ -56,81 +55,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   );
 }
 
-  Future<void> cambiarPassword() async {
-    final actual = actualController.text.trim();
-    final nueva = nuevaController.text.trim();
-    final confirmar = confirmarController.text.trim();
-
-    if (actual.isEmpty || nueva.isEmpty || confirmar.isEmpty) {
-      mostrarMensaje(
-        'Completa todos los campos.',
-        color: warning,
-      );
-      return;
-    }
-
-    if (nueva.length < 6) {
-      mostrarMensaje(
-        'La nueva contraseña debe tener mínimo 6 caracteres.',
-        color: warning,
-      );
-      return;
-    }
-
-    if (nueva != confirmar) {
-      mostrarMensaje(
-        'La nueva contraseña y la confirmación no coinciden.',
-        color: danger,
-      );
-      return;
-    }
-
-    setState(() {
-      cargando = true;
-    });
-
-    try {
-      await clientePortalService.cambiarPassword(
-        passwordActual: actual,
-        nuevaPassword: nueva,
-        confirmarPassword: confirmar,
-      );
-
-      await storageService.clearSession();
-
-      if (!mounted) return;
-
-      setState(() {
-        cargando = false;
-      });
-
-      actualController.clear();
-      nuevaController.clear();
-      confirmarController.clear();
-
-      mostrarMensaje(
-        'Contraseña actualizada correctamente. Inicia sesión nuevamente.',
-        color: success,
-      );
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/login',
-        (route) => false,
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        cargando = false;
-      });
-
-      mostrarMensaje(
-        e.toString().replaceFirst('Exception: ', ''),
-        color: danger,
-      );
-    }
-  }
 
   Future<void> cerrarSesion() async {
     final confirmar = await showDialog<bool>(
@@ -576,39 +500,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             },
           ),
           SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton.icon(
-              onPressed: cargando ? null : cambiarPassword,
-              icon: cargando
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(Icons.save_rounded),
-              label: Text(
-                cargando ? 'Actualizando...' : 'Guardar contraseña',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: secondary,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: secondary.withValues(alpha: 0.55),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(17),
-                ),
-              ),
-            ),
-          ),
+          
         ],
       ),
     );

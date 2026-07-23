@@ -79,7 +79,6 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       final texto = '''
       ${_nombreCliente(cliente)}
       ${cliente['dni']}
-      ${cliente['codigoUsuario']}
       ${cliente['telefono']}
       ${cliente['correo']}
       ${cliente['suministros']}
@@ -313,7 +312,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'DNI: ${_txt(cliente['dni'])} | Usuario: ${_txt(cliente['codigoUsuario'])}',
+                  'DNI: ${_txt(cliente['dni'])}',
                   style: TextStyle(
                     color: context.jassTextMuted,
                     fontWeight: FontWeight.w700,
@@ -584,7 +583,6 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                     return _ClienteCard(
                       nombre: _nombreCliente(cliente),
                       dni: _txt(cliente['dni']),
-                      codigo: _txt(cliente['codigoUsuario']),
                       telefono: _txt(cliente['telefono']),
                       correo: _txt(cliente['correo']),
                       activo: _estadoCliente(cliente),
@@ -612,7 +610,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Gestión de usuarios',
+                'Gestión de clientes',
                 style: TextStyle(
                   color: context.jassTextMuted,
                   fontWeight: FontWeight.w700,
@@ -800,7 +798,6 @@ class _ResumenBox extends StatelessWidget {
 class _ClienteCard extends StatelessWidget {
   final String nombre;
   final String dni;
-  final String codigo;
   final String telefono;
   final String correo;
   final bool activo;
@@ -812,7 +809,6 @@ class _ClienteCard extends StatelessWidget {
   _ClienteCard({
     required this.nombre,
     required this.dni,
-    required this.codigo,
     required this.telefono,
     required this.correo,
     required this.activo,
@@ -865,7 +861,7 @@ class _ClienteCard extends StatelessWidget {
           ),
           SizedBox(height: 12),
           Text(
-            'DNI: $dni · Usuario: $codigo',
+            'DNI: $dni',
             style: TextStyle(
               color: context.jassTextMuted,
               fontWeight: FontWeight.w700,
@@ -1505,7 +1501,7 @@ class _EditarClienteSheetState extends State<_EditarClienteSheet> {
                 border: Border.all(color: Color(0xFFFFD899)),
               ),
               child: Text(
-                'Nota: si cambias el DNI, también puede actualizarse el usuario de acceso del cliente si el backend lo permite.',
+                'El cliente se registra únicamente para la gestión del servicio y sus suministros. No tendrá acceso a esta aplicación.',
                 style: TextStyle(
                   color: JassColors.warning,
                   fontWeight: FontWeight.w800,

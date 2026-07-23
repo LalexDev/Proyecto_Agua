@@ -14,14 +14,13 @@ class MisSuministrosPage extends StatefulWidget {
 }
 
 class _MisSuministrosPageState extends State<MisSuministrosPage> {
+  final ClientePortalService clientePortalService = ClientePortalService();
+
   Color get primary => context.jassTextPrimary;
   static const Color secondary = JassColors.secondary;
   Color get background => context.jassBackground;
   Color get muted => context.jassTextMuted;
   static const Color danger = JassColors.danger;
-  static const Color success = JassColors.success;
-
-  final ClientePortalService clientePortalService = ClientePortalService();
 
   List<Map<String, dynamic>> suministros = [];
 

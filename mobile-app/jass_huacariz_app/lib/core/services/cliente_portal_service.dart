@@ -4,9 +4,29 @@ import 'api_service.dart';
 class ClientePortalService {
   final ApiService _api = ApiService();
 
-  Future<Map<String, dynamic>> obtenerMiPerfil() async {
-    final response = await _api.get(ApiConfig.clientePerfil);
+  List<Map<String, dynamic>> _asList(dynamic response) {
+    if (response is List) {
+      return response
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
 
+    if (response is Map && response['data'] is List) {
+      return (response['data'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+
+    if (response is Map && response['content'] is List) {
+      return (response['content'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+
+    return [];
+  }
+
+  Map<String, dynamic> _asMap(dynamic response) {
     if (response is Map<String, dynamic>) {
       return response;
     }
@@ -18,37 +38,25 @@ class ClientePortalService {
     return {};
   }
 
-  Future<List<Map<String, dynamic>>> listarMisSuministros() async {
-    final response = await _api.get(ApiConfig.clienteSuministros);
-
-    if (response is List) {
-      return response.map((item) {
-        return Map<String, dynamic>.from(item);
-      }).toList();
-    }
-
-    if (response is Map && response['data'] is List) {
-      return (response['data'] as List).map((item) {
-        return Map<String, dynamic>.from(item);
-      }).toList();
-    }
-
-    if (response is Map && response['content'] is List) {
-      return (response['content'] as List).map((item) {
-        return Map<String, dynamic>.from(item);
-      }).toList();
-    }
-
-    return [];
+  Future<Map<String, dynamic>> obtenerMiPerfil() async {
+    return _asMap(await _api.get(ApiConfig.clienteMe));
   }
 
-  Future<Map<String, dynamic>> cambiarPassword({
+  Future<List<Map<String, dynamic>>> listarMisSuministros() async {
+    return _asList(await _api.get(ApiConfig.clienteMeSuministros));
+  }
+
+  Future<List<Map<String, dynamic>>> listarMisRecibos() async {
+    return _asList(await _api.get(ApiConfig.clienteMeRecibos));
+  }
+
+  Future<Map<String, dynamic>> cambiarMiPassword({
     required String passwordActual,
     required String nuevaPassword,
     required String confirmarPassword,
   }) async {
     final response = await _api.patch(
-      ApiConfig.clienteCambiarPassword,
+      ApiConfig.clienteMePassword,
       {
         'passwordActual': passwordActual,
         'nuevaPassword': nuevaPassword,
@@ -56,16 +64,37 @@ class ClientePortalService {
       },
     );
 
-    if (response is Map<String, dynamic>) {
-      return response;
-    }
+    return _asMap(response);
+  }
 
-    if (response is Map) {
-      return Map<String, dynamic>.from(response);
-    }
+  Future<Map<String, dynamic>> cambiarPassword({
+    required String passwordActual,
+    required String nuevaPassword,
+    required String confirmarPassword,
+  }) {
+    return cambiarMiPassword(
+      passwordActual: passwordActual,
+      nuevaPassword: nuevaPassword,
+      confirmarPassword: confirmarPassword,
+    );
+  }
 
-    return {
-      'mensaje': 'Contraseña actualizada correctamente',
-    };
+  Future<Map<String, dynamic>> pagarMiRecibo({
+    required int idRecibo,
+    required String metodoPago,
+    required String codigoOperacion,
+    required String comprobantePath,
+  }) async {
+    final response = await _api.patchMultipart(
+      ApiConfig.clienteMePagarRecibo(idRecibo),
+      fields: {
+        'metodoPago': metodoPago,
+        'codigoOperacion': codigoOperacion,
+      },
+      fileField: 'comprobante',
+      filePath: comprobantePath,
+    );
+
+    return _asMap(response);
   }
 }

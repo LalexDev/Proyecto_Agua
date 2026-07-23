@@ -4,16 +4,6 @@ import 'core/app_theme_controller.dart';
 import 'shared/theme/jass_colors.dart';
 
 import 'features/auth/login_page.dart';
-import 'features/auth/change_password_page.dart';
-
-import 'features/home/home_page.dart';
-import 'features/perfil/perfil_page.dart';
-
-import 'features/recibos/recibos_page.dart';
-import 'features/recibos/recibo_detail_page.dart';
-import 'features/recibos/pdf_viewer_page.dart';
-
-import 'features/pagos/pago_cip_page.dart';
 
 import 'features/admin/admin_dashboard_page.dart';
 import 'features/admin/admin_clientes_page.dart';
@@ -33,9 +23,6 @@ import 'features/lector/comprobante_recibo_page.dart';
 import 'features/lector/historial_lecturas_page.dart';
 import 'features/lector/qr_scanner_page.dart';
 
-import 'features/suministros/mis_suministros_page.dart';
-import 'features/suministros/detalle_suministro_cliente_page.dart';
-
 class JassHuacarizApp extends StatelessWidget {
   const JassHuacarizApp({super.key});
 
@@ -48,8 +35,6 @@ class JassHuacarizApp extends StatelessWidget {
           title: 'AGUA POTABLE HUACARIZ SAN ANTONIO',
           debugShowCheckedModeBanner: false,
           themeMode: themeMode,
-
-          // Tema claro.
           theme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.light,
@@ -63,8 +48,6 @@ class JassHuacarizApp extends StatelessWidget {
               surface: JassColors.card,
             ),
           ),
-
-          // Tema oscuro.
           darkTheme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
@@ -78,33 +61,12 @@ class JassHuacarizApp extends StatelessWidget {
               surface: JassColors.darkCard,
             ),
           ),
-
           initialRoute: '/login',
-
           routes: {
-            // =========================================================
-            // AUTENTICACIÓN
-            // =========================================================
+            // AUTENTICACIÓN DEL PERSONAL
             '/login': (_) => const LoginPage(),
-            '/cambiar-password': (_) => const ChangePasswordPage(),
 
-            // =========================================================
-            // CLIENTE
-            // =========================================================
-            '/home': (_) => const HomePage(),
-            '/recibos': (_) => const RecibosPage(),
-            '/recibo-detalle': (_) => const ReciboDetailPage(),
-            '/pago-cip': (_) => const PagoCipPage(),
-            '/perfil': (_) => const PerfilPage(),
-            '/pdf-viewer': (_) => const PdfViewerPage(),
-
-            '/mis-suministros': (_) => const MisSuministrosPage(),
-            '/detalle-suministro-cliente': (_) =>
-                const DetalleSuministroClientePage(),
-
-            // =========================================================
             // ADMINISTRADOR
-            // =========================================================
             '/admin-dashboard': (_) => const AdminDashboardPage(),
             '/admin-clientes': (_) => const AdminClientesPage(),
             '/admin-lecturadores': (_) => const AdminLecturadoresPage(),
@@ -115,68 +77,39 @@ class JassHuacarizApp extends StatelessWidget {
             '/admin-recibos': (_) => const AdminRecibosPage(),
             '/admin-reportes': (_) => const AdminReportesPage(),
 
-            // Pantallas compartidas abiertas desde administrador.
+            // PANTALLAS COMPARTIDAS ABIERTAS DESDE ADMINISTRADOR
             '/admin-historial-lecturas': (_) =>
-                const HistorialLecturasPage(
-                  modoAdmin: true,
-                ),
-
-            '/admin-qr-scanner': (_) => const QrScannerPage(
-                  modoAdmin: true,
-                ),
-
+                const HistorialLecturasPage(modoAdmin: true),
+            '/admin-qr-scanner': (_) =>
+                const QrScannerPage(modoAdmin: true),
             '/admin-buscar-suministro': (_) =>
-    const BuscarSuministroPage(
-      modoAdmin: true,
-    ),
+                const BuscarSuministroPage(modoAdmin: true),
             '/admin-detalle-suministro': (_) =>
-                const DetalleSuministroPage(
-                  modoAdmin: true,
-                ),
-
+                const DetalleSuministroPage(modoAdmin: true),
             '/admin-registrar-lectura': (_) =>
-                const RegistrarLecturaPage(
-                  modoAdmin: true,
-                ),
-
+                const RegistrarLecturaPage(modoAdmin: true),
             '/admin-comprobante-recibo': (_) =>
-                const ComprobanteReciboPage(
-                  modoAdmin: true,
-                ),
+                const ComprobanteReciboPage(modoAdmin: true),
 
-            // =========================================================
             // LECTURADOR
-            // =========================================================
             '/lector-home': (_) => const LectorHomePage(),
-
-            '/buscar-suministro': (_) => const BuscarSuministroPage(
-                  modoAdmin: false,
-                ),
-
-            '/qr-scanner': (_) => const QrScannerPage(
-                  modoAdmin: false,
-                ),
-
+            '/buscar-suministro': (_) =>
+                const BuscarSuministroPage(modoAdmin: false),
+            '/qr-scanner': (_) =>
+                const QrScannerPage(modoAdmin: false),
             '/detalle-suministro': (_) =>
-                const DetalleSuministroPage(
-                  modoAdmin: false,
-                ),
-
+                const DetalleSuministroPage(modoAdmin: false),
             '/registrar-lectura': (_) =>
-                const RegistrarLecturaPage(
-                  modoAdmin: false,
-                ),
-
+                const RegistrarLecturaPage(modoAdmin: false),
             '/comprobante-recibo': (_) =>
-                const ComprobanteReciboPage(
-                  modoAdmin: false,
-                ),
-
+                const ComprobanteReciboPage(modoAdmin: false),
             '/historial-lecturas': (_) =>
-                const HistorialLecturasPage(
-                  modoAdmin: false,
-                ),
+                const HistorialLecturasPage(modoAdmin: false),
           },
+          onUnknownRoute: (_) => MaterialPageRoute<void>(
+            builder: (_) => const LoginPage(),
+            settings: const RouteSettings(name: '/login'),
+          ),
         );
       },
     );

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../config/api_config.dart';
 import 'api_service.dart';
 
 class ReciboPdfService {
@@ -18,11 +19,11 @@ class ReciboPdfService {
     final idRecibo = _id(recibo);
 
     if (idRecibo <= 0) {
-      throw Exception('No se encontró el ID del recibo para descargar el PDF.');
+      throw Exception('No se encontró un ID válido para generar el PDF.');
     }
 
     return _api.getBytes(
-      '/cliente/me/recibos/$idRecibo/pdf',
+      ApiConfig.clienteMeReciboPdf(idRecibo),
       accept: 'application/pdf',
     );
   }

@@ -613,12 +613,31 @@ class _PagoCipPageState extends State<PagoCipPage> {
                         ],
                       ),
                     ),
-                    Radio<String>(
-                      value: metodo,
-                      groupValue: metodoPago,
-                      onChanged: (value) {
-                        if (value != null) setState(() => metodoPago = value);
-                      },
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: seleccionado
+                              ? JassColors.secondary
+                              : context.jassBorder,
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: seleccionado
+                                ? JassColors.secondary
+                                : Colors.transparent,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

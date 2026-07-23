@@ -27,13 +27,21 @@ class PagoService {
   }
 
   Map<String, dynamic> _asMap(dynamic response) {
-    if (response is Map<String, dynamic>) return response;
-    if (response is Map) return Map<String, dynamic>.from(response);
+    if (response is Map<String, dynamic>) {
+      return response;
+    }
+
+    if (response is Map) {
+      return Map<String, dynamic>.from(response);
+    }
+
     return {};
   }
 
   Future<List<Map<String, dynamic>>> listarPagos() async {
-    return _asList(await _api.get(ApiConfig.pagos));
+    return _asList(
+      await _api.get(ApiConfig.pagos),
+    );
   }
 
   Future<List<Map<String, dynamic>>> listarPagosPorSuministro(
@@ -41,7 +49,9 @@ class PagoService {
   ) async {
     return _asList(
       await _api.get(
-        ApiConfig.pagosPorSuministro(codigoSuministro),
+        ApiConfig.pagosPorSuministro(
+          codigoSuministro,
+        ),
       ),
     );
   }
@@ -53,9 +63,9 @@ class PagoService {
     required String comprobantePath,
   }) async {
     final response = await _api.patchMultipart(
-      ApiConfig.pagarReciboCliente(idRecibo),
+      ApiConfig.clienteMePagarRecibo(idRecibo),
       fields: {
-        'metodoPago': metodoPago.trim().toUpperCase(),
+        'metodoPago': metodoPago.trim(),
         'codigoOperacion': codigoOperacion.trim(),
       },
       fileField: 'comprobante',
