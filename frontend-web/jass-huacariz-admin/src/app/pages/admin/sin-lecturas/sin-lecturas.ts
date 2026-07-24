@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -54,7 +54,9 @@ export class SinLecturas implements OnInit {
 
     this.lecturaAdmin.listarPendientesLectura(
       Number(this.filtroPendienteAnio),
-      Number(this.filtroPendienteMes)
+      Number(this.filtroPendienteMes),
+      '',
+      2000
     )
       .pipe(
         finalize(() => {

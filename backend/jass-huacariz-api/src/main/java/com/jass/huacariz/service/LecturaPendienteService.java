@@ -24,7 +24,7 @@ public class LecturaPendienteService {
 
     @Transactional(readOnly = true)
     public List<LecturaPendienteResponse> listarSuministrosSinLectura(Integer anio, Integer mes) {
-        return listarSuministrosSinLectura(anio, mes, null, 500);
+        return listarSuministrosSinLectura(anio, mes, null, 2000);
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +56,7 @@ public class LecturaPendienteService {
             return 200;
         }
 
-        return Math.max(20, Math.min(limit, 500));
+        return Math.max(20, Math.min(limit, 3000));
     }
 
     private void validarPeriodo(Integer anio, Integer mes) {
