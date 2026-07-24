@@ -34,3 +34,5 @@ dist/
 .angular/
 .env
 backend/jass-huacariz-api/uploads/
+
+*.zip
