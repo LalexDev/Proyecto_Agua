@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 
@@ -42,9 +43,55 @@ public class AdminLecturaRepository {
                 .toList();
     }
 
-    private HistorialLecturaResponse convertir(Lectura lectura) {
-        Recibo recibo = buscarReciboPorLectura(lectura);
+    public List<HistorialLecturaResponse> listarHistorialOptimizado(
+            Integer anio,
+            Integer mes,
+            String buscar,
+            int limit
+    ) {
+        String busqueda = buscar == null ? null : buscar.trim();
 
+        List<Object[]> filas = entityManager.createQuery(
+                """
+                SELECT l, r
+                FROM Lectura l
+                JOIN FETCH l.suministro s
+                JOIN FETCH s.cliente c
+                JOIN FETCH s.sector sec
+                LEFT JOIN Recibo r ON r.lectura.id = l.id
+                WHERE (:anio IS NULL OR l.anio = :anio)
+                  AND (:mes IS NULL OR l.mes = :mes)
+                  AND (
+                      :buscar IS NULL OR :buscar = '' OR
+                      LOWER(s.codigoSuministro) LIKE LOWER(CONCAT('%', :buscar, '%')) OR
+                      LOWER(COALESCE(s.aliasSuministro, '')) LIKE LOWER(CONCAT('%', :buscar, '%')) OR
+                      LOWER(COALESCE(s.direccionSuministro, '')) LIKE LOWER(CONCAT('%', :buscar, '%')) OR
+                      LOWER(c.dni) LIKE LOWER(CONCAT('%', :buscar, '%')) OR
+                      LOWER(CONCAT(COALESCE(c.nombres, ''), ' ', COALESCE(c.apellidos, ''))) LIKE LOWER(CONCAT('%', :buscar, '%')) OR
+                      LOWER(sec.nombre) LIKE LOWER(CONCAT('%', :buscar, '%')) OR
+                      LOWER(COALESCE(r.codigoRecibo, '')) LIKE LOWER(CONCAT('%', :buscar, '%')) OR
+                      LOWER(COALESCE(r.estadoRecibo, '')) LIKE LOWER(CONCAT('%', :buscar, '%'))
+                  )
+                ORDER BY l.anio DESC, l.mes DESC, l.id DESC
+                """,
+                Object[].class
+        )
+                .setParameter("anio", anio)
+                .setParameter("mes", mes)
+                .setParameter("buscar", busqueda)
+                .setMaxResults(limit)
+                .getResultList();
+
+        return filas.stream()
+                .map(fila -> convertir((Lectura) fila[0], (Recibo) fila[1]))
+                .toList();
+    }
+
+    private HistorialLecturaResponse convertir(Lectura lectura) {
+        return convertir(lectura, buscarReciboPorLectura(lectura));
+    }
+
+    private HistorialLecturaResponse convertir(Lectura lectura, Recibo recibo) {
         String nombreCliente = "";
         if (lectura.getSuministro() != null && lectura.getSuministro().getCliente() != null) {
             String nombres = lectura.getSuministro().getCliente().getNombres() != null
@@ -88,7 +135,7 @@ public class AdminLecturaRepository {
                 lectura.getLecturaActual(),
                 lectura.getConsumoM3(),
                 recibo != null ? recibo.getCodigoRecibo() : "-",
-                recibo != null ? recibo.getTotal() : java.math.BigDecimal.ZERO,
+                recibo != null ? recibo.getTotal() : BigDecimal.ZERO,
                 recibo != null ? recibo.getEstadoRecibo() : "PENDIENTE",
                 lectura.getFechaLectura(),
 
@@ -97,12 +144,12 @@ public class AdminLecturaRepository {
                 lectura.getObservacionCambioMedidor(),
                 lectura.getConsumoInusual(),
 
-                recibo != null ? recibo.getSubtotalAgua() : java.math.BigDecimal.ZERO,
-                recibo != null ? recibo.getCargoMantenimiento() : java.math.BigDecimal.ZERO,
-                recibo != null ? recibo.getCargoLector() : java.math.BigDecimal.ZERO,
-                recibo != null ? recibo.getCargoOtros() : java.math.BigDecimal.ZERO,
-                recibo != null ? recibo.getMora() : java.math.BigDecimal.ZERO,
-                recibo != null ? recibo.getTotal() : java.math.BigDecimal.ZERO,
+                recibo != null ? recibo.getSubtotalAgua() : BigDecimal.ZERO,
+                recibo != null ? recibo.getCargoMantenimiento() : BigDecimal.ZERO,
+                recibo != null ? recibo.getCargoLector() : BigDecimal.ZERO,
+                recibo != null ? recibo.getCargoOtros() : BigDecimal.ZERO,
+                recibo != null ? recibo.getMora() : BigDecimal.ZERO,
+                recibo != null ? recibo.getTotal() : BigDecimal.ZERO,
                 recibo != null ? recibo.getFechaEmision() : null,
                 recibo != null ? recibo.getFechaVencimiento() : null,
                 recibo != null ? generarCodigoBarras(recibo) : "-"

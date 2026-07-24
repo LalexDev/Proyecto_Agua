@@ -10,6 +10,7 @@ import com.jass.huacariz.repository.PagoRepository;
 import com.jass.huacariz.repository.ReciboRepository;
 import com.jass.huacariz.repository.SuministroRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.jass.huacariz.entity.ConfiguracionCobranza;
@@ -20,6 +21,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +47,34 @@ public class ReciboService {
         actualizarVencidosConMora();
 
         return reciboRepository.findByEstadoRecibo("PENDIENTE")
+                .stream()
+                .map(this::convertirAResponse)
+                .toList();
+    }
+
+
+    @Transactional
+    public List<ReciboResponse> listarRecibosOptimizado(
+            Integer anio,
+            Integer mes,
+            String estado,
+            String buscar,
+            Integer limit
+    ) {
+        actualizarVencidosConMora();
+
+        String estadoNormalizado = normalizarEstadoRecibo(estado);
+        String busquedaNormalizada = limpiarBusqueda(buscar);
+        int limite = normalizarLimite(limit);
+
+        return reciboRepository
+                .buscarRecibosOptimizado(
+                        anio,
+                        mes,
+                        estadoNormalizado,
+                        busquedaNormalizada,
+                        PageRequest.of(0, limite)
+                )
                 .stream()
                 .map(this::convertirAResponse)
                 .toList();
@@ -112,11 +142,8 @@ public class ReciboService {
                 ? config.getMoraBase()
                 : BigDecimal.ZERO;
 
-        List<Recibo> vencidos = reciboRepository.findByEstadoRecibo("PENDIENTE")
-                .stream()
-                .filter(recibo -> recibo.getFechaVencimiento() != null)
-                .filter(recibo -> recibo.getFechaVencimiento().isBefore(LocalDate.now()))
-                .toList();
+        List<Recibo> vencidos = reciboRepository
+                .findByEstadoReciboAndFechaVencimientoBefore("PENDIENTE", LocalDate.now());
 
         for (Recibo recibo : vencidos) {
             BigDecimal mora = valorSeguro(moraBase);
@@ -217,6 +244,27 @@ public class ReciboService {
         return suministro.getSector().getNombre() != null
                 ? suministro.getSector().getNombre()
                 : "-";
+    }
+
+
+    private String normalizarEstadoRecibo(String estado) {
+        if (estado == null || estado.isBlank() || "TODOS".equalsIgnoreCase(estado)) {
+            return null;
+        }
+
+        return estado.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String limpiarBusqueda(String buscar) {
+        return buscar == null ? null : buscar.trim();
+    }
+
+    private int normalizarLimite(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return 200;
+        }
+
+        return Math.max(20, Math.min(limit, 500));
     }
 
     private BigDecimal valorSeguro(BigDecimal valor) {

@@ -6,6 +6,7 @@ import com.jass.huacariz.entity.Suministro;
 import com.jass.huacariz.repository.LecturaRepository;
 import com.jass.huacariz.repository.SuministroRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,24 +24,39 @@ public class LecturaPendienteService {
 
     @Transactional(readOnly = true)
     public List<LecturaPendienteResponse> listarSuministrosSinLectura(Integer anio, Integer mes) {
+        return listarSuministrosSinLectura(anio, mes, null, 500);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LecturaPendienteResponse> listarSuministrosSinLectura(
+            Integer anio,
+            Integer mes,
+            String buscar,
+            Integer limit
+    ) {
         validarPeriodo(anio, mes);
 
-        return suministroRepository.findAll()
-                .stream()
-                .filter(suministro -> Boolean.TRUE.equals(suministro.getEstado()))
-                .filter(suministro -> !lecturaRepository.existsBySuministroIdAndAnioAndMes(
-                        suministro.getId(),
+        String busquedaNormalizada = buscar == null ? null : buscar.trim();
+        int limite = normalizarLimite(limit);
+
+        return suministroRepository.buscarPendientesLectura(
                         anio,
-                        mes
-                ))
-                .sorted(
-                        Comparator
-                                .comparing((Suministro suministro) -> obtenerSector(suministro).toLowerCase())
-                                .thenComparing(suministro -> obtenerNombreCliente(suministro).toLowerCase())
-                                .thenComparing(Suministro::getCodigoSuministro)
+                        mes,
+                        busquedaNormalizada,
+                        PageRequest.of(0, limite)
                 )
+                .stream()
                 .map(suministro -> convertirAResponse(suministro, anio, mes))
                 .toList();
+    }
+
+
+    private int normalizarLimite(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return 200;
+        }
+
+        return Math.max(20, Math.min(limit, 500));
     }
 
     private void validarPeriodo(Integer anio, Integer mes) {

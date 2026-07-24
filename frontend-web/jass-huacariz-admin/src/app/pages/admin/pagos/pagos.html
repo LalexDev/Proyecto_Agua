@@ -190,6 +190,29 @@
       </select>
     </div>
 
+    <select [(ngModel)]="filtroMes" (change)="cargarPagos()">
+      <option [ngValue]="''">Todos los meses</option>
+      <option [ngValue]="1">Enero</option>
+      <option [ngValue]="2">Febrero</option>
+      <option [ngValue]="3">Marzo</option>
+      <option [ngValue]="4">Abril</option>
+      <option [ngValue]="5">Mayo</option>
+      <option [ngValue]="6">Junio</option>
+      <option [ngValue]="7">Julio</option>
+      <option [ngValue]="8">Agosto</option>
+      <option [ngValue]="9">Septiembre</option>
+      <option [ngValue]="10">Octubre</option>
+      <option [ngValue]="11">Noviembre</option>
+      <option [ngValue]="12">Diciembre</option>
+    </select>
+
+    <input
+      type="number"
+      placeholder="Año"
+      [(ngModel)]="filtroAnio"
+      (input)="filtrarPagos()"
+    >
+
     <button type="button" class="btn-secondary btn-icon" (click)="limpiarFiltros()">
       <svg viewBox="0 0 24 24">
         <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
@@ -206,7 +229,7 @@
         <h3>Pagos registrados</h3>
       </div>
 
-      <span>{{ pagosFiltrados.length }} resultado(s)</span>
+      <span>{{ pagosFiltrados.length }} resultado(s) · máx. {{ limiteRegistros }}</span>
     </div>
 
       <div class="table-responsive mobile-table-wrapper">

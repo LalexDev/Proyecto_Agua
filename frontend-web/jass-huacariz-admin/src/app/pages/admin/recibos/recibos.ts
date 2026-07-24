@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
@@ -22,7 +22,11 @@ export class Recibos implements OnInit {
   exito = '';
 
   filtroEstado = 'TODOS';
+  filtroAnio: number | '' = new Date().getFullYear();
+  filtroMes: number | '' = new Date().getMonth() + 1;
+  limiteRegistros = 200;
   busqueda = '';
+  private debounceBusqueda: any;
 
   reciboSeleccionado: any = null;
   reciboDetalle: any = null;
@@ -46,7 +50,13 @@ export class Recibos implements OnInit {
     this.error = '';
     this.exito = '';
 
-    this.reciboService.listarRecibos()
+    this.reciboService.listarRecibos({
+      anio: this.filtroAnio,
+      mes: this.filtroMes,
+      estado: this.filtroEstado,
+      buscar: this.busqueda,
+      limit: this.limiteRegistros
+    })
       .pipe(
         finalize(() => {
           this.cargando = false;
@@ -107,13 +117,18 @@ export class Recibos implements OnInit {
   }
 
   filtrarRecibos(): void {
-    this.aplicarFiltros();
+    clearTimeout(this.debounceBusqueda);
+    this.debounceBusqueda = setTimeout(() => {
+      this.cargarRecibos();
+    }, 350);
   }
 
   limpiarFiltros(): void {
     this.busqueda = '';
     this.filtroEstado = 'TODOS';
-    this.aplicarFiltros();
+    this.filtroAnio = new Date().getFullYear();
+    this.filtroMes = new Date().getMonth() + 1;
+    this.cargarRecibos();
   }
 
   abrirDetalleRecibo(recibo: ReciboResponse): void {

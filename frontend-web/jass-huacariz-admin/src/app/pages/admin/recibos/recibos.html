@@ -286,12 +286,35 @@
         >
       </div>
 
-      <select [(ngModel)]="filtroEstado" (change)="filtrarRecibos()">
+      <select [(ngModel)]="filtroEstado" (change)="cargarRecibos()">
         <option value="TODOS">Todos los estados</option>
         <option value="PENDIENTE">Pendientes</option>
         <option value="PAGADO">Pagados</option>
         <option value="VENCIDO">Vencidos</option>
       </select>
+
+      <select [(ngModel)]="filtroMes" (change)="cargarRecibos()">
+        <option [ngValue]="''">Todos los meses</option>
+        <option [ngValue]="1">Enero</option>
+        <option [ngValue]="2">Febrero</option>
+        <option [ngValue]="3">Marzo</option>
+        <option [ngValue]="4">Abril</option>
+        <option [ngValue]="5">Mayo</option>
+        <option [ngValue]="6">Junio</option>
+        <option [ngValue]="7">Julio</option>
+        <option [ngValue]="8">Agosto</option>
+        <option [ngValue]="9">Septiembre</option>
+        <option [ngValue]="10">Octubre</option>
+        <option [ngValue]="11">Noviembre</option>
+        <option [ngValue]="12">Diciembre</option>
+      </select>
+
+      <input
+        type="number"
+        placeholder="Año"
+        [(ngModel)]="filtroAnio"
+        (input)="filtrarRecibos()"
+      >
 
       <button
         type="button"
@@ -334,7 +357,7 @@
             <h3>Recibos registrados</h3>
           </div>
 
-          <span>{{ recibosFiltrados.length }} resultado(s)</span>
+          <span>{{ recibosFiltrados.length }} resultado(s) · máx. {{ limiteRegistros }}</span>
         </div>
 
          <div class="table-responsive mobile-table-wrapper">

@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -22,6 +22,10 @@ export class Pagos implements OnInit {
   pagos: PagoResponse[] = [];
   pagosFiltrados: PagoResponse[] = [];
   estadoFiltro = 'TODOS';
+  filtroAnio: number | '' = new Date().getFullYear();
+  filtroMes: number | '' = new Date().getMonth() + 1;
+  limiteRegistros = 200;
+  private debounceBusqueda: any;
 
   cargando = false;
   error = '';
@@ -52,7 +56,12 @@ cargarPagos(): void {
   this.error = '';
   this.exito = '';
 
-  this.pagoService.listarPagos(this.estadoFiltro)
+  this.pagoService.listarPagos(this.estadoFiltro, {
+    anio: this.filtroAnio,
+    mes: this.filtroMes,
+    buscar: this.busqueda,
+    limit: this.limiteRegistros
+  })
     .pipe(
       finalize(() => {
         this.cargando = false;
@@ -62,7 +71,7 @@ cargarPagos(): void {
     .subscribe({
       next: (data) => {
         this.pagos = data || [];
-        this.filtrarPagos();
+        this.pagosFiltrados = this.pagos;
         this.mostrarExito('Pagos actualizados correctamente.');
         this.cdr.detectChanges();
       },
@@ -76,30 +85,18 @@ cargarPagos(): void {
     });
 }
   filtrarPagos(): void {
-    const texto = this.busqueda.trim().toLowerCase();
-    const estado = this.estadoFiltro;
-
-    this.pagosFiltrados = this.pagos.filter((pago: PagoResponse) => {
-      const coincideTexto =
-        !texto ||
-        String(pago.codigoRecibo || '').toLowerCase().includes(texto) ||
-        String(pago.metodoPago || '').toLowerCase().includes(texto) ||
-        String(pago.codigoOperacion || '').toLowerCase().includes(texto) ||
-        String(pago.monto || '').toLowerCase().includes(texto) ||
-        String(pago.estadoPago || '').toLowerCase().includes(texto) ||
-        this.fechaPagoTexto(pago).toLowerCase().includes(texto);
-
-      const coincideEstado =
-        estado === 'TODOS' || pago.estadoPago === estado;
-
-      return coincideTexto && coincideEstado;
-    });
+    clearTimeout(this.debounceBusqueda);
+    this.debounceBusqueda = setTimeout(() => {
+      this.cargarPagos();
+    }, 350);
   }
 
   limpiarFiltros(): void {
     this.busqueda = '';
     this.estadoFiltro = 'TODOS';
-    this.filtrarPagos();
+    this.filtroAnio = new Date().getFullYear();
+    this.filtroMes = new Date().getMonth() + 1;
+    this.cargarPagos();
   }
 
   totalPagos(): number {

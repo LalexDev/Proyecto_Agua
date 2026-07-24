@@ -25,6 +25,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -90,12 +92,27 @@ public class ClienteService {
 
     @Transactional(readOnly = true)
     public List<ClienteResponse> listarClientes() {
-        return clienteRepository.findAll()
+        List<Cliente> clientes = clienteRepository.findAllWithUsuario();
+
+        if (clientes.isEmpty()) {
+            return List.of();
+        }
+
+        List<Integer> clienteIds = clientes.stream()
+                .map(Cliente::getId)
+                .toList();
+
+        Map<Integer, List<Suministro>> suministrosPorCliente = suministroRepository
+                .findByClienteIdInWithSector(clienteIds)
                 .stream()
-                .map(cliente -> {
-                    List<Suministro> suministros = suministroRepository.findByClienteId(cliente.getId());
-                    return convertirAResponse(cliente, cliente.getUsuario(), suministros);
-                })
+                .collect(Collectors.groupingBy(suministro -> suministro.getCliente().getId()));
+
+        return clientes.stream()
+                .map(cliente -> convertirAResponse(
+                        cliente,
+                        cliente.getUsuario(),
+                        suministrosPorCliente.getOrDefault(cliente.getId(), List.of())
+                ))
                 .toList();
     }
 

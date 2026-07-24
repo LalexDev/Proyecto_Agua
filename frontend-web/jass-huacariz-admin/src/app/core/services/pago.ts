@@ -1,5 +1,5 @@
-﻿import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface PagoResponse {
@@ -22,15 +22,25 @@ export class Pago {
 
   constructor(private http: HttpClient) {}
 
-  listarPagos(estado?: string): Observable<PagoResponse[]> {
-  if (estado && estado !== 'TODOS') {
-    return this.http.get<PagoResponse[]>(
-      `${this.apiUrl}?estado=${estado}`
-    );
-  }
+  listarPagos(
+    estado?: string,
+    params?: {
+      anio?: number | '';
+      mes?: number | '';
+      buscar?: string;
+      limit?: number;
+    }
+  ): Observable<PagoResponse[]> {
+    let httpParams = new HttpParams();
 
-  return this.http.get<PagoResponse[]>(this.apiUrl);
-}
+    if (estado && estado !== 'TODOS') httpParams = httpParams.set('estado', estado);
+    if (params?.anio) httpParams = httpParams.set('anio', String(params.anio));
+    if (params?.mes) httpParams = httpParams.set('mes', String(params.mes));
+    if (params?.buscar?.trim()) httpParams = httpParams.set('buscar', params.buscar.trim());
+    if (params?.limit) httpParams = httpParams.set('limit', String(params.limit));
+
+    return this.http.get<PagoResponse[]>(this.apiUrl, { params: httpParams });
+  }
 
   buscarPorSuministro(codigoSuministro: string): Observable<PagoResponse[]> {
     return this.http.get<PagoResponse[]>(`${this.apiUrl}/suministro/${codigoSuministro}`);

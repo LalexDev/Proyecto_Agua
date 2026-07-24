@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -26,8 +26,12 @@ export class HistorialLecturas implements OnInit {
   pendientesFiltrados: LecturaPendiente[] = [];
 
   busqueda = '';
-  filtroAnio: number | '' = '';
-  filtroMes: number | '' = '';
+  filtroAnio: number | '' = new Date().getFullYear();
+  filtroMes: number | '' = new Date().getMonth() + 1;
+  limiteHistorial = 200;
+  limitePendientes = 200;
+  private debounceHistorial: any;
+  private debouncePendientes: any;
 
   busquedaPendientes = '';
   filtroPendienteAnio: number = new Date().getFullYear();
@@ -57,7 +61,12 @@ export class HistorialLecturas implements OnInit {
     this.cargando = true;
     this.error = '';
 
-    this.lecturaAdmin.listarHistorial()
+    this.lecturaAdmin.listarHistorial({
+      anio: this.filtroAnio,
+      mes: this.filtroMes,
+      buscar: this.busqueda,
+      limit: this.limiteHistorial
+    })
       .pipe(
         finalize(() => {
           this.cargando = false;
@@ -67,7 +76,7 @@ export class HistorialLecturas implements OnInit {
       .subscribe({
         next: (data) => {
           this.lecturas = data || [];
-          this.aplicarFiltros();
+          this.lecturasFiltradas = this.lecturas;
           this.cdr.detectChanges();
         },
         error: () => {
@@ -97,7 +106,9 @@ export class HistorialLecturas implements OnInit {
 
     this.lecturaAdmin.listarPendientesLectura(
       Number(this.filtroPendienteAnio),
-      Number(this.filtroPendienteMes)
+      Number(this.filtroPendienteMes),
+      this.busquedaPendientes,
+      this.limitePendientes
     )
       .pipe(
         finalize(() => {
@@ -108,7 +119,7 @@ export class HistorialLecturas implements OnInit {
       .subscribe({
         next: (data) => {
           this.pendientesLectura = data || [];
-          this.aplicarFiltroPendientes();
+          this.pendientesFiltrados = this.pendientesLectura;
 
           this.exitoPendientes = this.pendientesLectura.length > 0
             ? `Se encontraron ${this.pendientesLectura.length} suministro(s) sin lectura en ${this.nombreMes(Number(this.filtroPendienteMes))} ${this.filtroPendienteAnio}.`
@@ -127,59 +138,29 @@ export class HistorialLecturas implements OnInit {
   }
 
   aplicarFiltros(): void {
-    const texto = this.busqueda.trim().toLowerCase();
-
-    this.lecturasFiltradas = this.lecturas.filter((item: any) => {
-      const coincideTexto =
-        !texto ||
-        String(item.codigoSuministro || '').toLowerCase().includes(texto) ||
-        String(item.aliasSuministro || '').toLowerCase().includes(texto) ||
-        String(item.direccionSuministro || '').toLowerCase().includes(texto) ||
-        String(item.cliente || '').toLowerCase().includes(texto) ||
-        String(item.nombreCliente || '').toLowerCase().includes(texto) ||
-        String(item.dniCliente || '').toLowerCase().includes(texto) ||
-        String(item.codigoRecibo || '').toLowerCase().includes(texto) ||
-        String(item.sector || '').toLowerCase().includes(texto) ||
-        String(item.estadoRecibo || '').toLowerCase().includes(texto);
-
-      const coincideAnio =
-        !this.filtroAnio || Number(item.anio) === Number(this.filtroAnio);
-
-      const coincideMes =
-        !this.filtroMes || Number(item.mes) === Number(this.filtroMes);
-
-      return coincideTexto && coincideAnio && coincideMes;
-    });
+    clearTimeout(this.debounceHistorial);
+    this.debounceHistorial = setTimeout(() => {
+      this.cargarHistorial();
+    }, 350);
   }
 
   aplicarFiltroPendientes(): void {
-    const texto = this.busquedaPendientes.trim().toLowerCase();
-
-    this.pendientesFiltrados = this.pendientesLectura.filter((item: any) => {
-      return (
-        !texto ||
-        String(item.codigoSuministro || '').toLowerCase().includes(texto) ||
-        String(item.nombreCliente || '').toLowerCase().includes(texto) ||
-        String(item.dniCliente || '').toLowerCase().includes(texto) ||
-        String(item.aliasSuministro || '').toLowerCase().includes(texto) ||
-        String(item.direccionSuministro || '').toLowerCase().includes(texto) ||
-        String(item.referencia || '').toLowerCase().includes(texto) ||
-        String(item.sector || '').toLowerCase().includes(texto) ||
-        String(item.estadoInstalacion || '').toLowerCase().includes(texto)
-      );
-    });
+    clearTimeout(this.debouncePendientes);
+    this.debouncePendientes = setTimeout(() => {
+      this.buscarPendientesLectura();
+    }, 350);
   }
 
   limpiarFiltros(): void {
     this.busqueda = '';
-    this.filtroAnio = '';
-    this.filtroMes = '';
-    this.aplicarFiltros();
+    this.filtroAnio = new Date().getFullYear();
+    this.filtroMes = new Date().getMonth() + 1;
+    this.cargarHistorial();
   }
 
   limpiarFiltroPendientes(): void {
     this.busquedaPendientes = '';
-    this.aplicarFiltroPendientes();
+    this.buscarPendientesLectura();
   }
 
   abrirDetalleLectura(item: HistorialLectura): void {

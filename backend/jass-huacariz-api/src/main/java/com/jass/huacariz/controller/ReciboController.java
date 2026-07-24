@@ -24,7 +24,25 @@ public class ReciboController {
     private final ReciboPdfService reciboPdfService;
 
     @GetMapping
-    public ResponseEntity<List<ReciboResponse>> listarRecibos() {
+    public ResponseEntity<List<ReciboResponse>> listarRecibos(
+            @RequestParam(value = "anio", required = false) Integer anio,
+            @RequestParam(value = "mes", required = false) Integer mes,
+            @RequestParam(value = "estado", required = false) String estado,
+            @RequestParam(value = "buscar", required = false) String buscar,
+            @RequestParam(value = "limit", required = false) Integer limit
+    ) {
+        boolean modoOptimizado = anio != null
+                || mes != null
+                || estado != null
+                || buscar != null
+                || limit != null;
+
+        if (modoOptimizado) {
+            return ResponseEntity.ok(
+                    reciboService.listarRecibosOptimizado(anio, mes, estado, buscar, limit)
+            );
+        }
+
         return ResponseEntity.ok(reciboService.listarRecibos());
     }
 

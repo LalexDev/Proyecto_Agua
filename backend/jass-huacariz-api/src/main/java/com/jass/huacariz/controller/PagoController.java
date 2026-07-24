@@ -17,8 +17,23 @@ public class PagoController {
 
     @GetMapping
     public ResponseEntity<List<PagoResponse>> listarPagos(
-            @RequestParam(value = "estado", required = false) String estado
+            @RequestParam(value = "estado", required = false) String estado,
+            @RequestParam(value = "anio", required = false) Integer anio,
+            @RequestParam(value = "mes", required = false) Integer mes,
+            @RequestParam(value = "buscar", required = false) String buscar,
+            @RequestParam(value = "limit", required = false) Integer limit
     ) {
+        boolean modoOptimizado = anio != null
+                || mes != null
+                || buscar != null
+                || limit != null;
+
+        if (modoOptimizado) {
+            return ResponseEntity.ok(
+                    pagoService.listarPagosOptimizado(estado, anio, mes, buscar, limit)
+            );
+        }
+
         return ResponseEntity.ok(pagoService.listarPagos(estado));
     }
 

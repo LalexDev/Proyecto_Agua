@@ -1,5 +1,5 @@
-﻿import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface ReciboResponse {
@@ -68,8 +68,22 @@ export class Recibo {
 
   constructor(private http: HttpClient) {}
 
-  listarRecibos(): Observable<ReciboResponse[]> {
-    return this.http.get<ReciboResponse[]>(this.apiUrl);
+  listarRecibos(params?: {
+    anio?: number | '';
+    mes?: number | '';
+    estado?: string;
+    buscar?: string;
+    limit?: number;
+  }): Observable<ReciboResponse[]> {
+    let httpParams = new HttpParams();
+
+    if (params?.anio) httpParams = httpParams.set('anio', String(params.anio));
+    if (params?.mes) httpParams = httpParams.set('mes', String(params.mes));
+    if (params?.estado && params.estado !== 'TODOS') httpParams = httpParams.set('estado', params.estado);
+    if (params?.buscar?.trim()) httpParams = httpParams.set('buscar', params.buscar.trim());
+    if (params?.limit) httpParams = httpParams.set('limit', String(params.limit));
+
+    return this.http.get<ReciboResponse[]>(this.apiUrl, { params: httpParams });
   }
 
   listarPendientes(): Observable<ReciboResponse[]> {

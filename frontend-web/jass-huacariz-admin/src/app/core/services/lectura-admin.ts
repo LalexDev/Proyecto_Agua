@@ -1,4 +1,4 @@
-﻿import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -61,14 +61,36 @@ export class LecturaAdmin {
 
   constructor(private http: HttpClient) {}
 
-  listarHistorial(): Observable<HistorialLectura[]> {
-    return this.http.get<HistorialLectura[]>(`${this.apiUrl}/historial`);
+  listarHistorial(params?: {
+    anio?: number | '';
+    mes?: number | '';
+    buscar?: string;
+    limit?: number;
+  }): Observable<HistorialLectura[]> {
+    let httpParams = new HttpParams();
+
+    if (params?.anio) httpParams = httpParams.set('anio', String(params.anio));
+    if (params?.mes) httpParams = httpParams.set('mes', String(params.mes));
+    if (params?.buscar?.trim()) httpParams = httpParams.set('buscar', params.buscar.trim());
+    if (params?.limit) httpParams = httpParams.set('limit', String(params.limit));
+
+    return this.http.get<HistorialLectura[]>(`${this.apiUrl}/historial`, { params: httpParams });
   }
 
-  listarPendientesLectura(anio: number, mes: number): Observable<LecturaPendiente[]> {
-    return this.http.get<LecturaPendiente[]>(
-      `${this.apiUrl}/pendientes?anio=${anio}&mes=${mes}`
-    );
+  listarPendientesLectura(
+    anio: number,
+    mes: number,
+    buscar?: string,
+    limit?: number
+  ): Observable<LecturaPendiente[]> {
+    let params = new HttpParams()
+      .set('anio', String(anio))
+      .set('mes', String(mes));
+
+    if (buscar?.trim()) params = params.set('buscar', buscar.trim());
+    if (limit) params = params.set('limit', String(limit));
+
+    return this.http.get<LecturaPendiente[]>(`${this.apiUrl}/pendientes`, { params });
   }
 }
 

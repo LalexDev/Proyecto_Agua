@@ -18,10 +18,12 @@ public class AdminLecturaPendienteController {
     @GetMapping("/pendientes")
     public ResponseEntity<List<LecturaPendienteResponse>> listarSuministrosSinLectura(
             @RequestParam Integer anio,
-            @RequestParam Integer mes
+            @RequestParam Integer mes,
+            @RequestParam(value = "buscar", required = false) String buscar,
+            @RequestParam(value = "limit", required = false) Integer limit
     ) {
         return ResponseEntity.ok(
-                lecturaPendienteService.listarSuministrosSinLectura(anio, mes)
+                lecturaPendienteService.listarSuministrosSinLectura(anio, mes, buscar, limit)
         );
     }
 }

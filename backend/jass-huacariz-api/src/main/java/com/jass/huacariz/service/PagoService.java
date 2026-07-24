@@ -5,6 +5,7 @@ import com.jass.huacariz.entity.Pago;
 import com.jass.huacariz.entity.Recibo;
 import com.jass.huacariz.repository.PagoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,37 @@ public class PagoService {
         validarEstadoPago(estadoNormalizado);
 
         return pagoRepository.findByEstadoPagoOrderByFechaPagoDesc(estadoNormalizado)
+                .stream()
+                .map(this::convertirAResponse)
+                .toList();
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<PagoResponse> listarPagosOptimizado(
+            String estado,
+            Integer anio,
+            Integer mes,
+            String buscar,
+            Integer limit
+    ) {
+        String estadoNormalizado = null;
+
+        if (estado != null && !estado.isBlank() && !"TODOS".equalsIgnoreCase(estado)) {
+            estadoNormalizado = estado.trim().toUpperCase(Locale.ROOT);
+            validarEstadoPago(estadoNormalizado);
+        }
+
+        String busquedaNormalizada = buscar == null ? null : buscar.trim();
+        int limite = normalizarLimite(limit);
+
+        return pagoRepository.buscarPagosOptimizado(
+                        anio,
+                        mes,
+                        estadoNormalizado,
+                        busquedaNormalizada,
+                        PageRequest.of(0, limite)
+                )
                 .stream()
                 .map(this::convertirAResponse)
                 .toList();
@@ -168,6 +200,15 @@ public class PagoService {
         } catch (Exception ignored) {
             // No detenemos la limpieza si el archivo ya no existe.
         }
+    }
+
+
+    private int normalizarLimite(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return 200;
+        }
+
+        return Math.max(20, Math.min(limit, 500));
     }
 
     private void validarEstadoPago(String estado) {
