@@ -254,6 +254,13 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
     return pagos.where((pago) => _estadoPago(pago) == estado).length;
   }
 
+  static const int _limiteInicialPagos = 60;
+  static const int _limiteBusquedaPagos = 100;
+
+  int get _limitePagosActual {
+    return busqueda.trim().isEmpty ? _limiteInicialPagos : _limiteBusquedaPagos;
+  }
+
   List<Map<String, dynamic>> get pagosFiltrados {
     final query = busqueda.trim().toLowerCase();
 
@@ -279,6 +286,15 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
 
       return texto.contains(query);
     }).toList();
+  }
+
+  List<Map<String, dynamic>> get pagosVisibles {
+    final filtrados = pagosFiltrados;
+    return filtrados.take(_limitePagosActual).toList(growable: false);
+  }
+
+  bool get _pagosLimitados {
+    return pagosFiltrados.length > pagosVisibles.length;
   }
 
   Future<void> cargarPagos() async {
@@ -1011,29 +1027,74 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
                 fontWeight: FontWeight.w700,
               ),
             )
-          else
-            ...pagosFiltrados.map((pago) {
+          else ...[
+            if (_pagosLimitados)
+              _LimitNotice(
+                texto:
+                    'Mostrando ${pagosVisibles.length} de ${pagosFiltrados.length} pagos. Usa el buscador para encontrar pagos específicos.',
+              ),
+            ...pagosVisibles.map((pago) {
               final id = _idPago(pago);
-              return _PagoCard(
-                recibo: _codigoRecibo(pago),
-                metodo: _metodoPago(pago),
-                operacion: _codigoOperacion(pago),
-                monto: _monto(pago),
-                fecha: _fecha(pago),
-                cliente: _cliente(pago),
-                suministro: _suministro(pago),
-                estado: _estadoPago(pago),
-                estadoLabel: _estadoLabel(_estadoPago(pago)),
-                estadoColor: _estadoColor(_estadoPago(pago)),
-                estadoBg: _estadoBg(_estadoPago(pago)),
-                tieneComprobante: _comprobanteUrl(pago).isNotEmpty,
-                enRevision: _enRevision(pago),
-                procesando: id != null && procesandoPagoId == id,
-                onVerComprobante: () => _verComprobante(pago),
-                onAprobar: () => _cambiarEstadoPago(pago, aprobar: true),
-                onRechazar: () => _cambiarEstadoPago(pago, aprobar: false),
+              return RepaintBoundary(
+                child: _PagoCard(
+                  recibo: _codigoRecibo(pago),
+                  metodo: _metodoPago(pago),
+                  operacion: _codigoOperacion(pago),
+                  monto: _monto(pago),
+                  fecha: _fecha(pago),
+                  cliente: _cliente(pago),
+                  suministro: _suministro(pago),
+                  estado: _estadoPago(pago),
+                  estadoLabel: _estadoLabel(_estadoPago(pago)),
+                  estadoColor: _estadoColor(_estadoPago(pago)),
+                  estadoBg: _estadoBg(_estadoPago(pago)),
+                  tieneComprobante: _comprobanteUrl(pago).isNotEmpty,
+                  enRevision: _enRevision(pago),
+                  procesando: id != null && procesandoPagoId == id,
+                  onVerComprobante: () => _verComprobante(pago),
+                  onAprobar: () => _cambiarEstadoPago(pago, aprobar: true),
+                  onRechazar: () => _cambiarEstadoPago(pago, aprobar: false),
+                ),
               );
             }),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LimitNotice extends StatelessWidget {
+  final String texto;
+
+  const _LimitNotice({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7FC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: JassColors.primary.withOpacity(0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, color: JassColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              texto,
+              style: TextStyle(
+                color: context.jassTextMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );

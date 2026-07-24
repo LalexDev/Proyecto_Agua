@@ -781,7 +781,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
       crossAxisCount: 2,
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 1.18,
+      childAspectRatio: 1.02,
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
       children: [
@@ -1123,7 +1123,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(14),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
@@ -1140,15 +1140,15 @@ class _SummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(icon, color: iconColor, size: 21),
           ),
-          Spacer(),
+          SizedBox(height: 8),
           Text(
             title,
             maxLines: 1,
@@ -1166,7 +1166,7 @@ class _SummaryCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: context.jassTextPrimary,
-              fontSize: 18,
+              fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -1177,7 +1177,7 @@ class _SummaryCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: context.jassTextMuted,
-              fontSize: 9.5,
+              fontSize: 9,
               fontWeight: FontWeight.w700,
             ),
           ),

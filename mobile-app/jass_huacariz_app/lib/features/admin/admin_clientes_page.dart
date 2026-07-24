@@ -194,6 +194,15 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     );
   }
 
+  static const int _limiteInicialClientes = 50;
+  static const int _limiteBusquedaClientes = 80;
+
+  int get _limiteClientesActual {
+    return busqueda.trim().isEmpty
+        ? _limiteInicialClientes
+        : _limiteBusquedaClientes;
+  }
+
   List<Map<String, dynamic>> get clientesFiltrados {
     final query = busqueda.trim().toLowerCase();
 
@@ -212,6 +221,15 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
 
       return texto.contains(query);
     }).toList();
+  }
+
+  List<Map<String, dynamic>> get clientesVisibles {
+    final filtrados = clientesFiltrados;
+    return filtrados.take(_limiteClientesActual).toList(growable: false);
+  }
+
+  bool get _clientesLimitados {
+    return clientesFiltrados.length > clientesVisibles.length;
   }
 
   Future<void> cargarDatos() async {
@@ -868,22 +886,29 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                       child: Text('No hay clientes para mostrar.'),
                     ),
                   ),
+                if (!cargando && error.isEmpty && _clientesLimitados)
+                  _LimitNotice(
+                    texto:
+                        'Mostrando ${clientesVisibles.length} de ${clientesFiltrados.length} clientes. Usa el buscador para encontrar un cliente específico.',
+                  ),
                 if (!cargando && error.isEmpty)
-                  ...clientesFiltrados.map((cliente) {
+                  ...clientesVisibles.map((cliente) {
                     final suministros = cliente['suministros'];
 
-                    return _ClienteCard(
-                      nombre: _nombreCliente(cliente),
-                      dni: _txt(cliente['dni']),
-                      telefono: _txt(cliente['telefono']),
-                      correo: _txt(cliente['correo']),
-                      activo: _estadoCliente(cliente),
-                      cantidadSuministros: suministros is List
-                          ? suministros.length
-                          : 0,
-                      onDetalle: () => _abrirDetalleCliente(cliente),
-                      onEditar: () => _abrirEditarCliente(cliente),
-                      onCambiarEstado: () => _cambiarEstadoCliente(cliente),
+                    return RepaintBoundary(
+                      child: _ClienteCard(
+                        nombre: _nombreCliente(cliente),
+                        dni: _txt(cliente['dni']),
+                        telefono: _txt(cliente['telefono']),
+                        correo: _txt(cliente['correo']),
+                        activo: _estadoCliente(cliente),
+                        cantidadSuministros: suministros is List
+                            ? suministros.length
+                            : 0,
+                        onDetalle: () => _abrirDetalleCliente(cliente),
+                        onEditar: () => _abrirEditarCliente(cliente),
+                        onCambiarEstado: () => _cambiarEstadoCliente(cliente),
+                      ),
                     );
                   }),
                 SizedBox(height: 90),
@@ -968,6 +993,43 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
         ),
+      ),
+    );
+  }
+}
+
+class _LimitNotice extends StatelessWidget {
+  final String texto;
+
+  const _LimitNotice({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7FC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: JassColors.primary.withOpacity(0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, color: JassColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              texto,
+              style: TextStyle(
+                color: context.jassTextMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -168,6 +168,15 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
     return estado == 'PENDIENTE' || estado == 'VENCIDO';
   }
 
+  static const int _limiteInicialRecibos = 60;
+  static const int _limiteBusquedaRecibos = 100;
+
+  int get _limiteRecibosActual {
+    return busqueda.trim().isEmpty
+        ? _limiteInicialRecibos
+        : _limiteBusquedaRecibos;
+  }
+
   List<Map<String, dynamic>> get recibosFiltrados {
     final query = busqueda.trim().toLowerCase();
 
@@ -193,6 +202,15 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
 
       return cumpleEstado && cumpleBusqueda;
     }).toList();
+  }
+
+  List<Map<String, dynamic>> get recibosVisibles {
+    final filtrados = recibosFiltrados;
+    return filtrados.take(_limiteRecibosActual).toList(growable: false);
+  }
+
+  bool get _recibosLimitados {
+    return recibosFiltrados.length > recibosVisibles.length;
   }
 
   List<Map<String, dynamic>> get seleccionados {
@@ -514,25 +532,32 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                       child: Text('No hay recibos para mostrar.'),
                     ),
                   ),
+                if (!cargando && error.isEmpty && _recibosLimitados)
+                  _LimitNotice(
+                    texto:
+                        'Mostrando ${recibosVisibles.length} de ${recibosFiltrados.length} recibos. Usa el buscador para encontrar recibos específicos.',
+                  ),
                 if (!cargando && error.isEmpty)
-                  ...recibosFiltrados.map((recibo) {
+                  ...recibosVisibles.map((recibo) {
                     final id = _idRecibo(recibo);
                     final seleccionado = recibosSeleccionados.contains(id);
 
-                    return _ReciboCard(
-                      codigoRecibo: _codigoRecibo(recibo),
-                      codigoSuministro: _codigoSuministro(recibo),
-                      cliente: _cliente(recibo),
-                      direccion: _direccion(recibo),
-                      periodo: _periodo(recibo),
-                      consumo: _consumo(recibo),
-                      total: _total(recibo),
-                      vencimiento: _vencimiento(recibo),
-                      estado: _estado(recibo),
-                      seleccionado: seleccionado,
-                      puedeMarcarPagado: _puedeMarcarPagado(recibo),
-                      onToggle: () => _toggleSeleccion(recibo),
-                      onPagar: () => _cobrarSolo(recibo),
+                    return RepaintBoundary(
+                      child: _ReciboCard(
+                        codigoRecibo: _codigoRecibo(recibo),
+                        codigoSuministro: _codigoSuministro(recibo),
+                        cliente: _cliente(recibo),
+                        direccion: _direccion(recibo),
+                        periodo: _periodo(recibo),
+                        consumo: _consumo(recibo),
+                        total: _total(recibo),
+                        vencimiento: _vencimiento(recibo),
+                        estado: _estado(recibo),
+                        seleccionado: seleccionado,
+                        puedeMarcarPagado: _puedeMarcarPagado(recibo),
+                        onToggle: () => _toggleSeleccion(recibo),
+                        onPagar: () => _cobrarSolo(recibo),
+                      ),
                     );
                   }),
                 if (recibosSeleccionados.isNotEmpty) SizedBox(height: 110),
@@ -814,6 +839,43 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LimitNotice extends StatelessWidget {
+  final String texto;
+
+  const _LimitNotice({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF7FC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: JassColors.primary.withOpacity(0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, color: JassColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              texto,
+              style: TextStyle(
+                color: context.jassTextMuted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

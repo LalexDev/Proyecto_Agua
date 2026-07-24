@@ -156,6 +156,15 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
     );
   }
 
+  static const int _limiteInicialLecturas = 60;
+  static const int _limiteBusquedaLecturas = 100;
+
+  int get _limiteLecturasActual {
+    return busqueda.trim().isEmpty
+        ? _limiteInicialLecturas
+        : _limiteBusquedaLecturas;
+  }
+
   List<Map<String, dynamic>> get lecturasFiltradas {
     final query = busqueda.trim().toLowerCase();
 
@@ -174,6 +183,15 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
 
       return texto.contains(query);
     }).toList();
+  }
+
+  List<Map<String, dynamic>> get lecturasVisibles {
+    final filtradas = lecturasFiltradas;
+    return filtradas.take(_limiteLecturasActual).toList(growable: false);
+  }
+
+  bool get _lecturasLimitadas {
+    return lecturasFiltradas.length > lecturasVisibles.length;
   }
 
   Future<void> cargarHistorial() async {
@@ -334,27 +352,35 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
                   _ErrorCard(error: error, onRetry: cargarHistorial),
                 if (!cargando && error.isEmpty && lecturasFiltradas.isEmpty)
                   _buildEmpty(oscuro),
+                if (!cargando && error.isEmpty && _lecturasLimitadas)
+                  _LimitNotice(
+                    texto:
+                        'Mostrando ${lecturasVisibles.length} de ${lecturasFiltradas.length} lecturas. Usa el buscador para encontrar historiales específicos.',
+                    oscuro: oscuro,
+                  ),
                 if (!cargando && error.isEmpty)
-                  ...lecturasFiltradas.map((lectura) {
-                    return _LecturaCard(
-                      codigo: _codigoSuministro(lectura),
-                      cliente: _cliente(lectura),
-                      direccion: _direccion(lectura),
-                      periodo: _periodo(lectura),
-                      fecha: _fecha(lectura),
-                      lecturaAnterior: _lecturaAnterior(lectura),
-                      lecturaActual: _lecturaActual(lectura),
-                      consumo: _consumo(lectura),
-                      total: _num(
-                        lectura['total'] ??
-                            lectura['totalRecibo'] ??
-                            lectura['recibo']?['total'],
+                  ...lecturasVisibles.map((lectura) {
+                    return RepaintBoundary(
+                      child: _LecturaCard(
+                        codigo: _codigoSuministro(lectura),
+                        cliente: _cliente(lectura),
+                        direccion: _direccion(lectura),
+                        periodo: _periodo(lectura),
+                        fecha: _fecha(lectura),
+                        lecturaAnterior: _lecturaAnterior(lectura),
+                        lecturaActual: _lecturaActual(lectura),
+                        consumo: _consumo(lectura),
+                        total: _num(
+                          lectura['total'] ??
+                              lectura['totalRecibo'] ??
+                              lectura['recibo']?['total'],
+                        ),
+                        estadoSincronizacion: _txt(
+                          lectura['estadoSincronizacion'],
+                          'SINCRONIZADA',
+                        ),
+                        oscuro: oscuro,
                       ),
-                      estadoSincronizacion: _txt(
-                        lectura['estadoSincronizacion'],
-                        'SINCRONIZADA',
-                      ),
-                      oscuro: oscuro,
                     );
                   }),
               ],
@@ -527,6 +553,48 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
               color: oscuro ? Colors.white : JassColors.primary,
               fontSize: 17,
               fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LimitNotice extends StatelessWidget {
+  final String texto;
+  final bool oscuro;
+
+  const _LimitNotice({required this.texto, required this.oscuro});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: oscuro ? JassColors.darkCard : const Color(0xFFEAF7FC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: oscuro
+              ? JassColors.darkBorder
+              : JassColors.primary.withOpacity(0.18),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, color: JassColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              texto,
+              style: TextStyle(
+                color: oscuro ? JassColors.darkMuted : JassColors.muted,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
