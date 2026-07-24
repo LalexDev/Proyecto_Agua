@@ -61,10 +61,17 @@ class _QrScannerPageState extends State<QrScannerPage> {
         '/admin-buscar-suministro',
         arguments: codigo,
       );
-    } else {
-      // El lecturador devuelve el código a BuscarSuministroPage.
-      Navigator.pop(context, codigo);
+      return;
     }
+
+    // En modo lecturador siempre enviamos el código a la búsqueda.
+    // Así funcionan igual todos los accesos QR: inicio, tarjeta rápida,
+    // barra inferior y botón dentro de Buscar suministro.
+    Navigator.pushReplacementNamed(
+      context,
+      '/buscar-suministro',
+      arguments: codigo,
+    );
   }
 
   void _volver() {
@@ -235,7 +242,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
                   Text(
                     widget.modoAdmin
                         ? 'El suministro se abrirá dentro del panel administrativo.'
-                        : 'El código será enviado a la búsqueda del lecturador.',
+                        : 'Al leer el QR se abrirá la búsqueda del suministro automáticamente.',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Color(0xFFD6E8EE),
