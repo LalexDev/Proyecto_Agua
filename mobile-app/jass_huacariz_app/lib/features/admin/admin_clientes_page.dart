@@ -1,11 +1,10 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, prefer_const_declarations
 import 'package:flutter/material.dart';
 
-import '../../shared/theme/jass_colors.dart';
-import '../../shared/theme/jass_theme_context.dart';
-
 import '../../core/services/cliente_service.dart';
 import '../../core/services/sector_service.dart';
+import '../../shared/theme/jass_colors.dart';
+import '../../shared/theme/jass_theme_context.dart';
 import '../../shared/widgets/admin_bottom_nav.dart';
 
 class AdminClientesPage extends StatefulWidget {
@@ -43,13 +42,47 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     return text;
   }
 
-  int _idCliente(Map<String, dynamic> cliente) {
-    final value = cliente['id'] ?? cliente['idCliente'];
-
+  int _intValue(dynamic value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
-
     return int.tryParse(value.toString()) ?? 0;
+  }
+
+  double _doubleValue(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString().replaceAll(',', '.')) ?? 0;
+  }
+
+  int _idCliente(Map<String, dynamic> cliente) {
+    return _intValue(
+      cliente['id'] ?? cliente['idCliente'] ?? cliente['clienteId'],
+    );
+  }
+
+  int _idSuministro(Map<String, dynamic> suministro) {
+    return _intValue(
+      suministro['id'] ??
+          suministro['idSuministro'] ??
+          suministro['suministroId'] ??
+          suministro['id_suministro'],
+    );
+  }
+
+  int _idSector(Map<String, dynamic> suministro) {
+    final sector = suministro['sector'];
+
+    if (sector is Map) {
+      return _intValue(
+        sector['id'] ?? sector['idSector'] ?? sector['sectorId'],
+      );
+    }
+
+    return _intValue(
+      suministro['idSector'] ??
+          suministro['sectorId'] ??
+          suministro['id_sector'],
+    );
   }
 
   String _nombreCliente(Map<String, dynamic> cliente) {
@@ -68,6 +101,97 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     final text = value.toString().toLowerCase().trim();
 
     return text == 'true' || text == 'activo' || text == '1';
+  }
+
+  bool _estadoSuministro(Map<String, dynamic> suministro) {
+    final value = suministro['estado'];
+
+    if (value is bool) return value;
+
+    final text = value.toString().toLowerCase().trim();
+
+    return text == 'true' || text == 'activo' || text == '1';
+  }
+
+  String _estadoInstalacion(Map<String, dynamic> suministro) {
+    final raw = _txt(
+      suministro['estadoInstalacion'] ??
+          suministro['estado_instalacion'] ??
+          suministro['estadoConexion'] ??
+          suministro['estadoSuministro'],
+      '',
+    );
+
+    final estado = raw.toUpperCase().trim();
+
+    if (estado.contains('PENDIENTE')) return 'PENDIENTE_INSTALACION';
+    if (estado.contains('SUSPEND')) return 'SUSPENDIDO';
+    if (estado.contains('INACT')) return 'SUSPENDIDO';
+    if (estado.contains('INSTAL')) return 'INSTALADO';
+
+    return _estadoSuministro(suministro) ? 'INSTALADO' : 'SUSPENDIDO';
+  }
+
+  String _estadoInstalacionTexto(Map<String, dynamic> suministro) {
+    final estado = _estadoInstalacion(suministro);
+
+    if (estado == 'INSTALADO') return 'Instalado';
+    if (estado == 'PENDIENTE_INSTALACION') return 'Pendiente instalación';
+    return 'Suspendido';
+  }
+
+  String _codigoSuministro(Map<String, dynamic> suministro) {
+    return _txt(
+      suministro['codigoSuministro'] ??
+          suministro['suministroCodigo'] ??
+          suministro['codigo'] ??
+          suministro['numeroSuministro'],
+      'SUMINISTRO',
+    );
+  }
+
+  String _aliasSuministro(Map<String, dynamic> suministro) {
+    return _txt(
+      suministro['aliasSuministro'] ??
+          suministro['alias'] ??
+          suministro['referenciaRapida'],
+      'Casa principal',
+    );
+  }
+
+  String _direccionSuministro(Map<String, dynamic> suministro) {
+    return _txt(
+      suministro['direccionSuministro'] ??
+          suministro['direccion'] ??
+          suministro['direccionCliente'],
+      '-',
+    );
+  }
+
+  String _sectorSuministro(Map<String, dynamic> suministro) {
+    final sector = suministro['sector'];
+
+    if (sector is Map) {
+      return _txt(
+        sector['nombreSector'] ?? sector['nombre'] ?? sector['descripcion'],
+      );
+    }
+
+    return _txt(
+      suministro['nombreSector'] ??
+          suministro['sector'] ??
+          suministro['sectorNombre'] ??
+          suministro['descripcionSector'],
+    );
+  }
+
+  double _lecturaInicial(Map<String, dynamic> suministro) {
+    return _doubleValue(
+      suministro['lecturaInicial'] ??
+          suministro['lecturaActual'] ??
+          suministro['ultimaLectura'] ??
+          suministro['lecturaAnterior'],
+    );
   }
 
   List<Map<String, dynamic>> get clientesFiltrados {
@@ -126,6 +250,39 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     );
   }
 
+  Future<bool> _confirmar({
+    required String titulo,
+    required String mensaje,
+    required String textoConfirmar,
+    Color? color,
+  }) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(titulo, style: TextStyle(fontWeight: FontWeight.w900)),
+          content: Text(mensaje),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color ?? secondary,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(textoConfirmar),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmar == true;
+  }
+
   Future<void> _cambiarEstadoCliente(
     Map<String, dynamic> cliente, {
     bool cerrarDetalle = false,
@@ -139,40 +296,16 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       return;
     }
 
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(
-            activoActual ? 'Desactivar cliente' : 'Activar cliente',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
-          content: Text(
-            activoActual
-                ? '¿Deseas desactivar este cliente?'
-                : '¿Deseas activar este cliente?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: nuevoEstado
-                    ? JassColors.success
-                    : JassColors.danger,
-                foregroundColor: Colors.white,
-              ),
-              child: Text(nuevoEstado ? 'Activar' : 'Desactivar'),
-            ),
-          ],
-        );
-      },
+    final ok = await _confirmar(
+      titulo: activoActual ? 'Desactivar cliente' : 'Activar cliente',
+      mensaje: activoActual
+          ? 'El cliente quedará inactivo, pero se conservarán sus recibos, pagos y lecturas.'
+          : 'El cliente volverá a estar activo para operaciones administrativas.',
+      textoConfirmar: nuevoEstado ? 'Activar' : 'Desactivar',
+      color: nuevoEstado ? JassColors.success : JassColors.danger,
     );
 
-    if (confirmar != true) return;
+    if (!ok) return;
 
     try {
       await clienteService.cambiarEstadoCliente(
@@ -182,9 +315,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
 
       if (!mounted) return;
 
-      if (cerrarDetalle) {
-        Navigator.pop(context);
-      }
+      if (cerrarDetalle) Navigator.pop(context);
 
       _mensaje(
         nuevoEstado
@@ -196,62 +327,125 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       await cargarDatos();
     } catch (e) {
       if (!mounted) return;
-
       _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
     }
   }
 
-  void _abrirEditarCliente(Map<String, dynamic> cliente) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: context.jassSurface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (_) {
-        return _EditarClienteSheet(
-          cliente: cliente,
-          onGuardar: (payload) async {
-            final idCliente = _idCliente(cliente);
+  Future<void> _restablecerPasswordCliente(Map<String, dynamic> cliente) async {
+    final idCliente = _idCliente(cliente);
 
-            if (idCliente <= 0) {
-              throw Exception('No se encontró el ID del cliente.');
-            }
+    if (idCliente <= 0) {
+      _mensaje('No se encontró el ID del cliente.', true);
+      return;
+    }
 
-            await clienteService.actualizarCliente(idCliente, payload);
-
-            if (!mounted) return;
-
-            Navigator.pop(context);
-
-            _mensaje('Cliente actualizado correctamente.', false);
-
-            await cargarDatos();
-          },
-        );
-      },
+    final ok = await _confirmar(
+      titulo: 'Restablecer contraseña',
+      mensaje:
+          'Se restablecerá la contraseña del cliente y deberá cambiarla al iniciar sesión en la web.',
+      textoConfirmar: 'Restablecer',
+      color: secondary,
     );
+
+    if (!ok) return;
+
+    try {
+      final response = await clienteService.restablecerPasswordCliente(
+        idCliente,
+      );
+
+      if (!mounted) return;
+
+      final passwordTemporal = _txt(
+        response['passwordTemporal'] ??
+            response['password'] ??
+            response['clave'],
+        'cliente123',
+      );
+
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              'Contraseña restablecida',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Cliente: ${_nombreCliente(cliente)}'),
+                SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: context.jassSelectedSurface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: context.jassBorder),
+                  ),
+                  child: Text(
+                    passwordTemporal,
+                    style: TextStyle(
+                      color: context.jassTextPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'El cliente deberá cambiarla al iniciar sesión.',
+                  style: TextStyle(
+                    color: context.jassTextMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: secondary,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text('Entendido'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _suministrosCliente(
+    Map<String, dynamic> cliente,
+  ) async {
+    final idCliente = _idCliente(cliente);
+
+    if (cliente['suministros'] is List) {
+      final list = (cliente['suministros'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+      if (list.isNotEmpty) return list;
+    }
+
+    if (idCliente <= 0) return [];
+
+    return clienteService.listarSuministrosPorCliente(idCliente);
   }
 
   Future<void> _abrirDetalleCliente(Map<String, dynamic> cliente) async {
-    final idCliente = _idCliente(cliente);
-
     List<Map<String, dynamic>> suministros = [];
 
-    if (cliente['suministros'] is List) {
-      suministros = (cliente['suministros'] as List)
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
-    }
-
-    if (suministros.isEmpty && idCliente > 0) {
-      try {
-        suministros = await clienteService.listarSuministrosPorCliente(
-          idCliente,
-        );
-      } catch (_) {}
-    }
+    try {
+      suministros = await _suministrosCliente(cliente);
+    } catch (_) {}
 
     if (!mounted) return;
 
@@ -265,7 +459,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       builder: (_) {
         return DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.78,
+          initialChildSize: 0.82,
           minChildSize: 0.45,
           maxChildSize: 0.94,
           builder: (_, controller) {
@@ -315,60 +509,21 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                   activo: _estadoCliente(cliente),
                   suministros: suministros.length,
                 ),
-                SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _abrirEditarCliente(cliente);
-                        },
-                        icon: Icon(Icons.edit_outlined),
-                        label: Text(
-                          'Editar cliente',
-                          style: TextStyle(fontWeight: FontWeight.w900),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: context.jassTextPrimary,
-                          side: BorderSide(color: context.jassBorder),
-                          backgroundColor: context.jassSelectedSurface,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          _cambiarEstadoCliente(cliente, cerrarDetalle: true);
-                        },
-                        icon: Icon(
-                          _estadoCliente(cliente)
-                              ? Icons.block_rounded
-                              : Icons.check_circle_outline_rounded,
-                        ),
-                        label: Text(
-                          _estadoCliente(cliente) ? 'Desactivar' : 'Activar',
-                          style: TextStyle(fontWeight: FontWeight.w900),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _estadoCliente(cliente)
-                              ? Color(0xFFFFECEC)
-                              : Color(0xFFEAF8EF),
-                          foregroundColor: _estadoCliente(cliente)
-                              ? JassColors.danger
-                              : JassColors.success,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                SizedBox(height: 20),
+                _DetalleAccionesCliente(
+                  activo: _estadoCliente(cliente),
+                  onEditar: () {
+                    Navigator.pop(context);
+                    _abrirEditarCliente(cliente);
+                  },
+                  onEstado: () {
+                    _cambiarEstadoCliente(cliente, cerrarDetalle: true);
+                  },
+                  onPassword: () => _restablecerPasswordCliente(cliente),
+                  onAgregarSuministro: () {
+                    Navigator.pop(context);
+                    _abrirFormularioSuministro(cliente);
+                  },
                 ),
                 SizedBox(height: 24),
                 Text(
@@ -377,6 +532,15 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                     color: context.jassTextPrimary,
                     fontSize: 19,
                     fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'No elimines suministros con historial. Usa estado instalado, pendiente o suspendido.',
+                  style: TextStyle(
+                    color: context.jassTextMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 14),
@@ -390,70 +554,83 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                   )
                 else
                   ...suministros.map((suministro) {
-                    final activo =
-                        suministro['estado'] == true ||
-                        suministro['estado'].toString().toLowerCase() == 'true';
-
-                    return Container(
-                      margin: EdgeInsets.only(bottom: 12),
-                      padding: EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: context.jassSurfaceAlt,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: context.jassBorder),
+                    return _SuministroAdminCard(
+                      codigo: _codigoSuministro(suministro),
+                      alias: _aliasSuministro(suministro),
+                      direccion: _direccionSuministro(suministro),
+                      sector: _sectorSuministro(suministro),
+                      lecturaInicial: _lecturaInicial(suministro),
+                      activo: _estadoSuministro(suministro),
+                      estadoInstalacion: _estadoInstalacion(suministro),
+                      estadoTexto: _estadoInstalacionTexto(suministro),
+                      onEditar: () {
+                        Navigator.pop(context);
+                        _abrirFormularioSuministro(
+                          cliente,
+                          suministro: suministro,
+                        );
+                      },
+                      onQr: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(
+                          context,
+                          '/admin-qr-suministro',
+                          arguments: {
+                            'codigoSuministro': _codigoSuministro(suministro),
+                          },
+                        );
+                      },
+                      onInstalado: () => _cambiarEstadoInstalacion(
+                        cliente: cliente,
+                        suministro: suministro,
+                        estadoInstalacion: 'INSTALADO',
                       ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.water_drop_rounded, color: secondary),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _txt(suministro['codigoSuministro']),
-                                  style: TextStyle(
-                                    color: context.jassTextPrimary,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  _txt(suministro['aliasSuministro']),
-                                  style: TextStyle(
-                                    color: context.jassTextPrimary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                SizedBox(height: 3),
-                                Text(
-                                  _txt(suministro['direccionSuministro']),
-                                  style: TextStyle(
-                                    color: context.jassTextMuted,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  _txt(
-                                    suministro['nombreSector'] ??
-                                        suministro['sector'],
-                                  ),
-                                  style: TextStyle(
-                                    color: context.jassTextMuted,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _EstadoChip(activo: activo),
-                        ],
+                      onPendiente: () => _cambiarEstadoInstalacion(
+                        cliente: cliente,
+                        suministro: suministro,
+                        estadoInstalacion: 'PENDIENTE_INSTALACION',
+                      ),
+                      onSuspender: () => _cambiarEstadoSuministro(
+                        cliente: cliente,
+                        suministro: suministro,
+                        estado: !_estadoSuministro(suministro),
                       ),
                     );
                   }),
                 SizedBox(height: 18),
               ],
             );
+          },
+        );
+      },
+    );
+  }
+
+  void _abrirEditarCliente(Map<String, dynamic> cliente) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.jassSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) {
+        return _EditarClienteSheet(
+          cliente: cliente,
+          onGuardar: (payload) async {
+            final idCliente = _idCliente(cliente);
+
+            if (idCliente <= 0) {
+              throw Exception('No se encontró el ID del cliente.');
+            }
+
+            await clienteService.actualizarCliente(idCliente, payload);
+
+            if (!mounted) return;
+
+            Navigator.pop(context);
+            _mensaje('Cliente actualizado correctamente.', false);
+            await cargarDatos();
           },
         );
       },
@@ -477,14 +654,159 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
             if (!mounted) return;
 
             Navigator.pop(context);
-
             _mensaje('Cliente registrado correctamente.', false);
-
             await cargarDatos();
           },
         );
       },
     );
+  }
+
+  void _abrirFormularioSuministro(
+    Map<String, dynamic> cliente, {
+    Map<String, dynamic>? suministro,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.jassSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) {
+        return _SuministroFormSheet(
+          sectores: sectores,
+          suministro: suministro,
+          idSectorInicial: suministro == null ? null : _idSector(suministro),
+          onGuardar: (payload) async {
+            final idCliente = _idCliente(cliente);
+
+            if (idCliente <= 0) {
+              throw Exception('No se encontró el ID del cliente.');
+            }
+
+            if (suministro == null) {
+              await clienteService.agregarSuministro(
+                idCliente: idCliente,
+                data: payload,
+              );
+            } else {
+              final idSuministro = _idSuministro(suministro);
+
+              if (idSuministro <= 0) {
+                throw Exception('No se encontró el ID del suministro.');
+              }
+
+              await clienteService.actualizarSuministro(
+                idCliente: idCliente,
+                idSuministro: idSuministro,
+                data: payload,
+              );
+            }
+
+            if (!mounted) return;
+
+            Navigator.pop(context);
+            _mensaje(
+              suministro == null
+                  ? 'Suministro agregado correctamente.'
+                  : 'Suministro actualizado correctamente.',
+              false,
+            );
+            await cargarDatos();
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _cambiarEstadoInstalacion({
+    required Map<String, dynamic> cliente,
+    required Map<String, dynamic> suministro,
+    required String estadoInstalacion,
+  }) async {
+    final idCliente = _idCliente(cliente);
+    final idSuministro = _idSuministro(suministro);
+
+    if (idCliente <= 0 || idSuministro <= 0) {
+      _mensaje('No se encontró el ID del cliente o suministro.', true);
+      return;
+    }
+
+    final texto = estadoInstalacion == 'INSTALADO'
+        ? 'marcar como instalado'
+        : 'marcar como pendiente de instalación';
+
+    final ok = await _confirmar(
+      titulo: 'Cambiar estado de instalación',
+      mensaje: '¿Deseas $texto este suministro?',
+      textoConfirmar: 'Confirmar',
+      color: secondary,
+    );
+
+    if (!ok) return;
+
+    try {
+      await clienteService.cambiarEstadoInstalacionSuministro(
+        idCliente: idCliente,
+        idSuministro: idSuministro,
+        estadoInstalacion: estadoInstalacion,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+      _mensaje('Estado de instalación actualizado.', false);
+      await cargarDatos();
+    } catch (e) {
+      if (!mounted) return;
+      _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
+    }
+  }
+
+  Future<void> _cambiarEstadoSuministro({
+    required Map<String, dynamic> cliente,
+    required Map<String, dynamic> suministro,
+    required bool estado,
+  }) async {
+    final idCliente = _idCliente(cliente);
+    final idSuministro = _idSuministro(suministro);
+
+    if (idCliente <= 0 || idSuministro <= 0) {
+      _mensaje('No se encontró el ID del cliente o suministro.', true);
+      return;
+    }
+
+    final ok = await _confirmar(
+      titulo: estado ? 'Activar suministro' : 'Suspender suministro',
+      mensaje: estado
+          ? 'El suministro volverá a estar activo.'
+          : 'El suministro quedará inactivo, pero se conservarán recibos, pagos y lecturas.',
+      textoConfirmar: estado ? 'Activar' : 'Suspender',
+      color: estado ? JassColors.success : JassColors.danger,
+    );
+
+    if (!ok) return;
+
+    try {
+      await clienteService.cambiarEstadoSuministro(
+        idCliente: idCliente,
+        idSuministro: idSuministro,
+        estado: estado,
+      );
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+      _mensaje(
+        estado ? 'Suministro activado.' : 'Suministro suspendido.',
+        false,
+      );
+      await cargarDatos();
+    } catch (e) {
+      if (!mounted) return;
+      _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
+    }
   }
 
   void _go(int index) {
@@ -647,6 +969,362 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
           borderSide: BorderSide.none,
         ),
       ),
+    );
+  }
+}
+
+class _DetalleAccionesCliente extends StatelessWidget {
+  final bool activo;
+  final VoidCallback onEditar;
+  final VoidCallback onEstado;
+  final VoidCallback onPassword;
+  final VoidCallback onAgregarSuministro;
+
+  _DetalleAccionesCliente({
+    required this.activo,
+    required this.onEditar,
+    required this.onEstado,
+    required this.onPassword,
+    required this.onAgregarSuministro,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onEditar,
+                icon: Icon(Icons.edit_outlined),
+                label: Text('Editar cliente'),
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: onEstado,
+                icon: Icon(
+                  activo
+                      ? Icons.block_rounded
+                      : Icons.check_circle_outline_rounded,
+                ),
+                label: Text(activo ? 'Desactivar' : 'Activar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: activo
+                      ? Color(0xFFFFECEC)
+                      : Color(0xFFEAF8EF),
+                  foregroundColor: activo
+                      ? JassColors.danger
+                      : JassColors.success,
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: onPassword,
+                icon: Icon(Icons.lock_reset_rounded),
+                label: Text('Restablecer contraseña'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.jassSelectedSurface,
+                  foregroundColor: context.jassTextPrimary,
+                  elevation: 0,
+                ),
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: onAgregarSuministro,
+                icon: Icon(Icons.add_location_alt_outlined),
+                label: Text('Agregar suministro'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: JassColors.secondary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SuministroAdminCard extends StatelessWidget {
+  final String codigo;
+  final String alias;
+  final String direccion;
+  final String sector;
+  final double lecturaInicial;
+  final bool activo;
+  final String estadoInstalacion;
+  final String estadoTexto;
+  final VoidCallback onEditar;
+  final VoidCallback onQr;
+  final VoidCallback onInstalado;
+  final VoidCallback onPendiente;
+  final VoidCallback onSuspender;
+
+  _SuministroAdminCard({
+    required this.codigo,
+    required this.alias,
+    required this.direccion,
+    required this.sector,
+    required this.lecturaInicial,
+    required this.activo,
+    required this.estadoInstalacion,
+    required this.estadoTexto,
+    required this.onEditar,
+    required this.onQr,
+    required this.onInstalado,
+    required this.onPendiente,
+    required this.onSuspender,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final puedeMarcarInstalado = estadoInstalacion != 'INSTALADO';
+    final puedeMarcarPendiente = estadoInstalacion != 'PENDIENTE_INSTALACION';
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 14),
+      padding: EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: context.jassSurfaceAlt,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: context.jassBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                backgroundColor: context.jassSelectedSurface,
+                child: Icon(
+                  Icons.water_drop_rounded,
+                  color: JassColors.secondary,
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      codigo,
+                      style: TextStyle(
+                        color: context.jassTextPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      alias,
+                      style: TextStyle(
+                        color: context.jassTextPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      '$direccion · $sector',
+                      style: TextStyle(
+                        color: context.jassTextMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _SuministroEstadoChip(
+                activo: activo,
+                estadoInstalacion: estadoInstalacion,
+                estadoTexto: estadoTexto,
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          _InfoLine(
+            label: 'Lectura base',
+            value: '${lecturaInicial.toStringAsFixed(3)} m³',
+          ),
+          SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _MiniAction(
+                icon: Icons.edit_outlined,
+                label: 'Editar',
+                onTap: onEditar,
+              ),
+              _MiniAction(
+                icon: Icons.qr_code_2_rounded,
+                label: 'QR',
+                onTap: onQr,
+              ),
+              if (puedeMarcarInstalado)
+                _MiniAction(
+                  icon: Icons.check_circle_outline_rounded,
+                  label: 'Instalado',
+                  onTap: onInstalado,
+                ),
+              if (puedeMarcarPendiente)
+                _MiniAction(
+                  icon: Icons.home_repair_service_outlined,
+                  label: 'Pendiente',
+                  onTap: onPendiente,
+                ),
+              _MiniAction(
+                icon: activo
+                    ? Icons.pause_circle_outline_rounded
+                    : Icons.play_circle_outline_rounded,
+                label: activo ? 'Suspender' : 'Activar',
+                danger: activo,
+                onTap: onSuspender,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SuministroEstadoChip extends StatelessWidget {
+  final bool activo;
+  final String estadoInstalacion;
+  final String estadoTexto;
+
+  _SuministroEstadoChip({
+    required this.activo,
+    required this.estadoInstalacion,
+    required this.estadoTexto,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color bg;
+    Color fg;
+    String text;
+
+    if (!activo || estadoInstalacion == 'SUSPENDIDO') {
+      bg = Color(0xFFFFECEC);
+      fg = JassColors.danger;
+      text = 'Suspendido';
+    } else if (estadoInstalacion == 'PENDIENTE_INSTALACION') {
+      bg = Color(0xFFFFF3DF);
+      fg = JassColors.warning;
+      text = 'Pendiente';
+    } else {
+      bg = Color(0xFFEAF8EF);
+      fg = JassColors.success;
+      text = estadoTexto;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: fg, fontSize: 10, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class _MiniAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool danger;
+
+  _MiniAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.danger = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(13),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: danger ? Color(0xFFFFECEC) : context.jassSelectedSurface,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: context.jassBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 17,
+              color: danger ? JassColors.danger : context.jassTextPrimary,
+            ),
+            SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: danger ? JassColors.danger : context.jassTextPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  _InfoLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: context.jassTextMuted,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        Spacer(),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: context.jassTextPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -838,67 +1516,37 @@ class _ClienteCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: _ClienteActionButton(
                   onPressed: onDetalle,
-                  icon: Icon(Icons.visibility_outlined, size: 18),
-                  label: Text(
-                    'Detalle',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: context.jassTextPrimary,
-                    side: BorderSide(color: context.jassTextPrimary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
+                  icon: Icons.visibility_outlined,
+                  texto: 'Ver',
+                  outlined: true,
                 ),
               ),
               SizedBox(width: 8),
               Expanded(
-                child: ElevatedButton.icon(
+                child: _ClienteActionButton(
                   onPressed: onEditar,
-                  icon: Icon(Icons.edit_outlined, size: 18),
-                  label: Text(
-                    'Editar',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: context.jassSelectedSurface,
-                    foregroundColor: context.jassTextPrimary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
+                  icon: Icons.edit_outlined,
+                  texto: 'Editar',
+                  backgroundColor: context.jassSelectedSurface,
+                  foregroundColor: context.jassTextPrimary,
                 ),
               ),
               SizedBox(width: 8),
               Expanded(
-                child: ElevatedButton.icon(
+                child: _ClienteActionButton(
                   onPressed: onCambiarEstado,
-                  icon: Icon(
-                    activo
-                        ? Icons.block_rounded
-                        : Icons.check_circle_outline_rounded,
-                    size: 18,
-                  ),
-                  label: Text(
-                    activo ? 'Desactivar' : 'Activar',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: activo
-                        ? Color(0xFFFFECEC)
-                        : Color(0xFFEAF8EF),
-                    foregroundColor: activo
-                        ? JassColors.danger
-                        : JassColors.success,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
+                  icon: activo
+                      ? Icons.block_rounded
+                      : Icons.check_circle_outline_rounded,
+                  texto: activo ? 'Desact.' : 'Activar',
+                  backgroundColor: activo
+                      ? Color(0xFFFFECEC)
+                      : Color(0xFFEAF8EF),
+                  foregroundColor: activo
+                      ? JassColors.danger
+                      : JassColors.success,
                 ),
               ),
             ],
@@ -906,6 +1554,68 @@ class _ClienteCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _ClienteActionButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String texto;
+  final bool outlined;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+
+  const _ClienteActionButton({
+    required this.onPressed,
+    required this.icon,
+    required this.texto,
+    this.outlined = false,
+    this.backgroundColor,
+    this.foregroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16),
+        SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            texto,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    );
+
+    final style = ButtonStyle(
+      minimumSize: WidgetStateProperty.all(Size(0, 44)),
+      padding: WidgetStateProperty.all(
+        EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      ),
+      shape: WidgetStateProperty.all(
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      backgroundColor: backgroundColor == null
+          ? null
+          : WidgetStateProperty.all(backgroundColor),
+      foregroundColor: foregroundColor == null
+          ? null
+          : WidgetStateProperty.all(foregroundColor),
+      elevation: WidgetStateProperty.all(0),
+    );
+
+    if (outlined) {
+      return OutlinedButton(onPressed: onPressed, style: style, child: child);
+    }
+
+    return ElevatedButton(onPressed: onPressed, style: style, child: child);
   }
 }
 
@@ -935,6 +1645,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
   int? idSectorSeleccionado;
   final List<Map<String, dynamic>> suministros = [];
 
+  bool estadoCliente = true;
   bool guardando = false;
 
   @override
@@ -1002,6 +1713,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
         'aliasSuministro': alias,
         'lecturaInicial': lectura,
         'estado': true,
+        'estadoInstalacion': 'INSTALADO',
       });
 
       direccionController.clear();
@@ -1034,7 +1746,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
       'apellidos': apellidos,
       'telefono': telefono,
       'correo': correo,
-      'estado': true,
+      'estado': estadoCliente,
       'suministros': suministros,
     };
 
@@ -1102,6 +1814,33 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
               controller: correoController,
               label: 'Correo',
               keyboardType: TextInputType.emailAddress,
+            ),
+            DropdownButtonFormField<bool>(
+              value: estadoCliente,
+              decoration: InputDecoration(
+                labelText: 'Estado inicial del cliente',
+                helperText: estadoCliente
+                    ? 'El cliente podrá operar normalmente.'
+                    : 'Se registra inactivo y no podrá operar hasta activarlo.',
+                helperMaxLines: 2,
+                filled: true,
+                fillColor: context.jassSurfaceAlt,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: [
+                DropdownMenuItem(value: true, child: Text('Activo')),
+                DropdownMenuItem(value: false, child: Text('Inactivo')),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+
+                setState(() {
+                  estadoCliente = value;
+                });
+              },
             ),
             SizedBox(height: 12),
             Divider(),
@@ -1221,6 +1960,314 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
   }
 }
 
+class _SuministroFormSheet extends StatefulWidget {
+  final List<Map<String, dynamic>> sectores;
+  final Map<String, dynamic>? suministro;
+  final int? idSectorInicial;
+  final Future<void> Function(Map<String, dynamic> payload) onGuardar;
+
+  _SuministroFormSheet({
+    required this.sectores,
+    required this.suministro,
+    required this.idSectorInicial,
+    required this.onGuardar,
+  });
+
+  @override
+  State<_SuministroFormSheet> createState() => _SuministroFormSheetState();
+}
+
+class _SuministroFormSheetState extends State<_SuministroFormSheet> {
+  final aliasController = TextEditingController();
+  final direccionController = TextEditingController();
+  final referenciaController = TextEditingController();
+  final lecturaInicialController = TextEditingController(text: '0');
+
+  int? idSectorSeleccionado;
+  String estadoInstalacion = 'INSTALADO';
+  bool activo = true;
+  bool guardando = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final suministro = widget.suministro;
+
+    if (suministro == null) {
+      if (widget.sectores.isNotEmpty) {
+        idSectorSeleccionado = _idSector(widget.sectores.first);
+      }
+      return;
+    }
+
+    aliasController.text = _txt(
+      suministro['aliasSuministro'] ??
+          suministro['alias'] ??
+          suministro['referenciaRapida'],
+      '',
+    );
+    direccionController.text = _txt(
+      suministro['direccionSuministro'] ??
+          suministro['direccion'] ??
+          suministro['direccionCliente'],
+      '',
+    );
+    referenciaController.text = _txt(suministro['referencia'], '');
+    lecturaInicialController.text = _num(
+      suministro['lecturaInicial'] ??
+          suministro['lecturaActual'] ??
+          suministro['ultimaLectura'] ??
+          suministro['lecturaAnterior'],
+    ).toStringAsFixed(3);
+    idSectorSeleccionado =
+        widget.idSectorInicial == null || widget.idSectorInicial == 0
+        ? (widget.sectores.isNotEmpty ? _idSector(widget.sectores.first) : null)
+        : widget.idSectorInicial;
+    activo = _estadoBool(suministro['estado']);
+    estadoInstalacion = activo
+        ? _estadoInstalacionFrom(suministro)
+        : 'SUSPENDIDO';
+  }
+
+  @override
+  void dispose() {
+    aliasController.dispose();
+    direccionController.dispose();
+    referenciaController.dispose();
+    lecturaInicialController.dispose();
+    super.dispose();
+  }
+
+  String _txt(dynamic value, [String fallback = '-']) {
+    if (value == null) return fallback;
+    final text = value.toString().trim();
+    if (text.isEmpty || text == 'null') return fallback;
+    return text;
+  }
+
+  double _num(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString().replaceAll(',', '.')) ?? 0;
+  }
+
+  bool _estadoBool(dynamic value) {
+    if (value is bool) return value;
+    final text = value.toString().toLowerCase().trim();
+    return text == 'true' || text == 'activo' || text == '1';
+  }
+
+  String _estadoInstalacionFrom(Map<String, dynamic> suministro) {
+    final raw = _txt(
+      suministro['estadoInstalacion'] ??
+          suministro['estado_instalacion'] ??
+          suministro['estadoConexion'] ??
+          suministro['estadoSuministro'],
+      '',
+    ).toUpperCase();
+
+    if (raw.contains('PENDIENTE')) return 'PENDIENTE_INSTALACION';
+    if (raw.contains('SUSPEND') || raw.contains('INACT')) return 'SUSPENDIDO';
+    return 'INSTALADO';
+  }
+
+  int _idSector(Map<String, dynamic> sector) {
+    final value = sector['id'] ?? sector['idSector'];
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  void _mensaje(String mensaje) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(mensaje), backgroundColor: JassColors.danger),
+    );
+  }
+
+  Future<void> guardar() async {
+    final alias = aliasController.text.trim();
+    final direccion = direccionController.text.trim();
+    final referencia = referenciaController.text.trim();
+    final lectura = double.tryParse(lecturaInicialController.text.trim()) ?? 0;
+
+    if (idSectorSeleccionado == null || idSectorSeleccionado == 0) {
+      _mensaje('Selecciona un sector.');
+      return;
+    }
+
+    if (alias.isEmpty || direccion.isEmpty) {
+      _mensaje('Completa alias y dirección del suministro.');
+      return;
+    }
+
+    setState(() {
+      guardando = true;
+    });
+
+    try {
+      await widget.onGuardar({
+        'idSector': idSectorSeleccionado,
+        'direccionSuministro': direccion,
+        'referencia': referencia,
+        'aliasSuministro': alias,
+        'lecturaInicial': lectura,
+        'estado': activo,
+        'estadoInstalacion': estadoInstalacion,
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        guardando = false;
+      });
+
+      _mensaje(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final editando = widget.suministro != null;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 22,
+        right: 22,
+        top: 22,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 22,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              editando ? 'Editar suministro' : 'Agregar suministro',
+              style: TextStyle(
+                color: context.jassTextPrimary,
+                fontSize: 23,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'No se elimina el suministro para conservar recibos, pagos e historial.',
+              style: TextStyle(
+                color: context.jassTextMuted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 18),
+            _SectorDropdown(
+              sectores: widget.sectores,
+              value: idSectorSeleccionado,
+              onChanged: (value) {
+                setState(() {
+                  idSectorSeleccionado = value;
+                });
+              },
+            ),
+            _Input(controller: aliasController, label: 'Alias del suministro'),
+            _Input(
+              controller: direccionController,
+              label: 'Dirección del suministro',
+            ),
+            _Input(controller: referenciaController, label: 'Referencia'),
+            _Input(
+              controller: lecturaInicialController,
+              label: 'Lectura inicial / base',
+              keyboardType: TextInputType.number,
+            ),
+            DropdownButtonFormField<String>(
+              value: estadoInstalacion,
+              decoration: InputDecoration(
+                labelText: 'Estado de instalación',
+                filled: true,
+                fillColor: context.jassSurfaceAlt,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              items: [
+                DropdownMenuItem(value: 'INSTALADO', child: Text('Instalado')),
+                DropdownMenuItem(
+                  value: 'PENDIENTE_INSTALACION',
+                  child: Text('Pendiente de instalación'),
+                ),
+                DropdownMenuItem(
+                  value: 'SUSPENDIDO',
+                  child: Text('Suspendido'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() {
+                  estadoInstalacion = value;
+                  if (value == 'SUSPENDIDO') activo = false;
+                  if (value == 'INSTALADO') activo = true;
+                });
+              },
+            ),
+            SizedBox(height: 10),
+            SwitchListTile(
+              value: activo,
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'Suministro activo',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+              subtitle: Text(
+                'Desactívalo solo si el suministro queda suspendido.',
+              ),
+              onChanged: (value) {
+                setState(() {
+                  activo = value;
+                  if (!activo) estadoInstalacion = 'SUSPENDIDO';
+                });
+              },
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: guardando ? null : () => Navigator.pop(context),
+                    child: Text('Cancelar'),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: guardando ? null : guardar,
+                    icon: guardando
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Icon(Icons.save_outlined),
+                    label: Text(guardando ? 'Guardando...' : 'Guardar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: JassColors.secondary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _EditarClienteSheet extends StatefulWidget {
   final Map<String, dynamic> cliente;
   final Future<void> Function(Map<String, dynamic> payload) onGuardar;
@@ -1249,19 +2296,15 @@ class _EditarClienteSheetState extends State<_EditarClienteSheet> {
     dniController = TextEditingController(
       text: (widget.cliente['dni'] ?? '').toString(),
     );
-
     nombresController = TextEditingController(
       text: (widget.cliente['nombres'] ?? '').toString(),
     );
-
     apellidosController = TextEditingController(
       text: (widget.cliente['apellidos'] ?? '').toString(),
     );
-
     telefonoController = TextEditingController(
       text: (widget.cliente['telefono'] ?? '').toString(),
     );
-
     correoController = TextEditingController(
       text: (widget.cliente['correo'] ?? '').toString(),
     );
@@ -1416,7 +2459,7 @@ class _EditarClienteSheetState extends State<_EditarClienteSheet> {
                 border: Border.all(color: Color(0xFFFFD899)),
               ),
               child: Text(
-                'El cliente se registra únicamente para la gestión del servicio y sus suministros. No tendrá acceso a esta aplicación.',
+                'Si cambias el DNI, también puede actualizarse el usuario de acceso del cliente en la web.',
                 style: TextStyle(
                   color: JassColors.warning,
                   fontWeight: FontWeight.w800,
@@ -1430,10 +2473,7 @@ class _EditarClienteSheetState extends State<_EditarClienteSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: guardando ? null : () => Navigator.pop(context),
-                    child: Text(
-                      'Cancelar',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
+                    child: Text('Cancelar'),
                   ),
                 ),
                 SizedBox(width: 10),
@@ -1450,10 +2490,7 @@ class _EditarClienteSheetState extends State<_EditarClienteSheet> {
                             ),
                           )
                         : Icon(Icons.save_outlined),
-                    label: Text(
-                      guardando ? 'Guardando...' : 'Guardar',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                    ),
+                    label: Text(guardando ? 'Guardando...' : 'Guardar'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: secondary,
                       foregroundColor: Colors.white,
@@ -1524,10 +2561,13 @@ class _SectorDropdown extends StatelessWidget {
       );
     }
 
+    final values = sectores.map(_idSector).where((id) => id > 0).toSet();
+    final safeValue = values.contains(value) ? value : null;
+
     return Padding(
       padding: EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<int>(
-        value: value,
+        value: safeValue,
         decoration: InputDecoration(
           labelText: 'Sector',
           filled: true,

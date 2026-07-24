@@ -48,6 +48,22 @@ class PagoService {
     );
   }
 
+  Future<List<Map<String, dynamic>>> listarPagosEnRevision() async {
+    return _asList(await _api.get('/pagos/revision'));
+  }
+
+  Future<Map<String, dynamic>> obtenerPagoPorId(int idPago) async {
+    return _asMap(await _api.get('/pagos/$idPago'));
+  }
+
+  Future<Map<String, dynamic>> aprobarPago(int idPago) async {
+    return _asMap(await _api.patch('/pagos/$idPago/aprobar', {}));
+  }
+
+  Future<Map<String, dynamic>> rechazarPago(int idPago) async {
+    return _asMap(await _api.patch('/pagos/$idPago/rechazar', {}));
+  }
+
   Future<Map<String, dynamic>> pagarMiRecibo({
     required int idRecibo,
     required String metodoPago,

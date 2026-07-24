@@ -9,7 +9,7 @@ import '../theme/jass_colors.dart';
 /// 0 = Dashboard
 /// 1 = Clientes
 /// 2 = Tarifas
-/// 3 = Recibos
+/// 3 = Cobranza
 class AdminBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -76,8 +76,8 @@ class AdminBottomNav extends StatelessWidget {
                     _AdminBottomItem(
                       index: 3,
                       currentIndex: currentIndex,
-                      icon: Icons.receipt_long_rounded,
-                      tooltip: 'Recibos',
+                      icon: Icons.point_of_sale_rounded,
+                      tooltip: 'Cobranza',
                       onTap: onTap,
                     ),
                   ],

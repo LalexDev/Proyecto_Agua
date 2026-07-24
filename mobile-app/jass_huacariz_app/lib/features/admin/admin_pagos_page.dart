@@ -1,10 +1,10 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, prefer_const_declarations
 import 'package:flutter/material.dart';
 
+import '../../core/config/api_config.dart';
+import '../../core/services/pago_service.dart';
 import '../../shared/theme/jass_colors.dart';
 import '../../shared/theme/jass_theme_context.dart';
-
-import '../../core/services/pago_service.dart';
 import '../../shared/widgets/admin_bottom_nav.dart';
 
 class AdminPagosPage extends StatefulWidget {
@@ -22,6 +22,8 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
   bool cargando = false;
   String error = '';
   String busqueda = '';
+  String filtroEstado = 'TODOS';
+  int? procesandoPagoId;
 
   @override
   void initState() {
@@ -42,6 +44,13 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
 
     final text = value.toString().replaceAll(',', '.').trim();
     return double.tryParse(text) ?? 0.0;
+  }
+
+  int? _idPago(Map<String, dynamic> pago) {
+    final value = pago['id'] ?? pago['idPago'] ?? pago['pagoId'];
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '');
   }
 
   String _codigoRecibo(Map<String, dynamic> pago) {
@@ -83,6 +92,59 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
     );
   }
 
+  String _estadoPago(Map<String, dynamic> pago) {
+    return _txt(
+      pago['estadoPago'] ?? pago['estado'] ?? pago['estadoPagoRecibo'],
+      '-',
+    ).toUpperCase();
+  }
+
+  String _estadoLabel(String estado) {
+    switch (estado.toUpperCase()) {
+      case 'PAGO_EN_REVISION':
+        return 'En revisión';
+      case 'PAGADO_CONFIRMADO':
+      case 'PAGADO':
+        return 'Confirmado';
+      case 'RECHAZADO':
+        return 'Rechazado';
+      default:
+        return estado == '-' ? 'Sin estado' : estado;
+    }
+  }
+
+  Color _estadoColor(String estado) {
+    switch (estado.toUpperCase()) {
+      case 'PAGO_EN_REVISION':
+        return Color(0xFFD97706);
+      case 'PAGADO_CONFIRMADO':
+      case 'PAGADO':
+        return Color(0xFF047857);
+      case 'RECHAZADO':
+        return JassColors.danger;
+      default:
+        return context.jassTextMuted;
+    }
+  }
+
+  Color _estadoBg(String estado) {
+    switch (estado.toUpperCase()) {
+      case 'PAGO_EN_REVISION':
+        return Color(0xFFFFF3CD);
+      case 'PAGADO_CONFIRMADO':
+      case 'PAGADO':
+        return Color(0xFFDDFBEA);
+      case 'RECHAZADO':
+        return Color(0xFFFFE1E1);
+      default:
+        return context.jassSurface;
+    }
+  }
+
+  bool _enRevision(Map<String, dynamic> pago) {
+    return _estadoPago(pago) == 'PAGO_EN_REVISION';
+  }
+
   double _monto(Map<String, dynamic> pago) {
     return _num(
       pago['monto'] ??
@@ -122,6 +184,16 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
     );
   }
 
+  String _comprobanteUrl(Map<String, dynamic> pago) {
+    return _txt(
+      pago['comprobanteUrl'] ??
+          pago['comprobante'] ??
+          pago['urlComprobante'] ??
+          pago['rutaComprobante'],
+      '',
+    );
+  }
+
   bool _esPagoDelMes(Map<String, dynamic> pago) {
     final fechaTexto = _fecha(pago);
     final fecha = DateTime.tryParse(fechaTexto);
@@ -134,11 +206,20 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
   }
 
   double get montoRecaudado {
-    return pagos.fold(0.0, (sum, pago) => sum + _monto(pago));
+    return pagos
+        .where((pago) {
+          final estado = _estadoPago(pago);
+          return estado == 'PAGADO_CONFIRMADO' || estado == 'PAGADO';
+        })
+        .fold(0.0, (sum, pago) => sum + _monto(pago));
   }
 
   int get pagosDelMes {
     return pagos.where(_esPagoDelMes).length;
+  }
+
+  int get pagosEnRevision {
+    return pagos.where(_enRevision).length;
   }
 
   String get metodoPrincipal {
@@ -168,12 +249,21 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
     return data;
   }
 
+  int _conteoEstado(String estado) {
+    if (estado == 'TODOS') return pagos.length;
+    return pagos.where((pago) => _estadoPago(pago) == estado).length;
+  }
+
   List<Map<String, dynamic>> get pagosFiltrados {
     final query = busqueda.trim().toLowerCase();
 
-    if (query.isEmpty) return pagos;
-
     return pagos.where((pago) {
+      if (filtroEstado != 'TODOS' && _estadoPago(pago) != filtroEstado) {
+        return false;
+      }
+
+      if (query.isEmpty) return true;
+
       final texto =
           '''
       ${_codigoRecibo(pago)}
@@ -183,6 +273,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
       ${_suministro(pago)}
       ${_fecha(pago)}
       ${_monto(pago)}
+      ${_estadoLabel(_estadoPago(pago))}
       '''
               .toLowerCase();
 
@@ -218,6 +309,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
   void limpiarFiltros() {
     setState(() {
       busqueda = '';
+      filtroEstado = 'TODOS';
     });
   }
 
@@ -243,14 +335,292 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
     }
   }
 
+  String _fullComprobanteUrl(String url) {
+    final raw = url.trim();
+    if (raw.isEmpty) return '';
+
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return raw;
+    }
+
+    var host = ApiConfig.baseUrl.trim();
+    if (host.endsWith('/api')) {
+      host = host.substring(0, host.length - 4);
+    }
+
+    if (raw.startsWith('/')) {
+      return '$host$raw';
+    }
+
+    return '$host/$raw';
+  }
+
+  void _snack(String mensaje, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: error ? JassColors.danger : JassColors.primary,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Future<void> _verComprobante(Map<String, dynamic> pago) async {
+    final url = _fullComprobanteUrl(_comprobanteUrl(pago));
+
+    if (url.isEmpty) {
+      _snack('Este pago no tiene comprobante registrado.', error: true);
+      return;
+    }
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: EdgeInsets.all(18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: Container(
+              color: context.jassSurface,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: EdgeInsets.fromLTRB(18, 16, 12, 12),
+                    decoration: BoxDecoration(
+                      color: context.jassSelectedSurface,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Comprobante de pago',
+                                style: TextStyle(
+                                  color: context.jassTextPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                _codigoRecibo(pago),
+                                style: TextStyle(
+                                  color: context.jassTextMuted,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          icon: Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: InteractiveViewer(
+                      minScale: 0.7,
+                      maxScale: 4,
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxHeight: MediaQuery.of(context).size.height * 0.65,
+                          minHeight: 260,
+                          minWidth: double.infinity,
+                        ),
+                        color: Colors.black.withOpacity(0.04),
+                        child: Image.network(
+                          url,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) {
+                            return Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.broken_image_rounded,
+                                    size: 48,
+                                    color: JassColors.danger,
+                                  ),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'No se pudo cargar el comprobante.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: context.jassTextPrimary,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    url,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: context.jassTextMuted,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Center(child: CircularProgressIndicator());
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(14),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        icon: Icon(Icons.check_rounded),
+                        label: Text('Entendido'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: JassColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> _confirmarAccion({
+    required Map<String, dynamic> pago,
+    required bool aprobar,
+  }) async {
+    final titulo = aprobar ? 'Aprobar pago' : 'Rechazar pago';
+    final mensaje = aprobar
+        ? 'El recibo pasará a estado PAGADO. Verifica el comprobante antes de confirmar.'
+        : 'El recibo volverá a estado PENDIENTE. El cliente deberá enviar un nuevo comprobante.';
+    final color = aprobar ? Color(0xFF047857) : JassColors.danger;
+
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: Text(titulo),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(mensaje),
+              SizedBox(height: 12),
+              _DialogLine(label: 'Recibo', value: _codigoRecibo(pago)),
+              _DialogLine(
+                label: 'Monto',
+                value: 'S/ ${_monto(pago).toStringAsFixed(2)}',
+              ),
+              _DialogLine(label: 'Operación', value: _codigoOperacion(pago)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(aprobar ? 'Sí, aprobar' : 'Sí, rechazar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmado == true;
+  }
+
+  Future<void> _cambiarEstadoPago(
+    Map<String, dynamic> pago, {
+    required bool aprobar,
+  }) async {
+    final idPago = _idPago(pago);
+
+    if (idPago == null) {
+      _snack('No se pudo identificar el pago seleccionado.', error: true);
+      return;
+    }
+
+    if (!_enRevision(pago)) {
+      _snack(
+        'Solo se puede aprobar o rechazar un pago en revisión.',
+        error: true,
+      );
+      return;
+    }
+
+    final confirmado = await _confirmarAccion(pago: pago, aprobar: aprobar);
+    if (!confirmado) return;
+
+    setState(() {
+      procesandoPagoId = idPago;
+    });
+
+    try {
+      if (aprobar) {
+        await pagoService.aprobarPago(idPago);
+      } else {
+        await pagoService.rechazarPago(idPago);
+      }
+
+      _snack(
+        aprobar
+            ? 'Pago aprobado correctamente.'
+            : 'Pago rechazado correctamente.',
+      );
+
+      await cargarPagos();
+    } catch (e) {
+      _snack(e.toString().replaceFirst('Exception: ', ''), error: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          procesandoPagoId = null;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.jassBackground,
       extendBody: true,
       bottomNavigationBar: AdminBottomNav(
-        // Pagos se abre desde el menú "+", por eso no se marca
-        // ninguna de las cuatro opciones principales.
         currentIndex: -1,
         onTap: _go,
         onPlus: () {
@@ -280,9 +650,13 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
                 if (!cargando && error.isEmpty) ...[
                   _buildStats(),
                   SizedBox(height: 18),
+                  _buildAlertRevision(),
+                  SizedBox(height: 18),
                   _buildMetodos(),
                   SizedBox(height: 18),
                   _buildSearch(),
+                  SizedBox(height: 12),
+                  _buildFiltrosEstado(),
                   SizedBox(height: 18),
                   _buildListado(),
                 ],
@@ -337,7 +711,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
               ),
               SizedBox(height: 3),
               Text(
-                'Consulta pagos registrados y recaudación del servicio.',
+                'Revisa comprobantes y confirma pagos enviados por clientes.',
                 style: TextStyle(
                   color: context.jassTextMuted,
                   fontSize: 12,
@@ -362,10 +736,10 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
           children: [
             Expanded(
               child: _StatCard(
-                icon: Icons.payments_rounded,
-                label: 'Pagos totales',
-                value: '${pagos.length}',
-                subtitle: 'Pagos registrados',
+                icon: Icons.hourglass_top_rounded,
+                label: 'En revisión',
+                value: '$pagosEnRevision',
+                subtitle: 'Necesitan validación',
                 selected: true,
               ),
             ),
@@ -373,9 +747,9 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
             Expanded(
               child: _StatCard(
                 icon: Icons.savings_rounded,
-                label: 'Monto recaudado',
+                label: 'Confirmado',
                 value: 'S/ ${montoRecaudado.toStringAsFixed(2)}',
-                subtitle: 'Total acumulado',
+                subtitle: 'Recaudación válida',
               ),
             ),
           ],
@@ -403,6 +777,60 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildAlertRevision() {
+    if (pagosEnRevision == 0) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Color(0xFFDDFBEA),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Color(0xFFB8F0CF)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: Color(0xFF047857)),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'No hay pagos pendientes de validación.',
+                style: TextStyle(
+                  color: Color(0xFF047857),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Color(0xFFFFF3CD),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Color(0xFFFFE29A)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706)),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Hay $pagosEnRevision pago(s) en revisión. Verifica el comprobante antes de aprobar o rechazar.',
+              style: TextStyle(
+                color: Color(0xFF9A5B00),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -470,7 +898,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
               });
             },
             decoration: InputDecoration(
-              hintText: 'Buscar por recibo, método, operación o fecha...',
+              hintText: 'Buscar recibo, operación, método o fecha...',
               prefixIcon: Icon(Icons.search_rounded),
               filled: true,
               fillColor: context.jassSurface,
@@ -497,6 +925,47 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
           child: Text('Limpiar', style: TextStyle(fontWeight: FontWeight.w900)),
         ),
       ],
+    );
+  }
+
+  Widget _buildFiltrosEstado() {
+    final filtros = [
+      ('TODOS', 'Todos'),
+      ('PAGO_EN_REVISION', 'Revisión'),
+      ('PAGADO_CONFIRMADO', 'Confirmados'),
+      ('RECHAZADO', 'Rechazados'),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: filtros.map((item) {
+          final selected = filtroEstado == item.$1;
+          final color = item.$1 == 'TODOS'
+              ? JassColors.primary
+              : _estadoColor(item.$1);
+
+          return Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              selected: selected,
+              onSelected: (_) {
+                setState(() {
+                  filtroEstado = item.$1;
+                });
+              },
+              label: Text('${item.$2} (${_conteoEstado(item.$1)})'),
+              selectedColor: color.withOpacity(0.16),
+              backgroundColor: context.jassSurface,
+              labelStyle: TextStyle(
+                color: selected ? color : context.jassTextMuted,
+                fontWeight: FontWeight.w900,
+              ),
+              side: BorderSide(color: selected ? color : context.jassBorder),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -544,6 +1013,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
             )
           else
             ...pagosFiltrados.map((pago) {
+              final id = _idPago(pago);
               return _PagoCard(
                 recibo: _codigoRecibo(pago),
                 metodo: _metodoPago(pago),
@@ -552,6 +1022,16 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
                 fecha: _fecha(pago),
                 cliente: _cliente(pago),
                 suministro: _suministro(pago),
+                estado: _estadoPago(pago),
+                estadoLabel: _estadoLabel(_estadoPago(pago)),
+                estadoColor: _estadoColor(_estadoPago(pago)),
+                estadoBg: _estadoBg(_estadoPago(pago)),
+                tieneComprobante: _comprobanteUrl(pago).isNotEmpty,
+                enRevision: _enRevision(pago),
+                procesando: id != null && procesandoPagoId == id,
+                onVerComprobante: () => _verComprobante(pago),
+                onAprobar: () => _cambiarEstadoPago(pago, aprobar: true),
+                onRechazar: () => _cambiarEstadoPago(pago, aprobar: false),
               );
             }),
         ],
@@ -694,6 +1174,16 @@ class _PagoCard extends StatelessWidget {
   final String fecha;
   final String cliente;
   final String suministro;
+  final String estado;
+  final String estadoLabel;
+  final Color estadoColor;
+  final Color estadoBg;
+  final bool tieneComprobante;
+  final bool enRevision;
+  final bool procesando;
+  final VoidCallback onVerComprobante;
+  final VoidCallback onAprobar;
+  final VoidCallback onRechazar;
 
   _PagoCard({
     required this.recibo,
@@ -703,11 +1193,22 @@ class _PagoCard extends StatelessWidget {
     required this.fecha,
     required this.cliente,
     required this.suministro,
+    required this.estado,
+    required this.estadoLabel,
+    required this.estadoColor,
+    required this.estadoBg,
+    required this.tieneComprobante,
+    required this.enRevision,
+    required this.procesando,
+    required this.onVerComprobante,
+    required this.onAprobar,
+    required this.onRechazar,
   });
 
   @override
   Widget build(BuildContext context) {
     final Color secondary = JassColors.secondary;
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(14),
@@ -727,13 +1228,39 @@ class _PagoCard extends StatelessWidget {
               ),
               SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  recibo,
-                  style: TextStyle(
-                    color: context.jassTextPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recibo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.jassTextPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: estadoBg,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        estadoLabel,
+                        style: TextStyle(
+                          color: estadoColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Text(
@@ -752,7 +1279,93 @@ class _PagoCard extends StatelessWidget {
           _Line(label: 'Fecha', value: fecha),
           _Line(label: 'Cliente', value: cliente),
           _Line(label: 'Suministro', value: suministro),
+          SizedBox(height: 12),
+          if (procesando)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: context.jassSurface,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Procesando pago...',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ],
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _MiniActionButton(
+                  icon: Icons.image_search_rounded,
+                  label: 'Comprobante',
+                  color: JassColors.primary,
+                  enabled: tieneComprobante,
+                  onPressed: onVerComprobante,
+                ),
+                if (enRevision) ...[
+                  _MiniActionButton(
+                    icon: Icons.check_circle_rounded,
+                    label: 'Aprobar',
+                    color: Color(0xFF047857),
+                    onPressed: onAprobar,
+                  ),
+                  _MiniActionButton(
+                    icon: Icons.cancel_rounded,
+                    label: 'Rechazar',
+                    color: JassColors.danger,
+                    onPressed: onRechazar,
+                  ),
+                ],
+              ],
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _MiniActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+  final bool enabled;
+
+  _MiniActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+    this.enabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: enabled ? onPressed : null,
+      icon: Icon(icon, size: 17),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: enabled ? color : context.jassBorder,
+        foregroundColor: enabled ? Colors.white : context.jassTextMuted,
+        elevation: 0,
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
       ),
     );
   }
@@ -768,6 +1381,43 @@ class _Line extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: 5),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: context.jassTextMuted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                color: context.jassTextPrimary,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DialogLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  _DialogLine({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: 6),
       child: Row(
         children: [
           Expanded(

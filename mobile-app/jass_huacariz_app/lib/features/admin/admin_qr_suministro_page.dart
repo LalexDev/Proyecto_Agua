@@ -30,8 +30,32 @@ class _AdminQrSuministroPageState extends State<AdminQrSuministroPage> {
 
   bool buscando = false;
   bool qrGenerado = false;
+  bool _argumentosProcesados = false;
   String error = '';
   String qrData = '';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_argumentosProcesados) return;
+
+    _argumentosProcesados = true;
+
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    if (args is Map) {
+      final codigo = (args['codigoSuministro'] ?? args['codigo'] ?? '')
+          .toString()
+          .trim()
+          .toUpperCase();
+
+      if (codigo.isNotEmpty) {
+        codigoController.text = codigo;
+        Future.microtask(buscarSuministro);
+      }
+    }
+  }
 
   @override
   void dispose() {

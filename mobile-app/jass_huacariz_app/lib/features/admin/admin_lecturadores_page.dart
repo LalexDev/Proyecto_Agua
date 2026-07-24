@@ -512,7 +512,10 @@ class _LecturadorCard extends StatelessWidget {
                   icon: Icon(Icons.edit_outlined, size: 18),
                   label: Text(
                     'Editar',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: context.jassTextPrimary,
@@ -534,8 +537,11 @@ class _LecturadorCard extends StatelessWidget {
                     size: 18,
                   ),
                   label: Text(
-                    activo ? 'Desactivar' : 'Activar',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    activo ? 'Desact.' : 'Activar',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: activo
@@ -755,7 +761,9 @@ class _LecturadorFormSheetState extends State<_LecturadorFormSheet> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'Acceso activo',
+                editando
+                    ? 'Estado del acceso'
+                    : 'Estado inicial del lecturador',
                 style: TextStyle(
                   color: context.jassTextPrimary,
                   fontWeight: FontWeight.w900,
@@ -763,8 +771,8 @@ class _LecturadorFormSheetState extends State<_LecturadorFormSheet> {
               ),
               subtitle: Text(
                 estado
-                    ? 'El lecturador podrá iniciar sesión.'
-                    : 'El lecturador no podrá acceder al sistema.',
+                    ? 'Activo: el lecturador podrá iniciar sesión y registrar lecturas.'
+                    : 'Inactivo: se guarda el usuario, pero no podrá acceder al sistema.',
               ),
               value: estado,
               activeColor: secondary,

@@ -36,6 +36,18 @@ class ClienteService {
     return {};
   }
 
+  String _estadoInstalacionValida(dynamic value) {
+    final estado = (value ?? 'INSTALADO').toString().trim().toUpperCase();
+
+    if (estado == 'PENDIENTE_INSTALACION') {
+      return 'PENDIENTE_INSTALACION';
+    }
+
+    // El backend maneja instalado o pendiente de instalación.
+    // La suspensión se controla con el campo booleano estado=false.
+    return 'INSTALADO';
+  }
+
   Future<List<Map<String, dynamic>>> listarClientes() async {
     final response = await _api.get(ApiConfig.clientes);
     return _asList(response);
@@ -87,6 +99,84 @@ class ClienteService {
     final response = await _api.get(ApiConfig.suministrosPorCliente(idCliente));
 
     return _asList(response);
+  }
+
+  Future<Map<String, dynamic>> agregarSuministro({
+    required int idCliente,
+    required Map<String, dynamic> data,
+  }) async {
+    final payload = {
+      'idSector': data['idSector'],
+      'direccionSuministro': (data['direccionSuministro'] ?? '')
+          .toString()
+          .trim(),
+      'referencia': (data['referencia'] ?? '').toString().trim(),
+      'aliasSuministro': (data['aliasSuministro'] ?? '').toString().trim(),
+      'lecturaInicial': data['lecturaInicial'] ?? 0,
+      'estado': data['estado'] ?? true,
+      'estadoInstalacion': _estadoInstalacionValida(data['estadoInstalacion']),
+    };
+
+    final response = await _api.post(
+      ApiConfig.suministrosPorCliente(idCliente),
+      payload,
+    );
+
+    return _asMap(response);
+  }
+
+  Future<Map<String, dynamic>> actualizarSuministro({
+    required int idCliente,
+    required int idSuministro,
+    required Map<String, dynamic> data,
+  }) async {
+    final payload = {
+      'idSector': data['idSector'],
+      'direccionSuministro': (data['direccionSuministro'] ?? '')
+          .toString()
+          .trim(),
+      'referencia': (data['referencia'] ?? '').toString().trim(),
+      'aliasSuministro': (data['aliasSuministro'] ?? '').toString().trim(),
+      'lecturaInicial': data['lecturaInicial'] ?? 0,
+      'estado': data['estado'] ?? true,
+      'estadoInstalacion': _estadoInstalacionValida(data['estadoInstalacion']),
+    };
+
+    final response = await _api.put(
+      ApiConfig.suministroPorId(
+        idCliente: idCliente,
+        idSuministro: idSuministro,
+      ),
+      payload,
+    );
+
+    return _asMap(response);
+  }
+
+  Future<Map<String, dynamic>> cambiarEstadoInstalacionSuministro({
+    required int idCliente,
+    required int idSuministro,
+    required String estadoInstalacion,
+  }) async {
+    final response = await _api.patch(
+      ApiConfig.cambiarEstadoInstalacionSuministro(
+        idCliente: idCliente,
+        idSuministro: idSuministro,
+        estadoInstalacion: estadoInstalacion,
+      ),
+      {},
+    );
+
+    return _asMap(response);
+  }
+
+  Future<Map<String, dynamic>> restablecerPasswordCliente(int idCliente) async {
+    final response = await _api.patch(
+      ApiConfig.resetPasswordCliente(idCliente),
+      {},
+    );
+
+    return _asMap(response);
   }
 
   Future<Map<String, dynamic>> cambiarEstadoCliente({

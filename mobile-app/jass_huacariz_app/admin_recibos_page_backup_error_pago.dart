@@ -367,73 +367,325 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
       return;
     }
 
+    final codigoOperacionController = TextEditingController();
     final total = recibosValidos.fold(
       0.0,
       (sum, recibo) => sum + _total(recibo),
     );
-    final cantidadCobrada = recibosValidos.length;
 
-    final resultado = await showDialog<_PagoPresencialResult>(
+    await showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return _CobranzaPagoDialog(
-          cliente: _cliente(recibosValidos.first),
-          recibos: recibosValidos,
-          total: total,
-          metodosPago: metodosPago,
-          codigoRecibo: _codigoRecibo,
-          periodo: _periodo,
-          totalRecibo: _total,
+      backgroundColor: context.jassSurface,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (contextSheet) {
+        bool guardando = false;
+        String metodoPago = 'EFECTIVO';
+
+        return StatefulBuilder(
+          builder: (contextSheet, setModalState) {
+            Future<void> confirmar() async {
+              final esEfectivo = metodoPago == 'EFECTIVO';
+              final codigoTexto = codigoOperacionController.text.trim();
+
+              if (!esEfectivo && codigoTexto.isEmpty) {
+                _mensaje('Ingrese el código de operación del pago.', true);
+                return;
+              }
+
+              final codigoOperacion = codigoTexto.isEmpty
+                  ? 'PRESENCIAL-${DateTime.now().millisecondsSinceEpoch}'
+                  : codigoTexto;
+
+              setModalState(() {
+                guardando = true;
+              });
+
+              try {
+                for (final recibo in recibosValidos) {
+                  final idRecibo = _idRecibo(recibo);
+
+                  if (idRecibo <= 0) continue;
+
+                  await reciboService.pagarReciboAdmin(
+                    idRecibo: idRecibo,
+                    metodoPago: metodoPago,
+                    codigoOperacion: codigoOperacion,
+                  );
+                }
+
+                if (!mounted) return;
+
+                Navigator.pop(contextSheet);
+
+                setState(() {
+                  recibosSeleccionados.clear();
+                });
+
+                _mensaje(
+                  recibosValidos.length == 1
+                      ? 'Recibo cobrado correctamente.'
+                      : '${recibosValidos.length} recibos cobrados correctamente.',
+                  false,
+                );
+
+                await cargarRecibos();
+              } catch (e) {
+                setModalState(() {
+                  guardando = false;
+                });
+
+                _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 22,
+                right: 22,
+                top: 22,
+                bottom: MediaQuery.of(contextSheet).viewInsets.bottom + 22,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: secondary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.point_of_sale_rounded,
+                            color: secondary,
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Registrar cobranza',
+                                style: TextStyle(
+                                  color: context.jassTextPrimary,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              Text(
+                                'Pago presencial de recibos',
+                                style: TextStyle(
+                                  color: context.jassTextMuted,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 18),
+                    _ModalInfoCard(
+                      title: 'Cliente',
+                      value: _cliente(recibosValidos.first),
+                      icon: Icons.person_rounded,
+                    ),
+                    SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: context.jassSurfaceAlt,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: context.jassBorder),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Recibos seleccionados',
+                            style: TextStyle(
+                              color: context.jassTextPrimary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          ...recibosValidos.map((recibo) {
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${_codigoRecibo(recibo)} · ${_periodo(recibo)}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: context.jassTextMuted,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'S/ ${_total(recibo).toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      color: context.jassTextPrimary,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    _ModalInfoCard(
+                      title: 'Total a cobrar',
+                      value: 'S/ ${total.toStringAsFixed(2)}',
+                      icon: Icons.account_balance_wallet_rounded,
+                      destacado: true,
+                    ),
+                    SizedBox(height: 18),
+                    Text(
+                      'Método de pago',
+                      style: TextStyle(
+                        color: context.jassTextPrimary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: metodosPago.map((metodo) {
+                        final selected = metodoPago == metodo['value'];
+
+                        return ChoiceChip(
+                          selected: selected,
+                          selectedColor: secondary,
+                          backgroundColor: context.jassSurfaceAlt,
+                          side: BorderSide(
+                            color: selected ? secondary : context.jassBorder,
+                          ),
+                          avatar: Icon(
+                            metodo['icon'] as IconData,
+                            size: 18,
+                            color: selected ? Colors.white : secondary,
+                          ),
+                          label: Text(
+                            metodo['label'].toString(),
+                            style: TextStyle(
+                              color: selected
+                                  ? Colors.white
+                                  : context.jassTextPrimary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          onSelected: (_) {
+                            setModalState(() {
+                              metodoPago = metodo['value'].toString();
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    SizedBox(height: 14),
+                    TextField(
+                      controller: codigoOperacionController,
+                      decoration: InputDecoration(
+                        labelText: metodoPago == 'EFECTIVO'
+                            ? 'Código de operación (opcional)'
+                            : 'Código de operación',
+                        hintText: metodoPago == 'EFECTIVO'
+                            ? 'Se generará automáticamente si lo dejas vacío'
+                            : 'Ejemplo: OP-123456',
+                        filled: true,
+                        fillColor: context.jassSurfaceAlt,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Color(0xFFEAF8EF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: JassColors.success,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Si seleccionas varios recibos, se registrará un pago por cada recibo para mantener correcto el historial.',
+                              style: TextStyle(
+                                color: JassColors.success,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: guardando ? null : confirmar,
+                        icon: guardando
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Icon(Icons.check_circle_rounded),
+                        label: Text(
+                          guardando ? 'Registrando...' : 'Confirmar cobranza',
+                          style: TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: secondary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
 
-    if (resultado == null || !mounted) return;
-
-    setState(() {
-      cargando = true;
-      error = '';
-    });
-
-    try {
-      for (final recibo in recibosValidos) {
-        final idRecibo = _idRecibo(recibo);
-
-        if (idRecibo <= 0) continue;
-
-        await reciboService.pagarReciboAdmin(
-          idRecibo: idRecibo,
-          metodoPago: resultado.metodoPago,
-          codigoOperacion: resultado.codigoOperacion,
-        );
-      }
-
-      if (!mounted) return;
-
-      setState(() {
-        recibosSeleccionados.clear();
-      });
-
-      await cargarRecibos();
-
-      if (!mounted) return;
-
-      _mensaje(
-        cantidadCobrada == 1
-            ? 'Recibo cobrado correctamente.'
-            : '$cantidadCobrada recibos cobrados correctamente.',
-        false,
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        cargando = false;
-      });
-
-      _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
-    }
+    codigoOperacionController.dispose();
   }
 
   void _mensaje(String mensaje, bool error) {
@@ -813,337 +1065,6 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PagoPresencialResult {
-  final String metodoPago;
-  final String codigoOperacion;
-
-  const _PagoPresencialResult({
-    required this.metodoPago,
-    required this.codigoOperacion,
-  });
-}
-
-class _CobranzaPagoDialog extends StatefulWidget {
-  final String cliente;
-  final List<Map<String, dynamic>> recibos;
-  final double total;
-  final List<Map<String, dynamic>> metodosPago;
-  final String Function(Map<String, dynamic>) codigoRecibo;
-  final String Function(Map<String, dynamic>) periodo;
-  final double Function(Map<String, dynamic>) totalRecibo;
-
-  const _CobranzaPagoDialog({
-    required this.cliente,
-    required this.recibos,
-    required this.total,
-    required this.metodosPago,
-    required this.codigoRecibo,
-    required this.periodo,
-    required this.totalRecibo,
-  });
-
-  @override
-  State<_CobranzaPagoDialog> createState() => _CobranzaPagoDialogState();
-}
-
-class _CobranzaPagoDialogState extends State<_CobranzaPagoDialog> {
-  final TextEditingController codigoOperacionController =
-      TextEditingController();
-  String metodoPago = 'EFECTIVO';
-
-  @override
-  void dispose() {
-    codigoOperacionController.dispose();
-    super.dispose();
-  }
-
-  void _confirmar() {
-    final esEfectivo = metodoPago == 'EFECTIVO';
-    final codigoTexto = codigoOperacionController.text.trim();
-
-    if (!esEfectivo && codigoTexto.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ingrese el código de operación del pago.'),
-          backgroundColor: JassColors.danger,
-        ),
-      );
-      return;
-    }
-
-    final codigoOperacion = codigoTexto.isEmpty
-        ? 'PRESENCIAL-${DateTime.now().millisecondsSinceEpoch}'
-        : codigoTexto;
-
-    Navigator.of(context).pop(
-      _PagoPresencialResult(
-        metodoPago: metodoPago,
-        codigoOperacion: codigoOperacion,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final Color secondary = JassColors.secondary;
-
-    return Dialog(
-      backgroundColor: context.jassSurface,
-      insetPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.88,
-        ),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: secondary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(Icons.point_of_sale_rounded, color: secondary),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Registrar cobranza',
-                          style: TextStyle(
-                            color: context.jassTextPrimary,
-                            fontSize: 21,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        Text(
-                          'Pago presencial de recibos',
-                          style: TextStyle(
-                            color: context.jassTextMuted,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16),
-              _ModalInfoCard(
-                title: 'Cliente',
-                value: widget.cliente,
-                icon: Icons.person_rounded,
-              ),
-              SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: context.jassSurfaceAlt,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: context.jassBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Recibos seleccionados',
-                      style: TextStyle(
-                        color: context.jassTextPrimary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    ...widget.recibos.map((recibo) {
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${widget.codigoRecibo(recibo)} · ${widget.periodo(recibo)}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: context.jassTextMuted,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              'S/ ${widget.totalRecibo(recibo).toStringAsFixed(2)}',
-                              style: TextStyle(
-                                color: context.jassTextPrimary,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-              SizedBox(height: 12),
-              _ModalInfoCard(
-                title: 'Total a cobrar',
-                value: 'S/ ${widget.total.toStringAsFixed(2)}',
-                icon: Icons.account_balance_wallet_rounded,
-                destacado: true,
-              ),
-              SizedBox(height: 18),
-              Text(
-                'Método de pago',
-                style: TextStyle(
-                  color: context.jassTextPrimary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: widget.metodosPago.map((metodo) {
-                  final selected = metodoPago == metodo['value'];
-
-                  return ChoiceChip(
-                    selected: selected,
-                    selectedColor: secondary,
-                    backgroundColor: context.jassSurfaceAlt,
-                    side: BorderSide(
-                      color: selected ? secondary : context.jassBorder,
-                    ),
-                    avatar: Icon(
-                      metodo['icon'] as IconData,
-                      size: 18,
-                      color: selected ? Colors.white : secondary,
-                    ),
-                    label: Text(
-                      metodo['label'].toString(),
-                      style: TextStyle(
-                        color: selected
-                            ? Colors.white
-                            : context.jassTextPrimary,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    onSelected: (_) {
-                      setState(() {
-                        metodoPago = metodo['value'].toString();
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 14),
-              TextField(
-                controller: codigoOperacionController,
-                decoration: InputDecoration(
-                  labelText: metodoPago == 'EFECTIVO'
-                      ? 'Código de operación (opcional)'
-                      : 'Código de operación',
-                  hintText: metodoPago == 'EFECTIVO'
-                      ? 'Se generará automáticamente si lo dejas vacío'
-                      : 'Ejemplo: OP-123456',
-                  filled: true,
-                  fillColor: context.jassSurfaceAlt,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Color(0xFFEAF8EF),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: JassColors.success,
-                      size: 20,
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Si seleccionas varios recibos, se registrará un pago por cada recibo para mantener correcto el historial.',
-                        style: TextStyle(
-                          color: JassColors.success,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(Icons.close_rounded),
-                      label: Text(
-                        'Cancelar',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: context.jassTextPrimary,
-                        side: BorderSide(color: context.jassBorder),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _confirmar,
-                      icon: Icon(Icons.check_circle_rounded),
-                      label: Text(
-                        'Confirmar',
-                        style: TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: secondary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
         ),
       ),
     );

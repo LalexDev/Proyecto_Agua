@@ -42,6 +42,26 @@ class ApiConfig {
     return '/clientes/$idCliente/suministros';
   }
 
+  static String suministroPorId({
+    required int idCliente,
+    required int idSuministro,
+  }) {
+    return '/clientes/$idCliente/suministros/$idSuministro';
+  }
+
+  static String cambiarEstadoInstalacionSuministro({
+    required int idCliente,
+    required int idSuministro,
+    required String estadoInstalacion,
+  }) {
+    return '/clientes/$idCliente/suministros/'
+        '$idSuministro/estado-instalacion?estadoInstalacion=$estadoInstalacion';
+  }
+
+  static String resetPasswordCliente(int idCliente) {
+    return '/clientes/$idCliente/reset-password';
+  }
+
   static String cambiarEstadoCliente(int idCliente, bool estado) {
     return '/clientes/$idCliente/estado?estado=$estado';
   }
