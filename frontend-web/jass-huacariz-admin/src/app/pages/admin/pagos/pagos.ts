@@ -24,7 +24,9 @@ export class Pagos implements OnInit {
   estadoFiltro = 'TODOS';
   filtroAnio: number | '' = new Date().getFullYear();
   filtroMes: number | '' = new Date().getMonth() + 1;
-  limiteRegistros = 200;
+  private readonly limiteInicial = 200;
+  private readonly limiteFiltrado = 5000;
+  filtrosCompletosAplicados = false;
   private debounceBusqueda: any;
 
   cargando = false;
@@ -49,6 +51,10 @@ export class Pagos implements OnInit {
 
   ngOnInit(): void {
     this.cargarPagos();
+  }
+
+  get limiteRegistros(): number {
+    return this.filtrosCompletosAplicados ? this.limiteFiltrado : this.limiteInicial;
   }
 
 cargarPagos(): void {
@@ -85,10 +91,16 @@ cargarPagos(): void {
     });
 }
   filtrarPagos(): void {
+    this.filtrosCompletosAplicados = true;
     clearTimeout(this.debounceBusqueda);
     this.debounceBusqueda = setTimeout(() => {
       this.cargarPagos();
     }, 350);
+  }
+
+  aplicarFiltroCompleto(): void {
+    this.filtrosCompletosAplicados = true;
+    this.cargarPagos();
   }
 
   limpiarFiltros(): void {
@@ -96,6 +108,7 @@ cargarPagos(): void {
     this.estadoFiltro = 'TODOS';
     this.filtroAnio = new Date().getFullYear();
     this.filtroMes = new Date().getMonth() + 1;
+    this.filtrosCompletosAplicados = false;
     this.cargarPagos();
   }
 
@@ -351,6 +364,6 @@ confirmarAccionPago(): void {
   }
 
   cambiarFiltroEstado(): void {
-  this.cargarPagos();
-}
+    this.aplicarFiltroCompleto();
+  }
 }

@@ -1,4 +1,4 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -30,7 +30,8 @@ export class Dashboard implements OnInit {
   movimientosCaja: MovimientoCajaResponse[] = [];
 
   anioFiltroConsumo = new Date().getFullYear();
-  mesFiltroConsumo: number | 'TODOS' = 'TODOS';
+  mesFiltroConsumo: number | 'TODOS' = new Date().getMonth() + 1;
+  private readonly limiteDashboard = 5000;
 
   cargando = false;
   error = '';
@@ -53,10 +54,21 @@ export class Dashboard implements OnInit {
     this.cargando = true;
     this.error = '';
 
+    const mesFiltro = this.mesFiltroConsumo === 'TODOS' ? '' : Number(this.mesFiltroConsumo);
+
     forkJoin({
       clientes: this.clienteService.listarClientes(),
-      recibos: this.reciboService.listarRecibos(),
-      pagos: this.pagoService.listarPagos(),
+      recibos: this.reciboService.listarRecibos({
+        anio: Number(this.anioFiltroConsumo),
+        mes: mesFiltro,
+        estado: 'TODOS',
+        limit: this.limiteDashboard
+      }),
+      pagos: this.pagoService.listarPagos('TODOS', {
+        anio: Number(this.anioFiltroConsumo),
+        mes: mesFiltro,
+        limit: this.limiteDashboard
+      }),
       movimientosCaja: this.movimientoCajaService.listar()
     })
       .pipe(

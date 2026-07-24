@@ -286,14 +286,14 @@
         >
       </div>
 
-      <select [(ngModel)]="filtroEstado" (change)="cargarRecibos()">
+      <select [(ngModel)]="filtroEstado" (change)="aplicarFiltroCompleto()">
         <option value="TODOS">Todos los estados</option>
         <option value="PENDIENTE">Pendientes</option>
         <option value="PAGADO">Pagados</option>
         <option value="VENCIDO">Vencidos</option>
       </select>
 
-      <select [(ngModel)]="filtroMes" (change)="cargarRecibos()">
+      <select [(ngModel)]="filtroMes" (change)="aplicarFiltroCompleto()">
         <option [ngValue]="''">Todos los meses</option>
         <option [ngValue]="1">Enero</option>
         <option [ngValue]="2">Febrero</option>
@@ -357,7 +357,7 @@
             <h3>Recibos registrados</h3>
           </div>
 
-          <span>{{ recibosFiltrados.length }} resultado(s) · máx. {{ limiteRegistros }}</span>
+          <span>{{ recibosFiltrados.length }} resultado(s) · {{ filtrosCompletosAplicados ? 'filtro completo' : 'vista rápida' }} · máx. {{ limiteRegistros }}</span>
         </div>
 
          <div class="table-responsive mobile-table-wrapper">

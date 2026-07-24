@@ -28,8 +28,10 @@ export class HistorialLecturas implements OnInit {
   busqueda = '';
   filtroAnio: number | '' = new Date().getFullYear();
   filtroMes: number | '' = new Date().getMonth() + 1;
-  limiteHistorial = 200;
-  limitePendientes = 200;
+  private readonly limiteHistorialInicial = 200;
+  private readonly limiteHistorialFiltrado = 5000;
+  filtrosCompletosAplicados = false;
+  limitePendientes = 5000;
   private debounceHistorial: any;
   private debouncePendientes: any;
 
@@ -55,6 +57,10 @@ export class HistorialLecturas implements OnInit {
   ngOnInit(): void {
     this.cargarHistorial();
     this.buscarPendientesLectura();
+  }
+
+  get limiteHistorial(): number {
+    return this.filtrosCompletosAplicados ? this.limiteHistorialFiltrado : this.limiteHistorialInicial;
   }
 
   cargarHistorial(): void {
@@ -138,6 +144,7 @@ export class HistorialLecturas implements OnInit {
   }
 
   aplicarFiltros(): void {
+    this.filtrosCompletosAplicados = true;
     clearTimeout(this.debounceHistorial);
     this.debounceHistorial = setTimeout(() => {
       this.cargarHistorial();
@@ -155,6 +162,7 @@ export class HistorialLecturas implements OnInit {
     this.busqueda = '';
     this.filtroAnio = new Date().getFullYear();
     this.filtroMes = new Date().getMonth() + 1;
+    this.filtrosCompletosAplicados = false;
     this.cargarHistorial();
   }
 

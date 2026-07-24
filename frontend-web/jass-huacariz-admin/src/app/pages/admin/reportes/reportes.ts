@@ -1,4 +1,5 @@
-﻿import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { forkJoin, finalize } from 'rxjs';
 import * as XLSX from 'xlsx-js-style';
@@ -17,7 +18,7 @@ interface ResumenMetodoPago {
 
 @Component({
   selector: 'app-reportes',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './reportes.html',
   styleUrl: './reportes.scss',
 })
@@ -29,6 +30,10 @@ export class Reportes implements OnInit {
 
   cargando = false;
   error = '';
+
+  anioFiltro = new Date().getFullYear();
+  mesFiltro: number | 'TODOS' = new Date().getMonth() + 1;
+  private readonly limiteReporte = 5000;
 
   constructor(
     private clienteService: Cliente,
@@ -46,10 +51,21 @@ export class Reportes implements OnInit {
     this.cargando = true;
     this.error = '';
 
+    const mesFiltro = this.mesFiltro === 'TODOS' ? '' : Number(this.mesFiltro);
+
     forkJoin({
       clientes: this.clienteService.listarClientes(),
-      recibos: this.reciboService.listarRecibos(),
-      pagos: this.pagoService.listarPagos(),
+      recibos: this.reciboService.listarRecibos({
+        anio: Number(this.anioFiltro),
+        mes: mesFiltro,
+        estado: 'TODOS',
+        limit: this.limiteReporte
+      }),
+      pagos: this.pagoService.listarPagos('TODOS', {
+        anio: Number(this.anioFiltro),
+        mes: mesFiltro,
+        limit: this.limiteReporte
+      }),
       tarifas: this.tarifaService.listarTarifas()
     })
       .pipe(
@@ -71,6 +87,12 @@ export class Reportes implements OnInit {
           this.cdr.detectChanges();
         }
       });
+  }
+
+  limpiarPeriodoActual(): void {
+    this.anioFiltro = new Date().getFullYear();
+    this.mesFiltro = new Date().getMonth() + 1;
+    this.cargarReportes();
   }
 
   totalClientes(): number {

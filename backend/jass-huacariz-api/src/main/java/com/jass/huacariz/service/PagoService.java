@@ -208,7 +208,7 @@ public class PagoService {
             return 200;
         }
 
-        return Math.max(20, Math.min(limit, 500));
+        return Math.max(20, Math.min(limit, 5000));
     }
 
     private void validarEstadoPago(String estado) {

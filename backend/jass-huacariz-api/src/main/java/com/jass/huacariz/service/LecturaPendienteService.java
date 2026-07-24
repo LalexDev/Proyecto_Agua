@@ -56,7 +56,7 @@ public class LecturaPendienteService {
             return 200;
         }
 
-        return Math.max(20, Math.min(limit, 3000));
+        return Math.max(20, Math.min(limit, 5000));
     }
 
     private void validarPeriodo(Integer anio, Integer mes) {

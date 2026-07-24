@@ -190,7 +190,7 @@
       </select>
     </div>
 
-    <select [(ngModel)]="filtroMes" (change)="cargarPagos()">
+    <select [(ngModel)]="filtroMes" (change)="aplicarFiltroCompleto()">
       <option [ngValue]="''">Todos los meses</option>
       <option [ngValue]="1">Enero</option>
       <option [ngValue]="2">Febrero</option>
@@ -229,7 +229,7 @@
         <h3>Pagos registrados</h3>
       </div>
 
-      <span>{{ pagosFiltrados.length }} resultado(s) · máx. {{ limiteRegistros }}</span>
+      <span>{{ pagosFiltrados.length }} resultado(s) · {{ filtrosCompletosAplicados ? 'filtro completo' : 'vista rápida' }} · máx. {{ limiteRegistros }}</span>
     </div>
 
       <div class="table-responsive mobile-table-wrapper">

@@ -24,7 +24,9 @@ export class Recibos implements OnInit {
   filtroEstado = 'TODOS';
   filtroAnio: number | '' = new Date().getFullYear();
   filtroMes: number | '' = new Date().getMonth() + 1;
-  limiteRegistros = 200;
+  private readonly limiteInicial = 200;
+  private readonly limiteFiltrado = 5000;
+  filtrosCompletosAplicados = false;
   busqueda = '';
   private debounceBusqueda: any;
 
@@ -43,6 +45,10 @@ export class Recibos implements OnInit {
 
   ngOnInit(): void {
     this.cargarRecibos();
+  }
+
+  get limiteRegistros(): number {
+    return this.filtrosCompletosAplicados ? this.limiteFiltrado : this.limiteInicial;
   }
 
   cargarRecibos(): void {
@@ -117,10 +123,16 @@ export class Recibos implements OnInit {
   }
 
   filtrarRecibos(): void {
+    this.filtrosCompletosAplicados = true;
     clearTimeout(this.debounceBusqueda);
     this.debounceBusqueda = setTimeout(() => {
       this.cargarRecibos();
     }, 350);
+  }
+
+  aplicarFiltroCompleto(): void {
+    this.filtrosCompletosAplicados = true;
+    this.cargarRecibos();
   }
 
   limpiarFiltros(): void {
@@ -128,6 +140,7 @@ export class Recibos implements OnInit {
     this.filtroEstado = 'TODOS';
     this.filtroAnio = new Date().getFullYear();
     this.filtroMes = new Date().getMonth() + 1;
+    this.filtrosCompletosAplicados = false;
     this.cargarRecibos();
   }
 
@@ -349,7 +362,7 @@ export class Recibos implements OnInit {
     return;
   }
 
-  const enlacePortal = 'https://qnsdd0d9-4200.brs.devtunnels.ms/cliente/mis-recibos';
+  const enlacePortal = `${window.location.origin}/cliente/mis-recibos`;  // IP ahora, dominio automáticamente después
 
   const mensaje = `💧 *AGUA POTABLE HUACARIZ - NOTIFICACIÓN DE RECIBO*
 
