@@ -6,18 +6,14 @@ import '../../shared/theme/jass_colors.dart';
 class QrScannerPage extends StatefulWidget {
   final bool modoAdmin;
 
-  const QrScannerPage({
-    super.key,
-    this.modoAdmin = false,
-  });
+  const QrScannerPage({super.key, this.modoAdmin = false});
 
   @override
   State<QrScannerPage> createState() => _QrScannerPageState();
 }
 
 class _QrScannerPageState extends State<QrScannerPage> {
-  final MobileScannerController scannerController =
-      MobileScannerController();
+  final MobileScannerController scannerController = MobileScannerController();
 
   bool procesado = false;
 
@@ -32,8 +28,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
       if (uri.hasScheme && uri.host.isNotEmpty) {
         final codigoParam = uri.queryParameters['codigo'];
 
-        if (codigoParam != null &&
-            codigoParam.trim().isNotEmpty) {
+        if (codigoParam != null && codigoParam.trim().isNotEmpty) {
           return codigoParam.trim().toUpperCase();
         }
 
@@ -80,9 +75,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
     Navigator.pushReplacementNamed(
       context,
-      widget.modoAdmin
-          ? '/admin-dashboard'
-          : '/lector-home',
+      widget.modoAdmin ? '/admin-dashboard' : '/lector-home',
     );
   }
 
@@ -109,18 +102,14 @@ class _QrScannerPageState extends State<QrScannerPage> {
         elevation: 0,
         leading: IconButton(
           onPressed: _volver,
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Volver',
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.modoAdmin
-                  ? 'Administrador'
-                  : 'Lecturador',
+              widget.modoAdmin ? 'Administrador' : 'Lecturador',
               style: const TextStyle(
                 color: Color(0xFFCDEDF5),
                 fontSize: 11,
@@ -142,18 +131,14 @@ class _QrScannerPageState extends State<QrScannerPage> {
             onPressed: () async {
               await scannerController.toggleTorch();
             },
-            icon: const Icon(
-              Icons.flash_on_rounded,
-            ),
+            icon: const Icon(Icons.flash_on_rounded),
             tooltip: 'Linterna',
           ),
           IconButton(
             onPressed: () async {
               await scannerController.switchCamera();
             },
-            icon: const Icon(
-              Icons.cameraswitch_rounded,
-            ),
+            icon: const Icon(Icons.cameraswitch_rounded),
             tooltip: 'Cambiar cámara',
           ),
         ],
@@ -178,9 +163,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
           // Oscurece ligeramente el entorno para resaltar el área de lectura.
           Positioned.fill(
             child: IgnorePointer(
-              child: CustomPaint(
-                painter: _ScannerOverlayPainter(),
-              ),
+              child: CustomPaint(painter: _ScannerOverlayPainter()),
             ),
           ),
 
@@ -189,10 +172,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
               width: 260,
               height: 260,
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: JassColors.secondary,
-                  width: 4,
-                ),
+                border: Border.all(color: JassColors.secondary, width: 4),
                 borderRadius: BorderRadius.circular(26),
               ),
               child: Stack(
@@ -200,30 +180,22 @@ class _QrScannerPageState extends State<QrScannerPage> {
                   Positioned(
                     top: 12,
                     left: 12,
-                    child: _CornerIndicator(
-                      alignment: Alignment.topLeft,
-                    ),
+                    child: _CornerIndicator(alignment: Alignment.topLeft),
                   ),
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: _CornerIndicator(
-                      alignment: Alignment.topRight,
-                    ),
+                    child: _CornerIndicator(alignment: Alignment.topRight),
                   ),
                   Positioned(
                     bottom: 12,
                     left: 12,
-                    child: _CornerIndicator(
-                      alignment: Alignment.bottomLeft,
-                    ),
+                    child: _CornerIndicator(alignment: Alignment.bottomLeft),
                   ),
                   Positioned(
                     bottom: 12,
                     right: 12,
-                    child: _CornerIndicator(
-                      alignment: Alignment.bottomRight,
-                    ),
+                    child: _CornerIndicator(alignment: Alignment.bottomRight),
                   ),
                 ],
               ),
@@ -239,9 +211,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
               decoration: BoxDecoration(
                 color: const Color(0xD9000000),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.15),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -309,10 +279,7 @@ class _ScannerOverlayPainter extends CustomPainter {
 
     final scanArea = RRect.fromRectAndRadius(
       Rect.fromCenter(
-        center: Offset(
-          size.width / 2,
-          size.height / 2,
-        ),
+        center: Offset(size.width / 2, size.height / 2),
         width: 270,
         height: 270,
       ),
@@ -320,17 +287,9 @@ class _ScannerOverlayPainter extends CustomPainter {
     );
 
     final fullPath = Path()
-      ..addRect(
-        Rect.fromLTWH(
-          0,
-          0,
-          size.width,
-          size.height,
-        ),
-      );
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    final scanPath = Path()
-      ..addRRect(scanArea);
+    final scanPath = Path()..addRRect(scanArea);
 
     final overlayPath = Path.combine(
       PathOperation.difference,
@@ -338,16 +297,11 @@ class _ScannerOverlayPainter extends CustomPainter {
       scanPath,
     );
 
-    canvas.drawPath(
-      overlayPath,
-      backgroundPaint,
-    );
+    canvas.drawPath(overlayPath, backgroundPaint);
   }
 
   @override
-  bool shouldRepaint(
-    covariant CustomPainter oldDelegate,
-  ) {
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
 }
@@ -355,9 +309,7 @@ class _ScannerOverlayPainter extends CustomPainter {
 class _CornerIndicator extends StatelessWidget {
   final Alignment alignment;
 
-  const _CornerIndicator({
-    required this.alignment,
-  });
+  const _CornerIndicator({required this.alignment});
 
   @override
   Widget build(BuildContext context) {
@@ -369,28 +321,16 @@ class _CornerIndicator extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             top: alignment.y < 0
-                ? const BorderSide(
-                    color: Colors.white,
-                    width: 3,
-                  )
+                ? const BorderSide(color: Colors.white, width: 3)
                 : BorderSide.none,
             bottom: alignment.y > 0
-                ? const BorderSide(
-                    color: Colors.white,
-                    width: 3,
-                  )
+                ? const BorderSide(color: Colors.white, width: 3)
                 : BorderSide.none,
             left: alignment.x < 0
-                ? const BorderSide(
-                    color: Colors.white,
-                    width: 3,
-                  )
+                ? const BorderSide(color: Colors.white, width: 3)
                 : BorderSide.none,
             right: alignment.x > 0
-                ? const BorderSide(
-                    color: Colors.white,
-                    width: 3,
-                  )
+                ? const BorderSide(color: Colors.white, width: 3)
                 : BorderSide.none,
           ),
         ),

@@ -8,14 +8,10 @@ import '../../shared/widgets/lector_bottom_nav.dart';
 class ComprobanteReciboPage extends StatefulWidget {
   final bool modoAdmin;
 
-  const ComprobanteReciboPage({
-    super.key,
-    this.modoAdmin = false,
-  });
+  const ComprobanteReciboPage({super.key, this.modoAdmin = false});
 
   @override
-  State<ComprobanteReciboPage> createState() =>
-      _ComprobanteReciboPageState();
+  State<ComprobanteReciboPage> createState() => _ComprobanteReciboPageState();
 }
 
 class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
@@ -53,18 +49,12 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
     final recibo = args['recibo'];
 
     if (recibo is Map<String, dynamic>) {
-      comprobante = {
-        ...args,
-        ...recibo,
-      };
+      comprobante = {...args, ...recibo};
       return;
     }
 
     if (recibo is Map) {
-      comprobante = {
-        ...args,
-        ...Map<String, dynamic>.from(recibo),
-      };
+      comprobante = {...args, ...Map<String, dynamic>.from(recibo)};
       return;
     }
 
@@ -165,6 +155,24 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
     );
   }
 
+  bool _cambioMedidor() {
+    final value = comprobante['cambioMedidor'];
+    if (value is bool) return value;
+    final text = value?.toString().trim().toLowerCase() ?? '';
+    return text == 'true' || text == '1' || text == 'si' || text == 'sí';
+  }
+
+  double _lecturaInicialNuevoMedidor() {
+    return _num(comprobante['lecturaInicialNuevoMedidor']);
+  }
+
+  String _observacionCambioMedidor() {
+    return _txt(
+      comprobante['observacionCambioMedidor'],
+      'Cambio de medidor registrado.',
+    );
+  }
+
   double _consumo() {
     final consumo = _num(
       comprobante['consumoM3'] ??
@@ -174,7 +182,10 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
 
     if (consumo > 0) return consumo;
 
-    final calculado = _lecturaActual() - _lecturaAnterior();
+    final base = _cambioMedidor()
+        ? _lecturaInicialNuevoMedidor()
+        : _lecturaAnterior();
+    final calculado = _lecturaActual() - base;
 
     return calculado < 0 ? 0 : calculado;
   }
@@ -220,11 +231,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
   }
 
   double _mora() {
-    return _num(
-      comprobante['mora'] ??
-          comprobante['montoMora'] ??
-          0,
-    );
+    return _num(comprobante['mora'] ?? comprobante['montoMora'] ?? 0);
   }
 
   double _total() {
@@ -237,11 +244,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
 
     if (totalBackend > 0) return totalBackend;
 
-    return _subtotalAgua() +
-        _mantenimiento() +
-        _lector() +
-        _otros() +
-        _mora();
+    return _subtotalAgua() + _mantenimiento() + _lector() + _otros() + _mora();
   }
 
   String _periodo() {
@@ -279,17 +282,13 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
 
   String _fechaVencimiento() {
     return _txt(
-      comprobante['fechaVencimiento'] ??
-          comprobante['vencimiento'],
+      comprobante['fechaVencimiento'] ?? comprobante['vencimiento'],
       '-',
     );
   }
 
   String _observacion() {
-    return _txt(
-      comprobante['observacion'],
-      'Sin observaciones registradas.',
-    );
+    return _txt(comprobante['observacion'], 'Sin observaciones registradas.');
   }
 
   String _fechaActualTexto() {
@@ -305,27 +304,21 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
   void _nuevaLectura() {
     Navigator.pushReplacementNamed(
       context,
-      widget.modoAdmin
-          ? '/admin-buscar-suministro'
-          : '/buscar-suministro',
+      widget.modoAdmin ? '/admin-buscar-suministro' : '/buscar-suministro',
     );
   }
 
   void _volverInicio() {
     Navigator.pushReplacementNamed(
       context,
-      widget.modoAdmin
-          ? '/admin-dashboard'
-          : '/lector-home',
+      widget.modoAdmin ? '/admin-dashboard' : '/lector-home',
     );
   }
 
   void _verHistorial() {
     Navigator.pushReplacementNamed(
       context,
-      widget.modoAdmin
-          ? '/admin-historial-lecturas'
-          : '/historial-lecturas',
+      widget.modoAdmin ? '/admin-historial-lecturas' : '/historial-lecturas',
     );
   }
 
@@ -396,10 +389,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
                   ),
                   child: const Row(
                     children: [
-                      Icon(
-                        Icons.cloud_off_rounded,
-                        color: Color(0xFF9A6500),
-                      ),
+                      Icon(Icons.cloud_off_rounded, color: Color(0xFF9A6500)),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -447,10 +437,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
           ),
           child: IconButton(
             onPressed: _volverInicio,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.arrow_back_rounded, color: primary),
           ),
         ),
         SizedBox(width: 14),
@@ -490,10 +477,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [Color(0xFF0F3D57), Color(0xFF1DA1C2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -557,8 +541,10 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
           children: [
             Expanded(
               child: _MiniValue(
-                label: 'Anterior',
-                value: _lecturaAnterior().toStringAsFixed(0),
+                label: _cambioMedidor() ? 'Inicial nuevo' : 'Anterior',
+                value: _cambioMedidor()
+                    ? _lecturaInicialNuevoMedidor().toStringAsFixed(0)
+                    : _lecturaAnterior().toStringAsFixed(0),
               ),
             ),
             SizedBox(width: 10),
@@ -577,6 +563,38 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
             ),
           ],
         ),
+        if (_cambioMedidor()) ...[
+          SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF7FC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFBEEBFA)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.build_circle_outlined,
+                  color: JassColors.secondary,
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Cambio de medidor registrado. ${_observacionCambioMedidor()}',
+                    style: TextStyle(
+                      color: primary,
+                      fontWeight: FontWeight.w800,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -601,10 +619,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
           label: 'Otros cargos',
           value: 'S/ ${_otros().toStringAsFixed(2)}',
         ),
-        _InfoLine(
-          label: 'Mora',
-          value: 'S/ ${_mora().toStringAsFixed(2)}',
-        ),
+        _InfoLine(label: 'Mora', value: 'S/ ${_mora().toStringAsFixed(2)}'),
       ],
     );
   }
@@ -616,9 +631,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFFFF3DF),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFFFD899),
-        ),
+        border: Border.all(color: const Color(0xFFFFD899)),
       ),
       child: Row(
         children: [
@@ -672,9 +685,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
             icon: Icon(Icons.qr_code_scanner_rounded),
             label: Text(
               'Registrar nueva lectura',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w900),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: secondary,
@@ -695,9 +706,7 @@ class _ComprobanteReciboPageState extends State<ComprobanteReciboPage> {
             icon: Icon(Icons.history_rounded),
             label: Text(
               'Ver historial de lecturas',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w900),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: primary,
@@ -718,10 +727,7 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  const _SectionCard({
-    required this.title,
-    required this.children,
-  });
+  const _SectionCard({required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -733,9 +739,7 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -760,10 +764,7 @@ class _InfoLine extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoLine({
-    required this.label,
-    required this.value,
-  });
+  const _InfoLine({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -773,31 +774,21 @@ class _InfoLine extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: context.jassBorder,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: context.jassBorder)),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
-                color: muted,
-                fontWeight: FontWeight.w700,
-              ),
+              style: TextStyle(color: muted, fontWeight: FontWeight.w700),
             ),
           ),
           Flexible(
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: TextStyle(
-                color: primary,
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(color: primary, fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -810,10 +801,7 @@ class _MiniValue extends StatelessWidget {
   final String label;
   final String value;
 
-  const _MiniValue({
-    required this.label,
-    required this.value,
-  });
+  const _MiniValue({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -825,9 +813,7 @@ class _MiniValue extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         children: [

@@ -44,8 +44,7 @@ class _PerfilPageState extends State<PerfilPage> {
 
     try {
       final perfilData = await clientePortalService.obtenerMiPerfil();
-      final suministrosData =
-          await clientePortalService.listarMisSuministros();
+      final suministrosData = await clientePortalService.listarMisSuministros();
 
       if (!mounted) return;
 
@@ -114,13 +113,9 @@ class _PerfilPageState extends State<PerfilPage> {
         return AlertDialog(
           title: Text(
             'Cerrar sesión',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-            ),
+            style: TextStyle(fontWeight: FontWeight.w900),
           ),
-          content: Text(
-            '¿Deseas cerrar tu sesión actual?',
-          ),
+          content: Text('¿Deseas cerrar tu sesión actual?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -149,11 +144,7 @@ class _PerfilPageState extends State<PerfilPage> {
 
     if (!mounted) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   void irCambiarPassword() {
@@ -217,9 +208,7 @@ class _PerfilPageState extends State<PerfilPage> {
                     decoration: BoxDecoration(
                       color: context.jassSurface,
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: context.jassBorder,
-                      ),
+                      border: Border.all(color: context.jassBorder),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x33000000),
@@ -383,10 +372,7 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           child: IconButton(
             onPressed: _volver,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.arrow_back_rounded, color: primary),
           ),
         ),
         SizedBox(width: 12),
@@ -430,10 +416,7 @@ class _PerfilPageState extends State<PerfilPage> {
           ),
           child: IconButton(
             onPressed: cargarDatos,
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.refresh_rounded, color: primary),
           ),
         ),
       ],
@@ -454,10 +437,7 @@ class _PerfilPageState extends State<PerfilPage> {
           SizedBox(height: 14),
           Text(
             'Cargando perfil...',
-            style: TextStyle(
-              color: muted,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(color: muted, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -475,19 +455,12 @@ class _PerfilPageState extends State<PerfilPage> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: danger,
-            size: 42,
-          ),
+          Icon(Icons.error_outline_rounded, color: danger, size: 42),
           SizedBox(height: 10),
           Text(
             error,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: danger,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(color: danger, fontWeight: FontWeight.w800),
           ),
           SizedBox(height: 14),
           ElevatedButton(
@@ -509,10 +482,7 @@ class _PerfilPageState extends State<PerfilPage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [Color(0xFF0F3D57), Color(0xFF1DA1C2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -533,15 +503,9 @@ class _PerfilPageState extends State<PerfilPage> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.20),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.20)),
             ),
-            child: Icon(
-              Icons.person_rounded,
-              color: Colors.white,
-              size: 44,
-            ),
+            child: Icon(Icons.person_rounded, color: Colors.white, size: 44),
           ),
           SizedBox(height: 14),
           Text(
@@ -566,9 +530,7 @@ class _PerfilPageState extends State<PerfilPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: estado
-                  ? const Color(0xFFEAF8EF)
-                  : const Color(0xFFFFECEC),
+              color: estado ? const Color(0xFFEAF8EF) : const Color(0xFFFFECEC),
               borderRadius: BorderRadius.circular(100),
             ),
             child: Text(
@@ -583,11 +545,7 @@ class _PerfilPageState extends State<PerfilPage> {
             ),
           ),
           SizedBox(height: 18),
-          _InfoProfileRow(
-            icon: Icons.badge_rounded,
-            label: 'DNI',
-            value: dni,
-          ),
+          _InfoProfileRow(icon: Icons.badge_rounded, label: 'DNI', value: dni),
           _InfoProfileRow(
             icon: Icons.phone_rounded,
             label: 'Teléfono',
@@ -678,10 +636,7 @@ class _PerfilPageState extends State<PerfilPage> {
               child: Center(
                 child: Text(
                   'No tienes suministros registrados.',
-                  style: TextStyle(
-                    color: muted,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(color: muted, fontWeight: FontWeight.w700),
                 ),
               ),
             )
@@ -701,7 +656,8 @@ class _PerfilPageState extends State<PerfilPage> {
                   referencia: _texto(suministro['referencia']),
                   alias: _texto(suministro['aliasSuministro']),
                   lecturaInicial: _texto(suministro['lecturaInicial']),
-                  activo: suministro['estado'] == true ||
+                  activo:
+                      suministro['estado'] == true ||
                       suministro['estado'].toString().toLowerCase() == 'true',
                 );
               },
@@ -731,17 +687,11 @@ class _InfoProfileRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.16),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 22,
-          ),
+          Icon(icon, color: Colors.white, size: 22),
           SizedBox(width: 11),
           Expanded(
             child: Text(
@@ -813,10 +763,7 @@ class _SuministroCard extends StatelessWidget {
                   color: context.jassSelectedSurface,
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: Icon(
-                  Icons.water_drop_rounded,
-                  color: Color(0xFF1DA1C2),
-                ),
+                child: Icon(Icons.water_drop_rounded, color: Color(0xFF1DA1C2)),
               ),
               SizedBox(width: 12),
               Expanded(
@@ -830,8 +777,10 @@ class _SuministroCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: activo
                       ? const Color(0xFFEAF8EF)
@@ -870,10 +819,7 @@ class _SuministroInfo extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _SuministroInfo({
-    required this.icon,
-    required this.text,
-  });
+  const _SuministroInfo({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {

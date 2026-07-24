@@ -12,11 +12,11 @@ class LecturaOfflineService {
     TarifaService? tarifaService,
     SecureStorageService? storage,
     Uuid? uuid,
-  })  : _database = database ?? OfflineDatabase.instance,
-        _lecturadorService = lecturadorService ?? LecturadorService(),
-        _tarifaService = tarifaService ?? TarifaService(),
-        _storage = storage ?? SecureStorageService(),
-        _uuid = uuid ?? const Uuid();
+  }) : _database = database ?? OfflineDatabase.instance,
+       _lecturadorService = lecturadorService ?? LecturadorService(),
+       _tarifaService = tarifaService ?? TarifaService(),
+       _storage = storage ?? SecureStorageService(),
+       _uuid = uuid ?? const Uuid();
 
   final OfflineDatabase _database;
   final LecturadorService _lecturadorService;
@@ -38,8 +38,7 @@ class LecturaOfflineService {
 
     final suministros = await _lecturadorService.listarSuministrosOffline();
     final tarifas = await _tarifaService.listarTarifas();
-    final configuracion =
-        await _tarifaService.obtenerConfiguracionCobranza();
+    final configuracion = await _tarifaService.obtenerConfiguracionCobranza();
 
     final guardados = await _database.reemplazarSuministros(suministros);
     await _database.guardarTarifas(tarifas);
@@ -52,9 +51,7 @@ class LecturaOfflineService {
     };
   }
 
-  Future<Map<String, dynamic>> buscarSuministro(
-    String codigoSuministro,
-  ) async {
+  Future<Map<String, dynamic>> buscarSuministro(String codigoSuministro) async {
     await validarLecturador();
     final codigo = _normalizarCodigo(codigoSuministro);
     if (codigo.isEmpty) {
@@ -84,11 +81,7 @@ class LecturaOfflineService {
       );
     }
 
-    return {
-      ...local,
-      'origenOffline': true,
-      'estadoConexion': 'SIN_CONEXION',
-    };
+    return {...local, 'origenOffline': true, 'estadoConexion': 'SIN_CONEXION'};
   }
 
   Future<Map<String, dynamic>> registrarLecturaLocal({
@@ -97,6 +90,9 @@ class LecturaOfflineService {
     required int anio,
     required int mes,
     String observacion = '',
+    bool cambioMedidor = false,
+    double? lecturaInicialNuevoMedidor,
+    String observacionCambioMedidor = '',
   }) async {
     return _guardarOperacionLocal(
       suministro: suministro,
@@ -105,6 +101,9 @@ class LecturaOfflineService {
       anio: anio,
       mes: mes,
       observacion: observacion,
+      cambioMedidor: cambioMedidor,
+      lecturaInicialNuevoMedidor: lecturaInicialNuevoMedidor,
+      observacionCambioMedidor: observacionCambioMedidor,
     );
   }
 
@@ -137,6 +136,9 @@ class LecturaOfflineService {
     required int anio,
     required int mes,
     required String observacion,
+    bool cambioMedidor = false,
+    double? lecturaInicialNuevoMedidor,
+    String observacionCambioMedidor = '',
   }) async {
     await validarLecturador();
 
@@ -167,10 +169,20 @@ class LecturaOfflineService {
     final lecturaAnterior = _numero(
       suministro['lecturaAnterior'] ?? suministro['lecturaInicial'],
     );
-    if (!esMantenimiento && lecturaActual < lecturaAnterior) {
+    final baseConsumo = cambioMedidor
+        ? (lecturaInicialNuevoMedidor ?? 0)
+        : lecturaAnterior;
+    if (!esMantenimiento && lecturaActual < baseConsumo) {
       throw Exception(
-        'La lectura actual no puede ser menor a ${lecturaAnterior.toStringAsFixed(3)} m³.',
+        cambioMedidor
+            ? 'La lectura actual no puede ser menor a la lectura inicial del nuevo medidor.'
+            : 'La lectura actual no puede ser menor a ${lecturaAnterior.toStringAsFixed(3)} m³.',
       );
+    }
+    if (!esMantenimiento &&
+        cambioMedidor &&
+        observacionCambioMedidor.trim().isEmpty) {
+      throw Exception('Ingresa una observación del cambio de medidor.');
     }
 
     final ultimaAnio = _enteroNullable(suministro['anioUltimaLectura']);
@@ -194,7 +206,7 @@ class LecturaOfflineService {
       throw Exception('Ya existe una operación local para $mes/$anio.');
     }
 
-    final consumo = esMantenimiento ? 0.0 : lecturaActual - lecturaAnterior;
+    final consumo = esMantenimiento ? 0.0 : lecturaActual - baseConsumo;
     final recibo = await calcularReciboEstimado(
       suministro: suministro,
       tipoOperacion: tipoOperacion,
@@ -213,6 +225,9 @@ class LecturaOfflineService {
       'tipoOperacion': tipoOperacion,
       'lecturaAnterior': lecturaAnterior,
       'lecturaActual': lecturaActual,
+      'cambioMedidor': cambioMedidor,
+      'lecturaInicialNuevoMedidor': lecturaInicialNuevoMedidor,
+      'observacionCambioMedidor': observacionCambioMedidor,
       'anio': anio,
       'mes': mes,
       'observacion': observacion,
@@ -230,6 +245,9 @@ class LecturaOfflineService {
       'lecturaAnterior': lecturaAnterior,
       'lecturaActual': lecturaActual,
       'consumoM3': consumo,
+      'cambioMedidor': cambioMedidor,
+      'lecturaInicialNuevoMedidor': lecturaInicialNuevoMedidor,
+      'observacionCambioMedidor': observacionCambioMedidor,
       'anio': anio,
       'mes': mes,
       'observacion': observacion,
@@ -247,8 +265,7 @@ class LecturaOfflineService {
     required int anio,
     required int mes,
   }) async {
-    final configuracion =
-        await _database.obtenerConfiguracionCobranza();
+    final configuracion = await _database.obtenerConfiguracionCobranza();
     if (configuracion == null) {
       throw Exception(
         'No existe configuración de cobranza guardada. Actualiza el catálogo con conexión.',
@@ -269,11 +286,8 @@ class LecturaOfflineService {
         ? 0.0
         : _numero(configuracion['cargo_otros']);
     const mora = 0.0;
-    final total = subtotalAgua +
-        cargoMantenimiento +
-        cargoLector +
-        cargoOtros +
-        mora;
+    final total =
+        subtotalAgua + cargoMantenimiento + cargoLector + cargoOtros + mora;
 
     final dias = _entero(configuracion['dias_vencimiento'], 15);
     final vencimiento = DateTime.now().add(Duration(days: dias));
@@ -361,6 +375,13 @@ class LecturaOfflineService {
         'lecturaAnterior': _numero(fila['lectura_anterior']),
         'lecturaActual': _numero(fila['lectura_actual']),
         'consumoM3': _numero(fila['consumo']),
+        'cambioMedidor': _booleano(fila['cambio_medidor']),
+        'lecturaInicialNuevoMedidor':
+            fila['lectura_inicial_nuevo_medidor'] == null
+            ? null
+            : _numero(fila['lectura_inicial_nuevo_medidor']),
+        'observacionCambioMedidor': fila['observacion_cambio_medidor'],
+        'consumoInusual': _booleano(fila['consumo_inusual']),
         'anio': _enteroNullable(fila['anio']),
         'mes': _enteroNullable(fila['mes']),
         'observacion': fila['observacion'],

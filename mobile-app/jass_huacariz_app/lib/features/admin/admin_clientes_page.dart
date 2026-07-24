@@ -76,14 +76,15 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     if (query.isEmpty) return clientes;
 
     return clientes.where((cliente) {
-      final texto = '''
+      final texto =
+          '''
       ${_nombreCliente(cliente)}
       ${cliente['dni']}
       ${cliente['telefono']}
       ${cliente['correo']}
       ${cliente['suministros']}
       '''
-          .toLowerCase();
+              .toLowerCase();
 
       return texto.contains(query);
     }).toList();
@@ -120,8 +121,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -197,10 +197,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
     } catch (e) {
       if (!mounted) return;
 
-      _mensaje(
-        e.toString().replaceFirst('Exception: ', ''),
-        true,
-      );
+      _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
     }
   }
 
@@ -210,9 +207,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       isScrollControlled: true,
       backgroundColor: context.jassSurface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) {
         return _EditarClienteSheet(
@@ -224,10 +219,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
               throw Exception('No se encontró el ID del cliente.');
             }
 
-            await clienteService.actualizarCliente(
-              idCliente,
-              payload,
-            );
+            await clienteService.actualizarCliente(idCliente, payload);
 
             if (!mounted) return;
 
@@ -268,9 +260,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       backgroundColor: context.jassSurface,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) {
         return DraggableScrollableSheet(
@@ -341,9 +331,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: context.jassTextPrimary,
-                          side: BorderSide(
-                            color: context.jassBorder,
-                          ),
+                          side: BorderSide(color: context.jassBorder),
                           backgroundColor: context.jassSelectedSurface,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -355,10 +343,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          _cambiarEstadoCliente(
-                            cliente,
-                            cerrarDetalle: true,
-                          );
+                          _cambiarEstadoCliente(cliente, cerrarDetalle: true);
                         },
                         icon: Icon(
                           _estadoCliente(cliente)
@@ -366,9 +351,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                               : Icons.check_circle_outline_rounded,
                         ),
                         label: Text(
-                          _estadoCliente(cliente)
-                              ? 'Desactivar'
-                              : 'Activar',
+                          _estadoCliente(cliente) ? 'Desactivar' : 'Activar',
                           style: TextStyle(fontWeight: FontWeight.w900),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -407,9 +390,9 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                   )
                 else
                   ...suministros.map((suministro) {
-                    final activo = suministro['estado'] == true ||
-                        suministro['estado'].toString().toLowerCase() ==
-                            'true';
+                    final activo =
+                        suministro['estado'] == true ||
+                        suministro['estado'].toString().toLowerCase() == 'true';
 
                     return Container(
                       margin: EdgeInsets.only(bottom: 12),
@@ -417,16 +400,11 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                       decoration: BoxDecoration(
                         color: context.jassSurfaceAlt,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: context.jassBorder,
-                        ),
+                        border: Border.all(color: context.jassBorder),
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.water_drop_rounded,
-                            color: secondary,
-                          ),
+                          Icon(Icons.water_drop_rounded, color: secondary),
                           SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -488,9 +466,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
       isScrollControlled: true,
       backgroundColor: context.jassSurface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) {
         return _RegistrarClienteSheet(
@@ -528,10 +504,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
   }
 
   void _abrirMenuAdmin() {
-    showAdminQuickMenu(
-      context: context,
-      onRefresh: cargarDatos,
-    );
+    showAdminQuickMenu(context: context, onRefresh: cargarDatos);
   }
 
   @override
@@ -565,10 +538,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                     ),
                   ),
                 if (error.isNotEmpty && !cargando)
-                  _Error(
-                    error: error,
-                    onRetry: cargarDatos,
-                  ),
+                  _Error(error: error, onRetry: cargarDatos),
                 if (!cargando && error.isEmpty && clientesFiltrados.isEmpty)
                   Center(
                     child: Padding(
@@ -586,8 +556,9 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
                       telefono: _txt(cliente['telefono']),
                       correo: _txt(cliente['correo']),
                       activo: _estadoCliente(cliente),
-                      cantidadSuministros:
-                          suministros is List ? suministros.length : 0,
+                      cantidadSuministros: suministros is List
+                          ? suministros.length
+                          : 0,
                       onDetalle: () => _abrirDetalleCliente(cliente),
                       onEditar: () => _abrirEditarCliente(cliente),
                       onCambiarEstado: () => _cambiarEstadoCliente(cliente),
@@ -638,10 +609,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
           child: IconButton(
             onPressed: _abrirFormularioCliente,
             tooltip: 'Registrar cliente',
-            icon: Icon(
-              Icons.person_add_alt_1_rounded,
-              color: Colors.white,
-            ),
+            icon: Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
           ),
         ),
         SizedBox(width: 8),
@@ -655,10 +623,7 @@ class _AdminClientesPageState extends State<AdminClientesPage> {
           child: IconButton(
             onPressed: cargarDatos,
             tooltip: 'Actualizar',
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: context.jassTextPrimary,
-            ),
+            icon: Icon(Icons.refresh_rounded, color: context.jassTextPrimary),
           ),
         ),
       ],
@@ -706,17 +671,11 @@ class _DetalleResumenGrid extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _ResumenBox(
-                label: 'Teléfono',
-                value: telefono,
-              ),
+              child: _ResumenBox(label: 'Teléfono', value: telefono),
             ),
             SizedBox(width: 10),
             Expanded(
-              child: _ResumenBox(
-                label: 'Correo',
-                value: correo,
-              ),
+              child: _ResumenBox(label: 'Correo', value: correo),
             ),
           ],
         ),
@@ -747,23 +706,17 @@ class _ResumenBox extends StatelessWidget {
   final String label;
   final String value;
 
-  _ResumenBox({
-    required this.label,
-    required this.value,
-  });
+  _ResumenBox({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-  constraints: BoxConstraints(
-    minHeight: 74,),
-  padding: EdgeInsets.all(13),
+      constraints: BoxConstraints(minHeight: 74),
+      padding: EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -826,9 +779,7 @@ class _ClienteCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -962,10 +913,7 @@ class _RegistrarClienteSheet extends StatefulWidget {
   final List<Map<String, dynamic>> sectores;
   final Future<void> Function(Map<String, dynamic> payload) onGuardar;
 
-  _RegistrarClienteSheet({
-    required this.sectores,
-    required this.onGuardar,
-  });
+  _RegistrarClienteSheet({required this.sectores, required this.onGuardar});
 
   @override
   State<_RegistrarClienteSheet> createState() => _RegistrarClienteSheetState();
@@ -1025,8 +973,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -1144,14 +1091,8 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
               label: 'DNI',
               keyboardType: TextInputType.number,
             ),
-            _Input(
-              controller: nombresController,
-              label: 'Nombres',
-            ),
-            _Input(
-              controller: apellidosController,
-              label: 'Apellidos',
-            ),
+            _Input(controller: nombresController, label: 'Nombres'),
+            _Input(controller: apellidosController, label: 'Apellidos'),
             _Input(
               controller: telefonoController,
               label: 'Teléfono',
@@ -1187,14 +1128,8 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
               controller: direccionController,
               label: 'Dirección del suministro',
             ),
-            _Input(
-              controller: referenciaController,
-              label: 'Referencia',
-            ),
-            _Input(
-              controller: aliasController,
-              label: 'Alias del suministro',
-            ),
+            _Input(controller: referenciaController, label: 'Referencia'),
+            _Input(controller: aliasController, label: 'Alias del suministro'),
             _Input(
               controller: lecturaInicialController,
               label: 'Lectura inicial',
@@ -1223,10 +1158,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.water_drop_rounded,
-                        color: secondary,
-                      ),
+                      Icon(Icons.water_drop_rounded, color: secondary),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -1270,9 +1202,7 @@ class _RegistrarClienteSheetState extends State<_RegistrarClienteSheet> {
                     : Icon(Icons.save_outlined),
                 label: Text(
                   guardando ? 'Guardando...' : 'Guardar cliente',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w900),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: secondary,
@@ -1295,10 +1225,7 @@ class _EditarClienteSheet extends StatefulWidget {
   final Map<String, dynamic> cliente;
   final Future<void> Function(Map<String, dynamic> payload) onGuardar;
 
-  _EditarClienteSheet({
-    required this.cliente,
-    required this.onGuardar,
-  });
+  _EditarClienteSheet({required this.cliente, required this.onGuardar});
 
   @override
   State<_EditarClienteSheet> createState() => _EditarClienteSheetState();
@@ -1444,14 +1371,8 @@ class _EditarClienteSheetState extends State<_EditarClienteSheet> {
               label: 'DNI',
               keyboardType: TextInputType.number,
             ),
-            _Input(
-              controller: nombresController,
-              label: 'Nombres',
-            ),
-            _Input(
-              controller: apellidosController,
-              label: 'Apellidos',
-            ),
+            _Input(controller: nombresController, label: 'Nombres'),
+            _Input(controller: apellidosController, label: 'Apellidos'),
             _Input(
               controller: telefonoController,
               label: 'Teléfono',
@@ -1474,14 +1395,8 @@ class _EditarClienteSheetState extends State<_EditarClienteSheet> {
                 ),
               ),
               items: [
-                DropdownMenuItem(
-                  value: true,
-                  child: Text('Activo'),
-                ),
-                DropdownMenuItem(
-                  value: false,
-                  child: Text('Inactivo'),
-                ),
+                DropdownMenuItem(value: true, child: Text('Activo')),
+                DropdownMenuItem(value: false, child: Text('Inactivo')),
               ],
               onChanged: (value) {
                 if (value == null) return;
@@ -1597,9 +1512,7 @@ class _SectorDropdown extends StatelessWidget {
         decoration: BoxDecoration(
           color: Color(0xFFFFF3DF),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: Color(0xFFFFD899),
-          ),
+          border: Border.all(color: Color(0xFFFFD899)),
         ),
         child: Text(
           'No hay sectores cargados. Verifica el endpoint /sectores.',
@@ -1641,11 +1554,7 @@ class _Input extends StatelessWidget {
   final String label;
   final TextInputType? keyboardType;
 
-  _Input({
-    required this.controller,
-    required this.label,
-    this.keyboardType,
-  });
+  _Input({required this.controller, required this.label, this.keyboardType});
 
   @override
   Widget build(BuildContext context) {
@@ -1671,17 +1580,12 @@ class _Input extends StatelessWidget {
 class _EstadoChip extends StatelessWidget {
   final bool activo;
 
-  _EstadoChip({
-    required this.activo,
-  });
+  _EstadoChip({required this.activo});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: activo ? Color(0xFFEAF8EF) : Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(100),
@@ -1702,10 +1606,7 @@ class _Error extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  _Error({
-    required this.error,
-    required this.onRetry,
-  });
+  _Error({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -1726,10 +1627,7 @@ class _Error extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          TextButton(
-            onPressed: onRetry,
-            child: Text('Reintentar'),
-          ),
+          TextButton(onPressed: onRetry, child: Text('Reintentar')),
         ],
       ),
     );

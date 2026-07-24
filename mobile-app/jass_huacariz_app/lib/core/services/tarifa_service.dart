@@ -6,9 +6,7 @@ class TarifaService {
 
   List<Map<String, dynamic>> _asList(dynamic response) {
     if (response is List) {
-      return response
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      return response.map((item) => Map<String, dynamic>.from(item)).toList();
     }
 
     if (response is Map && response['data'] is List) {
@@ -43,9 +41,7 @@ class TarifaService {
   // =========================================================
 
   Future<List<Map<String, dynamic>>> listarTarifas() async {
-    final response = await _api.get(
-      ApiConfig.tarifas,
-    );
+    final response = await _api.get(ApiConfig.tarifas);
 
     return _asList(response);
   }
@@ -54,18 +50,14 @@ class TarifaService {
     Map<String, dynamic> data,
   ) async {
     final payload = {
-      'nombreTarifa':
-          (data['nombreTarifa'] ?? '').toString().trim(),
+      'nombreTarifa': (data['nombreTarifa'] ?? '').toString().trim(),
       'consumoDesde': data['consumoDesde'],
       'consumoHasta': data['consumoHasta'],
       'precioM3': data['precioM3'],
       'estado': data['estado'] ?? true,
     };
 
-    final response = await _api.post(
-      ApiConfig.tarifas,
-      payload,
-    );
+    final response = await _api.post(ApiConfig.tarifas, payload);
 
     return _asMap(response);
   }
@@ -75,8 +67,7 @@ class TarifaService {
     required Map<String, dynamic> data,
   }) async {
     final payload = {
-      'nombreTarifa':
-          (data['nombreTarifa'] ?? '').toString().trim(),
+      'nombreTarifa': (data['nombreTarifa'] ?? '').toString().trim(),
       'consumoDesde': data['consumoDesde'],
       'consumoHasta': data['consumoHasta'],
       'precioM3': data['precioM3'],
@@ -84,10 +75,7 @@ class TarifaService {
     };
 
     try {
-      final response = await _api.put(
-        ApiConfig.tarifaPorId(idTarifa),
-        payload,
-      );
+      final response = await _api.put(ApiConfig.tarifaPorId(idTarifa), payload);
 
       return _asMap(response);
     } catch (_) {
@@ -105,10 +93,7 @@ class TarifaService {
     required bool estado,
   }) async {
     final response = await _api.patch(
-      ApiConfig.cambiarEstadoTarifa(
-        idTarifa,
-        estado,
-      ),
+      ApiConfig.cambiarEstadoTarifa(idTarifa, estado),
       {},
     );
 
@@ -116,29 +101,21 @@ class TarifaService {
   }
 
   // Utilízalo solo si TarifaController tiene @DeleteMapping("/{id}").
-  Future<void> eliminarTarifa({
-    required int idTarifa,
-  }) async {
-    await _api.delete(
-      ApiConfig.tarifaPorId(idTarifa),
-    );
+  Future<void> eliminarTarifa({required int idTarifa}) async {
+    await _api.delete(ApiConfig.tarifaPorId(idTarifa));
   }
 
   // =========================================================
   // CONFIGURACIÓN GENERAL DE COBRANZA
   // =========================================================
 
-  Future<Map<String, dynamic>>
-      obtenerConfiguracionCobranza() async {
-    final response = await _api.get(
-      ApiConfig.configuracionCobranza,
-    );
+  Future<Map<String, dynamic>> obtenerConfiguracionCobranza() async {
+    final response = await _api.get(ApiConfig.configuracionCobranza);
 
     return _asMap(response);
   }
 
-  Future<Map<String, dynamic>>
-      actualizarConfiguracionCobranza({
+  Future<Map<String, dynamic>> actualizarConfiguracionCobranza({
     required double cargoLector,
     required double cargoMantenimiento,
     required double cargoOtros,
@@ -153,10 +130,7 @@ class TarifaService {
       'moraBase': moraBase,
     };
 
-    final response = await _api.put(
-      ApiConfig.configuracionCobranza,
-      payload,
-    );
+    final response = await _api.put(ApiConfig.configuracionCobranza, payload);
 
     return _asMap(response);
   }

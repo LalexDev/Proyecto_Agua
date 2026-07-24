@@ -21,10 +21,7 @@ class ApiService {
     String accept = 'application/json',
     String contentType = 'application/json',
   }) async {
-    final headers = {
-      'Content-Type': contentType,
-      'Accept': accept,
-    };
+    final headers = {'Content-Type': contentType, 'Accept': accept};
 
     if (withAuth) {
       final token = await _storage.getToken();
@@ -40,10 +37,7 @@ class ApiService {
   Future<dynamic> get(String endpoint, {bool withAuth = true}) async {
     try {
       final response = await http
-          .get(
-            _uri(endpoint),
-            headers: await _headers(withAuth: withAuth),
-          )
+          .get(_uri(endpoint), headers: await _headers(withAuth: withAuth))
           .timeout(_timeout);
 
       return _processResponse(response);
@@ -65,10 +59,7 @@ class ApiService {
       final response = await http
           .get(
             _uri(endpoint),
-            headers: await _headers(
-              withAuth: withAuth,
-              accept: accept,
-            ),
+            headers: await _headers(withAuth: withAuth, accept: accept),
           )
           .timeout(_timeout);
 
@@ -76,10 +67,7 @@ class ApiService {
         return response.bodyBytes;
       }
 
-      final bodyText = utf8.decode(
-        response.bodyBytes,
-        allowMalformed: true,
-      );
+      final bodyText = utf8.decode(response.bodyBytes, allowMalformed: true);
 
       if (bodyText.trim().isNotEmpty) {
         final mensaje = _extraerMensajeError(bodyText);
@@ -171,7 +159,6 @@ class ApiService {
     }
   }
 
-
   Future<dynamic> patchMultipart(
     String endpoint, {
     required Map<String, String> fields,
@@ -180,18 +167,10 @@ class ApiService {
     bool withAuth = true,
   }) async {
     try {
-      final request = http.MultipartRequest(
-        'PATCH',
-        _uri(endpoint),
-      );
+      final request = http.MultipartRequest('PATCH', _uri(endpoint));
 
       request.fields.addAll(fields);
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          fileField,
-          filePath,
-        ),
-      );
+      request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
 
       if (withAuth) {
         final token = await _storage.getToken();
@@ -218,10 +197,7 @@ class ApiService {
   Future<dynamic> delete(String endpoint, {bool withAuth = true}) async {
     try {
       final response = await http
-          .delete(
-            _uri(endpoint),
-            headers: await _headers(withAuth: withAuth),
-          )
+          .delete(_uri(endpoint), headers: await _headers(withAuth: withAuth))
           .timeout(_timeout);
 
       return _processResponse(response);

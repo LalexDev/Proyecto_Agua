@@ -35,13 +35,12 @@ class _LectorHomePageState extends State<LectorHomePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _conexionSubscription = Connectivity()
-        .onConnectivityChanged
-        .listen(_cuandoCambiaConexion);
+    _conexionSubscription = Connectivity().onConnectivityChanged.listen(
+      _cuandoCambiaConexion,
+    );
     _cargarUsuario();
     _prepararTrabajo();
   }
-
 
   @override
   void dispose() {
@@ -72,7 +71,8 @@ class _LectorHomePageState extends State<LectorHomePage>
     if (resultado['conectado'] == true) {
       setState(() {
         modoOffline = false;
-        estadoSincronizacion = resultado['mensaje']?.toString() ??
+        estadoSincronizacion =
+            resultado['mensaje']?.toString() ??
             'Conexión recuperada y datos sincronizados.';
       });
       await _actualizarResumen();
@@ -91,7 +91,6 @@ class _LectorHomePageState extends State<LectorHomePage>
     });
   }
 
-
   Future<void> _prepararTrabajo() async {
     final offline = await storageService.isOfflineMode();
     if (mounted) setState(() => modoOffline = offline);
@@ -100,9 +99,11 @@ class _LectorHomePageState extends State<LectorHomePage>
       try {
         await offlineService.prepararDatosOffline();
         await sincronizacionService.sincronizarPendientes();
-        estadoSincronizacion = 'Datos actualizados y listos para trabajar sin conexión.';
+        estadoSincronizacion =
+            'Datos actualizados y listos para trabajar sin conexión.';
       } catch (_) {
-        estadoSincronizacion = 'Trabajando con los datos guardados en el celular.';
+        estadoSincronizacion =
+            'Trabajando con los datos guardados en el celular.';
       }
     } else {
       estadoSincronizacion = 'Modo sin conexión activo.';
@@ -132,7 +133,8 @@ class _LectorHomePageState extends State<LectorHomePage>
     if (!mounted) return;
     setState(() {
       sincronizando = false;
-      estadoSincronizacion = resultado['mensaje']?.toString() ?? 'Sincronización finalizada.';
+      estadoSincronizacion =
+          resultado['mensaje']?.toString() ?? 'Sincronización finalizada.';
     });
     await _actualizarResumen();
     if (!mounted) return;
@@ -191,9 +193,7 @@ class _LectorHomePageState extends State<LectorHomePage>
             'Cerrar sesión',
             style: TextStyle(fontWeight: FontWeight.w900),
           ),
-          content: const Text(
-            '¿Deseas cerrar la sesión del lecturador?',
-          ),
+          content: const Text('¿Deseas cerrar la sesión del lecturador?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
@@ -218,11 +218,7 @@ class _LectorHomePageState extends State<LectorHomePage>
 
     if (!mounted) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   void _goBottomLector(int index) {
@@ -245,8 +241,9 @@ class _LectorHomePageState extends State<LectorHomePage>
     final oscuro = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          oscuro ? JassColors.darkBackground : JassColors.background,
+      backgroundColor: oscuro
+          ? JassColors.darkBackground
+          : JassColors.background,
       extendBody: true,
       bottomNavigationBar: LectorBottomNav(
         currentIndex: 0,
@@ -310,9 +307,7 @@ class _LectorHomePageState extends State<LectorHomePage>
               Text(
                 'Panel móvil del lecturador',
                 style: TextStyle(
-                  color: oscuro
-                      ? JassColors.darkMuted
-                      : JassColors.muted,
+                  color: oscuro ? JassColors.darkMuted : JassColors.muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -349,10 +344,7 @@ class _LectorHomePageState extends State<LectorHomePage>
       padding: const EdgeInsets.all(23),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            JassColors.primary,
-            JassColors.secondary,
-          ],
+          colors: [JassColors.primary, JassColors.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -369,10 +361,7 @@ class _LectorHomePageState extends State<LectorHomePage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 13,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(100),
@@ -468,7 +457,9 @@ class _LectorHomePageState extends State<LectorHomePage>
           Row(
             children: [
               Icon(
-                modoOffline ? Icons.cloud_off_rounded : Icons.cloud_done_rounded,
+                modoOffline
+                    ? Icons.cloud_off_rounded
+                    : Icons.cloud_done_rounded,
                 color: modoOffline ? JassColors.warning : JassColors.success,
               ),
               const SizedBox(width: 10),
@@ -603,9 +594,7 @@ class _LectorHomePageState extends State<LectorHomePage>
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: oscuro
-                  ? const Color(0xFF162432)
-                  : const Color(0xFFE8F7FB),
+              color: oscuro ? const Color(0xFF162432) : const Color(0xFFE8F7FB),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -622,9 +611,7 @@ class _LectorHomePageState extends State<LectorHomePage>
                 Text(
                   'Rol activo',
                   style: TextStyle(
-                    color: oscuro
-                        ? JassColors.darkMuted
-                        : JassColors.muted,
+                    color: oscuro ? JassColors.darkMuted : JassColors.muted,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -677,10 +664,7 @@ class _LectorHomePageState extends State<LectorHomePage>
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.route_rounded,
-                color: JassColors.secondary,
-              ),
+              const Icon(Icons.route_rounded, color: JassColors.secondary),
               const SizedBox(width: 9),
               Text(
                 'Flujo recomendado',
@@ -797,11 +781,7 @@ class _AccessCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                color: JassColors.secondary,
-                size: 29,
-              ),
+              Icon(icon, color: JassColors.secondary, size: 29),
               const SizedBox(height: 9),
               Text(
                 title,
@@ -821,9 +801,7 @@ class _AccessCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: oscuro
-                      ? JassColors.darkMuted
-                      : JassColors.muted,
+                  color: oscuro ? JassColors.darkMuted : JassColors.muted,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
@@ -871,9 +849,7 @@ class _StepLine extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                color: oscuro
-                    ? JassColors.darkMuted
-                    : JassColors.muted,
+                color: oscuro ? JassColors.darkMuted : JassColors.muted,
                 fontWeight: FontWeight.w700,
                 height: 1.35,
               ),

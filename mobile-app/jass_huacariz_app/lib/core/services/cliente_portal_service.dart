@@ -6,9 +6,7 @@ class ClientePortalService {
 
   List<Map<String, dynamic>> _asList(dynamic response) {
     if (response is List) {
-      return response
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      return response.map((item) => Map<String, dynamic>.from(item)).toList();
     }
 
     if (response is Map && response['data'] is List) {
@@ -55,14 +53,11 @@ class ClientePortalService {
     required String nuevaPassword,
     required String confirmarPassword,
   }) async {
-    final response = await _api.patch(
-      ApiConfig.clienteMePassword,
-      {
-        'passwordActual': passwordActual,
-        'nuevaPassword': nuevaPassword,
-        'confirmarPassword': confirmarPassword,
-      },
-    );
+    final response = await _api.patch(ApiConfig.clienteMePassword, {
+      'passwordActual': passwordActual,
+      'nuevaPassword': nuevaPassword,
+      'confirmarPassword': confirmarPassword,
+    });
 
     return _asMap(response);
   }
@@ -87,10 +82,7 @@ class ClientePortalService {
   }) async {
     final response = await _api.patchMultipart(
       ApiConfig.clienteMePagarRecibo(idRecibo),
-      fields: {
-        'metodoPago': metodoPago,
-        'codigoOperacion': codigoOperacion,
-      },
+      fields: {'metodoPago': metodoPago, 'codigoOperacion': codigoOperacion},
       fileField: 'comprobante',
       filePath: comprobantePath,
     );

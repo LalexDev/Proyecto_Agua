@@ -6,9 +6,7 @@ class ClienteService {
 
   List<Map<String, dynamic>> _asList(dynamic response) {
     if (response is List) {
-      return response
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      return response.map((item) => Map<String, dynamic>.from(item)).toList();
     }
 
     if (response is Map && response['data'] is List) {
@@ -73,10 +71,7 @@ class ClienteService {
       'estado': data['estado'] ?? true,
     };
 
-    final response = await _api.put(
-      ApiConfig.clientePorId(idCliente),
-      payload,
-    );
+    final response = await _api.put(ApiConfig.clientePorId(idCliente), payload);
 
     return _asMap(response);
   }
@@ -89,9 +84,7 @@ class ClienteService {
   Future<List<Map<String, dynamic>>> listarSuministrosPorCliente(
     int idCliente,
   ) async {
-    final response = await _api.get(
-      ApiConfig.suministrosPorCliente(idCliente),
-    );
+    final response = await _api.get(ApiConfig.suministrosPorCliente(idCliente));
 
     return _asList(response);
   }

@@ -9,7 +9,7 @@ class OfflineDatabase {
   static final OfflineDatabase instance = OfflineDatabase._();
 
   static const String _databaseName = 'jass_huacariz_offline.db';
-  static const int _databaseVersion = 2;
+  static const int _databaseVersion = 3;
 
   static const String tablaSuministros = 'suministros_cache';
   static const String tablaLecturas = 'lecturas_pendientes';
@@ -71,6 +71,10 @@ class OfflineDatabase {
         lectura_anterior REAL NOT NULL,
         lectura_actual REAL NOT NULL,
         consumo REAL NOT NULL,
+        cambio_medidor INTEGER NOT NULL DEFAULT 0,
+        lectura_inicial_nuevo_medidor REAL,
+        observacion_cambio_medidor TEXT,
+        consumo_inusual INTEGER NOT NULL DEFAULT 0,
         anio INTEGER NOT NULL,
         mes INTEGER NOT NULL,
         observacion TEXT,
@@ -156,6 +160,33 @@ class OfflineDatabase {
       await _crearTablasCache(db);
       await _crearIndices(db);
     }
+
+    if (versionAnterior < 3) {
+      await _agregarColumnaSiFalta(
+        db,
+        tablaLecturas,
+        'cambio_medidor',
+        'INTEGER NOT NULL DEFAULT 0',
+      );
+      await _agregarColumnaSiFalta(
+        db,
+        tablaLecturas,
+        'lectura_inicial_nuevo_medidor',
+        'REAL',
+      );
+      await _agregarColumnaSiFalta(
+        db,
+        tablaLecturas,
+        'observacion_cambio_medidor',
+        'TEXT',
+      );
+      await _agregarColumnaSiFalta(
+        db,
+        tablaLecturas,
+        'consumo_inusual',
+        'INTEGER NOT NULL DEFAULT 0',
+      );
+    }
   }
 
   Future<void> _agregarColumnaSiFalta(
@@ -165,9 +196,7 @@ class OfflineDatabase {
     String definicion,
   ) async {
     final columnas = await db.rawQuery('PRAGMA table_info($tabla)');
-    final existe = columnas.any(
-      (item) => item['name']?.toString() == columna,
-    );
+    final existe = columnas.any((item) => item['name']?.toString() == columna);
     if (!existe) {
       await db.execute('ALTER TABLE $tabla ADD COLUMN $columna $definicion');
     }
@@ -235,10 +264,7 @@ class OfflineDatabase {
             suministro['cliente'],
         'No disponible',
       ),
-      'dni_cliente': _texto(
-        suministro['dniCliente'] ?? suministro['dni'],
-        '-',
-      ),
+      'dni_cliente': _texto(suministro['dniCliente'] ?? suministro['dni'], '-'),
       'nombre_sector': _texto(
         suministro['nombreSector'] ??
             suministro['sector'] ??
@@ -285,9 +311,7 @@ class OfflineDatabase {
     };
   }
 
-  Map<String, dynamic> suministroLocalAFlutter(
-    Map<String, dynamic> local,
-  ) {
+  Map<String, dynamic> suministroLocalAFlutter(Map<String, dynamic> local) {
     return {
       'id': local['id_servidor'],
       'codigoSuministro': local['codigo_suministro'],
@@ -303,10 +327,10 @@ class OfflineDatabase {
       'mesUltimaLectura': local['mes_ultima_lectura'],
       'estado': intToBool(local['estado']),
       'estadoInstalacion': local['estado_instalacion'],
-      'permiteRegistrarLectura':
-          intToBool(local['permite_registrar_lectura']),
-      'permiteGenerarMantenimiento':
-          intToBool(local['permite_generar_mantenimiento']),
+      'permiteRegistrarLectura': intToBool(local['permite_registrar_lectura']),
+      'permiteGenerarMantenimiento': intToBool(
+        local['permite_generar_mantenimiento'],
+      ),
       'mensajeEstado': local['mensaje_estado'],
       'fechaActualizacionLocal': local['fecha_actualizacion'],
       'origenOffline': true,
@@ -334,9 +358,7 @@ class OfflineDatabase {
     }
   }
 
-  Future<void> guardarSuministro(
-    Map<String, dynamic> suministro,
-  ) async {
+  Future<void> guardarSuministro(Map<String, dynamic> suministro) async {
     final db = await database;
     final data = _suministroServidorALocal(suministro);
     final codigo = data['codigo_suministro'].toString();
@@ -361,9 +383,7 @@ class OfflineDatabase {
     });
   }
 
-  Future<Map<String, dynamic>?> buscarSuministroPorCodigo(
-    String codigo,
-  ) async {
+  Future<Map<String, dynamic>?> buscarSuministroPorCodigo(String codigo) async {
     final db = await database;
     final resultados = await db.query(
       tablaSuministros,
@@ -383,38 +403,25 @@ class OfflineDatabase {
     return Sqflite.firstIntValue(rows) ?? 0;
   }
 
-  Future<void> guardarTarifas(
-    List<Map<String, dynamic>> tarifas,
-  ) async {
+  Future<void> guardarTarifas(List<Map<String, dynamic>> tarifas) async {
     final db = await database;
     await db.transaction((transaction) async {
       await transaction.delete(tablaTarifas);
       int indice = 1;
       for (final tarifa in tarifas) {
-        final id = _enteroNullable(tarifa['id'] ?? tarifa['idTarifa']) ??
-            indice++;
-        await transaction.insert(
-          tablaTarifas,
-          {
-            'id_servidor': id,
-            'nombre_tarifa': _texto(
-              tarifa['nombreTarifa'] ?? tarifa['nombre'],
-            ),
-            'consumo_desde': _numero(
-              tarifa['consumoDesde'] ?? tarifa['desde'],
-            ),
-            'consumo_hasta': tarifa['consumoHasta'] == null
-                ? null
-                : _numero(tarifa['consumoHasta'] ?? tarifa['hasta']),
-            'precio_m3': _numero(
-              tarifa['precioM3'] ?? tarifa['precio'],
-            ),
-            'estado': _boolToInt(
-              _booleano(tarifa['estado'], true),
-            ),
-            'fecha_actualizacion': DateTime.now().toIso8601String(),
-          },
-        );
+        final id =
+            _enteroNullable(tarifa['id'] ?? tarifa['idTarifa']) ?? indice++;
+        await transaction.insert(tablaTarifas, {
+          'id_servidor': id,
+          'nombre_tarifa': _texto(tarifa['nombreTarifa'] ?? tarifa['nombre']),
+          'consumo_desde': _numero(tarifa['consumoDesde'] ?? tarifa['desde']),
+          'consumo_hasta': tarifa['consumoHasta'] == null
+              ? null
+              : _numero(tarifa['consumoHasta'] ?? tarifa['hasta']),
+          'precio_m3': _numero(tarifa['precioM3'] ?? tarifa['precio']),
+          'estado': _boolToInt(_booleano(tarifa['estado'], true)),
+          'fecha_actualizacion': DateTime.now().toIso8601String(),
+        });
       }
     });
   }
@@ -433,23 +440,18 @@ class OfflineDatabase {
     Map<String, dynamic> configuracion,
   ) async {
     final db = await database;
-    await db.insert(
-      tablaConfiguracion,
-      {
-        'id': 1,
-        'cargo_lector': _numero(configuracion['cargoLector']),
-        'cargo_mantenimiento':
-            _numero(configuracion['cargoMantenimiento']),
-        'cargo_otros': _numero(
-          configuracion['cargoOtros'] ?? configuracion['otrosCargos'],
-        ),
-        'dias_vencimiento':
-            _enteroNullable(configuracion['diasVencimiento']) ?? 15,
-        'mora_base': _numero(configuracion['moraBase']),
-        'fecha_actualizacion': DateTime.now().toIso8601String(),
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert(tablaConfiguracion, {
+      'id': 1,
+      'cargo_lector': _numero(configuracion['cargoLector']),
+      'cargo_mantenimiento': _numero(configuracion['cargoMantenimiento']),
+      'cargo_otros': _numero(
+        configuracion['cargoOtros'] ?? configuracion['otrosCargos'],
+      ),
+      'dias_vencimiento':
+          _enteroNullable(configuracion['diasVencimiento']) ?? 15,
+      'mora_base': _numero(configuracion['moraBase']),
+      'fecha_actualizacion': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<Map<String, dynamic>?> obtenerConfiguracionCobranza() async {
@@ -459,9 +461,7 @@ class OfflineDatabase {
     return Map<String, dynamic>.from(rows.first);
   }
 
-  Future<void> insertarLecturaPendiente(
-    Map<String, dynamic> lectura,
-  ) async {
+  Future<void> insertarLecturaPendiente(Map<String, dynamic> lectura) async {
     final db = await database;
     final codigo = normalizarCodigo(
       lectura['codigoSuministro'] ?? lectura['codigo_suministro'],
@@ -482,8 +482,16 @@ class OfflineDatabase {
     final lecturaActual = _numero(
       lectura['lecturaActual'] ?? lectura['lectura_actual'],
     );
-    final consumo = lecturaActual - lecturaAnterior;
     final tipo = _texto(lectura['tipoOperacion'], 'LECTURA').toUpperCase();
+    final cambioMedidor = _booleano(lectura['cambioMedidor']);
+    final lecturaInicialNuevoMedidor = cambioMedidor
+        ? _numero(lectura['lecturaInicialNuevoMedidor'])
+        : null;
+    final baseConsumo = cambioMedidor
+        ? (lecturaInicialNuevoMedidor ?? 0)
+        : lecturaAnterior;
+    final consumo = lecturaActual - baseConsumo;
+    final consumoInusual = _booleano(lectura['consumoInusual']);
     final reciboEstimado = lectura['reciboEstimado'];
 
     await db.transaction<void>((transaction) async {
@@ -500,33 +508,36 @@ class OfflineDatabase {
         );
       }
 
-      await transaction.insert(
-        tablaLecturas,
-        {
-          'id_local': idLocal,
-          'codigo_suministro': codigo,
-          'tipo_operacion': tipo,
-          'lectura_anterior': lecturaAnterior,
-          'lectura_actual': lecturaActual,
-          'consumo': consumo < 0 ? 0 : consumo,
-          'anio': anio,
-          'mes': mes,
-          'observacion': _texto(lectura['observacion']),
-          'fecha_registro_local': _texto(
-            lectura['fechaRegistroLocal'],
-            DateTime.now().toIso8601String(),
-          ),
-          'fecha_sincronizacion': null,
-          'estado_sincronizacion': 'PENDIENTE',
-          'intentos': 0,
-          'mensaje_error': null,
-          'respuesta_servidor': null,
-          'recibo_estimado_json':
-              reciboEstimado == null ? null : jsonEncode(reciboEstimado),
-          'lector_id': lectorId,
-        },
-        conflictAlgorithm: ConflictAlgorithm.abort,
-      );
+      await transaction.insert(tablaLecturas, {
+        'id_local': idLocal,
+        'codigo_suministro': codigo,
+        'tipo_operacion': tipo,
+        'lectura_anterior': lecturaAnterior,
+        'lectura_actual': lecturaActual,
+        'consumo': consumo < 0 ? 0 : consumo,
+        'cambio_medidor': _boolToInt(cambioMedidor),
+        'lectura_inicial_nuevo_medidor': lecturaInicialNuevoMedidor,
+        'observacion_cambio_medidor': _texto(
+          lectura['observacionCambioMedidor'],
+        ),
+        'consumo_inusual': _boolToInt(consumoInusual),
+        'anio': anio,
+        'mes': mes,
+        'observacion': _texto(lectura['observacion']),
+        'fecha_registro_local': _texto(
+          lectura['fechaRegistroLocal'],
+          DateTime.now().toIso8601String(),
+        ),
+        'fecha_sincronizacion': null,
+        'estado_sincronizacion': 'PENDIENTE',
+        'intentos': 0,
+        'mensaje_error': null,
+        'respuesta_servidor': null,
+        'recibo_estimado_json': reciboEstimado == null
+            ? null
+            : jsonEncode(reciboEstimado),
+        'lector_id': lectorId,
+      }, conflictAlgorithm: ConflictAlgorithm.abort);
 
       await transaction.update(
         tablaSuministros,
@@ -637,10 +648,7 @@ class OfflineDatabase {
     final db = await database;
     await db.update(
       tablaLecturas,
-      {
-        'estado_sincronizacion': 'ERROR',
-        'mensaje_error': mensaje,
-      },
+      {'estado_sincronizacion': 'ERROR', 'mensaje_error': mensaje},
       where: 'id_local = ?',
       whereArgs: [idLocal],
     );
@@ -668,9 +676,7 @@ class OfflineDatabase {
     return null;
   }
 
-  Future<void> eliminarLecturasSincronizadas({
-    required String lectorId,
-  }) async {
+  Future<void> eliminarLecturasSincronizadas({required String lectorId}) async {
     final db = await database;
     await db.delete(
       tablaLecturas,

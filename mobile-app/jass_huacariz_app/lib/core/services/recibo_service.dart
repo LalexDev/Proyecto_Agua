@@ -6,9 +6,7 @@ class ReciboService {
 
   List<Map<String, dynamic>> _asList(dynamic response) {
     if (response is List) {
-      return response
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      return response.map((item) => Map<String, dynamic>.from(item)).toList();
     }
 
     if (response is Map && response['data'] is List) {
@@ -44,9 +42,7 @@ class ReciboService {
   }
 
   Future<List<Map<String, dynamic>>> listarPendientesAdmin() async {
-    final response = await _api.get(
-      ApiConfig.recibosPendientes,
-    );
+    final response = await _api.get(ApiConfig.recibosPendientes);
     return _asList(response);
   }
 
@@ -59,9 +55,7 @@ class ReciboService {
     String codigoSuministro,
   ) async {
     final response = await _api.get(
-      ApiConfig.recibosPorSuministro(
-        codigoSuministro,
-      ),
+      ApiConfig.recibosPorSuministro(codigoSuministro),
     );
 
     return _asList(response);
@@ -72,13 +66,10 @@ class ReciboService {
     required String metodoPago,
     required String codigoOperacion,
   }) async {
-    final response = await _api.patch(
-      ApiConfig.pagarReciboAdmin(idRecibo),
-      {
-        'metodoPago': metodoPago,
-        'codigoOperacion': codigoOperacion,
-      },
-    );
+    final response = await _api.patch(ApiConfig.pagarReciboAdmin(idRecibo), {
+      'metodoPago': metodoPago,
+      'codigoOperacion': codigoOperacion,
+    });
 
     return _asMap(response);
   }

@@ -143,8 +143,8 @@ class _BottomItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: seleccionado
                   ? oscuro
-                      ? const Color(0xFF162432)
-                      : const Color(0xFFE8F7FB)
+                        ? const Color(0xFF162432)
+                        : const Color(0xFFE8F7FB)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(100),
             ),
@@ -154,8 +154,8 @@ class _BottomItem extends StatelessWidget {
                 color: seleccionado
                     ? JassColors.secondary
                     : oscuro
-                        ? JassColors.darkMuted
-                        : JassColors.primary,
+                    ? JassColors.darkMuted
+                    : JassColors.primary,
                 size: seleccionado ? 28 : 25,
               ),
             ),
@@ -212,8 +212,8 @@ class ClienteMenuTile extends StatelessWidget {
                 color: danger
                     ? JassColors.danger
                     : oscuro
-                        ? Colors.white
-                        : JassColors.primary,
+                    ? Colors.white
+                    : JassColors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
               ),
@@ -246,9 +246,7 @@ class ClienteThemeTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           child: Container(
             decoration: BoxDecoration(
-              color: oscuro
-                  ? const Color(0xFF162432)
-                  : const Color(0xFFF4F8FB),
+              color: oscuro ? const Color(0xFF162432) : const Color(0xFFF4F8FB),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: oscuro ? JassColors.darkBorder : JassColors.border,
@@ -258,9 +256,7 @@ class ClienteThemeTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  esOscuro
-                      ? Icons.light_mode_rounded
-                      : Icons.dark_mode_rounded,
+                  esOscuro ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                   color: JassColors.secondary,
                   size: 30,
                 ),

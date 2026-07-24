@@ -80,8 +80,7 @@ class JassHuacarizApp extends StatelessWidget {
             // PANTALLAS COMPARTIDAS ABIERTAS DESDE ADMINISTRADOR
             '/admin-historial-lecturas': (_) =>
                 const HistorialLecturasPage(modoAdmin: true),
-            '/admin-qr-scanner': (_) =>
-                const QrScannerPage(modoAdmin: true),
+            '/admin-qr-scanner': (_) => const QrScannerPage(modoAdmin: true),
             '/admin-buscar-suministro': (_) =>
                 const BuscarSuministroPage(modoAdmin: true),
             '/admin-detalle-suministro': (_) =>
@@ -95,8 +94,7 @@ class JassHuacarizApp extends StatelessWidget {
             '/lector-home': (_) => const LectorHomePage(),
             '/buscar-suministro': (_) =>
                 const BuscarSuministroPage(modoAdmin: false),
-            '/qr-scanner': (_) =>
-                const QrScannerPage(modoAdmin: false),
+            '/qr-scanner': (_) => const QrScannerPage(modoAdmin: false),
             '/detalle-suministro': (_) =>
                 const DetalleSuministroPage(modoAdmin: false),
             '/registrar-lectura': (_) =>

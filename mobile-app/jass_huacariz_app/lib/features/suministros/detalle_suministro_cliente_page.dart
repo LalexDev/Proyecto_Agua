@@ -99,8 +99,7 @@ class _DetalleSuministroClientePageState
 
   String get referencia {
     return _texto(
-      suministro['referencia'] ??
-          suministro['referenciaSuministro'],
+      suministro['referencia'] ?? suministro['referenciaSuministro'],
       'Sin referencia registrada',
     );
   }
@@ -153,9 +152,7 @@ class _DetalleSuministroClientePageState
 
   String _estadoRecibo(Map<String, dynamic> recibo) {
     return _texto(
-      recibo['estadoRecibo'] ??
-          recibo['estado'] ??
-          recibo['situacion'],
+      recibo['estadoRecibo'] ?? recibo['estado'] ?? recibo['situacion'],
       'PENDIENTE',
     ).toUpperCase();
   }
@@ -171,9 +168,7 @@ class _DetalleSuministroClientePageState
 
   double _consumoRecibo(Map<String, dynamic> recibo) {
     return _numero(
-      recibo['consumoM3'] ??
-          recibo['consumo'] ??
-          recibo['consumoMes'],
+      recibo['consumoM3'] ?? recibo['consumo'] ?? recibo['consumoMes'],
     );
   }
 
@@ -274,13 +269,15 @@ class _DetalleSuministroClientePageState
   }
 
   double get deudaPendiente {
-    return recibos.where((recibo) {
-      final estado = _estadoRecibo(recibo);
+    return recibos
+        .where((recibo) {
+          final estado = _estadoRecibo(recibo);
 
-      return estado == 'PENDIENTE' || estado == 'VENCIDO';
-    }).fold(0, (suma, recibo) {
-      return suma + _totalRecibo(recibo);
-    });
+          return estado == 'PENDIENTE' || estado == 'VENCIDO';
+        })
+        .fold(0, (suma, recibo) {
+          return suma + _totalRecibo(recibo);
+        });
   }
 
   double get ultimaLectura {
@@ -318,11 +315,7 @@ class _DetalleSuministroClientePageState
   }
 
   void _verRecibo(Map<String, dynamic> recibo) {
-    Navigator.pushNamed(
-      context,
-      '/recibo-detalle',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/recibo-detalle', arguments: recibo);
   }
 
   void _pagarRecibo() {
@@ -338,11 +331,7 @@ class _DetalleSuministroClientePageState
       return;
     }
 
-    Navigator.pushNamed(
-      context,
-      '/pago-cip',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/pago-cip', arguments: recibo);
   }
 
   void _volver() {
@@ -390,8 +379,7 @@ class _DetalleSuministroClientePageState
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color:
-                          oscuro ? JassColors.darkCard : JassColors.card,
+                      color: oscuro ? JassColors.darkCard : JassColors.card,
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
                         color: oscuro
@@ -517,8 +505,9 @@ class _DetalleSuministroClientePageState
     final oscuro = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          oscuro ? JassColors.darkBackground : JassColors.background,
+      backgroundColor: oscuro
+          ? JassColors.darkBackground
+          : JassColors.background,
       extendBody: true,
       bottomNavigationBar: ClienteBottomNav(
         currentIndex: -1,
@@ -569,8 +558,7 @@ class _DetalleSuministroClientePageState
               Text(
                 'Portal cliente',
                 style: TextStyle(
-                  color:
-                      oscuro ? JassColors.darkMuted : JassColors.muted,
+                  color: oscuro ? JassColors.darkMuted : JassColors.muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -581,8 +569,7 @@ class _DetalleSuministroClientePageState
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color:
-                      oscuro ? Colors.white : JassColors.primary,
+                  color: oscuro ? Colors.white : JassColors.primary,
                   fontSize: 23,
                   fontWeight: FontWeight.w900,
                 ),
@@ -605,10 +592,7 @@ class _DetalleSuministroClientePageState
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            JassColors.primary,
-            JassColors.secondary,
-          ],
+          colors: [JassColors.primary, JassColors.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -677,9 +661,7 @@ class _DetalleSuministroClientePageState
                 child: Text(
                   activo ? 'ACTIVO' : 'INACTIVO',
                   style: TextStyle(
-                    color: activo
-                        ? JassColors.success
-                        : JassColors.danger,
+                    color: activo ? JassColors.success : JassColors.danger,
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
                   ),
@@ -697,18 +679,9 @@ class _DetalleSuministroClientePageState
             ),
             child: Column(
               children: [
-                _HeroInfo(
-                  label: 'Sector',
-                  value: sector,
-                ),
-                _HeroInfo(
-                  label: 'Dirección',
-                  value: direccion,
-                ),
-                _HeroInfo(
-                  label: 'Referencia',
-                  value: referencia,
-                ),
+                _HeroInfo(label: 'Sector', value: sector),
+                _HeroInfo(label: 'Dirección', value: direccion),
+                _HeroInfo(label: 'Referencia', value: referencia),
               ],
             ),
           ),
@@ -762,8 +735,7 @@ class _DetalleSuministroClientePageState
         color: oscuro ? JassColors.darkCard : JassColors.card,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
-          color:
-              oscuro ? JassColors.darkBorder : JassColors.border,
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
         ),
       ),
       child: Column(
@@ -851,17 +823,11 @@ class _DetalleSuministroClientePageState
       decoration: BoxDecoration(
         color: const Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFFFD1D1),
-        ),
+        border: Border.all(color: const Color(0xFFFFD1D1)),
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: JassColors.danger,
-            size: 42,
-          ),
+          Icon(Icons.error_outline_rounded, color: JassColors.danger, size: 42),
           SizedBox(height: 10),
           Text(
             error,
@@ -893,8 +859,7 @@ class _DetalleSuministroClientePageState
         color: oscuro ? JassColors.darkCard : JassColors.card,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
-          color:
-              oscuro ? JassColors.darkBorder : JassColors.border,
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
         ),
       ),
       child: Column(
@@ -902,10 +867,7 @@ class _DetalleSuministroClientePageState
         children: [
           Row(
             children: [
-              Icon(
-                Icons.receipt_long_rounded,
-                color: JassColors.secondary,
-              ),
+              Icon(Icons.receipt_long_rounded, color: JassColors.secondary),
               SizedBox(width: 9),
               Expanded(
                 child: Text(
@@ -917,10 +879,7 @@ class _DetalleSuministroClientePageState
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: _irRecibos,
-                child: Text('Ver todos'),
-              ),
+              TextButton(onPressed: _irRecibos, child: Text('Ver todos')),
             ],
           ),
           SizedBox(height: 12),
@@ -932,9 +891,7 @@ class _DetalleSuministroClientePageState
                   'Este suministro no tiene recibos registrados.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: oscuro
-                        ? JassColors.darkMuted
-                        : JassColors.muted,
+                    color: oscuro ? JassColors.darkMuted : JassColors.muted,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -986,8 +943,7 @@ class _HeaderButton extends StatelessWidget {
         color: oscuro ? JassColors.darkCard : JassColors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color:
-              oscuro ? JassColors.darkBorder : JassColors.border,
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
         ),
         boxShadow: const [
           BoxShadow(
@@ -999,10 +955,7 @@ class _HeaderButton extends StatelessWidget {
       ),
       child: IconButton(
         onPressed: onPressed,
-        icon: Icon(
-          icon,
-          color: oscuro ? Colors.white : JassColors.primary,
-        ),
+        icon: Icon(icon, color: oscuro ? Colors.white : JassColors.primary),
       ),
     );
   }
@@ -1012,10 +965,7 @@ class _HeroInfo extends StatelessWidget {
   final String label;
   final String value;
 
-  const _HeroInfo({
-    required this.label,
-    required this.value,
-  });
+  const _HeroInfo({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1073,8 +1023,7 @@ class _ResumenCard extends StatelessWidget {
         color: oscuro ? JassColors.darkCard : JassColors.card,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color:
-              oscuro ? JassColors.darkBorder : JassColors.border,
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
         ),
       ),
       child: Column(
@@ -1102,8 +1051,7 @@ class _ResumenCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color:
-                  oscuro ? JassColors.darkMuted : JassColors.muted,
+              color: oscuro ? JassColors.darkMuted : JassColors.muted,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -1133,29 +1081,21 @@ class _DetalleInfo extends StatelessWidget {
       margin: const EdgeInsets.only(top: 9),
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: oscuro
-            ? const Color(0xFF162432)
-            : context.jassSurfaceAlt,
+        color: oscuro ? const Color(0xFF162432) : context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color:
-              oscuro ? JassColors.darkBorder : JassColors.border,
+          color: oscuro ? JassColors.darkBorder : JassColors.border,
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: JassColors.secondary,
-            size: 21,
-          ),
+          Icon(icon, color: JassColors.secondary, size: 21),
           SizedBox(width: 10),
           Expanded(
             child: Text(
               label,
               style: TextStyle(
-                color:
-                    oscuro ? JassColors.darkMuted : JassColors.muted,
+                color: oscuro ? JassColors.darkMuted : JassColors.muted,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -1205,13 +1145,10 @@ class _ReciboSuministroCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: oscuro
-              ? const Color(0xFF162432)
-              : context.jassSurfaceAlt,
+          color: oscuro ? const Color(0xFF162432) : context.jassSurfaceAlt,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color:
-                oscuro ? JassColors.darkBorder : JassColors.border,
+            color: oscuro ? JassColors.darkBorder : JassColors.border,
           ),
         ),
         child: Row(
@@ -1231,8 +1168,7 @@ class _ReciboSuministroCard extends StatelessWidget {
                   Text(
                     codigo,
                     style: TextStyle(
-                      color:
-                          oscuro ? Colors.white : JassColors.primary,
+                      color: oscuro ? Colors.white : JassColors.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                     ),
@@ -1241,9 +1177,7 @@ class _ReciboSuministroCard extends StatelessWidget {
                   Text(
                     '$periodo · ${consumo.toStringAsFixed(2)} m³',
                     style: TextStyle(
-                      color: oscuro
-                          ? JassColors.darkMuted
-                          : JassColors.muted,
+                      color: oscuro ? JassColors.darkMuted : JassColors.muted,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1257,8 +1191,7 @@ class _ReciboSuministroCard extends StatelessWidget {
                 Text(
                   'S/ ${total.toStringAsFixed(2)}',
                   style: TextStyle(
-                    color:
-                        oscuro ? Colors.white : JassColors.primary,
+                    color: oscuro ? Colors.white : JassColors.primary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -1276,9 +1209,7 @@ class _ReciboSuministroCard extends StatelessWidget {
 class _EstadoReciboBadge extends StatelessWidget {
   final String estado;
 
-  const _EstadoReciboBadge({
-    required this.estado,
-  });
+  const _EstadoReciboBadge({required this.estado});
 
   @override
   Widget build(BuildContext context) {
@@ -1299,10 +1230,7 @@ class _EstadoReciboBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: fondo,
         borderRadius: BorderRadius.circular(100),

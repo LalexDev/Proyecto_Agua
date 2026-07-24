@@ -44,8 +44,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final perfilData = await clientePortalService.obtenerMiPerfil();
-      final suministrosData =
-          await clientePortalService.listarMisSuministros();
+      final suministrosData = await clientePortalService.listarMisSuministros();
       final recibosData = await reciboService.listarMisRecibos();
 
       if (!mounted) return;
@@ -206,12 +205,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   double get deudaPendiente {
-    return recibos.where((recibo) {
-      final estado = _estado(recibo);
-      return estado == 'PENDIENTE' || estado == 'VENCIDO';
-    }).fold(0.0, (sum, recibo) {
-      return sum + _total(recibo);
-    });
+    return recibos
+        .where((recibo) {
+          final estado = _estado(recibo);
+          return estado == 'PENDIENTE' || estado == 'VENCIDO';
+        })
+        .fold(0.0, (sum, recibo) {
+          return sum + _total(recibo);
+        });
   }
 
   int get totalSuministros => suministros.length;
@@ -268,11 +269,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    Navigator.pushNamed(
-      context,
-      '/pago-cip',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/pago-cip', arguments: recibo);
   }
 
   void verUltimoRecibo() {
@@ -288,11 +285,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    Navigator.pushNamed(
-      context,
-      '/recibo-detalle',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/recibo-detalle', arguments: recibo);
   }
 
   // Barra inferior cliente:
@@ -334,9 +327,7 @@ class _HomePageState extends State<HomePage> {
                     decoration: BoxDecoration(
                       color: context.jassSurface,
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: context.jassBorder,
-                      ),
+                      border: Border.all(color: context.jassBorder),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x33000000),
@@ -507,10 +498,7 @@ class _HomePageState extends State<HomePage> {
             color: secondary,
             borderRadius: BorderRadius.circular(15),
           ),
-          child: Icon(
-            Icons.water_drop_rounded,
-            color: Colors.white,
-          ),
+          child: Icon(Icons.water_drop_rounded, color: Colors.white),
         ),
         SizedBox(width: 12),
         Expanded(
@@ -539,11 +527,7 @@ class _HomePageState extends State<HomePage> {
         ),
         IconButton(
           onPressed: irPerfil,
-          icon: Icon(
-            Icons.account_circle_outlined,
-            color: primary,
-            size: 30,
-          ),
+          icon: Icon(Icons.account_circle_outlined, color: primary, size: 30),
         ),
       ],
     );
@@ -563,10 +547,7 @@ class _HomePageState extends State<HomePage> {
           SizedBox(height: 14),
           Text(
             'Cargando información...',
-            style: TextStyle(
-              color: muted,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(color: muted, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -584,11 +565,7 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: Color(0xFFD93025),
-            size: 42,
-          ),
+          Icon(Icons.error_outline_rounded, color: Color(0xFFD93025), size: 42),
           SizedBox(height: 10),
           Text(
             error,
@@ -618,10 +595,7 @@ class _HomePageState extends State<HomePage> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [Color(0xFF0F3D57), Color(0xFF1DA1C2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -678,9 +652,7 @@ class _HomePageState extends State<HomePage> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.15),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -757,19 +729,12 @@ class _HomePageState extends State<HomePage> {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              color: secondary,
-              size: 32,
-            ),
+            Icon(Icons.receipt_long_outlined, color: secondary, size: 32),
             SizedBox(width: 12),
             Expanded(
               child: Text(
                 'Aún no tienes recibos registrados.',
-                style: TextStyle(
-                  color: primary,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: TextStyle(color: primary, fontWeight: FontWeight.w900),
               ),
             ),
           ],
@@ -806,10 +771,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 CircleAvatar(
                   backgroundColor: context.jassSelectedSurface,
-                  child: Icon(
-                    Icons.receipt_long_rounded,
-                    color: secondary,
-                  ),
+                  child: Icon(Icons.receipt_long_rounded, color: secondary),
                 ),
                 SizedBox(width: 12),
                 Expanded(
@@ -923,11 +885,7 @@ class _StatBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: secondary,
-            size: 30,
-          ),
+          Icon(icon, color: secondary, size: 30),
           SizedBox(height: 18),
           Text(
             label,
@@ -967,10 +925,7 @@ class _SmallInfo extends StatelessWidget {
   final String label;
   final String value;
 
-  const _SmallInfo({
-    required this.label,
-    required this.value,
-  });
+  const _SmallInfo({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1015,9 +970,7 @@ class _SmallInfo extends StatelessWidget {
 class _EstadoMiniBadge extends StatelessWidget {
   final String estado;
 
-  const _EstadoMiniBadge({
-    required this.estado,
-  });
+  const _EstadoMiniBadge({required this.estado});
 
   @override
   Widget build(BuildContext context) {
@@ -1086,11 +1039,7 @@ class _QuickAction extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: secondary,
-              size: 28,
-            ),
+            Icon(icon, color: secondary, size: 28),
             SizedBox(height: 8),
             Flexible(
               child: Text(

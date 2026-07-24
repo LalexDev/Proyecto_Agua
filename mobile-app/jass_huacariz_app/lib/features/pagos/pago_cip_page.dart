@@ -107,9 +107,11 @@ class _PagoCipPageState extends State<PagoCipPage> {
   }
 
   String _periodo() {
-    final anio = int.tryParse('${recibo['anio'] ?? DateTime.now().year}') ??
+    final anio =
+        int.tryParse('${recibo['anio'] ?? DateTime.now().year}') ??
         DateTime.now().year;
-    final mes = int.tryParse('${recibo['mes'] ?? DateTime.now().month}') ??
+    final mes =
+        int.tryParse('${recibo['mes'] ?? DateTime.now().month}') ??
         DateTime.now().month;
 
     const meses = [
@@ -138,9 +140,7 @@ class _PagoCipPageState extends State<PagoCipPage> {
   List<Map<String, dynamic>> get canalesVisibles {
     final filtrados = canales.where((canal) {
       final metodo = _txt(canal['metodoPago'], '').toUpperCase();
-      return metodo == 'YAPE' ||
-          metodo == 'PLIN' ||
-          metodo == 'TRANSFERENCIA';
+      return metodo == 'YAPE' || metodo == 'PLIN' || metodo == 'TRANSFERENCIA';
     }).toList();
 
     if (filtrados.isNotEmpty) return filtrados;
@@ -161,7 +161,8 @@ class _PagoCipPageState extends State<PagoCipPage> {
       {
         'metodoPago': 'TRANSFERENCIA',
         'titular': 'Agua Potable Huacariz',
-        'descripcion': 'Los datos bancarios serán configurados por administración.',
+        'descripcion':
+            'Los datos bancarios serán configurados por administración.',
         'estado': true,
       },
     ];
@@ -194,8 +195,10 @@ class _PagoCipPageState extends State<PagoCipPage> {
         if (!disponibles.any(
           (item) => _txt(item['metodoPago'], '').toUpperCase() == metodoPago,
         )) {
-          metodoPago = _txt(disponibles.first['metodoPago'], 'YAPE')
-              .toUpperCase();
+          metodoPago = _txt(
+            disponibles.first['metodoPago'],
+            'YAPE',
+          ).toUpperCase();
         }
       });
     } catch (_) {
@@ -408,7 +411,10 @@ class _PagoCipPageState extends State<PagoCipPage> {
           ),
           child: IconButton(
             onPressed: () => Navigator.maybePop(context),
-            icon: Icon(Icons.arrow_back_rounded, color: context.jassTextPrimary),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: context.jassTextPrimary,
+            ),
           ),
         ),
         const SizedBox(width: 14),

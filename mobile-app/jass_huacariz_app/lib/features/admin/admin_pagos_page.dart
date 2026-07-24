@@ -174,7 +174,8 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
     if (query.isEmpty) return pagos;
 
     return pagos.where((pago) {
-      final texto = '''
+      final texto =
+          '''
       ${_codigoRecibo(pago)}
       ${_codigoOperacion(pago)}
       ${_metodoPago(pago)}
@@ -183,7 +184,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
       ${_fecha(pago)}
       ${_monto(pago)}
       '''
-          .toLowerCase();
+              .toLowerCase();
 
       return texto.contains(query);
     }).toList();
@@ -253,10 +254,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
         currentIndex: -1,
         onTap: _go,
         onPlus: () {
-          showAdminQuickMenu(
-            context: context,
-            onRefresh: cargarPagos,
-          );
+          showAdminQuickMenu(context: context, onRefresh: cargarPagos);
         },
       ),
       body: SafeArea(
@@ -278,10 +276,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
                     ),
                   ),
                 if (error.isNotEmpty && !cargando)
-                  _ErrorBox(
-                    error: error,
-                    onRetry: cargarPagos,
-                  ),
+                  _ErrorBox(error: error, onRetry: cargarPagos),
                 if (!cargando && error.isEmpty) ...[
                   _buildStats(),
                   SizedBox(height: 18),
@@ -354,10 +349,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
         ),
         IconButton(
           onPressed: cargarPagos,
-          icon: Icon(
-            Icons.refresh_rounded,
-            color: context.jassTextPrimary,
-          ),
+          icon: Icon(Icons.refresh_rounded, color: context.jassTextPrimary),
         ),
       ],
     );
@@ -502,10 +494,7 @@ class _AdminPagosPageState extends State<AdminPagosPage> {
               side: BorderSide(color: context.jassBorder),
             ),
           ),
-          child: Text(
-            'Limpiar',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
+          child: Text('Limpiar', style: TextStyle(fontWeight: FontWeight.w900)),
         ),
       ],
     );
@@ -593,10 +582,8 @@ class _StatCard extends StatelessWidget {
     final sub = selected ? Color(0xFFE7F8FF) : context.jassTextMuted;
 
     return Container(
-  constraints: BoxConstraints(
-    minHeight: 118,
-  ),
-  padding: EdgeInsets.all(15),
+      constraints: BoxConstraints(minHeight: 118),
+      padding: EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(22),
@@ -736,10 +723,7 @@ class _PagoCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: context.jassSelectedSurface,
-                child: Icon(
-                  Icons.receipt_long_rounded,
-                  color: secondary,
-                ),
+                child: Icon(Icons.receipt_long_rounded, color: secondary),
               ),
               SizedBox(width: 12),
               Expanded(
@@ -778,10 +762,7 @@ class _Line extends StatelessWidget {
   final String label;
   final String value;
 
-  _Line({
-    required this.label,
-    required this.value,
-  });
+  _Line({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -818,10 +799,7 @@ class _ErrorBox extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  _ErrorBox({
-    required this.error,
-    required this.onRetry,
-  });
+  _ErrorBox({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -842,10 +820,7 @@ class _ErrorBox extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          TextButton(
-            onPressed: onRetry,
-            child: Text('Reintentar'),
-          ),
+          TextButton(onPressed: onRetry, child: Text('Reintentar')),
         ],
       ),
     );

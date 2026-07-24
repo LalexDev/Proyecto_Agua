@@ -6,12 +6,9 @@ class SecureStorageService {
   static const String _tokenKey = 'token';
   static const String _roleKey = 'rol';
   static const String _userKey = 'codigoUsuario';
-  static const String _lastOnlineLoginKey =
-      'ultimoLoginOnline';
-  static const String _offlineLectorEnabledKey =
-      'offlineLectorHabilitado';
-  static const String _offlineModeKey =
-      'modoOfflineActivo';
+  static const String _lastOnlineLoginKey = 'ultimoLoginOnline';
+  static const String _offlineLectorEnabledKey = 'offlineLectorHabilitado';
+  static const String _offlineModeKey = 'modoOfflineActivo';
 
   String normalizarRol(String? rol) {
     return (rol ?? '').trim().toUpperCase();
@@ -20,8 +17,7 @@ class SecureStorageService {
   bool esRolAdmin(String? rol) {
     final normalizado = normalizarRol(rol);
 
-    return normalizado == 'ADMIN' ||
-        normalizado == 'ROLE_ADMIN';
+    return normalizado == 'ADMIN' || normalizado == 'ROLE_ADMIN';
   }
 
   bool esRolLecturador(String? rol) {
@@ -38,10 +34,7 @@ class SecureStorageService {
   }
 
   Future<void> saveToken(String token) async {
-    await _storage.write(
-      key: _tokenKey,
-      value: token,
-    );
+    await _storage.write(key: _tokenKey, value: token);
   }
 
   Future<String?> getToken() async {
@@ -49,23 +42,15 @@ class SecureStorageService {
   }
 
   Future<void> saveUserRole(String rol) async {
-    await _storage.write(
-      key: _roleKey,
-      value: normalizarRol(rol),
-    );
+    await _storage.write(key: _roleKey, value: normalizarRol(rol));
   }
 
   Future<String?> getUserRole() async {
     return _storage.read(key: _roleKey);
   }
 
-  Future<void> saveUserName(
-    String codigoUsuario,
-  ) async {
-    await _storage.write(
-      key: _userKey,
-      value: codigoUsuario.trim(),
-    );
+  Future<void> saveUserName(String codigoUsuario) async {
+    await _storage.write(key: _userKey, value: codigoUsuario.trim());
   }
 
   Future<String?> getUserName() async {
@@ -98,21 +83,14 @@ class SecureStorageService {
       ),
       _storage.write(
         key: _offlineLectorEnabledKey,
-        value: esRolLecturador(rolNormalizado)
-            ? 'true'
-            : 'false',
+        value: esRolLecturador(rolNormalizado) ? 'true' : 'false',
       ),
-      _storage.write(
-        key: _offlineModeKey,
-        value: 'false',
-      ),
+      _storage.write(key: _offlineModeKey, value: 'false'),
     ]);
   }
 
   Future<DateTime?> getLastOnlineLogin() async {
-    final value = await _storage.read(
-      key: _lastOnlineLoginKey,
-    );
+    final value = await _storage.read(key: _lastOnlineLoginKey);
 
     if (value == null || value.isEmpty) {
       return null;
@@ -125,9 +103,7 @@ class SecureStorageService {
     final token = await getToken();
     final rol = await getUserRole();
     final usuario = await getUserName();
-    final enabled = await _storage.read(
-      key: _offlineLectorEnabledKey,
-    );
+    final enabled = await _storage.read(key: _offlineLectorEnabledKey);
 
     return token != null &&
         token.isNotEmpty &&
@@ -145,23 +121,15 @@ class SecureStorageService {
       );
     }
 
-    await _storage.write(
-      key: _offlineModeKey,
-      value: 'true',
-    );
+    await _storage.write(key: _offlineModeKey, value: 'true');
   }
 
   Future<void> deactivateOfflineMode() async {
-    await _storage.write(
-      key: _offlineModeKey,
-      value: 'false',
-    );
+    await _storage.write(key: _offlineModeKey, value: 'false');
   }
 
   Future<bool> isOfflineMode() async {
-    final value = await _storage.read(
-      key: _offlineModeKey,
-    );
+    final value = await _storage.read(key: _offlineModeKey);
 
     return value == 'true';
   }
@@ -176,17 +144,13 @@ class SecureStorageService {
     final token = await getToken();
     final rol = await getUserRole();
 
-    return token != null &&
-        token.isNotEmpty &&
-        esRolPermitido(rol);
+    return token != null && token.isNotEmpty && esRolPermitido(rol);
   }
 
   Future<void> clearUnsupportedSession() async {
     final rol = await getUserRole();
 
-    if (rol != null &&
-        rol.trim().isNotEmpty &&
-        !esRolPermitido(rol)) {
+    if (rol != null && rol.trim().isNotEmpty && !esRolPermitido(rol)) {
       await clearSession();
     }
   }

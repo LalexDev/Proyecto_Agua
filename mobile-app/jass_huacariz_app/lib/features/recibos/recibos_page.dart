@@ -168,12 +168,14 @@ class _RecibosPageState extends State<RecibosPage> {
   }
 
   double get deudaPendiente {
-    return recibos.where((recibo) {
-      final estado = _estado(recibo).toUpperCase();
-      return estado == 'PENDIENTE' || estado == 'VENCIDO';
-    }).fold(0.0, (sum, recibo) {
-      return sum + _total(recibo);
-    });
+    return recibos
+        .where((recibo) {
+          final estado = _estado(recibo).toUpperCase();
+          return estado == 'PENDIENTE' || estado == 'VENCIDO';
+        })
+        .fold(0.0, (sum, recibo) {
+          return sum + _total(recibo);
+        });
   }
 
   int _id(Map<String, dynamic> recibo) {
@@ -265,10 +267,7 @@ class _RecibosPageState extends State<RecibosPage> {
   }
 
   String _vencimiento(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['fechaVencimiento'] ?? recibo['vencimiento'],
-      '-',
-    );
+    return _texto(recibo['fechaVencimiento'] ?? recibo['vencimiento'], '-');
   }
 
   bool _puedePagar(Map<String, dynamic> recibo) {
@@ -277,19 +276,11 @@ class _RecibosPageState extends State<RecibosPage> {
   }
 
   void _verDetalle(Map<String, dynamic> recibo) {
-    Navigator.pushNamed(
-      context,
-      '/recibo-detalle',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/recibo-detalle', arguments: recibo);
   }
 
   void _pagar(Map<String, dynamic> recibo) {
-    Navigator.pushNamed(
-      context,
-      '/pago-cip',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/pago-cip', arguments: recibo);
   }
 
   void _irHome() {
@@ -366,9 +357,7 @@ class _RecibosPageState extends State<RecibosPage> {
                     decoration: BoxDecoration(
                       color: context.jassSurface,
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: context.jassBorder,
-                      ),
+                      border: Border.all(color: context.jassBorder),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x33000000),
@@ -532,10 +521,7 @@ class _RecibosPageState extends State<RecibosPage> {
           ),
           child: IconButton(
             onPressed: _volver,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.arrow_back_rounded, color: primary),
           ),
         ),
         SizedBox(width: 12),
@@ -579,10 +565,7 @@ class _RecibosPageState extends State<RecibosPage> {
           ),
           child: IconButton(
             onPressed: cargarRecibos,
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.refresh_rounded, color: primary),
           ),
         ),
       ],
@@ -595,10 +578,7 @@ class _RecibosPageState extends State<RecibosPage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [Color(0xFF0F3D57), Color(0xFF1DA1C2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -735,10 +715,7 @@ class _RecibosPageState extends State<RecibosPage> {
           SizedBox(height: 14),
           Text(
             'Cargando recibos...',
-            style: TextStyle(
-              color: muted,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(color: muted, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -756,11 +733,7 @@ class _RecibosPageState extends State<RecibosPage> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: Color(0xFFD93025),
-            size: 40,
-          ),
+          Icon(Icons.error_outline_rounded, color: Color(0xFFD93025), size: 40),
           SizedBox(height: 10),
           Text(
             error,
@@ -795,11 +768,7 @@ class _RecibosPageState extends State<RecibosPage> {
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              color: secondary,
-              size: 54,
-            ),
+            Icon(Icons.receipt_long_outlined, color: secondary, size: 54),
             SizedBox(height: 12),
             Text(
               'No hay recibos para mostrar',
@@ -1043,10 +1012,7 @@ class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoLine({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoLine({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -1080,10 +1046,7 @@ class _MiniBox extends StatelessWidget {
   final String label;
   final String value;
 
-  const _MiniBox({
-    required this.label,
-    required this.value,
-  });
+  const _MiniBox({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1126,9 +1089,7 @@ class _MiniBox extends StatelessWidget {
 class _EstadoBadge extends StatelessWidget {
   final String estado;
 
-  const _EstadoBadge({
-    required this.estado,
-  });
+  const _EstadoBadge({required this.estado});
 
   @override
   Widget build(BuildContext context) {

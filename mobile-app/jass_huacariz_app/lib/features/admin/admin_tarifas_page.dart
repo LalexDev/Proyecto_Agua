@@ -76,10 +76,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
     if (value == null) return null;
 
     final text = value.toString().trim().toLowerCase();
-    if (text.isEmpty ||
-        text == 'null' ||
-        text == '∞' ||
-        text == 'infinity') {
+    if (text.isEmpty || text == 'null' || text == '∞' || text == 'infinity') {
       return null;
     }
 
@@ -87,9 +84,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
   }
 
   double _precio(Map<String, dynamic> tarifa) {
-    return _num(
-      tarifa['precioM3'] ?? tarifa['precio'] ?? tarifa['monto'],
-    );
+    return _num(tarifa['precioM3'] ?? tarifa['precio'] ?? tarifa['monto']);
   }
 
   bool _activo(Map<String, dynamic> tarifa) {
@@ -110,10 +105,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
   }
 
   String _nombre(Map<String, dynamic> tarifa) {
-    final value = _txt(
-      tarifa['nombreTarifa'] ?? tarifa['nombre'],
-      '',
-    );
+    final value = _txt(tarifa['nombreTarifa'] ?? tarifa['nombre'], '');
 
     if (value.isNotEmpty) return value;
 
@@ -156,10 +148,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
     final fuente = activas.isNotEmpty ? activas : tarifas;
     if (fuente.isEmpty) return 0;
 
-    return fuente.fold<double>(
-          0,
-          (total, tarifa) => total + _precio(tarifa),
-        ) /
+    return fuente.fold<double>(0, (total, tarifa) => total + _precio(tarifa)) /
         fuente.length;
   }
 
@@ -179,12 +168,10 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
 
     try {
       final tarifasResponse = await tarifaService.listarTarifas();
-      final configuracionResponse =
-          await tarifaService.obtenerConfiguracionCobranza();
+      final configuracionResponse = await tarifaService
+          .obtenerConfiguracionCobranza();
 
-      tarifasResponse.sort(
-        (a, b) => _desde(a).compareTo(_desde(b)),
-      );
+      tarifasResponse.sort((a, b) => _desde(a).compareTo(_desde(b)));
 
       if (!mounted) return;
 
@@ -206,29 +193,33 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
   }
 
   void _llenarConfiguracion() {
-    cargoLectorController.text =
-        _configNum('cargoLector', 3).toStringAsFixed(2);
-    cargoMantenimientoController.text =
-        _configNum('cargoMantenimiento', 3).toStringAsFixed(2);
-    cargoOtrosController.text =
-        _configNum('cargoOtros', 0.25).toStringAsFixed(2);
-    diasVencimientoController.text =
-        _configInt('diasVencimiento', 15).toString();
-    moraBaseController.text =
-        _configNum('moraBase', 2).toStringAsFixed(2);
+    cargoLectorController.text = _configNum(
+      'cargoLector',
+      3,
+    ).toStringAsFixed(2);
+    cargoMantenimientoController.text = _configNum(
+      'cargoMantenimiento',
+      3,
+    ).toStringAsFixed(2);
+    cargoOtrosController.text = _configNum(
+      'cargoOtros',
+      0.25,
+    ).toStringAsFixed(2);
+    diasVencimientoController.text = _configInt(
+      'diasVencimiento',
+      15,
+    ).toString();
+    moraBaseController.text = _configNum('moraBase', 2).toStringAsFixed(2);
   }
 
   Future<void> guardarConfiguracion() async {
-    final cargoLector =
-        double.tryParse(cargoLectorController.text.trim());
-    final cargoMantenimiento =
-        double.tryParse(cargoMantenimientoController.text.trim());
-    final cargoOtros =
-        double.tryParse(cargoOtrosController.text.trim());
-    final diasVencimiento =
-        int.tryParse(diasVencimientoController.text.trim());
-    final moraBase =
-        double.tryParse(moraBaseController.text.trim());
+    final cargoLector = double.tryParse(cargoLectorController.text.trim());
+    final cargoMantenimiento = double.tryParse(
+      cargoMantenimientoController.text.trim(),
+    );
+    final cargoOtros = double.tryParse(cargoOtrosController.text.trim());
+    final diasVencimiento = int.tryParse(diasVencimientoController.text.trim());
+    final moraBase = double.tryParse(moraBaseController.text.trim());
 
     if (cargoLector == null ||
         cargoMantenimiento == null ||
@@ -248,18 +239,14 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
     }
 
     if (diasVencimiento <= 0) {
-      _mensaje(
-        'Los días de vencimiento deben ser mayores a cero.',
-        true,
-      );
+      _mensaje('Los días de vencimiento deben ser mayores a cero.', true);
       return;
     }
 
     setState(() => guardandoConfiguracion = true);
 
     try {
-      final response =
-          await tarifaService.actualizarConfiguracionCobranza(
+      final response = await tarifaService.actualizarConfiguracionCobranza(
         cargoLector: cargoLector,
         cargoMantenimiento: cargoMantenimiento,
         cargoOtros: cargoOtros,
@@ -280,10 +267,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
       if (!mounted) return;
 
       setState(() => guardandoConfiguracion = false);
-      _mensaje(
-        e.toString().replaceFirst('Exception: ', ''),
-        true,
-      );
+      _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
     }
   }
 
@@ -299,10 +283,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
     final id = _id(tarifa);
     if (id <= 0) throw Exception('No se encontró el ID de la tarifa.');
 
-    await tarifaService.actualizarTarifa(
-      idTarifa: id,
-      data: payload,
-    );
+    await tarifaService.actualizarTarifa(idTarifa: id, data: payload);
   }
 
   void _abrirFormulario({Map<String, dynamic>? tarifa}) {
@@ -336,14 +317,12 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
           builder: (sheetContext, setSheetState) {
             Future<void> guardar() async {
               final nombre = nombreController.text.trim();
-              final desde =
-                  double.tryParse(desdeController.text.trim());
+              final desde = double.tryParse(desdeController.text.trim());
               final hastaTexto = hastaController.text.trim();
               final hasta = hastaTexto.isEmpty
                   ? null
                   : double.tryParse(hastaTexto);
-              final precio =
-                  double.tryParse(precioController.text.trim());
+              final precio = double.tryParse(precioController.text.trim());
 
               if (nombre.isEmpty) {
                 _mensaje('Ingresa el nombre de la tarifa.', true);
@@ -361,10 +340,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
               }
 
               if (hasta != null && hasta <= desde) {
-                _mensaje(
-                  'El consumo final debe ser mayor al inicial.',
-                  true,
-                );
+                _mensaje('El consumo final debe ser mayor al inicial.', true);
                 return;
               }
 
@@ -403,10 +379,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
                 if (!mounted) return;
 
                 setSheetState(() => guardando = false);
-                _mensaje(
-                  e.toString().replaceFirst('Exception: ', ''),
-                  true,
-                );
+                _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
               }
             }
 
@@ -415,8 +388,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
                 left: 22,
                 right: 22,
                 top: 22,
-                bottom:
-                    MediaQuery.of(sheetContext).viewInsets.bottom + 22,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 22,
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -448,20 +420,23 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
                     _Field(
                       controller: desdeController,
                       label: 'Consumo desde m³',
-                      keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
                     _Field(
                       controller: hastaController,
                       label: 'Consumo hasta m³ (vacío si no tiene límite)',
-                      keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
                     _Field(
                       controller: precioController,
                       label: 'Precio por m³ S/',
-                      keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
                     Row(
                       children: [
@@ -671,8 +646,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -688,10 +662,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
   }
 
   void _abrirMenu() {
-    showAdminQuickMenu(
-      context: context,
-      onRefresh: cargarTodo,
-    ).then((_) {
+    showAdminQuickMenu(context: context, onRefresh: cargarTodo).then((_) {
       if (mounted) setState(() {});
     });
   }
@@ -903,9 +874,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: guardandoConfiguracion
-                  ? null
-                  : guardarConfiguracion,
+              onPressed: guardandoConfiguracion ? null : guardarConfiguracion,
               icon: guardandoConfiguracion
                   ? SizedBox(
                       width: 18,
@@ -943,8 +912,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
             children: [
               _MiniCard(
                 label: 'Cargo lector',
-                value:
-                    'S/ ${_configNum('cargoLector', 3).toStringAsFixed(2)}',
+                value: 'S/ ${_configNum('cargoLector', 3).toStringAsFixed(2)}',
               ),
               _MiniCard(
                 label: 'Mantenimiento',
@@ -958,13 +926,11 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
               ),
               _MiniCard(
                 label: 'Vencimiento',
-                value:
-                    '${_configInt('diasVencimiento', 15)} días',
+                value: '${_configInt('diasVencimiento', 15)} días',
               ),
               _MiniCard(
                 label: 'Mora base',
-                value:
-                    'S/ ${_configNum('moraBase', 2).toStringAsFixed(2)}',
+                value: 'S/ ${_configNum('moraBase', 2).toStringAsFixed(2)}',
               ),
             ],
           ),
@@ -1004,8 +970,7 @@ class _AdminTarifasPageState extends State<AdminTarifasPage> {
                 range: _rango(tarifa),
                 price: _precio(tarifa),
                 active: _activo(tarifa),
-                progress: (_precio(tarifa) / precioMaximo)
-                    .clamp(0.0, 1.0),
+                progress: (_precio(tarifa) / precioMaximo).clamp(0.0, 1.0),
               ),
             ),
         ],
@@ -1125,8 +1090,7 @@ class _IconButtonBox extends StatelessWidget {
         color: primary ? JassColors.secondary : context.jassSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color:
-              primary ? JassColors.secondary : context.jassBorder,
+          color: primary ? JassColors.secondary : context.jassBorder,
         ),
       ),
       child: IconButton(
@@ -1233,8 +1197,7 @@ class _Field extends StatelessWidget {
     required this.controller,
     required this.label,
     this.icon,
-    this.keyboardType =
-        const TextInputType.numberWithOptions(decimal: true),
+    this.keyboardType = const TextInputType.numberWithOptions(decimal: true),
   });
 
   @override
@@ -1266,10 +1229,7 @@ class _Field extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(
-              color: JassColors.secondary,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: JassColors.secondary, width: 1.5),
           ),
         ),
       ),
@@ -1325,10 +1285,7 @@ class _MiniCard extends StatelessWidget {
   final String label;
   final String value;
 
-  const _MiniCard({
-    required this.label,
-    required this.value,
-  });
+  const _MiniCard({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1433,8 +1390,7 @@ class _RangeBar extends StatelessWidget {
               Text(
                 active ? 'Activa' : 'Inactiva',
                 style: TextStyle(
-                  color:
-                      active ? JassColors.success : JassColors.danger,
+                  color: active ? JassColors.success : JassColors.danger,
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1536,10 +1492,7 @@ class _TariffCard extends StatelessWidget {
                 label: 'Hasta',
                 value: to == null ? 'A más' : '${_value(to!)} m³',
               ),
-              _Data(
-                label: 'Precio',
-                value: 'S/ ${price.toStringAsFixed(2)}',
-              ),
+              _Data(label: 'Precio', value: 'S/ ${price.toStringAsFixed(2)}'),
             ],
           ),
           SizedBox(height: 14),
@@ -1615,10 +1568,7 @@ class _Data extends StatelessWidget {
   final String label;
   final String value;
 
-  const _Data({
-    required this.label,
-    required this.value,
-  });
+  const _Data({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1645,10 +1595,7 @@ class _ErrorCard extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  const _ErrorCard({
-    required this.error,
-    required this.onRetry,
-  });
+  const _ErrorCard({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -1662,11 +1609,7 @@ class _ErrorCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: JassColors.danger,
-            size: 40,
-          ),
+          Icon(Icons.error_outline_rounded, color: JassColors.danger, size: 40),
           SizedBox(height: 10),
           Text(
             error,

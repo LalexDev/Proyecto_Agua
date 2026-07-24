@@ -9,8 +9,7 @@ extension JassThemeContext on BuildContext {
   Color get jassBackground =>
       isDarkMode ? JassColors.darkBackground : JassColors.background;
 
-  Color get jassSurface =>
-      isDarkMode ? JassColors.darkCard : JassColors.card;
+  Color get jassSurface => isDarkMode ? JassColors.darkCard : JassColors.card;
 
   Color get jassSurfaceAlt =>
       isDarkMode ? const Color(0xFF162432) : const Color(0xFFF8FBFD);
@@ -18,8 +17,7 @@ extension JassThemeContext on BuildContext {
   Color get jassBorder =>
       isDarkMode ? JassColors.darkBorder : JassColors.border;
 
-  Color get jassTextPrimary =>
-      isDarkMode ? Colors.white : JassColors.primary;
+  Color get jassTextPrimary => isDarkMode ? Colors.white : JassColors.primary;
 
   Color get jassTextMuted =>
       isDarkMode ? JassColors.darkMuted : JassColors.muted;

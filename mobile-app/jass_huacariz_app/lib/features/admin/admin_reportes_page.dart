@@ -77,7 +77,11 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
 
   double _montoPago(Map<String, dynamic> pago) {
     return _num(
-      pago['monto'] ?? pago['total'] ?? pago['importe'] ?? pago['montoPago'] ?? 0,
+      pago['monto'] ??
+          pago['total'] ??
+          pago['importe'] ??
+          pago['montoPago'] ??
+          0,
     );
   }
 
@@ -173,20 +177,24 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
   }
 
   double get deudaPendiente {
-    return recibos.where((recibo) {
-      final estado = _estadoRecibo(recibo);
-      return estado == 'PENDIENTE' || estado == 'VENCIDO';
-    }).fold(0.0, (sum, recibo) {
-      return sum + _totalRecibo(recibo);
-    });
+    return recibos
+        .where((recibo) {
+          final estado = _estadoRecibo(recibo);
+          return estado == 'PENDIENTE' || estado == 'VENCIDO';
+        })
+        .fold(0.0, (sum, recibo) {
+          return sum + _totalRecibo(recibo);
+        });
   }
 
   double get carteraVencida {
-    return recibos.where((recibo) {
-      return _estadoRecibo(recibo) == 'VENCIDO';
-    }).fold(0.0, (sum, recibo) {
-      return sum + _totalRecibo(recibo);
-    });
+    return recibos
+        .where((recibo) {
+          return _estadoRecibo(recibo) == 'VENCIDO';
+        })
+        .fold(0.0, (sum, recibo) {
+          return sum + _totalRecibo(recibo);
+        });
   }
 
   double get recaudacionTotal {
@@ -198,15 +206,19 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
   double get recaudacionMes {
     final now = DateTime.now();
 
-    return pagos.where((pago) {
-      final fecha = _fecha(pago['fechaPago'] ?? pago['fecha'] ?? pago['createdAt']);
+    return pagos
+        .where((pago) {
+          final fecha = _fecha(
+            pago['fechaPago'] ?? pago['fecha'] ?? pago['createdAt'],
+          );
 
-      if (fecha == null) return false;
+          if (fecha == null) return false;
 
-      return fecha.year == now.year && fecha.month == now.month;
-    }).fold(0.0, (sum, pago) {
-      return sum + _montoPago(pago);
-    });
+          return fecha.year == now.year && fecha.month == now.month;
+        })
+        .fold(0.0, (sum, pago) {
+          return sum + _montoPago(pago);
+        });
   }
 
   double get consumoTotalM3 {
@@ -218,14 +230,16 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
   double get consumoMesM3 {
     final now = DateTime.now();
 
-    return recibos.where((recibo) {
-      final anio = int.tryParse('${recibo['anio'] ?? 0}') ?? 0;
-      final mes = int.tryParse('${recibo['mes'] ?? 0}') ?? 0;
+    return recibos
+        .where((recibo) {
+          final anio = int.tryParse('${recibo['anio'] ?? 0}') ?? 0;
+          final mes = int.tryParse('${recibo['mes'] ?? 0}') ?? 0;
 
-      return anio == now.year && mes == now.month;
-    }).fold(0.0, (sum, recibo) {
-      return sum + _consumoRecibo(recibo);
-    });
+          return anio == now.year && mes == now.month;
+        })
+        .fold(0.0, (sum, recibo) {
+          return sum + _consumoRecibo(recibo);
+        });
   }
 
   int get lecturasRegistradas {
@@ -255,12 +269,8 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
     }
   }
 
-
   void _abrirMenuAdmin() {
-    showAdminQuickMenu(
-      context: context,
-      onRefresh: cargarReportes,
-    );
+    showAdminQuickMenu(context: context, onRefresh: cargarReportes);
   }
 
   @override
@@ -292,10 +302,7 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
                     ),
                   ),
                 if (error.isNotEmpty && !cargando)
-                  _Error(
-                    error: error,
-                    onRetry: cargarReportes,
-                  ),
+                  _Error(error: error, onRetry: cargarReportes),
                 if (!cargando && error.isEmpty) ...[
                   _buildResumenPrincipal(),
                   SizedBox(height: 18),
@@ -341,10 +348,7 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
         ),
         IconButton(
           onPressed: cargarReportes,
-          icon: Icon(
-            Icons.refresh_rounded,
-            color: context.jassTextPrimary,
-          ),
+          icon: Icon(Icons.refresh_rounded, color: context.jassTextPrimary),
         ),
       ],
     );
@@ -356,10 +360,7 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
       padding: EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            context.jassTextPrimary,
-            JassColors.secondary,
-          ],
+          colors: [context.jassTextPrimary, JassColors.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -454,9 +455,7 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -508,9 +507,7 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -532,10 +529,7 @@ class _AdminReportesPageState extends State<AdminReportesPage> {
             label: 'Consumo del mes',
             value: '${consumoMesM3.toStringAsFixed(0)} m³',
           ),
-          _SimpleLine(
-            label: 'Pagos registrados',
-            value: '${pagos.length}',
-          ),
+          _SimpleLine(label: 'Pagos registrados', value: '${pagos.length}'),
           _SimpleLine(
             label: 'Recaudación del mes',
             value: 'S/ ${recaudacionMes.toStringAsFixed(2)}',
@@ -567,18 +561,12 @@ class _ReportCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: secondary,
-            size: 30,
-          ),
+          Icon(icon, color: secondary, size: 30),
           Spacer(),
           Text(
             value,
@@ -675,23 +663,14 @@ class _SimpleLine extends StatelessWidget {
   final String label;
   final String value;
 
-  _SimpleLine({
-    required this.label,
-    required this.value,
-  });
+  _SimpleLine({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: 10,
-      ),
+      padding: EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: context.jassBorder,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: context.jassBorder)),
       ),
       child: Row(
         children: [
@@ -721,10 +700,7 @@ class _Error extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  _Error({
-    required this.error,
-    required this.onRetry,
-  });
+  _Error({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -745,10 +721,7 @@ class _Error extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          TextButton(
-            onPressed: onRetry,
-            child: Text('Reintentar'),
-          ),
+          TextButton(onPressed: onRetry, child: Text('Reintentar')),
         ],
       ),
     );

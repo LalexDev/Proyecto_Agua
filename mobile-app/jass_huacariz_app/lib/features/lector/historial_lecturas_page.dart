@@ -10,14 +10,10 @@ import '../../shared/widgets/lector_bottom_nav.dart';
 class HistorialLecturasPage extends StatefulWidget {
   final bool modoAdmin;
 
-  const HistorialLecturasPage({
-    super.key,
-    this.modoAdmin = false,
-  });
+  const HistorialLecturasPage({super.key, this.modoAdmin = false});
 
   @override
-  State<HistorialLecturasPage> createState() =>
-      _HistorialLecturasPageState();
+  State<HistorialLecturasPage> createState() => _HistorialLecturasPageState();
 }
 
 class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
@@ -111,9 +107,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
 
   double _consumo(Map<String, dynamic> lectura) {
     final consumo = _num(
-      lectura['consumoM3'] ??
-          lectura['consumo'] ??
-          lectura['consumoMes'],
+      lectura['consumoM3'] ?? lectura['consumo'] ?? lectura['consumoMes'],
     );
 
     if (consumo > 0) return consumo;
@@ -124,14 +118,12 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
   }
 
   String _periodo(Map<String, dynamic> lectura) {
-    final anio = int.tryParse(
-          '${lectura['anio'] ?? DateTime.now().year}',
-        ) ??
+    final anio =
+        int.tryParse('${lectura['anio'] ?? DateTime.now().year}') ??
         DateTime.now().year;
 
-    final mes = int.tryParse(
-          '${lectura['mes'] ?? DateTime.now().month}',
-        ) ??
+    final mes =
+        int.tryParse('${lectura['mes'] ?? DateTime.now().month}') ??
         DateTime.now().month;
 
     const meses = [
@@ -170,14 +162,15 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
     if (query.isEmpty) return lecturas;
 
     return lecturas.where((lectura) {
-      final texto = '''
+      final texto =
+          '''
       ${_codigoSuministro(lectura)}
       ${_cliente(lectura)}
       ${_direccion(lectura)}
       ${_periodo(lectura)}
       ${_fecha(lectura)}
       '''
-          .toLowerCase();
+              .toLowerCase();
 
       return texto.contains(query);
     }).toList();
@@ -207,11 +200,13 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
     }
 
     combinadas.sort((a, b) {
-      final fechaA = DateTime.tryParse(
+      final fechaA =
+          DateTime.tryParse(
             '${a['fechaRegistro'] ?? a['fechaLectura'] ?? ''}',
           ) ??
           DateTime(2000);
-      final fechaB = DateTime.tryParse(
+      final fechaB =
+          DateTime.tryParse(
             '${b['fechaRegistro'] ?? b['fechaLectura'] ?? ''}',
           ) ??
           DateTime(2000);
@@ -235,7 +230,9 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(resultado['mensaje']?.toString() ?? 'Sincronización finalizada.'),
+        content: Text(
+          resultado['mensaje']?.toString() ?? 'Sincronización finalizada.',
+        ),
         backgroundColor: resultado['conectado'] == true
             ? JassColors.success
             : JassColors.warning,
@@ -292,17 +289,11 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
 
   void _abrirMenu() {
     if (widget.modoAdmin) {
-      showAdminQuickMenu(
-        context: context,
-        onRefresh: cargarHistorial,
-      );
+      showAdminQuickMenu(context: context, onRefresh: cargarHistorial);
       return;
     }
 
-    showLectorQuickMenu(
-      context: context,
-      onRefresh: sincronizar,
-    );
+    showLectorQuickMenu(context: context, onRefresh: sincronizar);
   }
 
   @override
@@ -310,8 +301,9 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
     final oscuro = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          oscuro ? JassColors.darkBackground : JassColors.background,
+      backgroundColor: oscuro
+          ? JassColors.darkBackground
+          : JassColors.background,
       extendBody: true,
       bottomNavigationBar: widget.modoAdmin
           ? AdminBottomNav(
@@ -339,13 +331,8 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
                 const SizedBox(height: 18),
                 if (cargando) _buildLoading(oscuro),
                 if (error.isNotEmpty && !cargando)
-                  _ErrorCard(
-                    error: error,
-                    onRetry: cargarHistorial,
-                  ),
-                if (!cargando &&
-                    error.isEmpty &&
-                    lecturasFiltradas.isEmpty)
+                  _ErrorCard(error: error, onRetry: cargarHistorial),
+                if (!cargando && error.isEmpty && lecturasFiltradas.isEmpty)
                   _buildEmpty(oscuro),
                 if (!cargando && error.isEmpty)
                   ...lecturasFiltradas.map((lectura) {
@@ -358,7 +345,11 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
                       lecturaAnterior: _lecturaAnterior(lectura),
                       lecturaActual: _lecturaActual(lectura),
                       consumo: _consumo(lectura),
-                      total: _num(lectura['total'] ?? lectura['totalRecibo'] ?? lectura['recibo']?['total']),
+                      total: _num(
+                        lectura['total'] ??
+                            lectura['totalRecibo'] ??
+                            lectura['recibo']?['total'],
+                      ),
                       estadoSincronizacion: _txt(
                         lectura['estadoSincronizacion'],
                         'SINCRONIZADA',
@@ -384,8 +375,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
             color: oscuro ? JassColors.darkCard : JassColors.card,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color:
-                  oscuro ? JassColors.darkBorder : JassColors.border,
+              color: oscuro ? JassColors.darkBorder : JassColors.border,
             ),
           ),
           child: IconButton(
@@ -406,9 +396,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
                     ? 'Panel del administrador'
                     : 'Módulo lecturador',
                 style: TextStyle(
-                  color: oscuro
-                      ? JassColors.darkMuted
-                      : JassColors.muted,
+                  color: oscuro ? JassColors.darkMuted : JassColors.muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -432,8 +420,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
             color: oscuro ? JassColors.darkCard : JassColors.card,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color:
-                  oscuro ? JassColors.darkBorder : JassColors.border,
+              color: oscuro ? JassColors.darkBorder : JassColors.border,
             ),
           ),
           child: IconButton(
@@ -456,14 +443,11 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
           busqueda = value;
         });
       },
-      style: TextStyle(
-        color: oscuro ? Colors.white : JassColors.primary,
-      ),
+      style: TextStyle(color: oscuro ? Colors.white : JassColors.primary),
       decoration: InputDecoration(
         hintText: 'Buscar por suministro, cliente o periodo...',
         hintStyle: TextStyle(
-          color:
-              oscuro ? JassColors.darkMuted : JassColors.muted,
+          color: oscuro ? JassColors.darkMuted : JassColors.muted,
         ),
         prefixIcon: const Icon(
           Icons.search_rounded,
@@ -474,23 +458,18 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(
-            color:
-                oscuro ? JassColors.darkBorder : JassColors.border,
+            color: oscuro ? JassColors.darkBorder : JassColors.border,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(
-            color:
-                oscuro ? JassColors.darkBorder : JassColors.border,
+            color: oscuro ? JassColors.darkBorder : JassColors.border,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: JassColors.secondary,
-            width: 1.5,
-          ),
+          borderSide: const BorderSide(color: JassColors.secondary, width: 1.5),
         ),
       ),
     );
@@ -514,8 +493,7 @@ class _HistorialLecturasPageState extends State<HistorialLecturasPage> {
           Text(
             'Cargando historial...',
             style: TextStyle(
-              color:
-                  oscuro ? JassColors.darkMuted : JassColors.muted,
+              color: oscuro ? JassColors.darkMuted : JassColors.muted,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -635,8 +613,7 @@ class _LecturaCard extends StatelessWidget {
           Text(
             direccion,
             style: TextStyle(
-              color:
-                  oscuro ? JassColors.darkMuted : JassColors.muted,
+              color: oscuro ? JassColors.darkMuted : JassColors.muted,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -652,11 +629,7 @@ class _LecturaCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _MiniValue(
-                  label: 'Fecha',
-                  value: fecha,
-                  oscuro: oscuro,
-                ),
+                child: _MiniValue(label: 'Fecha', value: fecha, oscuro: oscuro),
               ),
             ],
           ),
@@ -714,18 +687,19 @@ class _SyncBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalizado = estado.toUpperCase();
-    final pendiente = normalizado == 'PENDIENTE' || normalizado == 'SINCRONIZANDO';
+    final pendiente =
+        normalizado == 'PENDIENTE' || normalizado == 'SINCRONIZANDO';
     final error = normalizado == 'ERROR';
     final color = error
         ? JassColors.danger
         : pendiente
-            ? JassColors.warning
-            : JassColors.success;
+        ? JassColors.warning
+        : JassColors.success;
     final texto = error
         ? 'ERROR'
         : pendiente
-            ? 'PENDIENTE'
-            : 'SINCRONIZADA';
+        ? 'PENDIENTE'
+        : 'SINCRONIZADA';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -761,9 +735,7 @@ class _MiniValue extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
-        color: oscuro
-            ? const Color(0xFF162432)
-            : const Color(0xFFF8FBFD),
+        color: oscuro ? const Color(0xFF162432) : const Color(0xFFF8FBFD),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color: oscuro ? JassColors.darkBorder : JassColors.border,
@@ -776,8 +748,7 @@ class _MiniValue extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color:
-                  oscuro ? JassColors.darkMuted : JassColors.muted,
+              color: oscuro ? JassColors.darkMuted : JassColors.muted,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -803,10 +774,7 @@ class _ErrorCard extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  const _ErrorCard({
-    required this.error,
-    required this.onRetry,
-  });
+  const _ErrorCard({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -816,9 +784,7 @@ class _ErrorCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFFFFD1D1),
-        ),
+        border: Border.all(color: const Color(0xFFFFD1D1)),
       ),
       child: Column(
         children: [
@@ -830,10 +796,7 @@ class _ErrorCard extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('Reintentar'),
-          ),
+          TextButton(onPressed: onRetry, child: const Text('Reintentar')),
         ],
       ),
     );

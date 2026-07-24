@@ -26,7 +26,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final TextEditingController nuevaController = TextEditingController();
   final TextEditingController confirmarController = TextEditingController();
 
- 
   final SecureStorageService storageService = SecureStorageService();
 
   bool verActual = false;
@@ -42,19 +41,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     super.dispose();
   }
 
-  void mostrarMensaje(
-  String mensaje, {
-  Color? color,
-}) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(mensaje),
-      backgroundColor:
-          color ?? Theme.of(context).colorScheme.primary,
-    ),
-  );
-}
-
+  void mostrarMensaje(String mensaje, {Color? color}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: color ?? Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
 
   Future<void> cerrarSesion() async {
     final confirmar = await showDialog<bool>(
@@ -63,13 +57,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         return AlertDialog(
           title: Text(
             'Cerrar sesión',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-            ),
+            style: TextStyle(fontWeight: FontWeight.w900),
           ),
-          content: Text(
-            '¿Deseas cerrar tu sesión actual?',
-          ),
+          content: Text('¿Deseas cerrar tu sesión actual?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -98,11 +88,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     if (!mounted) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   void _irHome() {
@@ -168,9 +154,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     decoration: BoxDecoration(
                       color: context.jassSurface,
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: context.jassBorder,
-                      ),
+                      border: Border.all(color: context.jassBorder),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x33000000),
@@ -318,10 +302,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           ),
           child: IconButton(
             onPressed: cargando ? null : _volver,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.arrow_back_rounded, color: primary),
           ),
         ),
         SizedBox(width: 12),
@@ -359,10 +340,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [Color(0xFF0F3D57), Color(0xFF1DA1C2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -383,9 +361,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.16),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
             ),
             child: Icon(
               Icons.lock_reset_rounded,
@@ -431,9 +407,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
         boxShadow: [
           BoxShadow(
             color: JassColors.primary.withValues(alpha: 0.05),
@@ -500,7 +474,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             },
           ),
           SizedBox(height: 24),
-          
         ],
       ),
     );
@@ -513,19 +486,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       decoration: BoxDecoration(
         color: context.jassSelectedSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFFCFEFF7),
-        ),
+        border: Border.all(color: const Color(0xFFCFEFF7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.security_rounded,
-                color: secondary,
-              ),
+              Icon(Icons.security_rounded, color: secondary),
               SizedBox(width: 10),
               Text(
                 'Recomendaciones',
@@ -599,22 +567,15 @@ class _PasswordField extends StatelessWidget {
             fillColor: fieldBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(17),
-              borderSide: BorderSide(
-                color: context.jassBorder,
-              ),
+              borderSide: BorderSide(color: context.jassBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(17),
-              borderSide: BorderSide(
-                color: context.jassBorder,
-              ),
+              borderSide: BorderSide(color: context.jassBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(17),
-              borderSide: BorderSide(
-                color: secondary,
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: secondary, width: 1.5),
             ),
           ),
         ),
@@ -626,9 +587,7 @@ class _PasswordField extends StatelessWidget {
 class _TipItem extends StatelessWidget {
   final String text;
 
-  const _TipItem({
-    required this.text,
-  });
+  const _TipItem({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -640,11 +599,7 @@ class _TipItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.check_circle_outline_rounded,
-            color: primary,
-            size: 18,
-          ),
+          Icon(Icons.check_circle_outline_rounded, color: primary, size: 18),
           SizedBox(width: 9),
           Expanded(
             child: Text(

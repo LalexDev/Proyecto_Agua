@@ -8,14 +8,10 @@ import '../../shared/widgets/lector_bottom_nav.dart';
 class DetalleSuministroPage extends StatefulWidget {
   final bool modoAdmin;
 
-  const DetalleSuministroPage({
-    super.key,
-    this.modoAdmin = false,
-  });
+  const DetalleSuministroPage({super.key, this.modoAdmin = false});
 
   @override
-  State<DetalleSuministroPage> createState() =>
-      _DetalleSuministroPageState();
+  State<DetalleSuministroPage> createState() => _DetalleSuministroPageState();
 }
 
 class _DetalleSuministroPageState extends State<DetalleSuministroPage> {
@@ -46,53 +42,51 @@ class _DetalleSuministroPageState extends State<DetalleSuministroPage> {
   }
 
   String get codigo => _txt(
-        suministro['codigoSuministro'] ??
-            suministro['suministroCodigo'] ??
-            suministro['codigo'] ??
-            suministro['numeroSuministro'],
-        'SIN-CÓDIGO',
-      );
+    suministro['codigoSuministro'] ??
+        suministro['suministroCodigo'] ??
+        suministro['codigo'] ??
+        suministro['numeroSuministro'],
+    'SIN-CÓDIGO',
+  );
 
   String get titular => _txt(
-        suministro['titular'] ??
-            suministro['cliente'] ??
-            suministro['nombreCliente'] ??
-            suministro['nombres'] ??
-            suministro['usuario'],
-        'Usuario del servicio',
-      );
+    suministro['titular'] ??
+        suministro['cliente'] ??
+        suministro['nombreCliente'] ??
+        suministro['nombres'] ??
+        suministro['usuario'],
+    'Usuario del servicio',
+  );
 
-  String get alias => _txt(
-        suministro['aliasSuministro'] ?? suministro['alias'],
-        'Sin alias',
-      );
+  String get alias =>
+      _txt(suministro['aliasSuministro'] ?? suministro['alias'], 'Sin alias');
 
   String get sector => _txt(
-        suministro['nombreSector'] ??
-            suministro['sector'] ??
-            suministro['sectorNombre'],
-        'Sector no registrado',
-      );
+    suministro['nombreSector'] ??
+        suministro['sector'] ??
+        suministro['sectorNombre'],
+    'Sector no registrado',
+  );
 
   String get direccion => _txt(
-        suministro['direccionSuministro'] ??
-            suministro['direccion'] ??
-            suministro['direccionCliente'],
-        'Dirección no registrada',
-      );
+    suministro['direccionSuministro'] ??
+        suministro['direccion'] ??
+        suministro['direccionCliente'],
+    'Dirección no registrada',
+  );
 
   String get referencia => _txt(
-        suministro['referencia'] ?? suministro['referenciaSuministro'],
-        'Sin referencia',
-      );
+    suministro['referencia'] ?? suministro['referenciaSuministro'],
+    'Sin referencia',
+  );
 
   String get lecturaAnterior => _txt(
-        suministro['lecturaAnterior'] ??
-            suministro['ultimaLectura'] ??
-            suministro['lecturaActual'] ??
-            suministro['lecturaInicial'],
-        '0',
-      );
+    suministro['lecturaAnterior'] ??
+        suministro['ultimaLectura'] ??
+        suministro['lecturaActual'] ??
+        suministro['lecturaInicial'],
+    '0',
+  );
 
   bool get activo {
     final value = suministro['estado'] ?? suministro['activo'];
@@ -101,7 +95,6 @@ class _DetalleSuministroPageState extends State<DetalleSuministroPage> {
     final text = value.toString().trim().toUpperCase();
     return text == 'TRUE' || text == 'ACTIVO' || text == '1';
   }
-
 
   String get tipoOperacion {
     final estado = _txt(
@@ -127,13 +120,8 @@ class _DetalleSuministroPageState extends State<DetalleSuministroPage> {
   void _registrar() {
     Navigator.pushNamed(
       context,
-      widget.modoAdmin
-          ? '/admin-registrar-lectura'
-          : '/registrar-lectura',
-      arguments: {
-        ...suministro,
-        'tipoOperacion': tipoOperacion,
-      },
+      widget.modoAdmin ? '/admin-registrar-lectura' : '/registrar-lectura',
+      arguments: {...suministro, 'tipoOperacion': tipoOperacion},
     );
   }
 
@@ -145,9 +133,7 @@ class _DetalleSuministroPageState extends State<DetalleSuministroPage> {
 
     Navigator.pushReplacementNamed(
       context,
-      widget.modoAdmin
-          ? '/admin-buscar-suministro'
-          : '/buscar-suministro',
+      widget.modoAdmin ? '/admin-buscar-suministro' : '/buscar-suministro',
     );
   }
 
@@ -218,7 +204,9 @@ class _DetalleSuministroPageState extends State<DetalleSuministroPage> {
                   onPressed: permiteOperacion ? _registrar : null,
                   icon: const Icon(Icons.edit_note_rounded),
                   label: Text(
-                    permiteOperacion ? textoOperacion : 'Operación no disponible',
+                    permiteOperacion
+                        ? textoOperacion
+                        : 'Operación no disponible',
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -403,9 +391,7 @@ class _InfoRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: context.jassBorder),
-        ),
+        border: Border(bottom: BorderSide(color: context.jassBorder)),
       ),
       child: Row(
         children: [
@@ -445,9 +431,7 @@ class _EstadoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: activo
-            ? const Color(0xFFEAF8EF)
-            : const Color(0xFFFFECEC),
+        color: activo ? const Color(0xFFEAF8EF) : const Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(100),
       ),
       child: Text(

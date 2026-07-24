@@ -209,9 +209,7 @@ class _MisSuministrosPageState extends State<MisSuministrosPage> {
                     decoration: BoxDecoration(
                       color: context.jassSurface,
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: context.jassBorder,
-                      ),
+                      border: Border.all(color: context.jassBorder),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x33000000),
@@ -371,10 +369,7 @@ class _MisSuministrosPageState extends State<MisSuministrosPage> {
           ),
           child: IconButton(
             onPressed: _volver,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.arrow_back_rounded, color: primary),
           ),
         ),
         SizedBox(width: 12),
@@ -418,10 +413,7 @@ class _MisSuministrosPageState extends State<MisSuministrosPage> {
           ),
           child: IconButton(
             onPressed: cargarSuministros,
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.refresh_rounded, color: primary),
           ),
         ),
       ],
@@ -434,10 +426,7 @@ class _MisSuministrosPageState extends State<MisSuministrosPage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [Color(0xFF0F3D57), Color(0xFF1DA1C2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -458,9 +447,7 @@ class _MisSuministrosPageState extends State<MisSuministrosPage> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.16),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
             ),
             child: Icon(
               Icons.water_drop_rounded,
@@ -513,10 +500,7 @@ class _MisSuministrosPageState extends State<MisSuministrosPage> {
           SizedBox(height: 14),
           Text(
             'Cargando suministros...',
-            style: TextStyle(
-              color: muted,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(color: muted, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -530,25 +514,16 @@ class _MisSuministrosPageState extends State<MisSuministrosPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: const Color(0xFFFFD1D1),
-        ),
+        border: Border.all(color: const Color(0xFFFFD1D1)),
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: danger,
-            size: 42,
-          ),
+          Icon(Icons.error_outline_rounded, color: danger, size: 42),
           SizedBox(height: 10),
           Text(
             error,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: danger,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(color: danger, fontWeight: FontWeight.w800),
           ),
           SizedBox(height: 14),
           ElevatedButton(
@@ -572,17 +547,11 @@ class _MisSuministrosPageState extends State<MisSuministrosPage> {
         decoration: BoxDecoration(
           color: context.jassSurface,
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(
-            color: context.jassBorder,
-          ),
+          border: Border.all(color: context.jassBorder),
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.water_drop_outlined,
-              color: secondary,
-              size: 54,
-            ),
+            Icon(Icons.water_drop_outlined, color: secondary, size: 54),
             SizedBox(height: 12),
             Text(
               'No tienes suministros registrados.',
@@ -659,9 +628,7 @@ class _SuministroCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: context.jassSurface,
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(
-            color: context.jassBorder,
-          ),
+          border: Border.all(color: context.jassBorder),
           boxShadow: [
             BoxShadow(
               color: JassColors.primary.withValues(alpha: 0.06),
@@ -721,22 +688,10 @@ class _SuministroCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: 14),
-            _InfoLine(
-              icon: Icons.map_rounded,
-              text: sector,
-            ),
-            _InfoLine(
-              icon: Icons.place_rounded,
-              text: direccion,
-            ),
-            _InfoLine(
-              icon: Icons.bookmark_rounded,
-              text: alias,
-            ),
-            _InfoLine(
-              icon: Icons.info_outline_rounded,
-              text: referencia,
-            ),
+            _InfoLine(icon: Icons.map_rounded, text: sector),
+            _InfoLine(icon: Icons.place_rounded, text: direccion),
+            _InfoLine(icon: Icons.bookmark_rounded, text: alias),
+            _InfoLine(icon: Icons.info_outline_rounded, text: referencia),
             SizedBox(height: 14),
             Row(
               children: [
@@ -748,10 +703,7 @@ class _SuministroCard extends StatelessWidget {
                 ),
                 SizedBox(width: 10),
                 Expanded(
-                  child: _MiniBox(
-                    label: 'Detalle',
-                    value: 'Ver más',
-                  ),
+                  child: _MiniBox(label: 'Detalle', value: 'Ver más'),
                 ),
               ],
             ),
@@ -768,11 +720,7 @@ class _SuministroCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 4),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: muted,
-                  size: 13,
-                ),
+                Icon(Icons.arrow_forward_ios_rounded, color: muted, size: 13),
               ],
             ),
           ],
@@ -786,10 +734,7 @@ class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoLine({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoLine({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -799,11 +744,7 @@ class _InfoLine extends StatelessWidget {
       padding: const EdgeInsets.only(top: 6),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 17,
-            color: muted,
-          ),
+          Icon(icon, size: 17, color: muted),
           SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -827,10 +768,7 @@ class _MiniBox extends StatelessWidget {
   final String label;
   final String value;
 
-  const _MiniBox({
-    required this.label,
-    required this.value,
-  });
+  const _MiniBox({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -842,9 +780,7 @@ class _MiniBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

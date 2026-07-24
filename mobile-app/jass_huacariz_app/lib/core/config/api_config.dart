@@ -42,10 +42,7 @@ class ApiConfig {
     return '/clientes/$idCliente/suministros';
   }
 
-  static String cambiarEstadoCliente(
-    int idCliente,
-    bool estado,
-  ) {
+  static String cambiarEstadoCliente(int idCliente, bool estado) {
     return '/clientes/$idCliente/estado?estado=$estado';
   }
 
@@ -67,9 +64,7 @@ class ApiConfig {
 
   static const String canalesPagoActivos = '/canales-pago/activos';
 
-  static String recibosPorSuministro(
-    String codigoSuministro,
-  ) {
+  static String recibosPorSuministro(String codigoSuministro) {
     return '/recibos/suministro/$codigoSuministro';
   }
 
@@ -80,9 +75,7 @@ class ApiConfig {
   // PAGOS ADMINISTRATIVOS
   static const String pagos = '/pagos';
 
-  static String pagosPorSuministro(
-    String codigoSuministro,
-  ) {
+  static String pagosPorSuministro(String codigoSuministro) {
     return '/pagos/suministro/$codigoSuministro';
   }
 
@@ -93,15 +86,11 @@ class ApiConfig {
     return '/tarifas/$idTarifa';
   }
 
-  static String cambiarEstadoTarifa(
-    int idTarifa,
-    bool estado,
-  ) {
+  static String cambiarEstadoTarifa(int idTarifa, bool estado) {
     return '/tarifas/$idTarifa/estado?estado=$estado';
   }
 
-  static const String configuracionCobranza =
-      '/configuracion-cobranza';
+  static const String configuracionCobranza = '/configuracion-cobranza';
 
   // SECTORES
   static const String sectores = '/sectores';
@@ -110,33 +99,24 @@ class ApiConfig {
     return '/sectores/$idSector';
   }
 
-  static String cambiarEstadoSector(
-    int idSector,
-    bool estado,
-  ) {
+  static String cambiarEstadoSector(int idSector, bool estado) {
     return '/sectores/$idSector/estado?estado=$estado';
   }
 
   // ADMINISTRACIÓN DE LECTURADORES
-  static const String lecturadores =
-      '/usuarios/lecturadores';
+  static const String lecturadores = '/usuarios/lecturadores';
 
   static String lecturadorPorId(int idLecturador) {
     return '/usuarios/lecturadores/$idLecturador';
   }
 
-  static String cambiarEstadoLecturador(
-    int idLecturador,
-    bool estado,
-  ) {
+  static String cambiarEstadoLecturador(int idLecturador, bool estado) {
     return '/usuarios/lecturadores/'
         '$idLecturador/estado?estado=$estado';
   }
 
   // OPERACIÓN DEL LECTURADOR
-  static String buscarSuministroLecturador(
-    String codigoSuministro,
-  ) {
+  static String buscarSuministroLecturador(String codigoSuministro) {
     return '/lecturador/suministros/$codigoSuministro';
   }
 
@@ -144,12 +124,9 @@ class ApiConfig {
       '/lecturador/suministros/offline';
 
   static const String registrarLectura = '/lecturas';
-  static const String registrarMantenimiento =
-      '/lecturas/mantenimiento';
+  static const String registrarMantenimiento = '/lecturas/mantenimiento';
 
   // Ruta compartida por ADMIN y LECTURADOR.
-  static const String historialLecturas =
-      '/lecturas/historial';
-  static const String historialLecturasAdmin =
-      historialLecturas;
+  static const String historialLecturas = '/lecturas/historial';
+  static const String historialLecturasAdmin = historialLecturas;
 }

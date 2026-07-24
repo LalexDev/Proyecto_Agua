@@ -64,12 +64,13 @@ class _AdminSectoresPageState extends State<AdminSectoresPage> {
     if (query.isEmpty) return sectores;
 
     return sectores.where((sector) {
-      final texto = '''
+      final texto =
+          '''
       ${_nombre(sector)}
       ${_descripcion(sector)}
       ${_estado(sector) ? 'activo' : 'inactivo'}
       '''
-          .toLowerCase();
+              .toLowerCase();
 
       return texto.contains(query);
     }).toList();
@@ -131,8 +132,9 @@ class _AdminSectoresPageState extends State<AdminSectoresPage> {
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    nuevoEstado ? JassColors.success : JassColors.danger,
+                backgroundColor: nuevoEstado
+                    ? JassColors.success
+                    : JassColors.danger,
                 foregroundColor: Colors.white,
               ),
               child: Text(nuevoEstado ? 'Activar' : 'Desactivar'),
@@ -171,46 +173,45 @@ class _AdminSectoresPageState extends State<AdminSectoresPage> {
       backgroundColor: context.jassSurface,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) {
         return _SectorFormSheet(
           sector: sector,
-          onGuardar: ({
-            required String nombre,
-            required String descripcion,
-            required bool estado,
-          }) async {
-            if (sector == null) {
-              await sectorService.registrarSector(
-                nombre: nombre,
-                descripcion: descripcion,
-                estado: estado,
-              );
-            } else {
-              await sectorService.actualizarSector(
-                idSector: _idSector(sector),
-                nombre: nombre,
-                descripcion: descripcion,
-                estado: estado,
-              );
-            }
+          onGuardar:
+              ({
+                required String nombre,
+                required String descripcion,
+                required bool estado,
+              }) async {
+                if (sector == null) {
+                  await sectorService.registrarSector(
+                    nombre: nombre,
+                    descripcion: descripcion,
+                    estado: estado,
+                  );
+                } else {
+                  await sectorService.actualizarSector(
+                    idSector: _idSector(sector),
+                    nombre: nombre,
+                    descripcion: descripcion,
+                    estado: estado,
+                  );
+                }
 
-            if (!mounted) return;
+                if (!mounted) return;
 
-            Navigator.pop(context);
+                Navigator.pop(context);
 
-            _mensaje(
-              sector == null
-                  ? 'Sector registrado correctamente.'
-                  : 'Sector actualizado correctamente.',
-              false,
-            );
+                _mensaje(
+                  sector == null
+                      ? 'Sector registrado correctamente.'
+                      : 'Sector actualizado correctamente.',
+                  false,
+                );
 
-            await cargarSectores();
-          },
+                await cargarSectores();
+              },
         );
       },
     );
@@ -220,8 +221,7 @@ class _AdminSectoresPageState extends State<AdminSectoresPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -249,10 +249,7 @@ class _AdminSectoresPageState extends State<AdminSectoresPage> {
   }
 
   void _abrirMenuAdmin() {
-    showAdminQuickMenu(
-      context: context,
-      onRefresh: cargarSectores,
-    );
+    showAdminQuickMenu(context: context, onRefresh: cargarSectores);
   }
 
   @override
@@ -286,10 +283,7 @@ class _AdminSectoresPageState extends State<AdminSectoresPage> {
                     ),
                   ),
                 if (error.isNotEmpty && !cargando)
-                  _Error(
-                    error: error,
-                    onRetry: cargarSectores,
-                  ),
+                  _Error(error: error, onRetry: cargarSectores),
                 if (!cargando && error.isEmpty && sectoresFiltrados.isEmpty)
                   Center(
                     child: Padding(
@@ -383,10 +377,7 @@ class _AdminSectoresPageState extends State<AdminSectoresPage> {
           ),
           child: IconButton(
             onPressed: cargarSectores,
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: context.jassTextPrimary,
-            ),
+            icon: Icon(Icons.refresh_rounded, color: context.jassTextPrimary),
           ),
         ),
         SizedBox(width: 8),
@@ -399,10 +390,7 @@ class _AdminSectoresPageState extends State<AdminSectoresPage> {
           ),
           child: IconButton(
             onPressed: () => abrirFormulario(),
-            icon: Icon(
-              Icons.add_rounded,
-              color: context.jassSurface,
-            ),
+            icon: Icon(Icons.add_rounded, color: context.jassSurface),
             tooltip: 'Registrar sector',
           ),
         ),
@@ -455,9 +443,7 @@ class _SectorCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,10 +452,7 @@ class _SectorCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: context.jassSelectedSurface,
-                child: Icon(
-                  Icons.map_rounded,
-                  color: secondary,
-                ),
+                child: Icon(Icons.map_rounded, color: secondary),
               ),
               SizedBox(width: 12),
               Expanded(
@@ -556,12 +539,10 @@ class _SectorFormSheet extends StatefulWidget {
     required String nombre,
     required String descripcion,
     required bool estado,
-  }) onGuardar;
+  })
+  onGuardar;
 
-  _SectorFormSheet({
-    required this.sector,
-    required this.onGuardar,
-  });
+  _SectorFormSheet({required this.sector, required this.onGuardar});
 
   @override
   State<_SectorFormSheet> createState() => _SectorFormSheetState();
@@ -596,7 +577,8 @@ class _SectorFormSheetState extends State<_SectorFormSheet> {
       if (value is bool) {
         estado = value;
       } else {
-        estado = value.toString().toLowerCase() == 'true' ||
+        estado =
+            value.toString().toLowerCase() == 'true' ||
             value.toString().toLowerCase() == 'activo';
       }
     }
@@ -648,8 +630,7 @@ class _SectorFormSheetState extends State<_SectorFormSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -688,10 +669,7 @@ class _SectorFormSheetState extends State<_SectorFormSheet> {
               ),
             ),
             SizedBox(height: 18),
-            _Input(
-              controller: nombreController,
-              label: 'Nombre del sector',
-            ),
+            _Input(controller: nombreController, label: 'Nombre del sector'),
             _Input(
               controller: descripcionController,
               label: 'Descripción',
@@ -761,11 +739,7 @@ class _Input extends StatelessWidget {
   final String label;
   final int maxLines;
 
-  _Input({
-    required this.controller,
-    required this.label,
-    this.maxLines = 1,
-  });
+  _Input({required this.controller, required this.label, this.maxLines = 1});
 
   @override
   Widget build(BuildContext context) {
@@ -791,17 +765,12 @@ class _Input extends StatelessWidget {
 class _EstadoChip extends StatelessWidget {
   final bool activo;
 
-  _EstadoChip({
-    required this.activo,
-  });
+  _EstadoChip({required this.activo});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: activo ? Color(0xFFEAF8EF) : Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(100),
@@ -822,10 +791,7 @@ class _Error extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  _Error({
-    required this.error,
-    required this.onRetry,
-  });
+  _Error({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -846,13 +812,9 @@ class _Error extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          TextButton(
-            onPressed: onRetry,
-            child: Text('Reintentar'),
-          ),
+          TextButton(onPressed: onRetry, child: Text('Reintentar')),
         ],
       ),
     );
   }
 }
-

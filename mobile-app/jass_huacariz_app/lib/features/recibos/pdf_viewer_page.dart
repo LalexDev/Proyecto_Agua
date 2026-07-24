@@ -191,11 +191,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       return;
     }
 
-    Navigator.pushNamed(
-      context,
-      '/pago-cip',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/pago-cip', arguments: recibo);
   }
 
   void _volver() {
@@ -245,9 +241,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                     decoration: BoxDecoration(
                       color: context.jassSurface,
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: context.jassBorder,
-                      ),
+                      border: Border.all(color: context.jassBorder),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x33000000),
@@ -422,10 +416,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           ),
           child: IconButton(
             onPressed: _volver,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.arrow_back_rounded, color: primary),
           ),
         ),
         SizedBox(width: 12),
@@ -477,9 +468,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
         boxShadow: [
           BoxShadow(
             color: JassColors.primary.withValues(alpha: 0.05),
@@ -523,9 +512,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 foregroundColor: primary,
                 backgroundColor: context.jassSurfaceAlt,
                 disabledForegroundColor: muted,
-                side: BorderSide(
-                  color: context.jassBorder,
-                ),
+                side: BorderSide(color: context.jassBorder),
                 minimumSize: const Size(0, 46),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -540,16 +527,11 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             decoration: BoxDecoration(
               color: context.jassSurfaceAlt,
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(
-                color: context.jassBorder,
-              ),
+              border: Border.all(color: context.jassBorder),
             ),
             child: IconButton(
               onPressed: cargando ? null : _cargarPdfReal,
-              icon: Icon(
-                Icons.refresh_rounded,
-                color: primary,
-              ),
+              icon: Icon(Icons.refresh_rounded, color: primary),
               tooltip: 'Recargar',
             ),
           ),
@@ -567,9 +549,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           decoration: BoxDecoration(
             color: context.jassSurface,
             borderRadius: BorderRadius.circular(26),
-            border: Border.all(
-              color: context.jassBorder,
-            ),
+            border: Border.all(color: context.jassBorder),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -579,10 +559,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               Text(
                 'Generando PDF del recibo...',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: muted,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(color: muted, fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -598,18 +575,12 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           decoration: BoxDecoration(
             color: const Color(0xFFFFECEC),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: const Color(0xFFFFD1D1),
-            ),
+            border: Border.all(color: const Color(0xFFFFD1D1)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.picture_as_pdf_outlined,
-                color: danger,
-                size: 48,
-              ),
+              Icon(Icons.picture_as_pdf_outlined, color: danger, size: 48),
               SizedBox(height: 12),
               Text(
                 'No se pudo cargar el PDF del recibo.',
@@ -624,10 +595,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               Text(
                 error.isEmpty ? 'Verifica la conexión con el backend.' : error,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: danger,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(color: danger, fontWeight: FontWeight.w700),
               ),
               SizedBox(height: 16),
               ElevatedButton.icon(
@@ -658,9 +626,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       child: Container(
         decoration: BoxDecoration(
           color: context.jassSurface,
-          border: Border.all(
-            color: context.jassBorder,
-          ),
+          border: Border.all(color: context.jassBorder),
         ),
         child: PdfPreview(
           canChangeOrientation: false,

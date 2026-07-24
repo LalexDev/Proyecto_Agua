@@ -103,9 +103,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
   }
 
   String _vencimiento(Map<String, dynamic> recibo) {
-    return _txt(
-      recibo['fechaVencimiento'] ?? recibo['vencimiento'],
-    );
+    return _txt(recibo['fechaVencimiento'] ?? recibo['vencimiento']);
   }
 
   String _periodo(Map<String, dynamic> recibo) {
@@ -113,7 +111,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
     final anio = recibo['anio'];
 
     if (mes != null && anio != null) {
-     const meses = [
+      const meses = [
         'Enero',
         'Febrero',
         'Marzo',
@@ -151,10 +149,12 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
     return recibos.where((recibo) {
       final estado = _estado(recibo);
 
-      final cumpleEstado =
-          filtroEstado == 'TODOS' ? true : estado == filtroEstado;
+      final cumpleEstado = filtroEstado == 'TODOS'
+          ? true
+          : estado == filtroEstado;
 
-      final texto = '''
+      final texto =
+          '''
       ${_codigoRecibo(recibo)}
       ${_codigoSuministro(recibo)}
       ${_cliente(recibo)}
@@ -162,7 +162,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
       ${_periodo(recibo)}
       ${_estado(recibo)}
       '''
-          .toLowerCase();
+              .toLowerCase();
 
       final cumpleBusqueda = query.isEmpty ? true : texto.contains(query);
 
@@ -185,10 +185,12 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
   }
 
   double get deudaTotal {
-    return recibos.where((r) {
-      final estado = _estado(r);
-      return estado == 'PENDIENTE' || estado == 'VENCIDO';
-    }).fold(0.0, (sum, recibo) => sum + _total(recibo));
+    return recibos
+        .where((r) {
+          final estado = _estado(r);
+          return estado == 'PENDIENTE' || estado == 'VENCIDO';
+        })
+        .fold(0.0, (sum, recibo) => sum + _total(recibo));
   }
 
   Future<void> cargarRecibos() async {
@@ -263,9 +265,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
       backgroundColor: context.jassSurface,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(26),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
       ),
       builder: (contextSheet) {
         bool guardando = false;
@@ -276,8 +276,8 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
             Future<void> confirmar() async {
               final codigoOperacion =
                   codigoOperacionController.text.trim().isEmpty
-                      ? 'ADMIN-${DateTime.now().millisecondsSinceEpoch}'
-                      : codigoOperacionController.text.trim();
+                  ? 'ADMIN-${DateTime.now().millisecondsSinceEpoch}'
+                  : codigoOperacionController.text.trim();
 
               setModalState(() {
                 guardando = true;
@@ -302,10 +302,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                   guardando = false;
                 });
 
-                _mensaje(
-                  e.toString().replaceFirst('Exception: ', ''),
-                  true,
-                );
+                _mensaje(e.toString().replaceFirst('Exception: ', ''), true);
               }
             }
 
@@ -350,14 +347,8 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                         ),
                       ),
                       items: const [
-                        DropdownMenuItem(
-                          value: 'YAPE',
-                          child: Text('Yape'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'PLIN',
-                          child: Text('Plin'),
-                        ),
+                        DropdownMenuItem(value: 'YAPE', child: Text('Yape')),
+                        DropdownMenuItem(value: 'PLIN', child: Text('Plin')),
                         DropdownMenuItem(
                           value: 'TRANSFERENCIA',
                           child: Text('Transferencia bancaria'),
@@ -402,9 +393,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                             : Icon(Icons.check_circle_outline),
                         label: Text(
                           guardando ? 'Guardando...' : 'Confirmar pago',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.w900),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: secondary,
@@ -432,8 +421,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -455,10 +443,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
   }
 
   void _abrirMenuAdmin() {
-    showAdminQuickMenu(
-      context: context,
-      onRefresh: cargarRecibos,
-    ).then((_) {
+    showAdminQuickMenu(context: context, onRefresh: cargarRecibos).then((_) {
       if (mounted) {
         setState(() {});
       }
@@ -500,10 +485,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
                     ),
                   ),
                 if (error.isNotEmpty && !cargando)
-                  _Error(
-                    error: error,
-                    onRetry: cargarRecibos,
-                  ),
+                  _Error(error: error, onRetry: cargarRecibos),
                 if (!cargando && error.isEmpty && recibosFiltrados.isEmpty)
                   Center(
                     child: Padding(
@@ -563,10 +545,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
         ),
         IconButton(
           onPressed: cargarRecibos,
-          icon: Icon(
-            Icons.refresh_rounded,
-            color: context.jassTextPrimary,
-          ),
+          icon: Icon(Icons.refresh_rounded, color: context.jassTextPrimary),
         ),
       ],
     );
@@ -672,9 +651,7 @@ class _AdminRecibosPageState extends State<AdminRecibosPage> {
               selected: selected,
               selectedColor: secondary,
               backgroundColor: context.jassSurface,
-              side: BorderSide(
-                color: context.jassBorder,
-              ),
+              side: BorderSide(color: context.jassBorder),
               label: Text(
                 item['label']!,
                 style: TextStyle(
@@ -700,11 +677,7 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
+  _StatCard({required this.label, required this.value, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -714,18 +687,12 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: secondary,
-            size: 28,
-          ),
+          Icon(icon, color: secondary, size: 28),
           SizedBox(height: 12),
           Text(
             value,
@@ -786,9 +753,7 @@ class _ReciboCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,10 +800,7 @@ class _ReciboCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _MiniInfo(
-                  label: 'Periodo',
-                  value: periodo,
-                ),
+                child: _MiniInfo(label: 'Periodo', value: periodo),
               ),
               SizedBox(width: 10),
               Expanded(
@@ -860,10 +822,7 @@ class _ReciboCard extends StatelessWidget {
               ),
               SizedBox(width: 10),
               Expanded(
-                child: _MiniInfo(
-                  label: 'Vence',
-                  value: vencimiento,
-                ),
+                child: _MiniInfo(label: 'Vence', value: vencimiento),
               ),
             ],
           ),
@@ -877,9 +836,7 @@ class _ReciboCard extends StatelessWidget {
                 icon: Icon(Icons.payments_rounded),
                 label: Text(
                   'Registrar pago presencial',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w900),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: secondary,
@@ -902,10 +859,7 @@ class _MiniInfo extends StatelessWidget {
   final String label;
   final String value;
 
-  _MiniInfo({
-    required this.label,
-    required this.value,
-  });
+  _MiniInfo({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -914,9 +868,7 @@ class _MiniInfo extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -949,9 +901,7 @@ class _MiniInfo extends StatelessWidget {
 class _EstadoBadge extends StatelessWidget {
   final String estado;
 
-  _EstadoBadge({
-    required this.estado,
-  });
+  _EstadoBadge({required this.estado});
 
   @override
   Widget build(BuildContext context) {
@@ -972,10 +922,7 @@ class _EstadoBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(100),
@@ -996,10 +943,7 @@ class _Error extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  _Error({
-    required this.error,
-    required this.onRetry,
-  });
+  _Error({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -1020,10 +964,7 @@ class _Error extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          TextButton(
-            onPressed: onRetry,
-            child: Text('Reintentar'),
-          ),
+          TextButton(onPressed: onRetry, child: Text('Reintentar')),
         ],
       ),
     );

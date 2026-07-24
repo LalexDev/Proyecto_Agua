@@ -36,9 +36,7 @@ class LecturadorAdminService {
   }
 
   Future<Map<String, dynamic>> obtenerLecturadorPorId(int idLecturador) async {
-    final response = await _api.get(
-      ApiConfig.lecturadorPorId(idLecturador),
-    );
+    final response = await _api.get(ApiConfig.lecturadorPorId(idLecturador));
 
     return _asMap(response);
   }

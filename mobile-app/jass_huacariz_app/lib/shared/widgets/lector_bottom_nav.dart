@@ -35,17 +35,12 @@ class LectorBottomNav extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 66,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 7,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
                 decoration: BoxDecoration(
                   color: oscuro ? JassColors.darkCard : JassColors.card,
                   borderRadius: BorderRadius.circular(100),
                   border: Border.all(
-                    color: oscuro
-                        ? JassColors.darkBorder
-                        : JassColors.border,
+                    color: oscuro ? JassColors.darkBorder : JassColors.border,
                   ),
                   boxShadow: const [
                     BoxShadow(
@@ -100,9 +95,7 @@ class LectorBottomNav extends StatelessWidget {
                   color: oscuro ? JassColors.darkCard : JassColors.card,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: oscuro
-                        ? JassColors.darkBorder
-                        : JassColors.border,
+                    color: oscuro ? JassColors.darkBorder : JassColors.border,
                   ),
                   boxShadow: const [
                     BoxShadow(
@@ -158,8 +151,8 @@ class _LectorBottomItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: seleccionado
                   ? oscuro
-                      ? const Color(0xFF162432)
-                      : const Color(0xFFE8F7FB)
+                        ? const Color(0xFF162432)
+                        : const Color(0xFFE8F7FB)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(100),
             ),
@@ -169,8 +162,8 @@ class _LectorBottomItem extends StatelessWidget {
                 color: seleccionado
                     ? JassColors.secondary
                     : oscuro
-                        ? JassColors.darkMuted
-                        : JassColors.primary,
+                    ? JassColors.darkMuted
+                    : JassColors.primary,
                 size: seleccionado ? 28 : 25,
               ),
             ),
@@ -212,9 +205,7 @@ Future<void> showLectorQuickMenu({
                     color: oscuro ? JassColors.darkCard : JassColors.card,
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: oscuro
-                          ? JassColors.darkBorder
-                          : JassColors.border,
+                      color: oscuro ? JassColors.darkBorder : JassColors.border,
                     ),
                     boxShadow: const [
                       BoxShadow(
@@ -284,9 +275,7 @@ Future<void> showLectorQuickMenu({
                   width: 58,
                   height: 58,
                   decoration: BoxDecoration(
-                    color: oscuro
-                        ? JassColors.darkCard
-                        : JassColors.primary,
+                    color: oscuro ? JassColors.darkCard : JassColors.primary,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: oscuro
@@ -339,9 +328,7 @@ class LectorMenuTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: oscuro
-              ? const Color(0xFF162432)
-              : const Color(0xFFF4F8FB),
+          color: oscuro ? const Color(0xFF162432) : const Color(0xFFF4F8FB),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: oscuro ? JassColors.darkBorder : JassColors.border,
@@ -364,8 +351,8 @@ class LectorMenuTile extends StatelessWidget {
                 color: danger
                     ? JassColors.danger
                     : oscuro
-                        ? Colors.white
-                        : JassColors.primary,
+                    ? Colors.white
+                    : JassColors.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
               ),
@@ -390,15 +377,12 @@ class LectorThemeTile extends StatelessWidget {
 
         return InkWell(
           onTap: () {
-            appThemeMode.value =
-                esOscuro ? ThemeMode.light : ThemeMode.dark;
+            appThemeMode.value = esOscuro ? ThemeMode.light : ThemeMode.dark;
           },
           borderRadius: BorderRadius.circular(20),
           child: Container(
             decoration: BoxDecoration(
-              color: oscuro
-                  ? const Color(0xFF162432)
-                  : const Color(0xFFF4F8FB),
+              color: oscuro ? const Color(0xFF162432) : const Color(0xFFF4F8FB),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: oscuro ? JassColors.darkBorder : JassColors.border,
@@ -408,9 +392,7 @@ class LectorThemeTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  esOscuro
-                      ? Icons.light_mode_rounded
-                      : Icons.dark_mode_rounded,
+                  esOscuro ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                   color: JassColors.secondary,
                   size: 30,
                 ),

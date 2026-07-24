@@ -197,17 +197,11 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
   }
 
   String _fechaEmision(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['fechaEmision'] ?? recibo['emision'],
-      '-',
-    );
+    return _texto(recibo['fechaEmision'] ?? recibo['emision'], '-');
   }
 
   String _fechaVencimiento(Map<String, dynamic> recibo) {
-    return _texto(
-      recibo['fechaVencimiento'] ?? recibo['vencimiento'],
-      '-',
-    );
+    return _texto(recibo['fechaVencimiento'] ?? recibo['vencimiento'], '-');
   }
 
   bool _puedePagar(Map<String, dynamic> recibo) {
@@ -243,19 +237,11 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
       return;
     }
 
-    Navigator.pushNamed(
-      context,
-      '/pago-cip',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/pago-cip', arguments: recibo);
   }
 
   void _verPdf(Map<String, dynamic> recibo) {
-    Navigator.pushNamed(
-      context,
-      '/pdf-viewer',
-      arguments: recibo,
-    );
+    Navigator.pushNamed(context, '/pdf-viewer', arguments: recibo);
   }
 
   void _volver() {
@@ -309,9 +295,7 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
                     decoration: BoxDecoration(
                       color: context.jassSurface,
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: context.jassBorder,
-                      ),
+                      border: Border.all(color: context.jassBorder),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x33000000),
@@ -473,10 +457,7 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
           ),
           child: IconButton(
             onPressed: _volver,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: primary,
-            ),
+            icon: Icon(Icons.arrow_back_rounded, color: primary),
           ),
         ),
         SizedBox(width: 12),
@@ -516,10 +497,7 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F3D57),
-            Color(0xFF1DA1C2),
-          ],
+          colors: [Color(0xFF0F3D57), Color(0xFF1DA1C2)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -539,10 +517,7 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
             children: [
               CircleAvatar(
                 backgroundColor: Colors.white24,
-                child: Icon(
-                  Icons.receipt_long_rounded,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.receipt_long_rounded, color: Colors.white),
               ),
               SizedBox(width: 12),
               Expanded(
@@ -559,18 +534,9 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
             ],
           ),
           SizedBox(height: 18),
-          _HeroLine(
-            label: 'Suministro',
-            value: _codigoSuministro(recibo),
-          ),
-          _HeroLine(
-            label: 'Dirección',
-            value: _direccion(recibo),
-          ),
-          _HeroLine(
-            label: 'Periodo',
-            value: _periodo(recibo),
-          ),
+          _HeroLine(label: 'Suministro', value: _codigoSuministro(recibo)),
+          _HeroLine(label: 'Dirección', value: _direccion(recibo)),
+          _HeroLine(label: 'Periodo', value: _periodo(recibo)),
           SizedBox(height: 18),
           Container(
             width: double.infinity,
@@ -578,9 +544,7 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.15),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -668,19 +632,12 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
       title: 'Fechas',
       icon: Icons.calendar_month_rounded,
       children: [
-        _InfoRow(
-          label: 'Fecha de emisión',
-          value: _fechaEmision(recibo),
-        ),
+        _InfoRow(label: 'Fecha de emisión', value: _fechaEmision(recibo)),
         _InfoRow(
           label: 'Fecha de vencimiento',
           value: _fechaVencimiento(recibo),
         ),
-        _InfoRow(
-          label: 'Estado',
-          value: _estado(recibo),
-          highlight: true,
-        ),
+        _InfoRow(label: 'Estado', value: _estado(recibo), highlight: true),
       ],
     );
   }
@@ -696,9 +653,7 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
             icon: Icon(Icons.payments_rounded),
             label: Text(
               _puedePagar(recibo) ? 'Pagar recibo' : 'Recibo pagado',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w900),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: secondary,
@@ -720,16 +675,12 @@ class _ReciboDetailPageState extends State<ReciboDetailPage> {
             icon: Icon(Icons.picture_as_pdf_rounded),
             label: Text(
               'Ver PDF del recibo',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w900),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: primary,
               backgroundColor: context.jassSurface,
-              side: BorderSide(
-                color: context.jassBorder,
-              ),
+              side: BorderSide(color: context.jassBorder),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(17),
               ),
@@ -745,10 +696,7 @@ class _HeroLine extends StatelessWidget {
   final String label;
   final String value;
 
-  const _HeroLine({
-    required this.label,
-    required this.value,
-  });
+  const _HeroLine({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -807,9 +755,7 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
         boxShadow: [
           BoxShadow(
             color: JassColors.primary.withValues(alpha: 0.05),
@@ -822,11 +768,7 @@ class _SectionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                color: secondary,
-                size: 28,
-              ),
+              Icon(icon, color: secondary, size: 28),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -871,9 +813,7 @@ class _InfoRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: highlight ? context.jassSelectedSurface : context.jassSurfaceAlt,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Row(
         children: [
@@ -908,9 +848,7 @@ class _InfoRow extends StatelessWidget {
 class _EstadoBadge extends StatelessWidget {
   final String estado;
 
-  const _EstadoBadge({
-    required this.estado,
-  });
+  const _EstadoBadge({required this.estado});
 
   @override
   Widget build(BuildContext context) {

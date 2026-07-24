@@ -4,8 +4,7 @@ import 'api_service.dart';
 
 class AuthService {
   final ApiService _apiService = ApiService();
-  final SecureStorageService _storage =
-      SecureStorageService();
+  final SecureStorageService _storage = SecureStorageService();
 
   Map<String, dynamic> _asMap(dynamic response) {
     if (response is Map<String, dynamic>) {
@@ -24,31 +23,23 @@ class AuthService {
     required String password,
   }) async {
     final response = _asMap(
-      await _apiService.post(
-        ApiConfig.login,
-        {
-          'codigoUsuario': codigoUsuario.trim(),
-          'password': password,
-        },
-        withAuth: false,
-      ),
+      await _apiService.post(ApiConfig.login, {
+        'codigoUsuario': codigoUsuario.trim(),
+        'password': password,
+      }, withAuth: false),
     );
 
     final token = response['token']?.toString().trim() ?? '';
     final rol = response['rol']?.toString().trim() ?? '';
-    final usuario = response['codigoUsuario']
-            ?.toString()
-            .trim() ??
-        codigoUsuario.trim();
+    final usuario =
+        response['codigoUsuario']?.toString().trim() ?? codigoUsuario.trim();
 
     if (token.isEmpty) {
       throw Exception('El backend no devolvió token.');
     }
 
     if (rol.isEmpty) {
-      throw Exception(
-        'El backend no devolvió el rol del usuario.',
-      );
+      throw Exception('El backend no devolvió el rol del usuario.');
     }
 
     if (!_storage.esRolPermitido(rol)) {
@@ -69,11 +60,8 @@ class AuthService {
     return true;
   }
 
-  Future<bool> loginOfflineLector({
-    String? codigoUsuario,
-  }) async {
-    final disponible =
-        await _storage.canUseOfflineLectorSession();
+  Future<bool> loginOfflineLector({String? codigoUsuario}) async {
+    final disponible = await _storage.canUseOfflineLectorSession();
 
     if (!disponible) {
       throw Exception(
@@ -82,14 +70,11 @@ class AuthService {
       );
     }
 
-    final usuarioGuardado =
-        (await _storage.getUserName() ?? '').trim();
-    final usuarioIngresado =
-        (codigoUsuario ?? '').trim();
+    final usuarioGuardado = (await _storage.getUserName() ?? '').trim();
+    final usuarioIngresado = (codigoUsuario ?? '').trim();
 
     if (usuarioIngresado.isNotEmpty &&
-        usuarioGuardado.toUpperCase() !=
-            usuarioIngresado.toUpperCase()) {
+        usuarioGuardado.toUpperCase() != usuarioIngresado.toUpperCase()) {
       throw Exception(
         'El usuario ingresado no coincide con el '
         'lecturador guardado en este dispositivo.',

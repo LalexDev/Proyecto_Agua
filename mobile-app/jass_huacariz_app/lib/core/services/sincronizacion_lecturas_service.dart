@@ -12,11 +12,11 @@ class SincronizacionLecturasService {
     ApiService? apiService,
     LecturadorService? lecturadorService,
     LecturaOfflineService? offlineService,
-  })  : _database = database ?? OfflineDatabase.instance,
-        _storage = storage ?? SecureStorageService(),
-        _apiService = apiService ?? ApiService(),
-        _lecturadorService = lecturadorService ?? LecturadorService(),
-        _offlineService = offlineService ?? LecturaOfflineService();
+  }) : _database = database ?? OfflineDatabase.instance,
+       _storage = storage ?? SecureStorageService(),
+       _apiService = apiService ?? ApiService(),
+       _lecturadorService = lecturadorService ?? LecturadorService(),
+       _offlineService = offlineService ?? LecturaOfflineService();
 
   final OfflineDatabase _database;
   final SecureStorageService _storage;
@@ -90,6 +90,13 @@ class SincronizacionLecturasService {
             anio: _entero(lectura['anio']),
             mes: _entero(lectura['mes']),
             observacion: lectura['observacion']?.toString(),
+            cambioMedidor: _booleano(lectura['cambio_medidor']),
+            lecturaInicialNuevoMedidor:
+                lectura['lectura_inicial_nuevo_medidor'] == null
+                ? null
+                : _numero(lectura['lectura_inicial_nuevo_medidor']),
+            observacionCambioMedidor: lectura['observacion_cambio_medidor']
+                ?.toString(),
             idOperacionCliente: idLocal,
           );
         }
@@ -134,5 +141,12 @@ class SincronizacionLecturasService {
     if (value is int) return value;
     if (value is num) return value.toInt();
     return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  bool _booleano(dynamic value, [bool fallback = false]) {
+    if (value is bool) return value;
+    if (value == null) return fallback;
+    final text = value.toString().trim().toLowerCase();
+    return text == 'true' || text == '1' || text == 'si' || text == 'sí';
   }
 }

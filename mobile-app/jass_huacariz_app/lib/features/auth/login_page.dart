@@ -15,14 +15,11 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   static const Color secondary = JassColors.secondary;
 
-  final TextEditingController usuarioController =
-      TextEditingController();
-  final TextEditingController passwordController =
-      TextEditingController();
+  final TextEditingController usuarioController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   final AuthService authService = AuthService();
-  final SecureStorageService storageService =
-      SecureStorageService();
+  final SecureStorageService storageService = SecureStorageService();
 
   bool mostrarPassword = false;
   bool cargando = false;
@@ -55,8 +52,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _cargarSesionOffline() async {
-    final disponible =
-        await authService.puedeIngresarOfflineComoLecturador();
+    final disponible = await authService.puedeIngresarOfflineComoLecturador();
     final usuario = await storageService.getUserName() ?? '';
     final fecha = await storageService.getLastOnlineLogin();
 
@@ -86,11 +82,9 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  bool get esAdministradorSeleccionado =>
-      rolSeleccionado == 'ADMINISTRADOR';
+  bool get esAdministradorSeleccionado => rolSeleccionado == 'ADMINISTRADOR';
 
-  bool get esLecturadorSeleccionado =>
-      rolSeleccionado == 'LECTURADOR';
+  bool get esLecturadorSeleccionado => rolSeleccionado == 'LECTURADOR';
 
   void _seleccionarRol(String rol) {
     if (procesando) return;
@@ -119,10 +113,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await authService.login(
-        codigoUsuario: usuario,
-        password: password,
-      );
+      await authService.login(codigoUsuario: usuario, password: password);
 
       final role = await storageService.getUserRole();
       final ruta = _rutaPorRol(role);
@@ -141,11 +132,7 @@ class _LoginPageState extends State<LoginPage> {
         cargando = false;
       });
 
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        ruta,
-        (route) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, ruta, (route) => false);
     } catch (e) {
       if (!mounted) return;
 
@@ -153,14 +140,12 @@ class _LoginPageState extends State<LoginPage> {
         cargando = false;
       });
 
-      final detalle = e
-          .toString()
-          .replaceFirst('Exception: ', '');
+      final detalle = e.toString().replaceFirst('Exception: ', '');
 
       _mostrarMensaje(
         puedeIngresarOffline
             ? 'No se pudo iniciar en línea: $detalle '
-                'El lecturador guardado puede usar el modo sin conexión.'
+                  'El lecturador guardado puede usar el modo sin conexión.'
             : detalle,
         esError: true,
       );
@@ -221,17 +206,13 @@ class _LoginPageState extends State<LoginPage> {
         '${dos(fecha.hour)}:${dos(fecha.minute)}';
   }
 
-  void _mostrarMensaje(
-    String mensaje, {
-    required bool esError,
-  }) {
+  void _mostrarMensaje(String mensaje, {required bool esError}) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -256,12 +237,9 @@ class _LoginPageState extends State<LoginPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF061A24)
-                        .withValues(alpha: 0.60),
-                    const Color(0xFF0F3D57)
-                        .withValues(alpha: 0.52),
-                    const Color(0xFF1DA1C2)
-                        .withValues(alpha: 0.30),
+                    const Color(0xFF061A24).withValues(alpha: 0.60),
+                    const Color(0xFF0F3D57).withValues(alpha: 0.52),
+                    const Color(0xFF1DA1C2).withValues(alpha: 0.30),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -271,10 +249,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 18,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -355,10 +330,7 @@ class _LoginPageState extends State<LoginPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(30),
@@ -367,11 +339,7 @@ class _LoginPageState extends State<LoginPage> {
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.verified_user_outlined,
-                color: Colors.white,
-                size: 18,
-              ),
+              Icon(Icons.verified_user_outlined, color: Colors.white, size: 18),
               SizedBox(width: 8),
               Text(
                 'Acceso exclusivo para personal autorizado',
@@ -602,8 +570,7 @@ class _LoginPageState extends State<LoginPage> {
               backgroundColor: context.jassBorder,
             ),
           ],
-          if (!verificandoSesionOffline &&
-              puedeIngresarOffline) ...[
+          if (!verificandoSesionOffline && puedeIngresarOffline) ...[
             const SizedBox(height: 14),
             Container(
               width: double.infinity,
@@ -611,9 +578,7 @@ class _LoginPageState extends State<LoginPage> {
               decoration: BoxDecoration(
                 color: context.jassSelectedSurface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: secondary.withValues(alpha: 0.28),
-                ),
+                border: Border.all(color: secondary.withValues(alpha: 0.28)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,9 +619,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     height: 48,
                     child: OutlinedButton.icon(
-                      onPressed: procesando
-                          ? null
-                          : iniciarSesionOffline,
+                      onPressed: procesando ? null : iniciarSesionOffline,
                       icon: ingresandoOffline
                           ? const SizedBox(
                               width: 17,
@@ -666,22 +629,16 @@ class _LoginPageState extends State<LoginPage> {
                                 color: secondary,
                               ),
                             )
-                          : const Icon(
-                              Icons.offline_bolt_rounded,
-                            ),
+                          : const Icon(Icons.offline_bolt_rounded),
                       label: Text(
                         ingresandoOffline
                             ? 'Ingresando...'
                             : 'Trabajar sin conexión',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: secondary,
-                        side: const BorderSide(
-                          color: secondary,
-                        ),
+                        side: const BorderSide(color: secondary),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
@@ -737,33 +694,22 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(
-        icon,
-        color: context.jassTextMuted,
-      ),
+      prefixIcon: Icon(icon, color: context.jassTextMuted),
       suffixIcon: suffix,
       filled: true,
       fillColor: context.jassSurfaceAlt,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(
-          color: context.jassBorder,
-        ),
+        borderSide: BorderSide(color: context.jassBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: secondary,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: secondary, width: 1.5),
       ),
     );
   }
@@ -773,10 +719,7 @@ class _InfoMiniCard extends StatelessWidget {
   final IconData icon;
   final String title;
 
-  const _InfoMiniCard({
-    required this.icon,
-    required this.title,
-  });
+  const _InfoMiniCard({required this.icon, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -828,9 +771,7 @@ class _RoleAccessCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        constraints: const BoxConstraints(
-          minHeight: 105,
-        ),
+        constraints: const BoxConstraints(minHeight: 105),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
@@ -846,11 +787,7 @@ class _RoleAccessCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 2),
-            Icon(
-              icon,
-              color: JassColors.secondary,
-              size: 25,
-            ),
+            Icon(icon, color: JassColors.secondary, size: 25),
             const SizedBox(height: 8),
             Text(
               title,

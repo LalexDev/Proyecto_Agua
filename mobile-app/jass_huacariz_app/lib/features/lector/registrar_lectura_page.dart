@@ -11,14 +11,10 @@ import '../../shared/widgets/lector_bottom_nav.dart';
 class RegistrarLecturaPage extends StatefulWidget {
   final bool modoAdmin;
 
-  const RegistrarLecturaPage({
-    super.key,
-    this.modoAdmin = false,
-  });
+  const RegistrarLecturaPage({super.key, this.modoAdmin = false});
 
   @override
-  State<RegistrarLecturaPage> createState() =>
-      _RegistrarLecturaPageState();
+  State<RegistrarLecturaPage> createState() => _RegistrarLecturaPageState();
 }
 
 class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
@@ -28,12 +24,17 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
 
   final TextEditingController lecturaController = TextEditingController();
   final TextEditingController observacionController = TextEditingController();
+  final TextEditingController lecturaInicialNuevoMedidorController =
+      TextEditingController(text: '0');
+  final TextEditingController observacionCambioMedidorController =
+      TextEditingController();
 
   Map<String, dynamic> suministro = {};
   Map<String, dynamic>? reciboEstimado;
   bool cargadoArgs = false;
   bool guardando = false;
   bool calculando = false;
+  bool cambioMedidor = false;
   int anioSeleccionado = DateTime.now().year;
   int mesSeleccionado = DateTime.now().month;
 
@@ -52,6 +53,11 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
 
     if (esMantenimiento) {
       lecturaController.text = lecturaAnterior.toStringAsFixed(3);
+      if (observacionController.text.trim().isEmpty) {
+        observacionController.text = 'Recibo de mantenimiento generado';
+      }
+    } else if (observacionController.text.trim().isEmpty) {
+      observacionController.text = 'Lectura mensual registrada';
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -63,6 +69,8 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
   void dispose() {
     lecturaController.dispose();
     observacionController.dispose();
+    lecturaInicialNuevoMedidorController.dispose();
+    observacionCambioMedidorController.dispose();
     super.dispose();
   }
 
@@ -78,34 +86,34 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
   }
 
   String get codigo => _txt(
-        suministro['codigoSuministro'] ??
-            suministro['suministroCodigo'] ??
-            suministro['codigo'],
-        'SIN-CÓDIGO',
-      );
+    suministro['codigoSuministro'] ??
+        suministro['suministroCodigo'] ??
+        suministro['codigo'],
+    'SIN-CÓDIGO',
+  );
 
   String get titular => _txt(
-        suministro['nombreCliente'] ??
-            suministro['titular'] ??
-            suministro['cliente'],
-        'Usuario del servicio',
-      );
+    suministro['nombreCliente'] ??
+        suministro['titular'] ??
+        suministro['cliente'],
+    'Usuario del servicio',
+  );
 
   String get direccion => _txt(
-        suministro['direccionSuministro'] ?? suministro['direccion'],
-        'Dirección no registrada',
-      );
+    suministro['direccionSuministro'] ?? suministro['direccion'],
+    'Dirección no registrada',
+  );
 
   String get sector => _txt(
-        suministro['nombreSector'] ?? suministro['sector'],
-        'Sector no registrado',
-      );
+    suministro['nombreSector'] ?? suministro['sector'],
+    'Sector no registrado',
+  );
 
   double get lecturaAnterior => _num(
-        suministro['lecturaAnterior'] ??
-            suministro['ultimaLectura'] ??
-            suministro['lecturaInicial'],
-      );
+    suministro['lecturaAnterior'] ??
+        suministro['ultimaLectura'] ??
+        suministro['lecturaInicial'],
+  );
 
   String get tipoOperacion {
     final explicito = _txt(suministro['tipoOperacion'], '').toUpperCase();
@@ -121,6 +129,41 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
 
   bool get esMantenimiento => tipoOperacion == 'MANTENIMIENTO';
 
+  String get estadoInstalacion => _txt(
+    suministro['estadoInstalacion'],
+    esMantenimiento ? 'PENDIENTE_INSTALACION' : 'INSTALADO',
+  ).toUpperCase();
+
+  bool get suministroActivo {
+    final value = suministro['activo'] ?? suministro['estado'];
+
+    if (value is bool) return value;
+    if (value == null) return true;
+
+    final text = value.toString().toLowerCase().trim();
+
+    if (text == 'false' ||
+        text == 'inactivo' ||
+        text == 'suspendido' ||
+        text == '0') {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool get lecturaDigitada => lecturaController.text.trim().isNotEmpty;
+
+  bool get sinConsumo {
+    if (esMantenimiento || cambioMedidor || !lecturaDigitada) return false;
+    return (lecturaActualIngresada - lecturaAnterior).abs() < 0.0001;
+  }
+
+  bool get consumoInusual {
+    if (esMantenimiento || !lecturaDigitada) return false;
+    return consumo >= 50;
+  }
+
   double get lecturaActualIngresada {
     if (esMantenimiento) return lecturaAnterior;
     return double.tryParse(
@@ -129,9 +172,21 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
         lecturaAnterior;
   }
 
+  double get lecturaInicialNuevoMedidor {
+    return double.tryParse(
+          lecturaInicialNuevoMedidorController.text.trim().replaceAll(',', '.'),
+        ) ??
+        0;
+  }
+
+  double get baseCalculoConsumo {
+    if (esMantenimiento) return lecturaAnterior;
+    return cambioMedidor ? lecturaInicialNuevoMedidor : lecturaAnterior;
+  }
+
   double get consumo {
     if (esMantenimiento) return 0;
-    final valor = lecturaActualIngresada - lecturaAnterior;
+    final valor = lecturaActualIngresada - baseCalculoConsumo;
     return valor < 0 ? 0 : valor;
   }
 
@@ -159,7 +214,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       if (mounted) setState(() => reciboEstimado = null);
       return;
     }
-    if (lecturaActualIngresada < lecturaAnterior) return;
+    if (lecturaActualIngresada < baseCalculoConsumo) return;
 
     setState(() => calculando = true);
     try {
@@ -201,12 +256,38 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       return;
     }
 
+    if (!suministroActivo) {
+      _mensaje(
+        'Suministro suspendido o inactivo. No se puede registrar una lectura desde la app.',
+        true,
+      );
+      return;
+    }
+
     final lecturaActual = lecturaActualIngresada;
     if (!esMantenimiento && lecturaController.text.trim().isEmpty) {
       _mensaje('Ingresa la lectura actual.', true);
       return;
     }
-    if (lecturaActual < lecturaAnterior) {
+    if (!esMantenimiento && cambioMedidor) {
+      if (lecturaInicialNuevoMedidorController.text.trim().isEmpty) {
+        _mensaje('Ingresa la lectura inicial del nuevo medidor.', true);
+        return;
+      }
+      if (lecturaActual < lecturaInicialNuevoMedidor) {
+        _mensaje(
+          'La lectura actual no puede ser menor a la lectura inicial del nuevo medidor.',
+          true,
+        );
+        return;
+      }
+      if (observacionCambioMedidorController.text.trim().isEmpty) {
+        _mensaje('Ingresa la observación del cambio de medidor.', true);
+        return;
+      }
+    }
+
+    if (!esMantenimiento && !cambioMedidor && lecturaActual < lecturaAnterior) {
       _mensaje('La lectura actual no puede ser menor a la anterior.', true);
       return;
     }
@@ -231,6 +312,13 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                 anio: anioSeleccionado,
                 mes: mesSeleccionado,
                 observacion: observacionController.text.trim(),
+                cambioMedidor: cambioMedidor,
+                lecturaInicialNuevoMedidor: cambioMedidor
+                    ? lecturaInicialNuevoMedidor
+                    : null,
+                observacionCambioMedidor: cambioMedidor
+                    ? observacionCambioMedidorController.text.trim()
+                    : null,
               );
       } else {
         final modoOffline = await storage.isOfflineMode();
@@ -252,6 +340,13 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                     anio: anioSeleccionado,
                     mes: mesSeleccionado,
                     observacion: observacionController.text.trim(),
+                    cambioMedidor: cambioMedidor,
+                    lecturaInicialNuevoMedidor: cambioMedidor
+                        ? lecturaInicialNuevoMedidor
+                        : null,
+                    observacionCambioMedidor: cambioMedidor
+                        ? observacionCambioMedidorController.text.trim()
+                        : null,
                   );
           } catch (e) {
             if (!_esErrorConexion(e)) rethrow;
@@ -274,6 +369,15 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
         'anio': response['anio'] ?? anioSeleccionado,
         'mes': response['mes'] ?? mesSeleccionado,
         'tipoOperacion': tipoOperacion,
+        'cambioMedidor': response['cambioMedidor'] ?? cambioMedidor,
+        'lecturaInicialNuevoMedidor':
+            response['lecturaInicialNuevoMedidor'] ??
+            (cambioMedidor ? lecturaInicialNuevoMedidor : null),
+        'observacionCambioMedidor':
+            response['observacionCambioMedidor'] ??
+            (cambioMedidor
+                ? observacionCambioMedidorController.text.trim()
+                : null),
         'origenOffline': response['origenOffline'] ?? guardadoLocal,
       };
 
@@ -281,16 +385,14 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
         guardadoLocal
             ? 'Guardado en el celular. Se enviará al recuperar conexión.'
             : esMantenimiento
-                ? 'Recibo de mantenimiento generado correctamente.'
-                : 'Lectura registrada correctamente.',
+            ? 'Recibo de mantenimiento generado correctamente.'
+            : 'Lectura registrada correctamente.',
         false,
       );
 
       Navigator.pushReplacementNamed(
         context,
-        widget.modoAdmin
-            ? '/admin-comprobante-recibo'
-            : '/comprobante-recibo',
+        widget.modoAdmin ? '/admin-comprobante-recibo' : '/comprobante-recibo',
         arguments: comprobante,
       );
     } catch (e) {
@@ -315,6 +417,13 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
       anio: anioSeleccionado,
       mes: mesSeleccionado,
       observacion: observacionController.text.trim(),
+      cambioMedidor: cambioMedidor,
+      lecturaInicialNuevoMedidor: cambioMedidor
+          ? lecturaInicialNuevoMedidor
+          : null,
+      observacionCambioMedidor: cambioMedidor
+          ? observacionCambioMedidorController.text.trim()
+          : '',
     );
   }
 
@@ -334,9 +443,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
     } else {
       Navigator.pushReplacementNamed(
         context,
-        widget.modoAdmin
-            ? '/admin-buscar-suministro'
-            : '/buscar-suministro',
+        widget.modoAdmin ? '/admin-buscar-suministro' : '/buscar-suministro',
       );
     }
   }
@@ -367,6 +474,13 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
   @override
   Widget build(BuildContext context) {
     final total = _num(reciboEstimado?['total']);
+    final textoBoton = guardando
+        ? 'Guardando...'
+        : esMantenimiento
+        ? 'Generar recibo de mantenimiento'
+        : sinConsumo
+        ? 'Marcar consumo cero'
+        : 'Registrar lectura y generar recibo';
 
     return Scaffold(
       backgroundColor: context.jassBackground,
@@ -406,6 +520,12 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                 lecturaAnterior: lecturaAnterior,
                 mantenimiento: esMantenimiento,
                 offline: suministro['origenOffline'] == true,
+              ),
+              const SizedBox(height: 12),
+              _OperationalStatusCard(
+                activo: suministroActivo,
+                mantenimiento: esMantenimiento,
+                estadoInstalacion: estadoInstalacion,
               ),
               const SizedBox(height: 18),
               _SectionCard(
@@ -448,16 +568,13 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                           child: DropdownButtonFormField<int>(
                             initialValue: anioSeleccionado,
                             decoration: _inputDecoration(context, 'Año'),
-                            items: List.generate(
-                              3,
-                              (index) {
-                                final year = DateTime.now().year - 1 + index;
-                                return DropdownMenuItem(
-                                  value: year,
-                                  child: Text('$year'),
-                                );
-                              },
-                            ),
+                            items: List.generate(3, (index) {
+                              final year = DateTime.now().year - 1 + index;
+                              return DropdownMenuItem(
+                                value: year,
+                                child: Text('$year'),
+                              );
+                            }),
                             onChanged: guardando
                                 ? null
                                 : (value) {
@@ -487,12 +604,94 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: cambioMedidor
+                              ? const Color(0xFFEAF7FC)
+                              : context.jassSurfaceAlt,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: cambioMedidor
+                                ? JassColors.primary
+                                : context.jassBorder,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            SwitchListTile.adaptive(
+                              contentPadding: EdgeInsets.zero,
+                              value: cambioMedidor,
+                              activeColor: JassColors.primary,
+                              title: Text(
+                                'Cambio de medidor',
+                                style: TextStyle(
+                                  color: context.jassTextPrimary,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'Activa esta opción si el medidor fue reemplazado y la lectura reinicia desde otro valor.',
+                              ),
+                              onChanged: guardando
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        cambioMedidor = value;
+                                        if (!value) {
+                                          lecturaInicialNuevoMedidorController
+                                                  .text =
+                                              '0';
+                                          observacionCambioMedidorController
+                                              .clear();
+                                        }
+                                      });
+                                      _actualizarEstimado();
+                                    },
+                            ),
+                            if (cambioMedidor) ...[
+                              const SizedBox(height: 10),
+                              TextField(
+                                controller:
+                                    lecturaInicialNuevoMedidorController,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                onChanged: (_) {
+                                  setState(() {});
+                                  _actualizarEstimado();
+                                },
+                                decoration: _inputDecoration(
+                                  context,
+                                  'Lectura inicial del nuevo medidor',
+                                  icon: Icons.water_drop_outlined,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextField(
+                                controller: observacionCambioMedidorController,
+                                maxLines: 2,
+                                decoration: _inputDecoration(
+                                  context,
+                                  'Observación del cambio de medidor',
+                                  icon: Icons.build_circle_outlined,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
                             child: _Metric(
-                              label: 'Anterior',
-                              value: '${lecturaAnterior.toStringAsFixed(3)} m³',
+                              label: cambioMedidor
+                                  ? 'Inicial nuevo'
+                                  : 'Anterior',
+                              value:
+                                  '${baseCalculoConsumo.toStringAsFixed(3)} m³',
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -504,6 +703,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                           ),
                         ],
                       ),
+                      ..._buildAvisosLectura(),
                     ] else ...[
                       const SizedBox(height: 14),
                       Container(
@@ -563,11 +763,7 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
                               : Icons.save_outlined,
                         ),
                   label: Text(
-                    guardando
-                        ? 'Guardando...'
-                        : esMantenimiento
-                            ? 'Generar recibo de mantenimiento'
-                            : 'Registrar lectura y generar recibo',
+                    textoBoton,
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -585,6 +781,58 @@ class _RegistrarLecturaPageState extends State<RegistrarLecturaPage> {
         ),
       ),
     );
+  }
+
+  List<Widget> _buildAvisosLectura() {
+    final widgets = <Widget>[];
+
+    if (!lecturaDigitada) return widgets;
+
+    if (sinConsumo) {
+      widgets.add(
+        const _NoticeCard(
+          icon: Icons.info_outline_rounded,
+          title: 'Sin consumo registrado',
+          message:
+              'La lectura actual es igual a la lectura anterior. Se generará un recibo con consumo 0.00 m³.',
+          color: Color(0xFF1593C7),
+          background: Color(0xFFEAF7FC),
+        ),
+      );
+    }
+
+    if (consumoInusual) {
+      widgets.add(
+        const _NoticeCard(
+          icon: Icons.warning_amber_rounded,
+          title: 'Consumo inusual detectado',
+          message:
+              'Verifica la lectura antes de registrar. El consumo calculado es mayor al rango esperado.',
+          color: Color(0xFFC2410C),
+          background: Color(0xFFFFF1DC),
+        ),
+      );
+    }
+
+    if (cambioMedidor) {
+      widgets.add(
+        const _NoticeCard(
+          icon: Icons.build_circle_outlined,
+          title: 'Cambio de medidor activado',
+          message:
+              'El consumo se calculará desde la lectura inicial del nuevo medidor.',
+          color: Color(0xFF0F617E),
+          background: Color(0xFFEAF7FC),
+        ),
+      );
+    }
+
+    return widgets
+        .map(
+          (widget) =>
+              Padding(padding: const EdgeInsets.only(top: 12), child: widget),
+        )
+        .toList();
   }
 
   InputDecoration _inputDecoration(
@@ -634,7 +882,10 @@ class _Header extends StatelessWidget {
           ),
           child: IconButton(
             onPressed: onBack,
-            icon: Icon(Icons.arrow_back_rounded, color: context.jassTextPrimary),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: context.jassTextPrimary,
+            ),
           ),
         ),
         const SizedBox(width: 14),
@@ -768,6 +1019,146 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+class _OperationalStatusCard extends StatelessWidget {
+  final bool activo;
+  final bool mantenimiento;
+  final String estadoInstalacion;
+
+  const _OperationalStatusCard({
+    required this.activo,
+    required this.mantenimiento,
+    required this.estadoInstalacion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color;
+    final Color background;
+    final IconData icon;
+    final String title;
+    final String message;
+
+    if (!activo) {
+      color = JassColors.danger;
+      background = const Color(0xFFFFECEC);
+      icon = Icons.block_rounded;
+      title = 'Suministro suspendido o inactivo';
+      message =
+          'No se debe registrar lectura mensual mientras el suministro esté suspendido.';
+    } else if (mantenimiento) {
+      color = const Color(0xFFB45309);
+      background = const Color(0xFFFFF4DD);
+      icon = Icons.home_repair_service_rounded;
+      title = 'Suministro pendiente de instalación';
+      message =
+          'Este suministro aún no está instalado. Solo se generará recibo de mantenimiento si corresponde.';
+    } else {
+      color = JassColors.success;
+      background = const Color(0xFFEAF8EF);
+      icon = Icons.verified_rounded;
+      title = 'Estado operativo';
+      message =
+          'Suministro instalado y activo. Puede registrar la lectura actual del medidor.';
+    }
+
+    return _NoticeCard(
+      icon: icon,
+      title: title,
+      message: message,
+      color: color,
+      background: background,
+      trailing: estadoInstalacion.replaceAll('_', ' '),
+    );
+  }
+}
+
+class _NoticeCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+  final Color color;
+  final Color background;
+  final String? trailing;
+
+  const _NoticeCard({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.color,
+    required this.background,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    if (trailing != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Text(
+                          trailing!,
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: context.jassTextMuted,
+                    fontSize: 12,
+                    height: 1.35,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Metric extends StatelessWidget {
   final String label;
   final String value;
@@ -838,53 +1229,53 @@ class _AmountCard extends StatelessWidget {
       child: loading
           ? const Center(child: CircularProgressIndicator())
           : receipt == null
-              ? Text(
-                  'El monto se mostrará al ingresar una lectura válida. Para calcular sin internet, primero actualiza el catálogo.',
+          ? Text(
+              'El monto se mostrará al ingresar una lectura válida. Para calcular sin internet, primero actualiza el catálogo.',
+              style: TextStyle(
+                color: context.jassTextMuted,
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  provisional ? 'Monto provisional' : 'Monto calculado',
                   style: TextStyle(
                     color: context.jassTextMuted,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      provisional ? 'Monto provisional' : 'Monto calculado',
-                      style: TextStyle(
-                        color: context.jassTextMuted,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'S/ ${total.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: context.jassTextPrimary,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _AmountLine('Agua', _num(receipt?['subtotalAgua'])),
-                    _AmountLine(
-                      'Mantenimiento',
-                      _num(receipt?['cargoMantenimiento']),
-                    ),
-                    _AmountLine('Lector', _num(receipt?['cargoLector'])),
-                    _AmountLine('Otros', _num(receipt?['cargoOtros'])),
-                    if (provisional) ...[
-                      const SizedBox(height: 8),
-                      const Text(
-                        'El backend confirmará el monto oficial al sincronizar.',
-                        style: TextStyle(
-                          color: JassColors.secondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ],
                 ),
+                const SizedBox(height: 5),
+                Text(
+                  'S/ ${total.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: context.jassTextPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _AmountLine('Agua', _num(receipt?['subtotalAgua'])),
+                _AmountLine(
+                  'Mantenimiento',
+                  _num(receipt?['cargoMantenimiento']),
+                ),
+                _AmountLine('Lector', _num(receipt?['cargoLector'])),
+                _AmountLine('Otros', _num(receipt?['cargoOtros'])),
+                if (provisional) ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    'El backend confirmará el monto oficial al sincronizar.',
+                    style: TextStyle(
+                      color: JassColors.secondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ],
+            ),
     );
   }
 }

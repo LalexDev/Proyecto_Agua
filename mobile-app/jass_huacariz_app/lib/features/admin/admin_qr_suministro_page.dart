@@ -66,9 +66,7 @@ class _AdminQrSuministroPageState extends State<AdminQrSuministroPage> {
 
   String _alias(Map<String, dynamic> data) {
     return _txt(
-      data['aliasSuministro'] ??
-          data['alias'] ??
-          data['referenciaRapida'],
+      data['aliasSuministro'] ?? data['alias'] ?? data['referenciaRapida'],
       '',
     );
   }
@@ -86,9 +84,7 @@ class _AdminQrSuministroPageState extends State<AdminQrSuministroPage> {
 
   String _dni(Map<String, dynamic> data) {
     return _txt(
-      data['dniCliente'] ??
-          data['dni'] ??
-          data['documentoCliente'],
+      data['dniCliente'] ?? data['dni'] ?? data['documentoCliente'],
       '',
     );
   }
@@ -104,9 +100,7 @@ class _AdminQrSuministroPageState extends State<AdminQrSuministroPage> {
 
   String _sector(Map<String, dynamic> data) {
     return _txt(
-      data['nombreSector'] ??
-          data['sector'] ??
-          data['sectorNombre'],
+      data['nombreSector'] ?? data['sector'] ?? data['sectorNombre'],
       '',
     );
   }
@@ -195,9 +189,7 @@ class _AdminQrSuministroPageState extends State<AdminQrSuministroPage> {
       return;
     }
 
-    await Clipboard.setData(
-      ClipboardData(text: codigo),
-    );
+    await Clipboard.setData(ClipboardData(text: codigo));
 
     _mensaje('Código copiado correctamente.', false);
   }
@@ -221,8 +213,7 @@ class _AdminQrSuministroPageState extends State<AdminQrSuministroPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -472,11 +463,7 @@ class _AdminQrSuministroPageState extends State<AdminQrSuministroPage> {
 
   Widget _buildContent() {
     return Column(
-      children: [
-        _buildForm(),
-        SizedBox(height: 18),
-        _buildQrPreview(),
-      ],
+      children: [_buildForm(), SizedBox(height: 18), _buildQrPreview()],
     );
   }
 
@@ -789,9 +776,7 @@ class _TopCard extends StatelessWidget {
     final sub = selected ? Color(0xFFE7F8FF) : context.jassTextMuted;
 
     return Container(
-      constraints: BoxConstraints(
-        minHeight: 96,
-      ),
+      constraints: BoxConstraints(minHeight: 96),
       padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bg,
@@ -801,8 +786,9 @@ class _TopCard extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor:
-                selected ? Colors.white24 : context.jassSelectedSurface,
+            backgroundColor: selected
+                ? Colors.white24
+                : context.jassSelectedSurface,
             child: Icon(
               icon,
               color: selected ? Colors.white : JassColors.secondary,
@@ -855,17 +841,12 @@ class _TopCard extends StatelessWidget {
 class _ChipTitle extends StatelessWidget {
   final String text;
 
-  _ChipTitle({
-    required this.text,
-  });
+  _ChipTitle({required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 13,
-        vertical: 7,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 13, vertical: 7),
       decoration: BoxDecoration(
         color: context.jassSelectedSurface,
         borderRadius: BorderRadius.circular(100),
@@ -887,18 +868,12 @@ class _StepBox extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  _StepBox({
-    required this.number,
-    required this.title,
-    required this.subtitle,
-  });
+  _StepBox({required this.number, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: BoxConstraints(
-        minHeight: 118,
-      ),
+      constraints: BoxConstraints(minHeight: 118),
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.jassSurfaceAlt,

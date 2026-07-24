@@ -40,7 +40,8 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
   }
 
   int _idLecturador(Map<String, dynamic> lecturador) {
-    final value = lecturador['id'] ??
+    final value =
+        lecturador['id'] ??
         lecturador['idUsuario'] ??
         lecturador['idLecturador'];
 
@@ -75,7 +76,8 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
     if (query.isEmpty) return lecturadores;
 
     return lecturadores.where((lecturador) {
-      final texto = '''
+      final texto =
+          '''
       ${_nombreCompleto(lecturador)}
       ${lecturador['dni']}
       ${lecturador['codigoUsuario']}
@@ -83,7 +85,7 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
       ${lecturador['correo']}
       ${_estado(lecturador) ? 'activo' : 'inactivo'}
       '''
-          .toLowerCase();
+              .toLowerCase();
 
       return texto.contains(query);
     }).toList();
@@ -118,8 +120,7 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -155,8 +156,9 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    nuevoEstado ? JassColors.success : JassColors.danger,
+                backgroundColor: nuevoEstado
+                    ? JassColors.success
+                    : JassColors.danger,
                 foregroundColor: Colors.white,
               ),
               child: Text(nuevoEstado ? 'Activar' : 'Desactivar'),
@@ -197,9 +199,7 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
       isScrollControlled: true,
       backgroundColor: context.jassSurface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) {
         return _LecturadorFormSheet(
@@ -214,10 +214,7 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
                 throw Exception('No se encontró el ID del lecturador.');
               }
 
-              await lecturadorService.actualizarLecturador(
-                id,
-                payload,
-              );
+              await lecturadorService.actualizarLecturador(id, payload);
             }
 
             if (!mounted) return;
@@ -261,10 +258,7 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
   }
 
   void _abrirMenuAdmin() {
-    showAdminQuickMenu(
-      context: context,
-      onRefresh: cargarLecturadores,
-    );
+    showAdminQuickMenu(context: context, onRefresh: cargarLecturadores);
   }
 
   @override
@@ -298,13 +292,8 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
                     ),
                   ),
                 if (error.isNotEmpty && !cargando)
-                  _ErrorBox(
-                    error: error,
-                    onRetry: cargarLecturadores,
-                  ),
-                if (!cargando &&
-                    error.isEmpty &&
-                    lecturadoresFiltrados.isEmpty)
+                  _ErrorBox(error: error, onRetry: cargarLecturadores),
+                if (!cargando && error.isEmpty && lecturadoresFiltrados.isEmpty)
                   Center(
                     child: Padding(
                       padding: EdgeInsets.all(28),
@@ -392,10 +381,7 @@ class _AdminLecturadoresPageState extends State<AdminLecturadoresPage> {
           ),
           child: IconButton(
             onPressed: cargarLecturadores,
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: context.jassTextPrimary,
-            ),
+            icon: Icon(Icons.refresh_rounded, color: context.jassTextPrimary),
             tooltip: 'Actualizar',
           ),
         ),
@@ -470,9 +456,7 @@ class _LecturadorCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.jassSurface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: context.jassBorder,
-        ),
+        border: Border.all(color: context.jassBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,10 +563,7 @@ class _LecturadorFormSheet extends StatefulWidget {
   final Map<String, dynamic>? lecturador;
   final Future<void> Function(Map<String, dynamic> payload) onGuardar;
 
-  _LecturadorFormSheet({
-    required this.lecturador,
-    required this.onGuardar,
-  });
+  _LecturadorFormSheet({required this.lecturador, required this.onGuardar});
 
   @override
   State<_LecturadorFormSheet> createState() => _LecturadorFormSheetState();
@@ -711,8 +692,7 @@ class _LecturadorFormSheetState extends State<_LecturadorFormSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(mensaje),
-        backgroundColor:
-            esError ? JassColors.danger : JassColors.success,
+        backgroundColor: esError ? JassColors.danger : JassColors.success,
       ),
     );
   }
@@ -754,18 +734,9 @@ class _LecturadorFormSheetState extends State<_LecturadorFormSheet> {
               label: 'DNI',
               keyboardType: TextInputType.number,
             ),
-            _Input(
-              controller: codigoController,
-              label: 'Usuario de acceso',
-            ),
-            _Input(
-              controller: nombresController,
-              label: 'Nombres',
-            ),
-            _Input(
-              controller: apellidosController,
-              label: 'Apellidos',
-            ),
+            _Input(controller: codigoController, label: 'Usuario de acceso'),
+            _Input(controller: nombresController, label: 'Nombres'),
+            _Input(controller: apellidosController, label: 'Apellidos'),
             _Input(
               controller: telefonoController,
               label: 'Teléfono',
@@ -778,9 +749,7 @@ class _LecturadorFormSheetState extends State<_LecturadorFormSheet> {
             ),
             _Input(
               controller: passwordController,
-              label: editando
-                  ? 'Nueva contraseña (opcional)'
-                  : 'Contraseña',
+              label: editando ? 'Nueva contraseña (opcional)' : 'Contraseña',
               obscureText: true,
             ),
             SwitchListTile(
@@ -825,8 +794,8 @@ class _LecturadorFormSheetState extends State<_LecturadorFormSheet> {
                   guardando
                       ? 'Guardando...'
                       : editando
-                          ? 'Guardar cambios'
-                          : 'Crear lecturador',
+                      ? 'Guardar cambios'
+                      : 'Crear lecturador',
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -884,17 +853,12 @@ class _Input extends StatelessWidget {
 class _EstadoChip extends StatelessWidget {
   final bool activo;
 
-  _EstadoChip({
-    required this.activo,
-  });
+  _EstadoChip({required this.activo});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: activo ? Color(0xFFEAF8EF) : Color(0xFFFFECEC),
         borderRadius: BorderRadius.circular(100),
@@ -915,10 +879,7 @@ class _ErrorBox extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  _ErrorBox({
-    required this.error,
-    required this.onRetry,
-  });
+  _ErrorBox({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -939,10 +900,7 @@ class _ErrorBox extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          TextButton(
-            onPressed: onRetry,
-            child: Text('Reintentar'),
-          ),
+          TextButton(onPressed: onRetry, child: Text('Reintentar')),
         ],
       ),
     );

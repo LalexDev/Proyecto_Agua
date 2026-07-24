@@ -12,9 +12,7 @@ class LecturadorService {
 
   List<Map<String, dynamic>> _asList(dynamic response) {
     if (response is List) {
-      return response
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      return response.map((item) => Map<String, dynamic>.from(item)).toList();
     }
     if (response is Map && response['data'] is List) {
       return (response['data'] as List)
@@ -29,9 +27,7 @@ class LecturadorService {
     return [];
   }
 
-  Future<Map<String, dynamic>> buscarSuministro(
-    String codigoSuministro,
-  ) async {
+  Future<Map<String, dynamic>> buscarSuministro(String codigoSuministro) async {
     final codigo = codigoSuministro.trim().toUpperCase();
     final response = await _api.get(
       ApiConfig.buscarSuministroLecturador(codigo),
@@ -39,9 +35,7 @@ class LecturadorService {
     return _asMap(response);
   }
 
-  Future<Map<String, dynamic>> buscarPorCodigo(
-    String codigoSuministro,
-  ) {
+  Future<Map<String, dynamic>> buscarPorCodigo(String codigoSuministro) {
     return buscarSuministro(codigoSuministro);
   }
 
@@ -52,9 +46,7 @@ class LecturadorService {
   }
 
   Future<List<Map<String, dynamic>>> listarSuministrosOffline() async {
-    final response = await _api.get(
-      ApiConfig.suministrosOfflineLecturador,
-    );
+    final response = await _api.get(ApiConfig.suministrosOfflineLecturador);
     return _asList(response);
   }
 
@@ -64,21 +56,27 @@ class LecturadorService {
     required int anio,
     required int mes,
     String? observacion,
+    bool cambioMedidor = false,
+    double? lecturaInicialNuevoMedidor,
+    String? observacionCambioMedidor,
     String? idOperacionCliente,
   }) async {
-    final response = await _api.post(
-      ApiConfig.registrarLectura,
-      {
-        'codigoSuministro': codigoSuministro.trim().toUpperCase(),
-        'lecturaActual': lecturaActual,
-        'anio': anio,
-        'mes': mes,
-        'observacion': observacion?.trim() ?? '',
-        if (idOperacionCliente != null &&
-            idOperacionCliente.trim().isNotEmpty)
-          'idOperacionCliente': idOperacionCliente.trim(),
+    final payload = <String, dynamic>{
+      'codigoSuministro': codigoSuministro.trim().toUpperCase(),
+      'lecturaActual': lecturaActual,
+      'anio': anio,
+      'mes': mes,
+      'observacion': observacion?.trim() ?? '',
+      'cambioMedidor': cambioMedidor,
+      if (cambioMedidor) ...{
+        'lecturaInicialNuevoMedidor': lecturaInicialNuevoMedidor ?? 0,
+        'observacionCambioMedidor': observacionCambioMedidor?.trim() ?? '',
       },
-    );
+      if (idOperacionCliente != null && idOperacionCliente.trim().isNotEmpty)
+        'idOperacionCliente': idOperacionCliente.trim(),
+    };
+
+    final response = await _api.post(ApiConfig.registrarLectura, payload);
     return _asMap(response);
   }
 
@@ -89,18 +87,14 @@ class LecturadorService {
     String? observacion,
     String? idOperacionCliente,
   }) async {
-    final response = await _api.post(
-      ApiConfig.registrarMantenimiento,
-      {
-        'codigoSuministro': codigoSuministro.trim().toUpperCase(),
-        'anio': anio,
-        'mes': mes,
-        'observacion': observacion?.trim() ?? '',
-        if (idOperacionCliente != null &&
-            idOperacionCliente.trim().isNotEmpty)
-          'idOperacionCliente': idOperacionCliente.trim(),
-      },
-    );
+    final response = await _api.post(ApiConfig.registrarMantenimiento, {
+      'codigoSuministro': codigoSuministro.trim().toUpperCase(),
+      'anio': anio,
+      'mes': mes,
+      'observacion': observacion?.trim() ?? '',
+      if (idOperacionCliente != null && idOperacionCliente.trim().isNotEmpty)
+        'idOperacionCliente': idOperacionCliente.trim(),
+    });
     return _asMap(response);
   }
 
@@ -113,6 +107,11 @@ class LecturadorService {
       anio: _entero(data['anio'], DateTime.now().year),
       mes: _entero(data['mes'], DateTime.now().month),
       observacion: data['observacion']?.toString(),
+      cambioMedidor: _booleano(data['cambioMedidor']),
+      lecturaInicialNuevoMedidor: data['lecturaInicialNuevoMedidor'] == null
+          ? null
+          : _numero(data['lecturaInicialNuevoMedidor']),
+      observacionCambioMedidor: data['observacionCambioMedidor']?.toString(),
       idOperacionCliente: data['idOperacionCliente']?.toString(),
     );
   }
@@ -131,5 +130,12 @@ class LecturadorService {
     if (value is int) return value;
     if (value is num) return value.toInt();
     return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  bool _booleano(dynamic value, [bool fallback = false]) {
+    if (value is bool) return value;
+    if (value == null) return fallback;
+    final text = value.toString().trim().toLowerCase();
+    return text == 'true' || text == '1' || text == 'si' || text == 'sí';
   }
 }

@@ -132,7 +132,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     Navigator.pushNamed(context, route);
   }
 
-
   void _go(int index) {
     if (index == 0) return;
 
@@ -199,11 +198,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
     if (!mounted) return;
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   @override
@@ -231,10 +226,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 const SizedBox(height: 18),
                 if (cargando) _buildLoading(),
                 if (error.isNotEmpty && !cargando)
-                  _ErrorBox(
-                    error: error,
-                    onRetry: cargarDashboard,
-                  ),
+                  _ErrorBox(error: error, onRetry: cargarDashboard),
                 if (!cargando && error.isEmpty) ...[
                   _buildStatsGrid(),
                   const SizedBox(height: 20),
@@ -299,10 +291,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           },
         ),
         const SizedBox(width: 10),
-        _CircleButton(
-          icon: Icons.refresh_rounded,
-          onTap: cargarDashboard,
-        ),
+        _CircleButton(icon: Icons.refresh_rounded, onTap: cargarDashboard),
         const SizedBox(width: 10),
         _CircleButton(
           icon: Icons.logout_rounded,
@@ -322,10 +311,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFF0F3D57),
-              Color(0xFF1DA1C2),
-            ],
+            colors: [Color(0xFF0F3D57), Color(0xFF1DA1C2)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -636,8 +622,8 @@ class _CircleButton extends StatelessWidget {
           color: danger
               ? const Color(0xFFD93025)
               : dark
-                  ? Colors.white
-                  : const Color(0xFF0F3D57),
+              ? Colors.white
+              : const Color(0xFF0F3D57),
         ),
       ),
     );
@@ -720,11 +706,7 @@ class _StatCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: muted,
-                  size: 18,
-                ),
+                Icon(Icons.chevron_right_rounded, color: muted, size: 18),
               ],
             ),
           ],
@@ -765,11 +747,7 @@ class _QuickAction extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.circle,
-              color: Colors.transparent,
-              size: 0,
-            ),
+            const Icon(Icons.circle, color: Colors.transparent, size: 0),
             Icon(icon, color: const Color(0xFF1DA1C2), size: 26),
             const SizedBox(height: 8),
             Text(
@@ -827,9 +805,7 @@ class _GestionTile extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: dark
-                    ? const Color(0xFF162432)
-                    : const Color(0xFFE8F7FB),
+                color: dark ? const Color(0xFF162432) : const Color(0xFFE8F7FB),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Icon(icon, color: const Color(0xFF1DA1C2)),
@@ -860,10 +836,7 @@ class _GestionTile extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: muted,
-            ),
+            Icon(Icons.chevron_right_rounded, color: muted),
           ],
         ),
       ),
@@ -875,10 +848,7 @@ class _ErrorBox extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
 
-  const _ErrorBox({
-    required this.error,
-    required this.onRetry,
-  });
+  const _ErrorBox({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -905,10 +875,7 @@ class _ErrorBox extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('Reintentar'),
-          ),
+          TextButton(onPressed: onRetry, child: const Text('Reintentar')),
         ],
       ),
     );
