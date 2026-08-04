@@ -362,30 +362,34 @@ export class Recibos implements OnInit {
     return;
   }
 
-  const enlacePortal = `${window.location.origin}/cliente/mis-recibos`;  // IP ahora, dominio automáticamente después
+const enlacePortal = `${window.location.origin}/cliente/mis-recibos`;
 
-  const mensaje = `💧 *AGUA POTABLE HUACARIZ - NOTIFICACIÓN DE RECIBO*
+const mensaje = [
+  '💧 *AGUA POTABLE HUACARIZ - NOTIFICACIÓN DE RECIBO*',
+  '',
+  `Estimado(a) *${recibo.nombreCliente}*:`,
+  '',
+  `Le informamos que su recibo de agua potable correspondiente a *${recibo.periodo}* ya fue generado.`,
+  '',
+  `🧾 Código de recibo: *${recibo.codigoRecibo}*`,
+  `🏠 Suministro: *${recibo.codigoSuministro}*`,
+  `💰 Total a pagar: *S/ ${recibo.total}*`,
+  `📅 Fecha de vencimiento: *${recibo.fechaVencimiento}*`,
+  '',
+  'Por favor realice su pago dentro del plazo establecido para evitar mora o restricciones del servicio.',
+  '',
+  `🔗 Consulte su recibo aquí: ${enlacePortal}`,
+  '',
+  '*AGUA POTABLE HUACARIZ*',
+  'Servicio de Agua Potable'
+].join('\n');
 
-Estimado(a) *${recibo.nombreCliente || 'usuario'}*:
+const mensajeCodificado = encodeURIComponent(mensaje);
 
-Le informamos que su recibo de agua potable correspondiente a *${this.periodo(recibo)}* ya fue generado.
+const telefonoLimpio = telefono.replace(/\D/g, '');
+const urlWhatsapp = `https://wa.me/51${telefonoLimpio}?text=${mensajeCodificado}`;
 
-📄 Código de recibo: *${recibo.codigoRecibo || '-'}*
-🏠 Suministro: *${recibo.codigoSuministro || '-'}*
-💰 Total a pagar: *S/ ${Number(recibo.total || 0).toFixed(2)}*
-📅 Fecha de vencimiento: *${recibo.fechaVencimiento || '-'}*
-
-⚠️ Por favor realice su pago dentro del plazo establecido de 15 días para evitar mora o restricciones del servicio.
-
-🔗 Consulte su recibo aquí:
-${enlacePortal}
-
-*AGUA POTABLE HUACARIZ*
-Servicio de Agua Potable`;
-
-  const url = `https://wa.me/51${telefono}?text=${encodeURIComponent(mensaje)}`;
-
-  window.open(url, '_blank');
+window.open(urlWhatsapp, '_blank');
 }
 
 obtenerTelefonoCliente(recibo: any): string {
